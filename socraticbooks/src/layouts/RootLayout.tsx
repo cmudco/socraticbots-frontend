@@ -1,17 +1,17 @@
-// src/layouts/RootLayout.tsx
-import { ReactNode } from 'react'
+import React from 'react';
+import Header from '../components/Header/Header';
 
-type RootLayoutProps = {
-  children: ReactNode
+interface RootLayoutProps {
+  children: React.ReactNode;
 }
 
-export const RootLayout = ({ children }: RootLayoutProps) => {
+export const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
   return (
-    <div className="root-layout">
-      <header>
-        <h1>SocraticBooks</h1>
-      </header>
-      <main>{children}</main>
+    <div>
+      <Header />
+      <main>
+        {children}
+      </main>
     </div>
-  )
-}
+  );
+};
