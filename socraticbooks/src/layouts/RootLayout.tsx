@@ -7,7 +7,7 @@ interface RootLayoutProps {
 
 export const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
   return (
-    <div>
+    <div className="root-layout">
       <Header />
       <main>
         {children}
