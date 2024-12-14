@@ -38,10 +38,12 @@ export const Books = () => {
   console.log('Edit book:', bookId);
 };
 
-const handleDelete = (e: React.MouseEvent, bookId: string) => {
-  e.stopPropagation(); // Prevent row click when clicking button
-  // TODO: Implement delete functionality
-  console.log('Delete book:', bookId);
+const handleDelete = async (e: React.MouseEvent, bookId: string) => {
+  e.stopPropagation();
+  if (window.confirm('Are you sure you want to delete this book?')) {
+    // TODO: Implement delete functionality
+    console.log('Delete book:', bookId);
+  }
 };
 
  const [title, setTitle] = useState('');
@@ -149,7 +151,7 @@ const handleDelete = (e: React.MouseEvent, bookId: string) => {
                 <th>Description</th>
                 <th>ID</th>
                 <th>Created At</th>
-                <th>Actions</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -163,13 +165,7 @@ const handleDelete = (e: React.MouseEvent, bookId: string) => {
                   <td>{book.description}</td>
                   <td className="id-cell">{book.id}</td>
                   <td>{new Date(book.created_at).toLocaleString()}</td>
-                  <td className="actions-cell">
-                    <button 
-                      onClick={(e) => handleEdit(e, book.id)}
-                      className="action-button edit"
-                    >
-                      Edit
-                    </button>
+                  <td>
                     <button 
                       onClick={(e) => handleDelete(e, book.id)}
                       className="action-button delete"

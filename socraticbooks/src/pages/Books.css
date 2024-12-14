@@ -1,139 +1,133 @@
 /* src/pages/Books.css */
 .books-container {
     padding: 20px;
-  }
-  
-  .book-form {
+ }
+ 
+ /* Form styles */
+ .book-form {
     max-width: 400px;
     margin-bottom: 20px;
-  }
-  
-  .form-group {
+ }
+ 
+ .form-group {
     margin-bottom: 15px;
-  }
-  
-  .form-group input {
+ }
+ 
+ .form-group input {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
-  }
-  
-  .book-form button {
+ }
+ 
+ .book-form button {
     padding: 8px 16px;
     background-color: #007bff;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-  }
-  
-  .book-form button:hover {
+ }
+ 
+ .book-form button:hover {
     background-color: #0056b3;
-  }
-  
-  .books-list {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .book-item {
-    border: 1px solid #ddd;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-  }
-  
-  .book-item h3 {
-    margin: 0 0 10px 0;
-  }
-  
-  .book-item p {
-    color: #666;
-    margin: 0;
-  }
-
-  .table-container {
+ }
+ 
+ /* Table styles */
+ .table-container {
     margin-top: 20px;
     overflow-x: auto;
-  }
-  
-  .books-table {
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+ }
+ 
+ .books-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
-  }
-  
-  .books-table th,
-  .books-table td {
+ }
+ 
+ .books-table th,
+ .books-table td {
     padding: 12px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  .books-table th {
-    background-color: #f5f5f5;
+    border-bottom: 1px solid #eee;
+ }
+ 
+ .books-table th {
+    background-color: #f8f9fa;
     font-weight: bold;
-  }
-  
-  .books-table tr:hover {
-    background-color: #f9f9f9;
-  }
-  
-  .id-cell {
+    color: #495057;
+ }
+ 
+ .id-cell {
     font-family: monospace;
     font-size: 0.9em;
-  }
-  
-  /* Make table responsive */
-  @media screen and (max-width: 768px) {
-    .table-container {
-      margin: 20px -20px;
-    }
-    
-    .books-table th,
-    .books-table td {
-      padding: 8px;
-    }
-  }
-
-  .book-row {
+    color: #6c757d;
+ }
+ 
+ /* Row styles */
+ .book-row {
     cursor: pointer;
     transition: background-color 0.2s;
-  }
-  
-  .book-row:hover {
-    background-color: #f5f5f5;
-  }
-  
-  .actions-cell {
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  
-  .book-row:hover .actions-cell {
-    opacity: 1;
-  }
-  
-  .action-button {
+ }
+ 
+ .book-row:hover {
+    background-color: #f8f9fa;
+ }
+ 
+ /* Action buttons */
+ .action-button {
     padding: 6px 12px;
-    margin: 0 4px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.9em;
-  }
-  
-  .action-button.edit {
-    background-color: #4a90e2;
+    transition: all 0.2s;
+    background-color: #dc3545;
     color: white;
-  }
-  
-  .action-button.delete {
-    background-color: #e25c5c;
+}
+
+.action-button:hover {
+    background-color: #c82333;
+}
+ 
+ .action-button.edit {
+    background-color: #007bff;
     color: white;
-  }
-  
-  .action-button:hover {
-    opacity: 0.9;
-  }
+ }
+ 
+ .action-button.edit:hover {
+    background-color: #0056b3;
+ }
+ 
+ .action-button.delete {
+    background-color: #dc3545;
+    color: white;
+ }
+ 
+ .action-button.delete:hover {
+    background-color: #c82333;
+ }
+ 
+ /* Responsive styles */
+ @media screen and (max-width: 768px) {
+    .table-container {
+        margin: 20px -20px;
+        border-radius: 0;
+    }
+    
+    .books-table th,
+    .books-table td {
+        padding: 8px;
+    }
+ }
+ 
+ /* Error message */
+ .error {
+    color: #dc3545;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #f8d7da;
+    border-radius: 4px;
+ }
