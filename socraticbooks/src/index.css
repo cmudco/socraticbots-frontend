@@ -10,4 +10,6 @@
   --primary-color: #1a1a1a;
   --background-color: #ffffff;
   --text-color: #333333;
+  --link-color: #646cff; /* Adding this for links */
+  --button-text: #ffffff; /* Adding this for button text */
 }

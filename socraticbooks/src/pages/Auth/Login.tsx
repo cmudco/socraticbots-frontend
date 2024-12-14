@@ -21,7 +21,7 @@ export const Login = () => {
   };
 
   return (
-    <div className="login-container">
+    <div className="form-container">
       <form onSubmit={handleSubmit}>
         {error && <div className="error">{error}</div>}
         <div>

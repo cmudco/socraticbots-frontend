@@ -27,14 +27,31 @@
   .header-nav {
     display: flex;
     gap: 1rem;
+    align-items: center;
   }
   
   .header-nav a {
     text-decoration: none;
     padding: 0.5rem 1rem;
-    color: var(--text-color);
+    color: var(--link-color);
+    font-weight: 500;
   }
   
   .header-nav a:hover {
     text-decoration: underline;
+  }
+  
+  /* Style for the logout button specifically */
+  .logout-button {
+    background-color: var(--primary-color);
+    color: var(--button-text);
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .logout-button:hover {
+    opacity: 0.9;
   }
