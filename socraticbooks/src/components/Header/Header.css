@@ -10,8 +10,31 @@
     z-index: 1000;
   }
   
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
   .header-title {
     font-size: 24px;
     font-weight: bold;
     margin: 0;
+  }
+  
+  .header-nav {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .header-nav a {
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    color: var(--text-color);
+  }
+  
+  .header-nav a:hover {
+    text-decoration: underline;
   }

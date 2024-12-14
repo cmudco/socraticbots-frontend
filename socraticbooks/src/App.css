@@ -48,3 +48,7 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
+.main-content {
+  padding-top: 80px; /* This should be more than your header height */
+}
