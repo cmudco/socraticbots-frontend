@@ -32,11 +32,6 @@ export const Books = () => {
   navigate(`/books/${bookId}`);
  };
 
- const handleEdit = (e: React.MouseEvent, bookId: string) => {
-  e.stopPropagation(); // Prevent row click when clicking button
-  // TODO: Implement edit functionality
-  console.log('Edit book:', bookId);
-};
 
 const handleDelete = async (e: React.MouseEvent, bookId: string) => {
   e.stopPropagation();
