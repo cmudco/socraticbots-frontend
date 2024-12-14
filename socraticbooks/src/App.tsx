@@ -6,6 +6,8 @@ import { Login } from './pages/Auth/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Register } from './pages/Auth/Register';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { Books } from './pages/Books';
+import { Chapters } from './pages/Chapters';
 import './App.css';
 
 
@@ -23,6 +25,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/books" 
+              element={
+                <ProtectedRoute>
+                  <Books />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/chapters" 
+              element={
+                <ProtectedRoute>
+                  <Chapters />
                 </ProtectedRoute>
               } 
             />

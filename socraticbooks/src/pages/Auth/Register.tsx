@@ -12,6 +12,24 @@ export const Register = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const verifyAccessCode = async (code: string) => {
+    try {
+      const response = await fetch('https://dare.hss.cmu.edu/api/verify-access-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ access_code: code })
+      });
+      
+      const data = await response.json();
+      return data.valid;
+    } catch (error) {
+      console.error('Error verifying code:', error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -22,15 +40,25 @@ export const Register = () => {
     }
 
     try {
+      // First verify access code
+      const isValidCode = await verifyAccessCode(accessCode);
+      if (!isValidCode) {
+        setError('Invalid access code');
+        return;
+      }
+
+      // If code is valid, create user
       await createUserWithEmailAndPassword(auth, email, password);
       navigate('/dashboard');
     } catch (err) {
       setError('Failed to create an account');
+      console.error('Registration error:', err);
     }
   };
 
   return (
     <div className="form-container">
+      <h2>Register</h2>
       <form onSubmit={handleSubmit}>
         {error && <div className="error">{error}</div>}
         <div>
@@ -39,6 +67,7 @@ export const Register = () => {
             type="text"
             value={accessCode}
             onChange={(e) => setAccessCode(e.target.value)}
+            placeholder="Enter access code"
             required
           />
         </div>
@@ -48,6 +77,7 @@ export const Register = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
             required
           />
         </div>
@@ -57,6 +87,7 @@ export const Register = () => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter password"
             required
           />
         </div>
@@ -66,6 +97,7 @@ export const Register = () => {
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm password"
             required
           />
         </div>
