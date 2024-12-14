@@ -90,47 +90,61 @@ export const Books = () => {
  };
 
  return (
-   <div className="books-container">
-     <h1>My Books</h1>
+  <div className="books-container">
+    <h1>My Books</h1>
 
-     <form onSubmit={handleSubmit} className="book-form">
-       <div className="form-group">
-         <input
-           type="text"
-           value={title}
-           onChange={(e) => setTitle(e.target.value)}
-           placeholder="Book title"
-           disabled={loading}
-         />
-       </div>
-       <div className="form-group">
-         <input
-           type="text"
-           value={description}
-           onChange={(e) => setDescription(e.target.value)}
-           placeholder="Book description"
-           disabled={loading}
-         />
-       </div>
-       <button type="submit" disabled={loading}>
-         {loading ? 'Adding...' : 'Add Book'}
-       </button>
-     </form>
+    <form onSubmit={handleSubmit} className="book-form">
+      <div className="form-group">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Book title"
+          disabled={loading}
+        />
+      </div>
+      <div className="form-group">
+        <input
+          type="text"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Book description"
+          disabled={loading}
+        />
+      </div>
+      <button type="submit" disabled={loading}>
+        {loading ? 'Adding...' : 'Add Book'}
+      </button>
+    </form>
 
-     {error && <p className="error">{error}</p>}
+    {error && <p className="error">{error}</p>}
 
-     {books.length === 0 ? (
-       <p>No books yet!</p>
-     ) : (
-       <ul className="books-list">
-         {books.map((book) => (
-           <li key={book.id} className="book-item">
-             <h3>{book.title}</h3>
-             <p>{book.description}</p>
-           </li>
-         ))}
-       </ul>
-     )}
-   </div>
- );
+    {books.length === 0 ? (
+      <p>No books yet!</p>
+    ) : (
+      <div className="table-container">
+        <table className="books-table">
+          <thead>
+            <tr>
+              <th>Book Name</th>
+              <th>Description</th>
+              <th>ID</th>
+              <th>Created At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {books.map((book) => (
+              <tr key={book.id}>
+                <td>{book.title}</td>
+                <td>{book.description}</td>
+                <td className="id-cell">{book.id}</td>
+                <td>{new Date(book.created_at).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+);
 };
