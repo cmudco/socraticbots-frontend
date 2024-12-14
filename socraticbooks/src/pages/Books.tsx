@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
 import { 
  addBookStart, 
  addBookSuccess, 
@@ -21,9 +23,26 @@ interface RootState {
 }
 
 export const Books = () => {
+ const navigate = useNavigate();
  const dispatch = useDispatch();
  const { books, loading, error } = useSelector((state: RootState) => state.books);
  const { user } = useAuth();
+
+ const handleRowClick = (bookId: string) => {
+  navigate(`/books/${bookId}`);
+ };
+
+ const handleEdit = (e: React.MouseEvent, bookId: string) => {
+  e.stopPropagation(); // Prevent row click when clicking button
+  // TODO: Implement edit functionality
+  console.log('Edit book:', bookId);
+};
+
+const handleDelete = (e: React.MouseEvent, bookId: string) => {
+  e.stopPropagation(); // Prevent row click when clicking button
+  // TODO: Implement delete functionality
+  console.log('Delete book:', bookId);
+};
 
  const [title, setTitle] = useState('');
  const [description, setDescription] = useState('');
@@ -120,31 +139,50 @@ export const Books = () => {
     {error && <p className="error">{error}</p>}
 
     {books.length === 0 ? (
-      <p>No books yet!</p>
-    ) : (
-      <div className="table-container">
-        <table className="books-table">
-          <thead>
-            <tr>
-              <th>Book Name</th>
-              <th>Description</th>
-              <th>ID</th>
-              <th>Created At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {books.map((book) => (
-              <tr key={book.id}>
-                <td>{book.title}</td>
-                <td>{book.description}</td>
-                <td className="id-cell">{book.id}</td>
-                <td>{new Date(book.created_at).toLocaleString()}</td>
+        <p>No books yet!</p>
+      ) : (
+        <div className="table-container">
+          <table className="books-table">
+            <thead>
+              <tr>
+                <th>Book Name</th>
+                <th>Description</th>
+                <th>ID</th>
+                <th>Created At</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-  </div>
-);
+            </thead>
+            <tbody>
+              {books.map((book) => (
+                <tr 
+                  key={book.id} 
+                  onClick={() => handleRowClick(book.id)}
+                  className="book-row"
+                >
+                  <td>{book.title}</td>
+                  <td>{book.description}</td>
+                  <td className="id-cell">{book.id}</td>
+                  <td>{new Date(book.created_at).toLocaleString()}</td>
+                  <td className="actions-cell">
+                    <button 
+                      onClick={(e) => handleEdit(e, book.id)}
+                      className="action-button edit"
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      onClick={(e) => handleDelete(e, book.id)}
+                      className="action-button delete"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
 };
