@@ -2,11 +2,9 @@
 .header {
     background-color: white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 5px 5px;
     width: 100%;
-    position: fixed;
+    position: sticky;
     top: 0;
-    left: 0;
     z-index: 1000;
   }
   
@@ -14,13 +12,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%; /* Make it span the full width */
+    padding: 5px;
   }
-
+  
   .header-title {
     font-size: 1.5rem;
     font-weight: bold;
     margin: 0;
+    padding-left: 0;
   }
   
   .header-nav {
@@ -40,7 +39,6 @@
     text-decoration: underline;
   }
   
-  /* Style for the logout button specifically */
   .logout-button {
     background-color: var(--primary-color);
     color: var(--button-text);
@@ -53,8 +51,4 @@
   
   .logout-button:hover {
     opacity: 0.9;
-  }
-
-  .main-content p {
-    font-size: .8rem;
   }

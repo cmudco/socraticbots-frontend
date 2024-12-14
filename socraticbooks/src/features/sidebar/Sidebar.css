@@ -1,18 +1,15 @@
 /* src/features/sidebar/Sidebar.css */
 .sidebar {
-    width: 250px;
-    height: 100vh;
-    position: fixed;
-    left: 0;
-    top: 80px; /* Same as header height */
+    
     background-color: white;
     border-right: 1px solid #eaeaea;
-    padding: 20px;
+    padding: 1rem;
   }
   
   .sidebar-nav ul {
     list-style: none;
     padding: 0;
+    margin: 0;
   }
   
   .sidebar-nav li {
@@ -23,7 +20,7 @@
     text-decoration: none;
     color: var(--text-color);
     display: block;
-    padding: 10px;
+    
   }
   
   .sidebar-nav a:hover {
