@@ -50,5 +50,12 @@ button {
 }
 
 .main-content {
-  padding-top: 80px; /* This should be more than your header height */
+  margin-left: 250px; /* Same as sidebar width */
+  padding: 20px;
+  width: 100%;
+}
+
+.layout-container {
+  padding-top: 80px; /* Header height */
+  display: flex;
 }
