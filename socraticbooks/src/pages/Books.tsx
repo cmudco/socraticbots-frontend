@@ -33,11 +33,41 @@ export const Books = () => {
  };
 
 
-const handleDelete = async (e: React.MouseEvent, bookId: string) => {
-  e.stopPropagation();
+ const handleDelete = async (e: React.MouseEvent, bookId: string) => {
+  e.stopPropagation(); // Prevent triggering row click
+
+  if (!user?.uid) {
+    console.error('No user ID found');
+    return;
+  }
+
   if (window.confirm('Are you sure you want to delete this book?')) {
-    // TODO: Implement delete functionality
-    console.log('Delete book:', bookId);
+    dispatch(fetchBooksStart()); // Set loading state
+
+    try {
+      const response = await fetch('https://dare.hss.cmu.edu/api/socratic-books/books', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.uid,
+          bookId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete book');
+      }
+
+      // Remove the book from the Redux state
+      dispatch(fetchBooksSuccess(books.filter((book) => book.id !== bookId)));
+      alert(data.message);
+    } catch (err) {
+      dispatch(fetchBooksFailure(err instanceof Error ? err.message : 'Failed to delete book'));
+    }
   }
 };
 
