@@ -8,6 +8,7 @@ import { Register } from './pages/Auth/Register';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Books } from './pages/Books';
 import { Chapters } from './pages/Chapters';
+import { BookDetail } from './pages/BookDetail';
 import './App.css';
 
 
@@ -43,6 +44,14 @@ function App() {
                   <Chapters />
                 </ProtectedRoute>
               } 
+            />
+            <Route
+              path="/books/:id"
+              element={
+                <ProtectedRoute>
+                  <BookDetail />
+                </ProtectedRoute>
+              }
             />
             <Route 
               path="/" 
