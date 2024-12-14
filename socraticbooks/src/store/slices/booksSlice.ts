@@ -1,24 +1,43 @@
 // src/store/slices/booksSlice.ts
 import { createSlice } from '@reduxjs/toolkit';
-import { Book } from '../../types/book';
 
-// Define what our books state looks like
-interface BooksState {
-  books: Book[];
+interface Book {
+  id: string;
+  title: string;
+  description: string;
+  user_id: string;
 }
 
-// Set initial state
+interface BooksState {
+  books: Book[];
+  loading: boolean;
+  error: string | null;
+}
+
 const initialState: BooksState = {
-  books: []
+  books: [],
+  loading: false,
+  error: null
 };
 
-// Create the slice
 const booksSlice = createSlice({
   name: 'books',
   initialState,
   reducers: {
-    // We'll add actions here later
+    addBookStart: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
+    addBookSuccess: (state, action) => {
+      state.books.push(action.payload);
+      state.loading = false;
+    },
+    addBookFailure: (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    }
   }
 });
 
+export const { addBookStart, addBookSuccess, addBookFailure } = booksSlice.actions;
 export default booksSlice.reducer;
