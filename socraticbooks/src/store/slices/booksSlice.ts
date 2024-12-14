@@ -1,15 +1,8 @@
 // src/store/slices/booksSlice.ts
 import { createSlice } from '@reduxjs/toolkit';
 
-interface Book {
-  id: string;
-  title: string;
-  description: string;
-  user_id: string;
-}
-
 interface BooksState {
-  books: Book[];
+  books: any[];
   loading: boolean;
   error: string | null;
 }
@@ -24,12 +17,24 @@ const booksSlice = createSlice({
   name: 'books',
   initialState,
   reducers: {
+    fetchBooksStart: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
+    fetchBooksSuccess: (state, action) => {
+      state.books = action.payload;
+      state.loading = false;
+    },
+    fetchBooksFailure: (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
     addBookStart: (state) => {
       state.loading = true;
       state.error = null;
     },
     addBookSuccess: (state, action) => {
-      state.books.push(action.payload);
+      state.books.unshift(action.payload); // Add to beginning of array
       state.loading = false;
     },
     addBookFailure: (state, action) => {
@@ -39,5 +44,12 @@ const booksSlice = createSlice({
   }
 });
 
-export const { addBookStart, addBookSuccess, addBookFailure } = booksSlice.actions;
+export const {
+  fetchBooksStart,
+  fetchBooksSuccess,
+  fetchBooksFailure,
+  addBookStart,
+  addBookSuccess,
+  addBookFailure
+} = booksSlice.actions;
 export default booksSlice.reducer;
