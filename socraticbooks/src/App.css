@@ -5,24 +5,26 @@ body {
   line-height: 1.6;
   color: var(--text-color);
   background-color: var(--background-color);
-  min-width: 320px; /* Keeping this useful constraint from the Vite template */
+  min-width: 320px;
+  margin: 0;
+  padding: 0;
 }
 
 /* Layout styles */
 .root-layout {
-  max-width: 1200px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.layout-container {
+  display: flex;
+  flex: 1;
+}
+
+.main-content {
+  flex: 1;
   padding: 1rem;
-}
-
-/* Component styles */
-header {
-  padding: 2rem 0;
-  border-bottom: 1px solid #eaeaea;
-}
-
-main {
-  padding: 2rem 0;
 }
 
 /* Typography */
@@ -34,18 +36,6 @@ h1 {
 h2 {
   font-size: 1rem;
   margin-bottom: 1rem;
-}
-
-
-.main-content {
-  margin-left: 250px; /* Same as sidebar width */
-  padding: 20px;
-  width: 100%;
-}
-
-.layout-container {
-  padding-top: 80px; /* Header height */
-  display: flex;
 }
 
 /* Common Form Styles */
