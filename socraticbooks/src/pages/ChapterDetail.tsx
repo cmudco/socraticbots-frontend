@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -7,6 +7,7 @@ interface Chapter {
   title: string;
   subject: string | null;
   topic: string | null;
+  greeting: string | null;
   book_id: string;
 }
 
@@ -15,14 +16,16 @@ interface Book {
   title: string;
 }
 
-interface EditableField {
-  field: 'title' | 'subject' | 'topic';
+type EditableField = {
+  field: 'title' | 'subject' | 'topic' | 'greeting';
   value: string;
 }
 
 export const ChapterDetail = () => {
   const { bookId, chapterId } = useParams<{ bookId: string; chapterId: string }>();
   const { user } = useAuth();
+  
+  // All state declarations
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,7 +69,7 @@ export const ChapterDetail = () => {
     }
   };
 
-  const handleEdit = (field: 'title' | 'subject' | 'topic', value: string) => {
+  const handleEdit = (field: EditableField['field'], value: string) => {
     setEditing({ field, value });
     setTempValue(value || '');
   };
@@ -86,6 +89,7 @@ export const ChapterDetail = () => {
             title: editing.field === 'title' ? tempValue : chapter.title,
             subject: editing.field === 'subject' ? tempValue : chapter.subject,
             topic: editing.field === 'topic' ? tempValue : chapter.topic,
+            greeting: editing.field === 'greeting' ? tempValue : chapter.greeting,
           })
         }
       );
@@ -98,6 +102,36 @@ export const ChapterDetail = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update chapter');
     }
+  };
+
+  const renderEditField = (field: EditableField['field']) => {
+    if (editing?.field === field) {
+      if (field === 'greeting') {
+        return (
+          <textarea
+            value={tempValue}
+            onChange={(e) => setTempValue(e.target.value)}
+            className="w-full p-2 border rounded min-h-[200px]"
+            autoFocus
+          />
+        );
+      }
+      return (
+        <input
+          type="text"
+          value={tempValue}
+          onChange={(e) => setTempValue(e.target.value)}
+          className="w-full p-2 border rounded"
+          autoFocus
+        />
+      );
+    }
+
+    const value = chapter?.[field];
+    if (field === 'greeting') {
+      return value ? `${value.substring(0, 50)}...` : '-';
+    }
+    return value || '-';
   };
 
   if (loading) return <div className="p-6">Loading...</div>;
@@ -119,21 +153,11 @@ export const ChapterDetail = () => {
             </tr>
           </thead>
           <tbody>
-            {(['title', 'subject', 'topic'] as const).map((field) => (
+            {(['title', 'subject', 'topic', 'greeting'] as const).map((field) => (
               <tr key={field}>
                 <td className="font-medium">{field.charAt(0).toUpperCase() + field.slice(1)}</td>
-                <td>
-                  {editing?.field === field ? (
-                    <input
-                      type="text"
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      className="w-full p-2 border rounded"
-                      autoFocus
-                    />
-                  ) : (
-                    chapter[field] || '-'
-                  )}
+                <td className={field === 'greeting' && editing?.field === field ? 'p-0' : ''}>
+                  {renderEditField(field)}
                 </td>
                 <td>
                   {editing?.field === field ? (
