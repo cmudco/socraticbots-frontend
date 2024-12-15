@@ -32,10 +32,9 @@ interface DefaultOptions {
   };
 }
 
-type EditableField = {
-  field: 'title' | 'subject' | 'topic' | 'greeting' | 'teaching_style' | 'qa_instructions' | 'restrictions' | 'learning_goal_1';
-  value: string;
-}
+type ChapterField = keyof Omit<Chapter, 'id' | 'book_id'>;
+type LearningGoalField = 'lg1' | 'lg2' | 'lg3' | 'lg4' | 'lg5' | 'lg6' | 'lg7' | 'lg8';
+type EditableField = ChapterField | LearningGoalField;
 
 const defaultOptions: DefaultOptions = {
   teachingStyle: {
@@ -51,10 +50,10 @@ export const ChapterDetail = () => {
   
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [book, setBook] = useState<Book | null>(null);
-  const [learningGoal, setLearningGoal] = useState<LearningGoal | null>(null);
+  const [learningGoals, setLearningGoals] = useState<Record<number, LearningGoal>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState<EditableField | null>(null);
+  const [editing, setEditing] = useState<{ field: EditableField; value: string } | null>(null);
   const [tempValue, setTempValue] = useState('');
 
   useEffect(() => {
@@ -81,11 +80,14 @@ export const ChapterDetail = () => {
 
       setBook(bookData);
       setChapter(chapterData);
-      
-      // Set first learning goal if it exists
-      if (Array.isArray(goalsData) && goalsData.length > 0) {
-        setLearningGoal(goalsData[0]);
+
+      const goalsMap: Record<number, LearningGoal> = {};
+      if (Array.isArray(goalsData)) {
+        goalsData.forEach(goal => {
+          goalsMap[goal.display_order] = goal;
+        });
       }
+      setLearningGoals(goalsMap);
       
       setLoading(false);
     } catch (err) {
@@ -94,7 +96,7 @@ export const ChapterDetail = () => {
     }
   };
 
-  const handleEdit = (field: EditableField['field'], value: string) => {
+  const handleEdit = (field: EditableField, value: string) => {
     setEditing({ field, value });
     setTempValue(value || '');
   };
@@ -110,59 +112,79 @@ export const ChapterDetail = () => {
     if (!editing || !chapter || !user?.uid) return;
 
     try {
-      if (editing.field === 'learning_goal_1') {
-        const url = learningGoal?.id 
-          ? `https://dare.hss.cmu.edu/api/socratic-books/learning-goals/${learningGoal.id}?userId=${user.uid}`
-          : `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/learning-goals?userId=${user.uid}`;
-        
-        const method = learningGoal?.id ? 'PUT' : 'POST';
-        
-        const response = await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ text: tempValue })
-        });
+      if (editing.field.startsWith('lg')) {
+        const displayOrder = parseInt(editing.field.slice(2));
+        const existingGoal = learningGoals[displayOrder];
 
-        if (!response.ok) throw new Error('Failed to update learning goal');
-
-        const updatedGoal = await response.json();
-        setLearningGoal(updatedGoal);
+        if (!tempValue.trim()) {
+          if (existingGoal) {
+            const response = await fetch(
+              `https://dare.hss.cmu.edu/api/socratic-books/learning-goals/${existingGoal.id}?userId=${user.uid}`,
+              { method: 'DELETE' }
+            );
+            if (response.ok) {
+              const newGoals = { ...learningGoals };
+              delete newGoals[displayOrder];
+              setLearningGoals(newGoals);
+            }
+          }
+        } else if (existingGoal) {
+          const response = await fetch(
+            `https://dare.hss.cmu.edu/api/socratic-books/learning-goals/${existingGoal.id}?userId=${user.uid}`,
+            {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: tempValue })
+            }
+          );
+          
+          if (response.ok) {
+            const updatedGoal = await response.json();
+            setLearningGoals(prev => ({ ...prev, [displayOrder]: updatedGoal }));
+          }
+        } else {
+          const response = await fetch(
+            `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/learning-goals?userId=${user.uid}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: tempValue })
+            }
+          );
+          
+          if (response.ok) {
+            const newGoal = await response.json();
+            setLearningGoals(prev => ({ ...prev, [displayOrder]: newGoal }));
+          }
+        }
       } else {
         const response = await fetch(
           `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}?userId=${user.uid}`,
           {
             method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              title: editing.field === 'title' ? tempValue : chapter.title,
-              subject: editing.field === 'subject' ? tempValue : chapter.subject,
-              topic: editing.field === 'topic' ? tempValue : chapter.topic,
-              greeting: editing.field === 'greeting' ? tempValue : chapter.greeting,
-              teaching_style: editing.field === 'teaching_style' ? tempValue : chapter.teaching_style,
-              qa_instructions: editing.field === 'qa_instructions' ? tempValue : chapter.qa_instructions,
-              restrictions: editing.field === 'restrictions' ? tempValue : chapter.restrictions
+              ...chapter,
+              [editing.field]: tempValue
             })
           }
         );
 
-        if (!response.ok) throw new Error('Failed to update chapter');
-        const updatedChapter = await response.json();
-        setChapter(updatedChapter);
+        if (response.ok) {
+          const updatedChapter = await response.json();
+          setChapter(updatedChapter);
+        }
       }
-      
-      setEditing(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setEditing(null);
     }
   };
 
-  const renderEditField = (field: EditableField['field']) => {
+  const renderEditField = (field: EditableField) => {
     if (editing?.field === field) {
-      if (['greeting', 'teaching_style', 'qa_instructions', 'restrictions', 'learning_goal_1'].includes(field)) {
+      if (['greeting', 'teaching_style', 'qa_instructions', 'restrictions'].includes(field) || field.startsWith('lg')) {
         return (
           <div className="space-y-2">
             {field === 'teaching_style' && (
@@ -198,39 +220,46 @@ export const ChapterDetail = () => {
       );
     }
 
-    if (field === 'learning_goal_1') {
-      return learningGoal?.text || '-';
+    if (field.startsWith('lg')) {
+      const displayOrder = parseInt(field.slice(2));
+      const goal = learningGoals[displayOrder];
+      return goal?.text || '-';
     }
 
-    const value = chapter?.[field];
+    const value = chapter?.[field as ChapterField];
     if (['greeting', 'teaching_style', 'qa_instructions', 'restrictions'].includes(field)) {
       return value ? `${value.substring(0, 50)}...` : '-';
     }
     return value || '-';
   };
 
-  const getFieldDisplayName = (field: string): string => {
-    const displayNames: { [key: string]: string } = {
-      'title': 'Title',
-      'subject': 'Subject',
-      'topic': 'Topic',
-      'greeting': 'Greeting',
-      'teaching_style': 'Teaching Style',
-      'qa_instructions': 'Q&A Instructions',
-      'restrictions': 'Restrictions',
-      'learning_goal_1': 'Learning Goal 1'
+  const getFieldDisplayName = (field: EditableField): string => {
+    if (field.startsWith('lg')) {
+      return `Learning Goal ${field.slice(2)}`;
+    }
+
+    const displayNames: Record<ChapterField, string> = {
+      title: 'Title',
+      subject: 'Subject',
+      topic: 'Topic',
+      greeting: 'Greeting',
+      teaching_style: 'Teaching Style',
+      qa_instructions: 'Q&A Instructions',
+      restrictions: 'Restrictions'
     };
-    return displayNames[field] || field;
+    
+    return displayNames[field as ChapterField];
   };
 
   if (loading) return <div className="p-6">Loading...</div>;
   if (error) return <div className="p-6 text-red-500">Error: {error}</div>;
   if (!chapter || !book) return <div className="p-6">Chapter not found</div>;
 
-  const allFields = [
+  const allFields: EditableField[] = [
     'title', 'subject', 'topic', 'greeting', 'teaching_style', 
-    'qa_instructions', 'restrictions', 'learning_goal_1'
-  ] as const;
+    'qa_instructions', 'restrictions', 
+    'lg1', 'lg2', 'lg3', 'lg4', 'lg5', 'lg6', 'lg7', 'lg8'
+  ];
 
   return (
     <div className="p-6">
@@ -250,7 +279,7 @@ export const ChapterDetail = () => {
             {allFields.map((field) => (
               <tr key={field}>
                 <td className="font-medium">{getFieldDisplayName(field)}</td>
-                <td className={['greeting', 'teaching_style', 'qa_instructions', 'restrictions', 'learning_goal_1'].includes(field) && editing?.field === field ? 'p-0' : ''}>
+                <td className={['greeting', 'teaching_style', 'qa_instructions', 'restrictions'].includes(field) || field.startsWith('lg') ? 'p-0' : ''}>
                   {renderEditField(field)}
                 </td>
                 <td>
@@ -271,10 +300,14 @@ export const ChapterDetail = () => {
                     </div>
                   ) : (
                     <button
-                      onClick={() => handleEdit(field, 
-                        field === 'learning_goal_1' 
-                          ? learningGoal?.text || '' 
-                          : chapter[field] || '')}
+                      onClick={() => {
+                        if (field.startsWith('lg')) {
+                          const displayOrder = parseInt(field.slice(2));
+                          handleEdit(field, learningGoals[displayOrder]?.text || '');
+                        } else {
+                          handleEdit(field, chapter[field as ChapterField] || '');
+                        }
+                      }}
                       className="action-button edit"
                     >
                       Edit
