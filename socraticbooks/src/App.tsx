@@ -9,6 +9,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Books } from './pages/Books';
 import { Chapters } from './pages/Chapters';
 import { BookDetail } from './pages/BookDetail';
+import { ChapterDetail } from './pages/ChapterDetail';
 import './App.css';
 
 
@@ -53,6 +54,11 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/books/:bookId/chapters/:chapterId" element={
+              <ProtectedRoute>
+                <ChapterDetail />
+              </ProtectedRoute>
+            } />
             <Route 
               path="/" 
               element={
