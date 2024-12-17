@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { uploadChapterFile, deleteChapterFile } from '../utils/storage';
 import { ChapterFile } from '../types/file';
 import { Upload, File, Trash2, Loader } from 'lucide-react';
-
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { firestore } from '../config/firebase';
 
 interface ChapterFilesProps {
   chapterId: string;
@@ -15,7 +16,39 @@ const ChapterFiles: React.FC<ChapterFilesProps> = ({ chapterId }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load existing files
+  useEffect(() => {
+    const loadFiles = async () => {
+      if (!user?.uid || !chapterId) return;
+
+      try {
+        const filesRef = collection(firestore, 'files');
+        const q = query(
+          filesRef, 
+          where('userId', '==', user.uid),
+          where('chapterId', '==', chapterId)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const loadedFiles: ChapterFile[] = [];
+        
+        querySnapshot.forEach((doc) => {
+          loadedFiles.push(doc.data() as ChapterFile);
+        });
+
+        setFiles(loadedFiles);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error loading files');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFiles();
+  }, [chapterId, user?.uid]);
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -67,6 +100,16 @@ const ChapterFiles: React.FC<ChapterFilesProps> = ({ chapterId }) => {
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="flex justify-center items-center h-20">
+          <Loader className="w-6 h-6 animate-spin text-gray-500" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow p-6 mb-6">
