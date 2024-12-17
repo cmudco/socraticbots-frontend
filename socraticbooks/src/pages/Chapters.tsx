@@ -72,34 +72,21 @@ export const Chapters = () => {
   return (
     <div className="books-container">
       <h1>My Chapters</h1>
-
       {chapters.length === 0 ? (
         <p>No chapters yet!</p>
       ) : (
         <div className="table-container">
           <table className="books-table">
             <thead>
-              <tr>
-                <th>Chapter Name</th>
-                <th>Subject</th>
-                <th>Topic</th>
-                <th>Book Name</th>
-                <th>Created At</th>
-                <th>Actions</th> {/* New column */}
-              </tr>
+              <tr><th>Chapter Name</th><th>Subject</th><th>Topic</th><th>Book Name</th><th>Created At</th><th>Actions</th></tr>
             </thead>
             <tbody>
               {chapters.map((chapter) => (
-                <tr key={chapter.id} onClick={() => handleChapterClick(chapter.book_id, chapter.id)} className="book-row">
-                  <td>{chapter.title}</td>
-                  <td>{chapter.subject || '-'}</td>
-                  <td>{chapter.topic || '-'}</td>
-                  <td>{chapter.book_title}</td>
-                  <td>{new Date(chapter.created_at).toLocaleString()}</td>
-                  <td onClick={e => e.stopPropagation()}> 
-                  <ChatButton chapterId={chapter.id} />
-                </td>
-                </tr>
+                <tr 
+                  key={chapter.id} 
+                  onClick={() => handleChapterClick(chapter.book_id, chapter.id)} 
+                  className="book-row"
+                ><td>{chapter.title}</td><td>{chapter.subject || '-'}</td><td>{chapter.topic || '-'}</td><td>{chapter.book_title}</td><td>{new Date(chapter.created_at).toLocaleString()}</td><td onClick={e => e.stopPropagation()}><ChatButton chapterId={chapter.id} /></td></tr>
               ))}
             </tbody>
           </table>
