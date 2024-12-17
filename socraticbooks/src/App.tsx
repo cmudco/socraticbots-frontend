@@ -10,6 +10,7 @@ import { Books } from './pages/Books';
 import { Chapters } from './pages/Chapters';
 import { BookDetail } from './pages/BookDetail';
 import { ChapterDetail } from './pages/ChapterDetail';
+import { ChapterChatPage } from './pages/ChapterChat';
 import './App.css';
 
 
@@ -59,6 +60,14 @@ function App() {
                 <ChapterDetail />
               </ProtectedRoute>
             } />
+            <Route 
+              path="/chapters/:chapterId/chat" 
+              element={
+                <ProtectedRoute>
+                  <ChapterChatPage />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/" 
               element={
