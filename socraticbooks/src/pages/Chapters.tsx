@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../contexts/AuthContext';
+import ChatButton from '../components/chat/ChatButton';
 import {
   fetchChaptersStart,
   fetchChaptersSuccess,
@@ -31,6 +32,7 @@ export const Chapters = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useAuth();
+  
   
   const { chapters, loading, error } = useSelector(
     (state: RootState) => state.chapters
@@ -83,20 +85,20 @@ export const Chapters = () => {
                 <th>Topic</th>
                 <th>Book Name</th>
                 <th>Created At</th>
+                <th>Actions</th> {/* New column */}
               </tr>
             </thead>
             <tbody>
               {chapters.map((chapter) => (
-                <tr
-                  key={chapter.id}
-                  onClick={() => handleChapterClick(chapter.book_id, chapter.id)}
-                  className="book-row"
-                >
+                <tr key={chapter.id} onClick={() => handleChapterClick(chapter.book_id, chapter.id)} className="book-row">
                   <td>{chapter.title}</td>
                   <td>{chapter.subject || '-'}</td>
                   <td>{chapter.topic || '-'}</td>
                   <td>{chapter.book_title}</td>
                   <td>{new Date(chapter.created_at).toLocaleString()}</td>
+                  <td onClick={e => e.stopPropagation()}> 
+                  <ChatButton chapterId={chapter.id} />
+                </td>
                 </tr>
               ))}
             </tbody>
