@@ -16,9 +16,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, isUser }) => {
             : 'bg-gray-100 text-gray-900'
         }`}
       >
-        <div className="prose prose-sm max-w-none">
+        <div className="prose prose-sm max-w-none [&>p]:mb-4 last:[&>p]:mb-0">
           <ReactMarkdown
             components={{
+              p({ node, children, ...props }) {
+                return (
+                  <p className="whitespace-pre-line" {...props}>
+                    {children}
+                  </p>
+                );
+              },
               code({ node, className, children, ...props }) {
                 const match = /language-(\w+)/.exec(className || '');
                 if (match) {
@@ -50,14 +57,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, isUser }) => {
               },
               ul({ node, children, ...props }) {
                 return (
-                  <ul className="list-disc list-inside my-2" {...props}>
+                  <ul className="list-disc list-inside my-4" {...props}>
                     {children}
                   </ul>
                 );
               },
               ol({ node, children, ...props }) {
                 return (
-                  <ol className="list-decimal list-inside my-2" {...props}>
+                  <ol className="list-decimal list-inside my-4" {...props}>
                     {children}
                   </ol>
                 );
@@ -65,7 +72,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ content, isUser }) => {
               blockquote({ node, children, ...props }) {
                 return (
                   <blockquote 
-                    className="border-l-4 border-gray-300 pl-4 my-2 italic"
+                    className="border-l-4 border-gray-300 pl-4 my-4 italic"
                     {...props}
                   >
                     {children}
