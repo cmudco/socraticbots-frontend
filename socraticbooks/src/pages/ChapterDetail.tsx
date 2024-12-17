@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ChapterFiles from '../components/ChapterFiles';
 
 interface Chapter {
   id: string;
@@ -267,6 +268,9 @@ export const ChapterDetail = () => {
       <h3 className="text-lg text-gray-600 mb-6">{book.title}</h3>
 
       <div className="table-container">
+      {chapter && (
+  <ChapterFiles chapterId={chapter.id} />
+)}
         <table className="books-table">
           <thead>
             <tr>
