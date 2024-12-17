@@ -1,6 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
-import { Chapter, Message } from '../../types/chapter';
+import { Chapter } from '../../types/chapter';
+import ChatMessage from './ChatMessage';
+import ChatInput from './ChatInput';
+
+interface Message {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
 interface ChapterChatProps {
   chapter: Chapter;
@@ -9,7 +15,6 @@ interface ChapterChatProps {
 
 const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -22,16 +27,12 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
     ${chapter.teaching_style ? `Teaching Style: ${chapter.teaching_style}` : ''}
     ${chapter.qa_instructions ? `Instructions: ${chapter.qa_instructions}` : ''}
     ${chapter.restrictions ? `Restrictions: ${chapter.restrictions}` : ''}
-    ${chapter.learning_goals ? `Learning Goals: ${chapter.learning_goals.join('\n')}` : ''}
-    `;
+    ${chapter.learning_goals ? `Learning Goals: ${chapter.learning_goals.join('\n')}` : ''}`;
   };
 
-  const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
-
-    const newMessage: Message = { role: 'user', content: inputMessage };
+  const handleSendMessage = async (content: string) => {
+    const newMessage: Message = { role: 'user', content };
     setMessages(prev => [...prev, newMessage]);
-    setInputMessage('');
     setIsLoading(true);
 
     try {
@@ -87,23 +88,31 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
       }
     } catch (error) {
       console.error('Error:', error);
+      setMessages(prev => [...prev, { 
+        role: 'system', 
+        content: 'Sorry, there was an error processing your message. Please try again.' 
+      }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-[600px] max-w-3xl mx-auto bg-white rounded-lg shadow">
-      {/* Chat Header */}
-      <div className="p-4 border-b flex justify-between items-center">
+    <div className="flex flex-col h-[80vh] max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b bg-gray-50">
         <div>
-          <h2 className="text-lg font-semibold">{chapter.title}</h2>
-          {chapter.subject && <p className="text-sm text-gray-600">{chapter.subject}</p>}
+          <h2 className="text-xl font-semibold text-gray-800">{chapter.title}</h2>
+          {chapter.subject && (
+            <p className="text-sm text-gray-600">Subject: {chapter.subject}</p>
+          )}
         </div>
         {onBack && (
           <button
             onClick={onBack}
-            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
+            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 
+                     bg-white rounded-md border border-gray-300 hover:bg-gray-50 
+                     transition-colors duration-200"
           >
             Back to Chapters
           </button>
@@ -111,29 +120,22 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 bg-white">
         {messages.map((message, index) => (
-          <div
+          <ChatMessage
             key={index}
-            className={`flex ${
-              message.role === 'user' ? 'justify-end' : 'justify-start'
-            }`}
-          >
-            <div
-              className={`max-w-[80%] rounded-lg p-3 ${
-                message.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-900'
-              }`}
-            >
-              {message.content}
-            </div>
-          </div>
+            content={message.content}
+            isUser={message.role === 'user'}
+          />
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg p-3">
-              <div className="animate-pulse">Thinking...</div>
+            <div className="bg-gray-100 rounded-lg p-4">
+              <div className="flex space-x-2">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+              </div>
             </div>
           </div>
         )}
@@ -141,26 +143,7 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t">
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder="Type your message..."
-            className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isLoading}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={isLoading}
-            className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            <Send className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+      <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
     </div>
   );
 };

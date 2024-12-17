@@ -1,4 +1,8 @@
 /* index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 * {
   margin: 0;
   padding: 0;
@@ -13,3 +17,4 @@
   --link-color: #646cff; /* Adding this for links */
   --button-text: #ffffff; /* Adding this for button text */
 }
+
