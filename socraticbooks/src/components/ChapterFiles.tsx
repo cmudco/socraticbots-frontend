@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { uploadChapterFile, deleteChapterFile } from '../utils/storage';
 import { ChapterFile } from '../types/file';
-import { Upload, File, Trash2, Loader } from 'lucide-react';
+import { Upload, File, Trash2, Loader, CheckCircle2, XCircle } from 'lucide-react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { firestore } from '../config/firebase';
 
@@ -169,6 +169,17 @@ const ChapterFiles: React.FC<ChapterFilesProps> = ({ chapterId }) => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              {file.vectorized ? (
+                <span className="flex items-center text-green-600 text-sm">
+                  <CheckCircle2 className="w-4 h-4 mr-1" />
+                  Vectorized
+                </span>
+              ) : (
+                <span className="flex items-center text-gray-400 text-sm">
+                  <XCircle className="w-4 h-4 mr-1" />
+                  Not vectorized
+                </span>
+              )}
               <a
                 href={file.url}
                 target="_blank"
