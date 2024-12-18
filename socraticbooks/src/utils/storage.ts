@@ -157,6 +157,7 @@ export const uploadChapterFile = async (
 
 export const deleteChapterFile = async (userId: string, fileId: string) => {
   try {
+    // Get the file data from Firestore
     const filesRef = collection(firestore, 'files');
     const q = query(filesRef, where('id', '==', fileId), where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
@@ -168,15 +169,24 @@ export const deleteChapterFile = async (userId: string, fileId: string) => {
     const fileDoc = querySnapshot.docs[0];
     const fileData = fileDoc.data();
 
+    // Delete from Firebase Storage
     const storageRef = ref(storage, fileData.storageUrl);
     await deleteObject(storageRef);
 
+    // If the file was vectorized, delete from Pinecone
     if (fileData.vectorized) {
       try {
         await fetch(
-          `${API_BASE_URL}/api/socratic-books/files/${fileId}/vectorize?userId=${userId}`,
+          `${API_BASE_URL}/api/socratic-books/files/${fileId}/delete-vectors?userId=${userId}`,
           {
             method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: userId,
+              chapterId: fileData.chapterId,
+            }),
           }
         );
       } catch (error) {
@@ -184,6 +194,7 @@ export const deleteChapterFile = async (userId: string, fileId: string) => {
       }
     }
 
+    // Delete from Firestore
     await deleteDoc(fileDoc.ref);
   } catch (error) {
     throw error;
