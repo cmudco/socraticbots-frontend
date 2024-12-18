@@ -84,33 +84,11 @@ const ChapterFiles: React.FC<ChapterFilesProps> = ({ chapterId }) => {
     }
   }, [chapterId, user]);
 
-  const handleDelete = async (fileId: string, fileName: string) => {
+  const handleDelete = async (fileId: string) => {
     if (!user) return;
-  
+
     try {
-      // Delete from Firebase
       await deleteChapterFile(user.uid, fileId);
-  
-      // Delete vectors from Pinecone
-      const response = await fetch(
-        `https://dare.hss.cmu.edu/api/socratic-books/files/${fileId}/delete-vectors`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: user.uid,
-            chapterId: chapterId,
-          }),
-        }
-      );
-  
-      if (!response.ok) {
-        throw new Error('Failed to delete vectors');
-      }
-  
-      // Update UI
       setFiles(prev => prev.filter(f => f.id !== fileId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error deleting file');
@@ -211,9 +189,9 @@ const ChapterFiles: React.FC<ChapterFilesProps> = ({ chapterId }) => {
                 Download
               </a>
               <button
-              onClick={() => handleDelete(file.id, file.name)}
-              className="p-1 text-red-600 hover:text-red-800 rounded"
-            >
+                onClick={() => handleDelete(file.id)}
+                className="p-1 text-red-600 hover:text-red-800 rounded"
+              >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
