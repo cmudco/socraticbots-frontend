@@ -1,45 +1,28 @@
 import { storage, firestore } from '../config/firebase';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { collection, addDoc, deleteDoc, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 
 const API_BASE_URL = 'https://dare.hss.cmu.edu';
 
 const readFileContent = async (file: File): Promise<string> => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     if (file.type.includes('image/')) {
       reject(new Error('Image files cannot be vectorized'));
       return;
     }
 
-    try {
-      if (file.type === 'application/pdf') {
-        // Handle PDFs by sending to our backend
-        const formData = new FormData();
-        formData.append('file', file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      resolve(e.target?.result as string);
+    };
+    reader.onerror = (e) => {
+      reject(e);
+    };
 
-        const response = await fetch(
-          `${API_BASE_URL}/api/socratic-books/files/process-pdf`,
-          {
-            method: 'POST',
-            body: formData
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to process PDF');
-        }
-
-        const data = await response.json();
-        resolve(data.text);
-      } else {
-        // Handle text files as before
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.onerror = (e) => reject(e);
-        reader.readAsText(file);
-      }
-    } catch (error) {
-      reject(error);
+    if (file.type === 'application/pdf') {
+      reject(new Error('PDF parsing not implemented yet'));
+    } else {
+      reader.readAsText(file);
     }
   });
 };
