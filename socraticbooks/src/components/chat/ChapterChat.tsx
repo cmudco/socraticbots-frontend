@@ -1,5 +1,3 @@
-// src/components/chat/ChapterChat.tsx
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Chapter } from '../../types/chapter';
 import ChatMessage from './ChatMessage';
@@ -8,12 +6,6 @@ import ChatInput from './ChatInput';
 interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
-}
-
-interface DocumentChunk {
-  text: string;
-  score: number;
-  file_name: string;
 }
 
 interface ChapterChatProps {
@@ -30,49 +22,12 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const getRelevantDocuments = async (question: string): Promise<DocumentChunk[]> => {
-    try {
-      const response = await fetch(
-        `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/search?userId=${chapter.user_id}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: question
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to search documents');
-      }
-
-      const data = await response.json();
-      return data.results;
-    } catch (error) {
-      console.error('Error searching documents:', error);
-      return [];
-    }
-  };
-
-  const constructSystemPrompt = (relevantDocs: DocumentChunk[]): string => {
-    let prompt = `You are a teaching assistant for this chapter.
-${chapter.teaching_style ? `Teaching Style: ${chapter.teaching_style}` : ''}
-${chapter.qa_instructions ? `Instructions: ${chapter.qa_instructions}` : ''}
-${chapter.restrictions ? `Restrictions: ${chapter.restrictions}` : ''}
-${chapter.learning_goals ? `Learning Goals: ${chapter.learning_goals.join('\n')}` : ''}`;
-
-    if (relevantDocs.length > 0) {
-      prompt += '\n\nRelevant content from course materials:\n';
-      relevantDocs.forEach(doc => {
-        prompt += `\nFrom ${doc.file_name} (relevance: ${doc.score.toFixed(2)}):\n${doc.text}\n`;
-      });
-      prompt += '\nPlease use the above content to inform your responses when relevant. Cite the source files when you use them.';
-    }
-
-    return prompt;
+  const constructSystemPrompt = (chapter: Chapter): string => {
+    return `You are a teaching assistant for this chapter.
+    ${chapter.teaching_style ? `Teaching Style: ${chapter.teaching_style}` : ''}
+    ${chapter.qa_instructions ? `Instructions: ${chapter.qa_instructions}` : ''}
+    ${chapter.restrictions ? `Restrictions: ${chapter.restrictions}` : ''}
+    ${chapter.learning_goals ? `Learning Goals: ${chapter.learning_goals.join('\n')}` : ''}`;
   };
 
   const handleSendMessage = async (content: string) => {
@@ -81,9 +36,6 @@ ${chapter.learning_goals ? `Learning Goals: ${chapter.learning_goals.join('\n')}
     setIsLoading(true);
 
     try {
-      // First, get relevant documents for the query
-      const relevantDocs = await getRelevantDocuments(content);
-
       const response = await fetch('https://dare.hss.cmu.edu/api/chat/stream', {
         method: 'POST',
         headers: {
@@ -91,7 +43,7 @@ ${chapter.learning_goals ? `Learning Goals: ${chapter.learning_goals.join('\n')}
         },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: constructSystemPrompt(relevantDocs) },
+            { role: 'system', content: constructSystemPrompt(chapter) },
             ...messages,
             newMessage
           ]
