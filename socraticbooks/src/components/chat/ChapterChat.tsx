@@ -21,7 +21,21 @@ interface ChapterChatProps {
   onBack?: () => void;
 }
 
+interface LearningGoalProgress {
+  text: string;
+  coverage: number;
+}
+
+interface LearningGoal {
+  id: string;
+  text: string;
+  chapter_id: string;
+  display_order: number;
+}
+
 const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
+  const [learningGoals, setLearningGoals] = useState<LearningGoal[]>([]);
+  const [learningGoalsProgress, setLearningGoalsProgress] = useState<LearningGoalProgress[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -38,6 +52,31 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
       }]);
     }
   }, []);
+
+  useEffect(() => {
+    const fetchLearningGoals = async () => {
+      try {
+        const response = await fetch(
+          `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/learning-goals?userId=${chapter.user_id}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch learning goals');
+        const data = await response.json() as LearningGoal[];
+        setLearningGoals(data);
+        
+        // Initialize progress tracking with fetched goals
+        setLearningGoalsProgress(
+          data.map((goal: LearningGoal) => ({
+            text: goal.text,
+            coverage: 0
+          }))
+        );
+      } catch (error) {
+        console.error('Error fetching learning goals:', error);
+      }
+    };
+  
+    fetchLearningGoals();
+  }, [chapter.id, chapter.user_id]);
 
   const getRelevantDocuments = async (question: string): Promise<DocumentChunk[]> => {
     try {
@@ -69,10 +108,17 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
   const constructSystemPrompt = (relevantDocs: DocumentChunk[]): string => {
     let prompt = `You are teaching students a chapter titled "${chapter.title}"${
       chapter.subject ? ` on the subject ${chapter.subject}` : ''
-    }${chapter.topic ? ` and topic ${chapter.topic}` : ''}.
-    ${chapter.teaching_style ? `You will have a teaching style of: ${chapter.teaching_style}` : ''}
-    ${chapter.qa_instructions ? `You are to respond to questions using: ${chapter.qa_instructions}` : ''}
-    ${chapter.restrictions ? `You have the following restrictions: ${chapter.restrictions}` : ''}`;
+      }${chapter.topic ? ` and topic ${chapter.topic}` : ''}.
+      ${chapter.teaching_style ? `You will have a teaching style of: ${chapter.teaching_style}` : ''}
+      ${chapter.qa_instructions ? `You are to respond to questions using: ${chapter.qa_instructions}` : ''}
+      ${chapter.restrictions ? `You have the following restrictions: ${chapter.restrictions}` : ''}
+
+      Learning Goals and Current Progress:
+      ${learningGoalsProgress.map(goal => 
+        `- ${goal.text} (Current Coverage: ${goal.coverage}%)`
+      ).join('\n')}`;
+
+    
 
     if (relevantDocs.length > 0) {
       prompt += '\n\nRelevant content from course materials:\n';
@@ -83,6 +129,110 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
     }
 
     return prompt;
+  };
+
+  const evaluateProgress = async (conversation: Message[]) => {
+    try {
+      const response = await fetch('https://dare.hss.cmu.edu/api/chat/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            { 
+              role: 'system', 
+              content: `You are a rigorous learning progress evaluator. Your job is to assess DEEP UNDERSTANDING, not just mention of topics.
+
+              For each learning goal, consider:
+              1. Has the student demonstrated clear understanding through their own explanations?
+              2. Has the student corrected initial misconceptions?
+              3. Can the student apply the knowledge accurately?
+              4. Has the concept been thoroughly discussed and verified?
+
+              Learning Goals:
+              ${learningGoalsProgress.map((goal, i) => `${i + 1}. ${goal.text}`).join('\n')}
+              
+              Return ONLY a JSON array of numbers (0-100) representing TRUE UNDERSTANDING of each goal.
+              - 0%: Not discussed or only mentioned
+              - 15%: Topic introduced but with clear misconceptions
+              - 25%: Student is beginning to question misconceptions
+              - 50%: Student has corrected misconceptions but hasn't demonstrated full understanding
+              - 75%: Student shows good understanding with clear explanation
+              - 100%: Complete mastery with ability to explain to others
+              
+              Be conservative in scoring. Misconceptions should significantly lower the score.
+              Do not include any other text in your response.`
+            },
+            { 
+              role: 'user', 
+              content: `Evaluate this conversation:\n${conversation.map(m => 
+                `${m.role}: ${m.content}`).join('\n')}`
+            }
+          ]
+        }),
+      });
+
+      // Add debug logging
+      console.log('Learning goals being evaluated:', learningGoalsProgress);
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader available');
+      
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+            
+            if (data.error) {
+              console.error('Error:', data.error);
+              break;
+            }
+
+            if (data.content === '[DONE]') {
+              break;
+            }
+
+            fullResponse += data.content;
+          }
+        }
+      }
+
+      // Add debug logging
+      console.log('Raw response:', fullResponse);
+
+      // Try to parse the response as a JSON array
+      try {
+        // Clean the response string (remove any markdown formatting)
+        const cleanResponse = fullResponse.replace(/```json\n?|\n?```/g, '').trim();
+        console.log('Cleaned response:', cleanResponse);
+        
+        const coverageValues = JSON.parse(cleanResponse);
+        if (Array.isArray(coverageValues)) {
+          setLearningGoalsProgress(prev => 
+            prev.map((goal, index) => ({
+              ...goal,
+              coverage: coverageValues[index] || goal.coverage
+            }))
+          );
+        }
+      } catch (error) {
+        console.error('Error parsing progress evaluation:', error);
+        console.error('Failed to parse response:', fullResponse);
+      }
+
+    } catch (error) {
+      console.error('Error evaluating progress:', error);
+    }
   };
 
   const handleSendMessage = async (content: string) => {
@@ -146,6 +296,10 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
           }
         }
       }
+
+      // After message exchange is complete, evaluate progress
+      await evaluateProgress([...messages, newMessage, assistantMessage]);
+
     } catch (error) {
       console.error('Error:', error);
       setMessages(prev => [...prev, { 
