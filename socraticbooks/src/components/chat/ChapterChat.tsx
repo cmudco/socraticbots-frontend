@@ -30,6 +30,15 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    if (chapter.greeting) {
+      setMessages([{ 
+        role: 'assistant', 
+        content: chapter.greeting || "Let's start chatting!" 
+      }]);
+    }
+  }, []);
+
   const getRelevantDocuments = async (question: string): Promise<DocumentChunk[]> => {
     try {
       const response = await fetch(
@@ -58,11 +67,12 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
   };
 
   const constructSystemPrompt = (relevantDocs: DocumentChunk[]): string => {
-    let prompt = `You are a teaching assistant for this chapter.
-${chapter.teaching_style ? `Teaching Style: ${chapter.teaching_style}` : ''}
-${chapter.qa_instructions ? `Instructions: ${chapter.qa_instructions}` : ''}
-${chapter.restrictions ? `Restrictions: ${chapter.restrictions}` : ''}
-${chapter.learning_goals ? `Learning Goals: ${chapter.learning_goals.join('\n')}` : ''}`;
+    let prompt = `You are teaching students a chapter titled "${chapter.title}"${
+      chapter.subject ? ` on the subject ${chapter.subject}` : ''
+    }${chapter.topic ? ` and topic ${chapter.topic}` : ''}.
+    ${chapter.teaching_style ? `You will have a teaching style of: ${chapter.teaching_style}` : ''}
+    ${chapter.qa_instructions ? `You are to respond to questions using: ${chapter.qa_instructions}` : ''}
+    ${chapter.restrictions ? `You have the following restrictions: ${chapter.restrictions}` : ''}`;
 
     if (relevantDocs.length > 0) {
       prompt += '\n\nRelevant content from course materials:\n';
@@ -83,6 +93,8 @@ ${chapter.learning_goals ? `Learning Goals: ${chapter.learning_goals.join('\n')}
     try {
       // First, get relevant documents for the query
       const relevantDocs = await getRelevantDocuments(content);
+      const systemPrompt = constructSystemPrompt(relevantDocs);
+      console.log('System prompt:', systemPrompt);
 
       const response = await fetch('https://dare.hss.cmu.edu/api/chat/stream', {
         method: 'POST',
@@ -91,7 +103,7 @@ ${chapter.learning_goals ? `Learning Goals: ${chapter.learning_goals.join('\n')}
         },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: constructSystemPrompt(relevantDocs) },
+            { role: 'system', content: systemPrompt },
             ...messages,
             newMessage
           ]
