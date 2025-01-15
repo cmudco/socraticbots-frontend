@@ -257,7 +257,10 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
               - 75%: Student shows good understanding with clear explanation
               - 100%: Complete mastery with ability to explain to others
               
-              Be conservative in scoring. Misconceptions should significantly lower the score.
+              Be conservative in scoring. Misconceptions should significantly lower the score. At the same time take into account the previous conversation if a student goes in with an understanding level it should only be decreased if they show an EXTREMLY clear lack of understandingand regression.
+
+              At the same time scores should then only go up if they clearly show a higher level of understanding.
+
               Do not include any other text in your response.`
             },
             { 
