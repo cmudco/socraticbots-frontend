@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Chapter } from '../../types/chapter';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
+import LearningGoalTracker from './LearningGoalTracker';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -23,7 +24,7 @@ interface ChapterChatProps {
 
 interface LearningGoalProgress {
   text: string;
-  coverage: number;
+  understanding: number;  // changed from coverage to understanding
 }
 
 interface LearningGoal {
@@ -67,7 +68,7 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
         setLearningGoalsProgress(
           data.map((goal: LearningGoal) => ({
             text: goal.text,
-            coverage: 0
+            understanding: 0  // changed from coverage: 0
           }))
         );
       } catch (error) {
@@ -115,7 +116,7 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
 
       Learning Goals and Current Progress:
       ${learningGoalsProgress.map(goal => 
-        `- ${goal.text} (Current Coverage: ${goal.coverage}%)`
+        `- ${goal.text} (Current Coverage: ${goal.understanding}%)`
       ).join('\n')}`;
 
     
@@ -221,7 +222,7 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
           setLearningGoalsProgress(prev => 
             prev.map((goal, index) => ({
               ...goal,
-              coverage: coverageValues[index] || goal.coverage
+              understanding: coverageValues[index] || goal.understanding
             }))
           );
         }
@@ -311,6 +312,11 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
     }
   };
 
+  const handleGoalClick = (index: number) => {
+    console.log(`Clicked goal ${index + 1}: ${learningGoalsProgress[index].text}`);
+    // Could add functionality here like focusing on specific goals
+  };
+
   return (
     <div className="flex flex-col h-[80vh] max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       {/* Header */}
@@ -331,6 +337,14 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
             Back to Chapters
           </button>
         )}
+      </div>
+
+      {/* Learning Goal Tracker */}
+      <div className="px-4 py-2 border-b">
+        <LearningGoalTracker 
+          goals={learningGoalsProgress}
+          onGoalClick={handleGoalClick}
+        />
       </div>
 
       {/* Messages Area */}
