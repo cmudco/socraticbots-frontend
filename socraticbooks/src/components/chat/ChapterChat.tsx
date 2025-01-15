@@ -23,6 +23,7 @@ interface ChapterChatProps {
 }
 
 interface LearningGoalProgress {
+  goal_id: string;
   text: string;
   understanding: number;  // changed from coverage to understanding
 }
@@ -55,29 +56,120 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
   }, []);
 
   useEffect(() => {
-    const fetchLearningGoals = async () => {
+    const loadLearningGoalsAndProgress = async () => {
       try {
-        const response = await fetch(
+        // First load learning goals
+        const goalsResponse = await fetch(
           `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/learning-goals?userId=${chapter.user_id}`
         );
-        if (!response.ok) throw new Error('Failed to fetch learning goals');
-        const data = await response.json() as LearningGoal[];
-        setLearningGoals(data);
-        
-        // Initialize progress tracking with fetched goals
-        setLearningGoalsProgress(
-          data.map((goal: LearningGoal) => ({
-            text: goal.text,
-            understanding: 0  // changed from coverage: 0
-          }))
+        if (!goalsResponse.ok) throw new Error('Failed to fetch learning goals');
+        const goals = await goalsResponse.json() as LearningGoal[];
+        setLearningGoals(goals);
+  
+        // Then load progress
+        const progressResponse = await fetch(
+          `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/learning-progress?userId=${chapter.user_id}`
         );
+        if (!progressResponse.ok) throw new Error('Failed to fetch learning progress');
+        const progress = await progressResponse.json();
+  
+        // Set learning goals progress using the progress data
+        setLearningGoalsProgress(progress);
+        
       } catch (error) {
-        console.error('Error fetching learning goals:', error);
+        console.error('Error loading goals and progress:', error);
       }
     };
   
-    fetchLearningGoals();
+    loadLearningGoalsAndProgress();
   }, [chapter.id, chapter.user_id]);
+  
+
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      try {
+        const response = await fetch(
+          `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/chat-history?userId=${chapter.user_id}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch chat history');
+        const data = await response.json();
+        
+        if (data.messages && data.messages.length > 0) {
+          setMessages(data.messages);
+        } else if (chapter.greeting) {
+          setMessages([{ 
+            role: 'assistant', 
+            content: chapter.greeting
+          }]);
+        }
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+      }
+    };
+  
+    const loadLearningProgress = async () => {
+      try {
+        const response = await fetch(
+          `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/learning-progress?userId=${chapter.user_id}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch learning progress');
+        const data = await response.json();
+        
+        if (data.length > 0) {
+          setLearningGoalsProgress(data.map((item: any) => ({
+            text: item.text,
+            understanding: item.understanding
+          })));
+        }
+      } catch (error) {
+        console.error('Error loading learning progress:', error);
+      }
+    };
+  
+    loadChatHistory();
+    loadLearningProgress();
+  }, [chapter.id, chapter.user_id]);
+  
+  // Add function to save chat history
+  const saveChatHistory = async (messages: Message[]) => {
+    try {
+      await fetch(
+        `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/chat-history?userId=${chapter.user_id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ messages })
+        }
+      );
+    } catch (error) {
+      console.error('Error saving chat history:', error);
+    }
+  };
+  
+  // Add function to save learning progress
+  const saveLearningProgress = async (progress: LearningGoalProgress[]) => {
+    try {
+      const progressData = learningGoals.map((goal, index) => ({
+        goal_id: goal.id,
+        understanding: progress[index].understanding
+      }));
+  
+      await fetch(
+        `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/learning-progress?userId=${chapter.user_id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ progress: progressData })
+        }
+      );
+    } catch (error) {
+      console.error('Error saving learning progress:', error);
+    }
+  };
 
   const getRelevantDocuments = async (question: string): Promise<DocumentChunk[]> => {
     try {
@@ -174,7 +266,6 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
         }),
       });
 
-      // Add debug logging
       console.log('Learning goals being evaluated:', learningGoalsProgress);
 
       const reader = response.body?.getReader();
@@ -208,26 +299,47 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
         }
       }
 
-      // Add debug logging
       console.log('Raw response:', fullResponse);
 
-      // Try to parse the response as a JSON array
       try {
-        // Clean the response string (remove any markdown formatting)
         const cleanResponse = fullResponse.replace(/```json\n?|\n?```/g, '').trim();
         console.log('Cleaned response:', cleanResponse);
         
         const coverageValues = JSON.parse(cleanResponse);
         if (Array.isArray(coverageValues)) {
-          setLearningGoalsProgress(prev => 
-            prev.map((goal, index) => ({
-              ...goal,
-              understanding: coverageValues[index] || goal.understanding
+          // Update progress and save to backend
+          const updatedProgress = learningGoals.map((goal, index) => ({
+            goal_id: goal.id,
+            understanding: coverageValues[index] || 0
+          }));
+
+          // Save to backend
+          const saveResponse = await fetch(
+            `https://dare.hss.cmu.edu/api/socratic-books/chapters/${chapter.id}/learning-progress?userId=${chapter.user_id}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ progress: updatedProgress })
+            }
+          );
+
+          if (!saveResponse.ok) {
+            throw new Error('Failed to save progress');
+          }
+
+          // Update local state with new progress and goal text
+          setLearningGoalsProgress(
+            learningGoals.map((goal, index) => ({
+              goal_id: goal.id,
+              text: goal.text,
+              understanding: coverageValues[index] || 0
             }))
           );
         }
       } catch (error) {
-        console.error('Error parsing progress evaluation:', error);
+        console.error('Error parsing/saving progress evaluation:', error);
         console.error('Failed to parse response:', fullResponse);
       }
 
@@ -300,6 +412,7 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
 
       // After message exchange is complete, evaluate progress
       await evaluateProgress([...messages, newMessage, assistantMessage]);
+      await saveChatHistory([...messages, newMessage, assistantMessage]);
 
     } catch (error) {
       console.error('Error:', error);
