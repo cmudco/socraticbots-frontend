@@ -5,6 +5,8 @@ import { Chapter } from '../../types/chapter';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import LearningGoalTracker from './LearningGoalTracker';
+import ChapterNotes from './ChapterNotes';
+
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -41,6 +43,7 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -431,7 +434,7 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
   };
 
   return (
-    <div className="flex flex-col h-[80vh] max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
+    <div className="flex flex-col h-[80vh] max-w-4xl mx-auto bg-white rounded-lg shadow-lg relative">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-gray-50">
         <div>
@@ -440,16 +443,26 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
             <p className="text-sm text-gray-600">Subject: {chapter.subject}</p>
           )}
         </div>
-        {onBack && (
+        <div className="flex gap-2">
           <button
-            onClick={onBack}
+            onClick={() => setIsNotesOpen(true)}
             className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 
-                     bg-white rounded-md border border-gray-300 hover:bg-gray-50 
-                     transition-colors duration-200"
+                    bg-white rounded-md border border-gray-300 hover:bg-gray-50 
+                    transition-colors duration-200"
           >
-            Back to Chapters
+            📝 Notes
           </button>
-        )}
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 
+                      bg-white rounded-md border border-gray-300 hover:bg-gray-50 
+                      transition-colors duration-200"
+            >
+              Back to Chapters
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Learning Goal Tracker */}
@@ -485,8 +498,24 @@ const ChapterChat: React.FC<ChapterChatProps> = ({ chapter, onBack }) => {
 
       {/* Input Area */}
       <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+
+      {/* Backdrop for Notes */}
+      {isNotesOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-25 z-40"
+          onClick={() => setIsNotesOpen(false)}
+        />
+      )}
+
+      {/* Notes Panel - Moved outside main content flow */}
+      <ChapterNotes
+        chapterId={chapter.id}
+        userId={chapter.user_id}
+        isOpen={isNotesOpen}
+        onClose={() => setIsNotesOpen(false)}
+      />
     </div>
-  );
+);
 };
 
 export default ChapterChat;
