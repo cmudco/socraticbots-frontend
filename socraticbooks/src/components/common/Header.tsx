@@ -2,8 +2,8 @@ import React from 'react';
 
 const Header: React.FC = () => {
     return (
-        <header className="bg-blue-500 text-white p-4">
-            <div className="container mx-auto">
+        <header className="bg-socratic text-white p-3">
+            <div className="container mx-5">
                 <h1 className="text-2xl font-bold">Socratic Books</h1>
             </div>
         </header>
