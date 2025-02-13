@@ -6,6 +6,7 @@ import Home from './components/screens/Home';
 import Login from './components/screens/Login';
 import Register from './components/screens/Register';
 import { useAuthContext } from './contexts/AuthContext';
+import Books from './components/screens/Books';
 
 function App() {
     const [currentScreen, setCurrentScreen] = useState<ScreenType>('home');
@@ -23,6 +24,8 @@ function App() {
         switch (currentScreen) {
             case 'home':
                 return <Home />;
+            case 'books':
+                return <Books />;
         }
     };
 
