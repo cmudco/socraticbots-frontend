@@ -8,11 +8,11 @@ export default {
     extend: {
       colors: {
         'socratic': {
-          light: '#4299E1',    // Light blue
-          DEFAULT: '#2B6CB0',  // Medium blue
-          dark: '#2C5282',     // Dark blue
-          fontlight: '#EBF8FF', // Almost white with blue tint
-          fontdark: '#1A365D'   // Dark blue-gray
+          light: '#6B46C1',    // Dark purple
+          DEFAULT: '#553C9A',  // Deep purple
+          dark: '#44337A',     // Very deep purple
+          fontlight: '#E2E8F0', // Ice gray light
+          fontdark: '#1A202C'   // Very deep gray
         }
       },
       fontSize: {

@@ -1,46 +1,76 @@
-import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/common/Header';
 import Sidebar from './components/sidebar/Sidebar';
-import { ScreenType } from './types/navigation';
 import Home from './components/screens/Home';
 import Login from './components/screens/Login';
 import Register from './components/screens/Register';
-import { useAuthContext } from './contexts/AuthContext';
 import Books from './components/screens/Books';
+import { useAuthContext } from './contexts/AuthContext';
+import { NAVIGATION_ITEMS } from './types/navigation';
 
 function App() {
-    const [currentScreen, setCurrentScreen] = useState<ScreenType>('home');
     const user = useAuthContext();
 
-    // If no user is logged in, show login or register screen
     if (!user) {
-        if (window.location.pathname === '/register') {
-            return <Register />;
-        }
-        return <Login />;
+        return (
+            <BrowserRouter>
+                <Routes>
+                    {NAVIGATION_ITEMS
+                        .filter(item => !item.requiresAuth)
+                        .map(item => (
+                            <Route 
+                                key={item.path} 
+                                path={item.path} 
+                                element={getComponent(item.path)} 
+                            />
+                        ))}
+                    <Route path="*" element={<Navigate to="/login" />} />
+                </Routes>
+            </BrowserRouter>
+        );
     }
 
-    const renderScreen = () => {
-        switch (currentScreen) {
-            case 'home':
-                return <Home />;
-            case 'books':
-                return <Books />;
-        }
-    };
-
     return (
-        <div className="min-h-screen bg-gray-100">
-            <Header />
-            <Sidebar currentScreen={currentScreen} onNavigate={setCurrentScreen} />
-            
-            <main className="ml-64 pt-14"> 
-                <div className="p-4"> 
-                    {renderScreen()}
-                </div>
-            </main>
-        </div>
+        <BrowserRouter>
+            <div className="min-h-screen bg-gray-100">
+                <Header />
+                <Sidebar />
+                
+                <main className="ml-64 pt-14"> 
+                    <div className="p-4"> 
+                        <Routes>
+                            {NAVIGATION_ITEMS
+                                .filter(item => item.requiresAuth)
+                                .map(item => (
+                                    <Route 
+                                        key={item.path} 
+                                        path={item.path} 
+                                        element={getComponent(item.path)} 
+                                    />
+                                ))}
+                            <Route path="*" element={<Navigate to="/" />} />
+                        </Routes>
+                    </div>
+                </main>
+            </div>
+        </BrowserRouter>
     );
 }
+
+// Helper function to get the component based on path
+const getComponent = (path: string) => {
+    switch (path) {
+        case '/':
+            return <Home />;
+        case '/books':
+            return <Books />;
+        case '/login':
+            return <Login />;
+        case '/register':
+            return <Register />;
+        default:
+            return <Navigate to="/" />;
+    }
+};
 
 export default App;
