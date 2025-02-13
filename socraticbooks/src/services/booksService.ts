@@ -21,3 +21,17 @@ export const getBooks = async (userId: string): Promise<Book[]> => {
         throw error;
     }
 };
+
+export const createBook = async (userId: string, title: string, description: string): Promise<Book> => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/api/socratic-books/books`, {
+            userId,
+            title,
+            description
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error creating book:', error);
+        throw error;
+    }
+};

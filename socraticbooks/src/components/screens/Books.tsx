@@ -1,14 +1,29 @@
 // src/components/Books.tsx
 import React, { useEffect, useState } from 'react';
-import { getBooks, Book } from '../../services/booksService';
+import { getBooks, Book, createBook} from '../../services/booksService';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { Table, TableHead, TableRow, TableCell, TableBody, Paper } from '@mui/material';
+import { Table, TableHead, TableRow, TableCell, TableBody, Paper, Button } from '@mui/material';
 import { Typography } from '@mui/material';
+import CreateBookModal from '../modals/CreateBookModal';
 
 const Books: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
     const [loading, setLoading] = useState(true);
+    const [openModal, setOpenModal] = useState(false);
     const user = useAuthContext(); // Using your auth context
+
+    const handleCreateBook = async (title: string, description: string) => {
+        try {
+            if (user?.uid) {
+                const createdBook = await createBook(user.uid, title, description);
+                setBooks([createdBook, ...books]);
+                setOpenModal(false);
+            }
+        } catch (error) {
+            console.error('Error creating book:', error);
+            // TODO: Add error handling/notification
+        }
+    };
 
     useEffect(() => {
         const fetchBooks = async () => {
@@ -37,7 +52,15 @@ const Books: React.FC = () => {
 
     return (
         <div style={{ padding: '20px' }}>
-            <Typography variant="h4" sx={{ mb: 3 }}>My Books</Typography>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <Typography variant="h4" sx={{ mb: 3 }}>My Books</Typography>
+                <button 
+                    onClick={() => setOpenModal(true)}
+                    className="h-10 px-4 bg-socratic hover:bg-socratic-dark text-socratic-fontlight rounded"
+                >
+                    Create New Book
+                </button>
+            </div>
             <p>Here you can view/edit/create books. Books are how you can group content together. </p>
             <Paper sx={{ width: '100%', overflow: 'hidden', marginTop: 2 }}>
                 <Table>
@@ -62,10 +85,10 @@ const Books: React.FC = () => {
                                     <TableCell>{book.title}</TableCell>
                                     <TableCell>{book.description}</TableCell>
                                     <TableCell>
-                                        {new Date(book.created_at).toLocaleDateString()}
+                                        {book.created_at ? new Date(book.created_at).toLocaleDateString() : 'Just now'}
                                     </TableCell>
                                     <TableCell>
-                                        {new Date(book.updated_at).toLocaleDateString()}
+                                        {book.updated_at ? new Date(book.updated_at).toLocaleDateString() : 'Just now'}
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -73,6 +96,12 @@ const Books: React.FC = () => {
                     </TableBody>
                 </Table>
             </Paper>
+
+            <CreateBookModal 
+                open={openModal}
+                onClose={() => setOpenModal(false)}
+                onSubmit={handleCreateBook}
+            />
         </div>
     );
 };
