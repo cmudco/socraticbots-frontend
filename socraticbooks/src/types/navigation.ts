@@ -1,3 +1,3 @@
-export type ScreenType = 'home' ;
+export type ScreenType = 'home' | 'books' ;
 
 
