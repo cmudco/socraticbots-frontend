@@ -86,7 +86,7 @@ const Books: React.FC = () => {
                 <Typography variant="h4" sx={{ mb: 3 }}>My Books</Typography>
                 <button 
                     onClick={() => setOpenModal(true)}
-                    className="h-10 px-4 bg-socratic hover:bg-socratic-dark text-socratic-fontlight rounded"
+                    className="h-10 px-4 bg-socratic hover:bg-socratic-dark text-socratic-font-light rounded transition-colors"
                 >
                     Create New Book
                 </button>
@@ -128,13 +128,13 @@ const Books: React.FC = () => {
                                                 setSelectedBook(book);
                                                 setOpenEditModal(true);
                                             }}
-                                            className="bg-socratic hover:bg-socratic-dark text-socratic-fontlight font-bold py-1 px-3 rounded text-sm"
+                                            className="bg-socratic hover:bg-socratic-dark text-socratic-font-light font-bold py-1 px-3 rounded text-sm transition-colors"
                                         >
                                             Edit
                                         </button>
                                             <button 
                                                 onClick={() => handleDeleteBook(book.id)}
-                                                className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
+                                                className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm transition-colors"
                                             >
                                                 Delete
                                             </button>

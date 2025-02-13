@@ -15,7 +15,7 @@ const Header: React.FC = () => {
     };
     
     return (
-        <header className="fixed top-0 left-0 right-0 h-14 bg-socratic text-white z-10"> 
+        <header className="fixed top-0 left-0 right-0 h-14 bg-socratic text-socratic-font-light z-10"> 
             <div className="w-full h-full flex items-center justify-between px-3">
                 <h1 className="text-2xl font-bold">Socratic Books</h1>
                 
@@ -24,7 +24,7 @@ const Header: React.FC = () => {
                         <span className="text-sm">{user.email}</span>
                         <button 
                             onClick={handleLogout}
-                            className="px-1 py-1 text-sm bg-white/10 rounded hover:bg-white/20 transition-colors"
+                            className="mx-3 px-3 py-1 text-sm bg-socratic-dark text-socratic-font-light rounded hover:bg-socratic-light transition-colors"
                         >
                             Logout
                         </button>

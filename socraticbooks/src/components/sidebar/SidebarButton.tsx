@@ -12,8 +12,8 @@ const SidebarButton = ({ to, label, isActive }: SidebarButtonProps) => {
             to={to}
             className={`block w-full text-left px-4 py-2 rounded-lg transition-colors duration-200
                 ${isActive 
-                    ? 'bg-socratic text-white' 
-                    : 'text-gray-700 hover:bg-socratic-light hover:text-white'
+                    ? 'bg-socratic text-socratic-font-light' 
+                    : 'text-gray-700 hover:bg-socratic-light hover:text-socratic-font-light'
                 }`
             }
         >
