@@ -6,6 +6,7 @@ import { useAuthContext } from '../../../contexts/AuthContext';
 import CreateChapterModal from '../../modals/CreateChapterModal';
 import EditChapterModal from '../../modals/EditChapterModal';
 import { KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material';
+import DOMPurify from 'dompurify';
 
 interface ExpandedChaptersProps {
     bookId: string;
@@ -56,18 +57,20 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
     };
 
     const handleUpdateChapter = async (
-        chapterId: string, 
-        title: string, 
-        subject: string, 
-        topic: string
+        chapterId: string,
+        data: {
+            title: string;
+            subject: string;
+            topic: string;
+            greeting?: string;
+            teaching_style?: string;
+            qa_instructions?: string;
+            restrictions?: string;
+        }
     ) => {
         try {
             if (user?.uid) {
-                const updatedChapter = await updateChapter(user.uid, chapterId, {
-                    title,
-                    subject,
-                    topic
-                });
+                const updatedChapter = await updateChapter(user.uid, chapterId, data);
                 setChapters(chapters.map(chapter => 
                     chapter.id === chapterId ? updatedChapter : chapter
                 ));
@@ -117,7 +120,7 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
                                     key={chapter.id}
                                     className="flex items-center justify-between p-3 bg-white rounded shadow-sm"
                                 >
-                                    <div>
+                                    <div className="w-full">
                                         <h4 className="font-medium">{chapter.title}</h4>
                                         {(chapter.subject || chapter.topic) && (
                                             <p className="text-sm text-gray-600">
@@ -126,8 +129,58 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
                                                 {chapter.topic && <span>Topic: {chapter.topic}</span>}
                                             </p>
                                         )}
+                                        {/* Preview of rich text content */}
+                                        {(chapter.greeting || chapter.teaching_style || 
+                                          chapter.qa_instructions || chapter.restrictions) && (
+                                            <div className="mt-2 border-t pt-2">
+                                                {chapter.greeting && (
+                                                    <div className="text-sm mt-1">
+                                                        <span className="font-medium">Greeting:</span>
+                                                        <div 
+                                                            className="prose prose-sm max-w-none ml-2 mt-1"
+                                                            dangerouslySetInnerHTML={{ 
+                                                                __html: DOMPurify.sanitize(chapter.greeting) 
+                                                            }} 
+                                                        />
+                                                    </div>
+                                                )}
+                                                {chapter.teaching_style && (
+                                                    <div className="text-sm mt-1">
+                                                        <span className="font-medium">Teaching Style:</span>
+                                                        <div 
+                                                            className="prose prose-sm max-w-none ml-2 mt-1"
+                                                            dangerouslySetInnerHTML={{ 
+                                                                __html: DOMPurify.sanitize(chapter.teaching_style) 
+                                                            }} 
+                                                        />
+                                                    </div>
+                                                )}
+                                                {chapter.qa_instructions && (
+                                                    <div className="text-sm mt-1">
+                                                        <span className="font-medium">QA Instructions:</span>
+                                                        <div 
+                                                            className="prose prose-sm max-w-none ml-2 mt-1"
+                                                            dangerouslySetInnerHTML={{ 
+                                                                __html: DOMPurify.sanitize(chapter.qa_instructions) 
+                                                            }} 
+                                                        />
+                                                    </div>
+                                                )}
+                                                {chapter.restrictions && (
+                                                    <div className="text-sm mt-1">
+                                                        <span className="font-medium">Restrictions:</span>
+                                                        <div 
+                                                            className="prose prose-sm max-w-none ml-2 mt-1"
+                                                            dangerouslySetInnerHTML={{ 
+                                                                __html: DOMPurify.sanitize(chapter.restrictions) 
+                                                            }} 
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 ml-4">
                                         <button 
                                             onClick={() => {
                                                 setSelectedChapter(chapter);

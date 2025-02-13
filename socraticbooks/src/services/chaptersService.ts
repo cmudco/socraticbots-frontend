@@ -10,7 +10,7 @@ export interface Chapter {
     topic: string;
     book_id: string;
     user_id: string;
-    book_title: string;
+    book_title?: string;
     greeting?: string;
     teaching_style?: string;
     qa_instructions?: string;
@@ -21,14 +21,14 @@ export interface Chapter {
 
 interface CreateChapterData {
     title: string;
-    subject: string;
-    topic: string;
+    subject?: string;
+    topic?: string;
     bookId: string;
     userId: string;
 }
 
 interface UpdateChapterData {
-    title?: string;
+    title: string;
     subject?: string;
     topic?: string;
     greeting?: string;
@@ -126,3 +126,4 @@ export const deleteChapter = async (userId: string, chapterId: string): Promise<
         throw error;
     }
 };
+
