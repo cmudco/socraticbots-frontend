@@ -13,8 +13,8 @@ const SidebarButton = ({ screen, currentScreen, onNavigate, label }: SidebarButt
             onClick={() => onNavigate(screen)}
             className={`w-full text-left px-4 py-2 rounded-lg
                 ${currentScreen === screen 
-                    ? 'bg-blue-500 text-white' 
-                    : 'text-gray-700 hover:bg-blue-500 hover:text-white'
+                    ? 'bg-socratic text-white' 
+                    : 'text-gray-700 hover:bg-socratic-light hover:text-white'
                 }`
             }
         >
