@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+    --color-socratic-light: #6B46C1;
+    --color-socratic: #553C9A;
+    --color-socratic-dark: #44337A;
+    --color-socratic-font-light: #E2E8F0;
+    --color-socratic-font-dark: #1A202C;
+  }
