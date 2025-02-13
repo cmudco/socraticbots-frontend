@@ -1,16 +1,8 @@
+// src/components/books/BooksList/ExpandedChapters.tsx
 import React, { useEffect, useState } from 'react';
 import { TableRow, TableCell } from '@mui/material';
-import { getChapters } from '../../../services/chaptersService'; // You'll need to create this
-
-interface Chapter {
-    id: string;
-    bookId: string;
-    title: string;
-    description?: string;
-    order: number;
-    created_at?: string;
-    updated_at?: string;
-}
+import { getChapters, Chapter } from '../../../services/chaptersService';
+import { useAuthContext } from '../../../contexts/AuthContext';
 
 interface ExpandedChaptersProps {
     bookId: string;
@@ -19,12 +11,26 @@ interface ExpandedChaptersProps {
 const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
     const [chapters, setChapters] = useState<Chapter[]>([]);
     const [loading, setLoading] = useState(true);
+    const user = useAuthContext();
 
     useEffect(() => {
         const fetchChapters = async () => {
             try {
-                const chaptersData = await getChapters(bookId);
-                setChapters(chaptersData);
+                if (user?.uid) {
+                    console.log('Fetching chapters for:', {
+                        userId: user.uid,
+                        bookId: bookId
+                    });
+                    
+                    const chaptersData = await getChapters(user.uid);
+                    console.log('All chapters received:', chaptersData);
+                    
+                    // Updated to use book_id instead of bookId
+                    const bookChapters = chaptersData.filter(chapter => chapter.book_id === bookId);
+                    console.log('Filtered chapters for this book:', bookChapters);
+                    
+                    setChapters(bookChapters);
+                }
             } catch (error) {
                 console.error('Error fetching chapters:', error);
             } finally {
@@ -33,7 +39,14 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
         };
 
         fetchChapters();
-    }, [bookId]);
+    }, [bookId, user]);
+
+    console.log('Current component state:', {
+        loading,
+        chaptersCount: chapters.length,
+        bookId,
+        userId: user?.uid
+    });
 
     return (
         <TableRow>
@@ -51,7 +64,9 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
                     {loading ? (
                         <div>Loading chapters...</div>
                     ) : chapters.length === 0 ? (
-                        <p className="text-gray-500">No chapters yet. Add your first chapter!</p>
+                        <p className="text-gray-500">
+                            No chapters yet. Add your first chapter! (BookID: {bookId})
+                        </p>
                     ) : (
                         <div className="space-y-2">
                             {chapters.map((chapter) => (
@@ -61,8 +76,12 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
                                 >
                                     <div>
                                         <h4 className="font-medium">{chapter.title}</h4>
-                                        {chapter.description && (
-                                            <p className="text-sm text-gray-600">{chapter.description}</p>
+                                        {(chapter.subject || chapter.topic) && (
+                                            <p className="text-sm text-gray-600">
+                                                {chapter.subject && <span>Subject: {chapter.subject}</span>}
+                                                {chapter.subject && chapter.topic && <span> • </span>}
+                                                {chapter.topic && <span>Topic: {chapter.topic}</span>}
+                                            </p>
                                         )}
                                     </div>
                                     <div className="flex gap-2">
