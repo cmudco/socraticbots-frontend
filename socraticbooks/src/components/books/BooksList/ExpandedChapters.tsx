@@ -17,17 +17,14 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
         const fetchChapters = async () => {
             try {
                 if (user?.uid) {
-                    console.log('Fetching chapters for:', {
-                        userId: user.uid,
-                        bookId: bookId
-                    });
+                    
                     
                     const chaptersData = await getChapters(user.uid);
-                    console.log('All chapters received:', chaptersData);
+                    
                     
                     // Updated to use book_id instead of bookId
                     const bookChapters = chaptersData.filter(chapter => chapter.book_id === bookId);
-                    console.log('Filtered chapters for this book:', bookChapters);
+                    
                     
                     setChapters(bookChapters);
                 }
@@ -41,12 +38,7 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
         fetchChapters();
     }, [bookId, user]);
 
-    console.log('Current component state:', {
-        loading,
-        chaptersCount: chapters.length,
-        bookId,
-        userId: user?.uid
-    });
+    
 
     return (
         <TableRow>
