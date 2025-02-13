@@ -19,10 +19,11 @@ function App() {
           <Header />
           <Sidebar currentScreen={currentScreen} onNavigate={setCurrentScreen} />
           
-          <main className="ml-64 pt-3 px-3">
-              {renderScreen()}
+          <main className="ml-64 pt-14"> 
+              <div className="p-4"> 
+                  {renderScreen()}
+              </div>
           </main>
-      
       </div>
   );
 }
