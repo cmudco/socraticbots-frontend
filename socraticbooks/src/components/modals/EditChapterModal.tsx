@@ -1,13 +1,70 @@
 // src/components/modals/EditChapterModal.tsx
 import React, { useState, useEffect } from 'react';
-import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-} from '@mui/material';
 import { Chapter } from '../../services/chaptersService';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+
+
+const MenuBar = ({ editor }: { editor: any }) => {
+    if (!editor) {
+        return null;
+    }
+
+    return (
+        <div className="border-b p-2 space-x-2">
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    editor.chain().focus().toggleBold().run();
+                }}
+                className={`px-2 py-1 rounded ${editor.isActive('bold') ? 'bg-gray-200' : ''}`}
+            >
+                Bold
+            </button>
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    editor.chain().focus().toggleItalic().run();
+                }}
+                className={`px-2 py-1 rounded ${editor.isActive('italic') ? 'bg-gray-200' : ''}`}
+            >
+                Italic
+            </button>
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    editor.chain().focus().toggleStrike().run();
+                }}
+                className={`px-2 py-1 rounded ${editor.isActive('strike') ? 'bg-gray-200' : ''}`}
+            >
+                Strike
+            </button>
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    editor.chain().focus().toggleBulletList().run();
+                }}
+                className={`px-2 py-1 rounded ${editor.isActive('bulletList') ? 'bg-gray-200' : ''}`}
+            >
+                Bullet List
+            </button>
+            <button
+                type="button"
+                onClick={(e) => {
+                    e.preventDefault();
+                    editor.chain().focus().toggleOrderedList().run();
+                }}
+                className={`px-2 py-1 rounded ${editor.isActive('orderedList') ? 'bg-gray-200' : ''}`}
+            >
+                Ordered List
+            </button>
+        </div>
+    );
+};
 
 interface EditChapterModalProps {
     open: boolean;
@@ -24,6 +81,15 @@ interface EditChapterModalProps {
     }) => void;
 }
 
+type AdvancedField = 'greeting' | 'teaching_style' | 'qa_instructions' | 'restrictions';
+
+interface AdvancedFields {
+    greeting: string;
+    teaching_style: string;
+    qa_instructions: string;
+    restrictions: string;
+}
+
 const EditChapterModal: React.FC<EditChapterModalProps> = ({
     open,
     chapter,
@@ -33,174 +99,191 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
     const [title, setTitle] = useState('');
     const [subject, setSubject] = useState('');
     const [topic, setTopic] = useState('');
-    const [greeting, setGreeting] = useState('');
-    const [teachingStyle, setTeachingStyle] = useState('');
-    const [qaInstructions, setQaInstructions] = useState('');
-    const [restrictions, setRestrictions] = useState('');
+    const [currentTab, setCurrentTab] = useState(0);
+    const [selectedAdvancedField, setSelectedAdvancedField] = useState<AdvancedField>('greeting');
+    const [advancedFields, setAdvancedFields] = useState<AdvancedFields>({
+        greeting: '',
+        teaching_style: '',
+        qa_instructions: '',
+        restrictions: ''
+    });
 
-    // Log when props change
-    useEffect(() => {
-        console.log('Modal props changed:', { open, chapter });
-    }, [open, chapter]);
+    const editor = useEditor({
+        extensions: [
+            StarterKit,
+        ],
+        content: '',
+        editable: true,
+        onUpdate: ({ editor }) => {
+            handleAdvancedValueChange(editor.getHTML());
+        },
+        editorProps: {
+            attributes: {
+                class: 'min-h-[200px] focus:outline-none prose prose-sm sm:prose lg:prose-lg xl:prose-xl p-4',
+            },
+        },
+    });
 
-    // Update state when chapter changes
     useEffect(() => {
-        console.log('Setting values from chapter:', chapter);
-        if (chapter) {
+        if (editor && advancedFields[selectedAdvancedField]) {
+            editor.commands.setContent(advancedFields[selectedAdvancedField]);
+        }
+    }, [selectedAdvancedField, editor]);
+
+    useEffect(() => {
+        if (chapter && editor) {
             setTitle(chapter.title || '');
             setSubject(chapter.subject || '');
             setTopic(chapter.topic || '');
-            setGreeting(chapter.greeting || '');
-            setTeachingStyle(chapter.teaching_style || '');
-            setQaInstructions(chapter.qa_instructions || '');
-            setRestrictions(chapter.restrictions || '');
+            const newAdvancedFields = {
+                greeting: chapter.greeting || '',
+                teaching_style: chapter.teaching_style || '',
+                qa_instructions: chapter.qa_instructions || '',
+                restrictions: chapter.restrictions || ''
+            };
+            setAdvancedFields(newAdvancedFields);
+            editor.commands.setContent(newAdvancedFields[selectedAdvancedField]);
         }
-    }, [chapter]);
+    }, [chapter, editor]);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        console.log('Submitting with values:', {
-            title,
-            subject,
-            topic,
-            greeting,
-            teachingStyle,
-            qaInstructions,
-            restrictions
-        });
-        if (chapter) {
-            onSubmit(chapter.id, {
-                title,
-                subject,
-                topic,
-                greeting,
-                teaching_style: teachingStyle,
-                qa_instructions: qaInstructions,
-                restrictions
-            });
-        }
+    const handleAdvancedValueChange = (value: string) => {
+        setAdvancedFields(prev => ({
+            ...prev,
+            [selectedAdvancedField]: value
+        }));
     };
 
-    const handleClose = () => {
-        console.log('Closing modal and resetting values');
-        setTitle('');
-        setSubject('');
-        setTopic('');
-        setGreeting('');
-        setTeachingStyle('');
-        setQaInstructions('');
-        setRestrictions('');
-        onClose();
-    };
+    if (!open) return null;
 
     return (
-        <Dialog 
-            open={open} 
-            onClose={handleClose} 
-            maxWidth="md" 
-            fullWidth
-            TransitionProps={{
-                onEnter: () => {
-                    console.log('Dialog entering with chapter:', chapter);
-                }
-            }}
-        >
-            <form onSubmit={handleSubmit}>
-                <DialogTitle>Edit Chapter</DialogTitle>
-                <DialogContent>
-                    <div className="space-y-4 mt-4">
-                        <TextField
-                            label="Title"
-                            fullWidth
-                            value={title}
-                            onChange={(e) => {
-                                console.log('Title changed to:', e.target.value);
-                                setTitle(e.target.value);
-                            }}
-                            required
-                        />
-                        <TextField
-                            label="Subject"
-                            fullWidth
-                            value={subject}
-                            onChange={(e) => {
-                                console.log('Subject changed to:', e.target.value);
-                                setSubject(e.target.value);
-                            }}
-                        />
-                        <TextField
-                            label="Topic"
-                            fullWidth
-                            value={topic}
-                            onChange={(e) => {
-                                console.log('Topic changed to:', e.target.value);
-                                setTopic(e.target.value);
-                            }}
-                        />
-                        <TextField
-                            label="Greeting"
-                            fullWidth
-                            multiline
-                            rows={4}
-                            value={greeting}
-                            onChange={(e) => {
-                                console.log('Greeting changed to:', e.target.value);
-                                setGreeting(e.target.value);
-                            }}
-                        />
-                        <TextField
-                            label="Teaching Style"
-                            fullWidth
-                            multiline
-                            rows={4}
-                            value={teachingStyle}
-                            onChange={(e) => {
-                                console.log('Teaching Style changed to:', e.target.value);
-                                setTeachingStyle(e.target.value);
-                            }}
-                        />
-                        <TextField
-                            label="QA Instructions"
-                            fullWidth
-                            multiline
-                            rows={4}
-                            value={qaInstructions}
-                            onChange={(e) => {
-                                console.log('QA Instructions changed to:', e.target.value);
-                                setQaInstructions(e.target.value);
-                            }}
-                        />
-                        <TextField
-                            label="Restrictions"
-                            fullWidth
-                            multiline
-                            rows={4}
-                            value={restrictions}
-                            onChange={(e) => {
-                                console.log('Restrictions changed to:', e.target.value);
-                                setRestrictions(e.target.value);
-                            }}
-                        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    if (chapter) {
+                        onSubmit(chapter.id, {
+                            title,
+                            subject,
+                            topic,
+                            ...advancedFields
+                        });
+                    }
+                }}>
+                    <div className="p-6">
+                        <h2 className="text-2xl font-bold mb-6">Edit Chapter</h2>
+                        
+                        <div className="border-b border-gray-200 mb-6">
+                            <nav className="-mb-px flex">
+                                {['Basic Info', 'Advanced Settings', 'Learning Goals'].map((tab, index) => (
+                                    <button
+                                        key={tab}
+                                        type="button"
+                                        className={`mr-2 py-2 px-4 border-b-2 ${
+                                            currentTab === index
+                                                ? 'border-socratic text-socratic'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                        }`}
+                                        onClick={() => setCurrentTab(index)}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+
+                        <div className="mt-6">
+                            {currentTab === 0 && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Title
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={title}
+                                            onChange={(e) => setTitle(e.target.value)}
+                                            className="w-full p-2 border rounded focus:ring-socratic focus:border-socratic"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Subject
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={subject}
+                                            onChange={(e) => setSubject(e.target.value)}
+                                            className="w-full p-2 border rounded focus:ring-socratic focus:border-socratic"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Topic
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={topic}
+                                            onChange={(e) => setTopic(e.target.value)}
+                                            className="w-full p-2 border rounded focus:ring-socratic focus:border-socratic"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentTab === 1 && (
+                                <div className="space-y-4">
+                                    <select
+                                        value={selectedAdvancedField}
+                                        onChange={(e) => {
+                                            setSelectedAdvancedField(e.target.value as AdvancedField);
+                                            if (editor) {
+                                                editor.commands.setContent(advancedFields[e.target.value as AdvancedField]);
+                                            }
+                                        }}
+                                        className="w-full p-2 border rounded mb-4 focus:ring-socratic focus:border-socratic"
+                                    >
+                                        <option value="greeting">Greeting</option>
+                                        <option value="teaching_style">Teaching Style</option>
+                                        <option value="qa_instructions">QA Instructions</option>
+                                        <option value="restrictions">Restrictions</option>
+                                    </select>
+                                    <div className="border rounded-lg overflow-hidden bg-white">
+                                        <MenuBar editor={editor} />
+                                        <div className="border-t">
+                                            <EditorContent editor={editor} className="prose max-w-none" />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentTab === 2 && (
+                                <div>
+                                    <p>Learning Goals coming soon...</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </DialogContent>
-                <DialogActions className="p-4">
-                    <button
-                        type="button"
-                        onClick={handleClose}
-                        className="px-4 py-2 text-gray-500 hover:text-gray-700"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        className="px-4 py-2 bg-socratic text-socratic-font-light rounded hover:bg-socratic-dark"
-                        disabled={!title}
-                    >
-                        Save Changes
-                    </button>
-                </DialogActions>
-            </form>
-        </Dialog>
+
+                    <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-2 rounded-b-lg">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-gray-700 hover:text-gray-900"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-socratic text-white rounded hover:bg-socratic-dark"
+                            disabled={!title}
+                        >
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     );
 };
 
