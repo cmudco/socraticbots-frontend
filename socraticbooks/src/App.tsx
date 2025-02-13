@@ -1,14 +1,29 @@
-import React from 'react';
-import  Header  from './components/common/Header';
+import { useState } from 'react';
+import Header from './components/common/Header';
+import Sidebar from './components/sidebar/Sidebar';
+import { ScreenType } from './types/navigation';
+import Home from './components/screens/Home';
 
-const App: React.FC = () => {
+function App() {
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('home');
+
+  const renderScreen = () => {
+      switch (currentScreen) {
+          case 'home':
+              return <Home />;
+      }
+  };
+
   return (
-    
-    <div>
-      <Header />
-      <h1>Welcome to Socratic Books</h1>
-      <p>This is a basic React application.</p>
-    </div>
+      <div className="min-h-screen bg-gray-100">
+          <Header />
+          <Sidebar currentScreen={currentScreen} onNavigate={setCurrentScreen} />
+          
+          <main className="ml-64 pt-3 px-3">
+              {renderScreen()}
+          </main>
+      
+      </div>
   );
 }
 
