@@ -5,8 +5,7 @@ import { getChapters, getChapter, Chapter, createChapter, updateChapter, deleteC
 import { useAuthContext } from '../../../contexts/AuthContext';
 import CreateChapterModal from '../../modals/CreateChapterModal';
 import EditChapterModal from '../../modals/EditChapterModal';
-import { KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material';
-import DOMPurify from 'dompurify';
+
 
 interface ExpandedChaptersProps {
     bookId: string;

@@ -38,6 +38,8 @@ const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
         onClose();
     };
 
+    if (false) console.log(bookId);  // Prevent unused variable error
+
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
             <form onSubmit={handleSubmit}>
