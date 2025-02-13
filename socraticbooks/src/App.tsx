@@ -8,6 +8,7 @@ import Books from './components/screens/Books';
 import { useAuthContext } from './contexts/AuthContext';
 import { NAVIGATION_ITEMS } from './types/navigation';
 import Settings from './components/screens/Settings';
+import ThemeProvider from './providers/ThemeProvider';
 
 function App() {
     const user = useAuthContext();
@@ -32,6 +33,7 @@ function App() {
     }
 
     return (
+        <ThemeProvider>
         <BrowserRouter>
             <div className="min-h-screen bg-gray-100">
                 <Header />
@@ -55,6 +57,7 @@ function App() {
                 </main>
             </div>
         </BrowserRouter>
+        </ThemeProvider>
     );
 }
 
