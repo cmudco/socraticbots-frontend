@@ -35,3 +35,14 @@ export const createBook = async (userId: string, title: string, description: str
         throw error;
     }
 };
+
+export const deleteBook = async (userId: string, bookId: string): Promise<void> => {
+    try {
+        await axios.delete(`${API_BASE_URL}/api/socratic-books/books`, {
+            data: { userId, bookId }  // axios requires 'data' for DELETE request body
+        });
+    } catch (error) {
+        console.error('Error deleting book:', error);
+        throw error;
+    }
+};

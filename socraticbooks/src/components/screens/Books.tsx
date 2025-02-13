@@ -1,8 +1,8 @@
 // src/components/Books.tsx
 import React, { useEffect, useState } from 'react';
-import { getBooks, Book, createBook} from '../../services/booksService';
+import { getBooks, Book, createBook, deleteBook } from '../../services/booksService';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { Table, TableHead, TableRow, TableCell, TableBody, Paper, Button } from '@mui/material';
+import { Table, TableHead, TableRow, TableCell, TableBody, Paper} from '@mui/material';
 import { Typography } from '@mui/material';
 import CreateBookModal from '../modals/CreateBookModal';
 
@@ -10,7 +10,7 @@ const Books: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
     const [loading, setLoading] = useState(true);
     const [openModal, setOpenModal] = useState(false);
-    const user = useAuthContext(); // Using your auth context
+    const user = useAuthContext();
 
     const handleCreateBook = async (title: string, description: string) => {
         try {
@@ -21,14 +21,26 @@ const Books: React.FC = () => {
             }
         } catch (error) {
             console.error('Error creating book:', error);
-            // TODO: Add error handling/notification
+        }
+    };
+
+    const handleDeleteBook = async (bookId: string) => {
+        if (window.confirm('Are you sure you want to delete this book?')) {
+            try {
+                if (user?.uid) {
+                    await deleteBook(user.uid, bookId);
+                    setBooks(books.filter(book => book.id !== bookId));
+                }
+            } catch (error) {
+                console.error('Error deleting book:', error);
+            }
         }
     };
 
     useEffect(() => {
         const fetchBooks = async () => {
             try {
-                if (user?.uid) {  // Check if user exists and has uid
+                if (user?.uid) {
                     const booksData = await getBooks(user.uid);
                     setBooks(booksData);
                 }
@@ -70,12 +82,13 @@ const Books: React.FC = () => {
                             <TableCell><strong>Description</strong></TableCell>
                             <TableCell><strong>Created</strong></TableCell>
                             <TableCell><strong>Last Updated</strong></TableCell>
+                            <TableCell><strong>Actions</strong></TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {books.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} align="center">
+                                <TableCell colSpan={5} align="center">
                                     No books found. Create your first book!
                                 </TableCell>
                             </TableRow>
@@ -89,6 +102,14 @@ const Books: React.FC = () => {
                                     </TableCell>
                                     <TableCell>
                                         {book.updated_at ? new Date(book.updated_at).toLocaleDateString() : 'Just now'}
+                                    </TableCell>
+                                    <TableCell>
+                                        <button 
+                                            onClick={() => handleDeleteBook(book.id)}
+                                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
+                                        >
+                                            Delete
+                                        </button>
                                     </TableCell>
                                 </TableRow>
                             ))
