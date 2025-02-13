@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { register } from '../../services/auth';
-import { verifyAccessCode } from '../../services/accessCode';
+import { verifyAccessCode, createUserRecord } from '../../services/accessCode';
 
 export default function Register() {
     const [email, setEmail] = useState('');
@@ -13,20 +13,33 @@ export default function Register() {
         e.preventDefault();
         setIsLoading(true);
         setError('');
-
+    
         try {
             // First verify access code
             const verification = await verifyAccessCode(accessCode);
             
             if (!verification.valid) {
                 setError(verification.message || 'Invalid access code');
-                setIsLoading(false);
                 return;
             }
-
-            // If access code is valid, proceed with registration
-            await register(email, password);
-            // Registration successful - user will be automatically logged in
+    
+            // Make sure we have an affiliation
+            if (!verification.affiliation) {
+                setError('Invalid access code - no affiliation found');
+                return;
+            }
+    
+            // Register with Firebase
+            const userCredential = await register(email, password);
+            
+            // Create user record using the affiliation from the verification
+            await createUserRecord(
+                userCredential.user.uid, 
+                email, 
+                accessCode, 
+                verification.affiliation  // Now TypeScript knows this is definitely a string
+            );
+            
         } catch (err: any) {
             setError(err.message || 'Registration failed - please check your details');
             console.error(err);
