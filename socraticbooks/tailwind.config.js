@@ -7,12 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        'socratic': {
-          light: '#6B46C1',    // Dark purple
-          DEFAULT: '#553C9A',  // Deep purple
-          dark: '#44337A',     // Very deep purple
-          fontlight: '#E2E8F0', // Ice gray light
-          fontdark: '#1A202C'   // Very deep gray
+        socratic: {
+          light: 'var(--color-socratic-light)',
+          DEFAULT: 'var(--color-socratic)',
+          dark: 'var(--color-socratic-dark)'
+        },
+        'socratic-font': {
+          light: 'var(--color-socratic-font-light)',
+          dark: 'var(--color-socratic-font-dark)'
         }
       },
       fontSize: {
