@@ -12,6 +12,11 @@ export interface Book {
     updated_at: string;
 }
 
+interface UpdateBookData {
+    title: string;
+    description: string;
+}
+
 export const getBooks = async (userId: string): Promise<Book[]> => {
     try {
         const response = await axios.get(`${API_BASE_URL}/api/socratic-books/books?userId=${userId}`);
@@ -43,6 +48,21 @@ export const deleteBook = async (userId: string, bookId: string): Promise<void> 
         });
     } catch (error) {
         console.error('Error deleting book:', error);
+        throw error;
+    }
+};
+
+export const updateBook = async (userId: string, bookId: string, data: UpdateBookData): Promise<Book> => {
+    try {
+        const response = await axios.put(`${API_BASE_URL}/api/socratic-books/books`, {
+            userId,
+            bookId,
+            title: data.title,
+            description: data.description
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error updating book:', error);
         throw error;
     }
 };

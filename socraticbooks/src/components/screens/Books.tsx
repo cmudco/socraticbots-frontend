@@ -1,16 +1,19 @@
 // src/components/Books.tsx
 import React, { useEffect, useState } from 'react';
-import { getBooks, Book, createBook, deleteBook } from '../../services/booksService';
+import { getBooks, Book, createBook, deleteBook, updateBook } from '../../services/booksService';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Table, TableHead, TableRow, TableCell, TableBody, Paper} from '@mui/material';
 import { Typography } from '@mui/material';
 import CreateBookModal from '../modals/CreateBookModal';
+import EditBookModal from '../modals/EditBookModal';
 
 const Books: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
     const [loading, setLoading] = useState(true);
     const [openModal, setOpenModal] = useState(false);
     const user = useAuthContext();
+    const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+    const [openEditModal, setOpenEditModal] = useState(false);
 
     const handleCreateBook = async (title: string, description: string) => {
         try {
@@ -34,6 +37,21 @@ const Books: React.FC = () => {
             } catch (error) {
                 console.error('Error deleting book:', error);
             }
+        }
+    };
+
+    const handleUpdateBook = async (bookId: string, title: string, description: string) => {
+        try {
+            if (user?.uid) {
+                const updatedBook = await updateBook(user.uid, bookId, { title, description });
+                setBooks(books.map(book => 
+                    book.id === bookId ? updatedBook : book
+                ));
+                setOpenEditModal(false);
+                setSelectedBook(null);
+            }
+        } catch (error) {
+            console.error('Error updating book:', error);
         }
     };
 
@@ -104,12 +122,23 @@ const Books: React.FC = () => {
                                         {book.updated_at ? new Date(book.updated_at).toLocaleDateString() : 'Just now'}
                                     </TableCell>
                                     <TableCell>
+                                        <div className="flex gap-2">
                                         <button 
-                                            onClick={() => handleDeleteBook(book.id)}
-                                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
+                                            onClick={() => {
+                                                setSelectedBook(book);
+                                                setOpenEditModal(true);
+                                            }}
+                                            className="bg-socratic hover:bg-socratic-dark text-socratic-fontlight font-bold py-1 px-3 rounded text-sm"
                                         >
-                                            Delete
+                                            Edit
                                         </button>
+                                            <button 
+                                                onClick={() => handleDeleteBook(book.id)}
+                                                className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -122,6 +151,16 @@ const Books: React.FC = () => {
                 open={openModal}
                 onClose={() => setOpenModal(false)}
                 onSubmit={handleCreateBook}
+            />
+
+            <EditBookModal 
+                    open={openEditModal}
+                    book={selectedBook}
+                    onClose={() => {
+                        setOpenEditModal(false);
+                        setSelectedBook(null);
+                    }}
+                    onSubmit={handleUpdateBook}
             />
         </div>
     );
