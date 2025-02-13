@@ -1,25 +1,24 @@
-import { ScreenType } from '../../types/navigation';
+import { Link } from 'react-router-dom';
 
 interface SidebarButtonProps {
-    screen: ScreenType;
-    currentScreen: ScreenType;
-    onNavigate: (screen: ScreenType) => void;
+    to: string;
     label: string;
+    isActive: boolean;
 }
 
-const SidebarButton = ({ screen, currentScreen, onNavigate, label }: SidebarButtonProps) => {
+const SidebarButton = ({ to, label, isActive }: SidebarButtonProps) => {
     return (
-        <button 
-            onClick={() => onNavigate(screen)}
-            className={`w-full text-left px-4 py-2 rounded-lg
-                ${currentScreen === screen 
+        <Link 
+            to={to}
+            className={`block w-full text-left px-4 py-2 rounded-lg transition-colors duration-200
+                ${isActive 
                     ? 'bg-socratic text-white' 
                     : 'text-gray-700 hover:bg-socratic-light hover:text-white'
                 }`
             }
         >
             {label}
-        </button>
+        </Link>
     );
 };
 
