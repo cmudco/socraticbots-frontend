@@ -1,8 +1,11 @@
 // src/components/books/BooksList/ExpandedChapters.tsx
 import React, { useEffect, useState } from 'react';
 import { TableRow, TableCell } from '@mui/material';
-import { getChapters, Chapter } from '../../../services/chaptersService';
+import { getChapters, Chapter, createChapter, updateChapter, deleteChapter } from '../../../services/chaptersService';
 import { useAuthContext } from '../../../contexts/AuthContext';
+import CreateChapterModal from '../../modals/CreateChapterModal';
+import EditChapterModal from '../../modals/EditChapterModal';
+import { KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material';
 
 interface ExpandedChaptersProps {
     bookId: string;
@@ -11,34 +14,83 @@ interface ExpandedChaptersProps {
 const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
     const [chapters, setChapters] = useState<Chapter[]>([]);
     const [loading, setLoading] = useState(true);
+    const [openCreateModal, setOpenCreateModal] = useState(false);
+    const [openEditModal, setOpenEditModal] = useState(false);
+    const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
     const user = useAuthContext();
 
     useEffect(() => {
-        const fetchChapters = async () => {
-            try {
-                if (user?.uid) {
-                    
-                    
-                    const chaptersData = await getChapters(user.uid);
-                    
-                    
-                    // Updated to use book_id instead of bookId
-                    const bookChapters = chaptersData.filter(chapter => chapter.book_id === bookId);
-                    
-                    
-                    setChapters(bookChapters);
-                }
-            } catch (error) {
-                console.error('Error fetching chapters:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchChapters();
     }, [bookId, user]);
 
-    
+    const fetchChapters = async () => {
+        try {
+            if (user?.uid) {
+                const chaptersData = await getChapters(user.uid);
+                const bookChapters = chaptersData.filter(chapter => chapter.book_id === bookId);
+                setChapters(bookChapters);
+            }
+        } catch (error) {
+            console.error('Error fetching chapters:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateChapter = async (title: string, subject: string, topic: string) => {
+        try {
+            if (user?.uid) {
+                const newChapter = await createChapter({
+                    title,
+                    subject,
+                    topic,
+                    bookId,
+                    userId: user.uid
+                });
+                setChapters([...chapters, newChapter]);
+                setOpenCreateModal(false);
+            }
+        } catch (error) {
+            console.error('Error creating chapter:', error);
+        }
+    };
+
+    const handleUpdateChapter = async (
+        chapterId: string, 
+        title: string, 
+        subject: string, 
+        topic: string
+    ) => {
+        try {
+            if (user?.uid) {
+                const updatedChapter = await updateChapter(user.uid, chapterId, {
+                    title,
+                    subject,
+                    topic
+                });
+                setChapters(chapters.map(chapter => 
+                    chapter.id === chapterId ? updatedChapter : chapter
+                ));
+                setOpenEditModal(false);
+                setSelectedChapter(null);
+            }
+        } catch (error) {
+            console.error('Error updating chapter:', error);
+        }
+    };
+
+    const handleDeleteChapter = async (chapterId: string) => {
+        if (window.confirm('Are you sure you want to delete this chapter?')) {
+            try {
+                if (user?.uid) {
+                    await deleteChapter(user.uid, chapterId);
+                    setChapters(chapters.filter(chapter => chapter.id !== chapterId));
+                }
+            } catch (error) {
+                console.error('Error deleting chapter:', error);
+            }
+        }
+    };
 
     return (
         <TableRow>
@@ -47,6 +99,7 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold">Chapters</h3>
                         <button 
+                            onClick={() => setOpenCreateModal(true)}
                             className="bg-socratic hover:bg-socratic-dark text-socratic-font-light px-3 py-1 rounded text-sm transition-colors"
                         >
                             Add Chapter
@@ -56,9 +109,7 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
                     {loading ? (
                         <div>Loading chapters...</div>
                     ) : chapters.length === 0 ? (
-                        <p className="text-gray-500">
-                            No chapters yet. Add your first chapter! (BookID: {bookId})
-                        </p>
+                        <p className="text-gray-500">No chapters yet. Add your first chapter!</p>
                     ) : (
                         <div className="space-y-2">
                             {chapters.map((chapter) => (
@@ -77,10 +128,19 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
                                         )}
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="text-socratic hover:text-socratic-dark">
+                                        <button 
+                                            onClick={() => {
+                                                setSelectedChapter(chapter);
+                                                setOpenEditModal(true);
+                                            }}
+                                            className="text-socratic hover:text-socratic-dark"
+                                        >
                                             Edit
                                         </button>
-                                        <button className="text-red-500 hover:text-red-700">
+                                        <button 
+                                            onClick={() => handleDeleteChapter(chapter.id)}
+                                            className="text-red-500 hover:text-red-700"
+                                        >
                                             Delete
                                         </button>
                                     </div>
@@ -89,6 +149,23 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
                         </div>
                     )}
                 </div>
+
+                <CreateChapterModal 
+                    open={openCreateModal}
+                    bookId={bookId}
+                    onClose={() => setOpenCreateModal(false)}
+                    onSubmit={handleCreateChapter}
+                />
+
+                <EditChapterModal 
+                    open={openEditModal}
+                    chapter={selectedChapter}
+                    onClose={() => {
+                        setOpenEditModal(false);
+                        setSelectedChapter(null);
+                    }}
+                    onSubmit={handleUpdateChapter}
+                />
             </TableCell>
         </TableRow>
     );
