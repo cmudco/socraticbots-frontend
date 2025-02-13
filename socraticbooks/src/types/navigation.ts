@@ -26,5 +26,10 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
         path: '/register',
         label: 'Register',
         requiresAuth: false
+    },
+    {
+        path: '/settings',
+        label: 'Settings',
+        requiresAuth: true  
     }
 ];

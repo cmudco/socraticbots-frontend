@@ -7,6 +7,7 @@ import Register from './components/screens/Register';
 import Books from './components/screens/Books';
 import { useAuthContext } from './contexts/AuthContext';
 import { NAVIGATION_ITEMS } from './types/navigation';
+import Settings from './components/screens/Settings';
 
 function App() {
     const user = useAuthContext();
@@ -64,6 +65,8 @@ const getComponent = (path: string) => {
             return <Home />;
         case '/books':
             return <Books />;
+        case '/settings':
+            return <Settings />;
         case '/login':
             return <Login />;
         case '/register':
