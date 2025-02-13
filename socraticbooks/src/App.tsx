@@ -4,7 +4,7 @@ import Sidebar from './components/sidebar/Sidebar';
 import Home from './components/screens/Home';
 import Login from './components/screens/Login';
 import Register from './components/screens/Register';
-import Books from './components/screens/Books';
+import Books from './components/books';
 import { useAuthContext } from './contexts/AuthContext';
 import { NAVIGATION_ITEMS } from './types/navigation';
 import Settings from './components/screens/Settings';
