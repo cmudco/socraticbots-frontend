@@ -8,6 +8,7 @@ const Header: React.FC = () => {
     const handleLogout = async () => {
         try {
             await logout();
+            window.location.pathname = '/';
         } catch (err) {
             console.error('Logout failed:', err);
         }
