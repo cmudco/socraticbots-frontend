@@ -6,15 +6,7 @@ import {
     DialogContent,
     DialogActions,
     TextField,
-    Tabs,
-    Tab,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
 } from '@mui/material';
-import ReactQuill from 'react-quill'; // We'll use Quill for rich text editing
-import 'react-quill/dist/quill.snow.css';
 import { Chapter } from '../../services/chaptersService';
 
 interface EditChapterModalProps {
@@ -32,32 +24,30 @@ interface EditChapterModalProps {
     }) => void;
 }
 
-type AdvancedField = 'greeting' | 'teaching_style' | 'qa_instructions' | 'restrictions';
-
 const EditChapterModal: React.FC<EditChapterModalProps> = ({
     open,
     chapter,
     onClose,
     onSubmit,
 }) => {
-    // Basic fields
     const [title, setTitle] = useState('');
     const [subject, setSubject] = useState('');
     const [topic, setTopic] = useState('');
-
-    // Advanced fields
     const [greeting, setGreeting] = useState('');
     const [teachingStyle, setTeachingStyle] = useState('');
     const [qaInstructions, setQaInstructions] = useState('');
     const [restrictions, setRestrictions] = useState('');
 
-    // UI state
-    const [currentTab, setCurrentTab] = useState(0);
-    const [selectedAdvancedField, setSelectedAdvancedField] = useState<AdvancedField>('greeting');
-
+    // Log when props change
     useEffect(() => {
+        console.log('Modal props changed:', { open, chapter });
+    }, [open, chapter]);
+
+    // Update state when chapter changes
+    useEffect(() => {
+        console.log('Setting values from chapter:', chapter);
         if (chapter) {
-            setTitle(chapter.title);
+            setTitle(chapter.title || '');
             setSubject(chapter.subject || '');
             setTopic(chapter.topic || '');
             setGreeting(chapter.greeting || '');
@@ -67,27 +57,17 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
         }
     }, [chapter]);
 
-    const getCurrentAdvancedValue = () => {
-        switch (selectedAdvancedField) {
-            case 'greeting': return greeting;
-            case 'teaching_style': return teachingStyle;
-            case 'qa_instructions': return qaInstructions;
-            case 'restrictions': return restrictions;
-            default: return '';
-        }
-    };
-
-    const handleAdvancedValueChange = (value: string) => {
-        switch (selectedAdvancedField) {
-            case 'greeting': setGreeting(value); break;
-            case 'teaching_style': setTeachingStyle(value); break;
-            case 'qa_instructions': setQaInstructions(value); break;
-            case 'restrictions': setRestrictions(value); break;
-        }
-    };
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        console.log('Submitting with values:', {
+            title,
+            subject,
+            topic,
+            greeting,
+            teachingStyle,
+            qaInstructions,
+            restrictions
+        });
         if (chapter) {
             onSubmit(chapter.id, {
                 title,
@@ -101,66 +81,112 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
         }
     };
 
+    const handleClose = () => {
+        console.log('Closing modal and resetting values');
+        setTitle('');
+        setSubject('');
+        setTopic('');
+        setGreeting('');
+        setTeachingStyle('');
+        setQaInstructions('');
+        setRestrictions('');
+        onClose();
+    };
+
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <Dialog 
+            open={open} 
+            onClose={handleClose} 
+            maxWidth="md" 
+            fullWidth
+            TransitionProps={{
+                onEnter: () => {
+                    console.log('Dialog entering with chapter:', chapter);
+                }
+            }}
+        >
             <form onSubmit={handleSubmit}>
                 <DialogTitle>Edit Chapter</DialogTitle>
                 <DialogContent>
-                    <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
-                        <Tab label="Basic Info" />
-                        <Tab label="Advanced Settings" />
-                    </Tabs>
-
-                    {currentTab === 0 ? (
-                        <div className="space-y-4 mt-4">
-                            <TextField
-                                autoFocus
-                                label="Title"
-                                fullWidth
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                required
-                            />
-                            <TextField
-                                label="Subject"
-                                fullWidth
-                                value={subject}
-                                onChange={(e) => setSubject(e.target.value)}
-                            />
-                            <TextField
-                                label="Topic"
-                                fullWidth
-                                value={topic}
-                                onChange={(e) => setTopic(e.target.value)}
-                            />
-                        </div>
-                    ) : (
-                        <div className="space-y-4 mt-4">
-                            <FormControl fullWidth>
-                                <InputLabel>Field to Edit</InputLabel>
-                                <Select
-                                    value={selectedAdvancedField}
-                                    onChange={(e) => setSelectedAdvancedField(e.target.value as AdvancedField)}
-                                >
-                                    <MenuItem value="greeting">Greeting</MenuItem>
-                                    <MenuItem value="teaching_style">Teaching Style</MenuItem>
-                                    <MenuItem value="qa_instructions">QA Instructions</MenuItem>
-                                    <MenuItem value="restrictions">Restrictions</MenuItem>
-                                </Select>
-                            </FormControl>
-                            <ReactQuill
-                                theme="snow"
-                                value={getCurrentAdvancedValue()}
-                                onChange={handleAdvancedValueChange}
-                                className="h-64 mb-12" // Extra margin bottom for Quill toolbar
-                            />
-                        </div>
-                    )}
+                    <div className="space-y-4 mt-4">
+                        <TextField
+                            label="Title"
+                            fullWidth
+                            value={title}
+                            onChange={(e) => {
+                                console.log('Title changed to:', e.target.value);
+                                setTitle(e.target.value);
+                            }}
+                            required
+                        />
+                        <TextField
+                            label="Subject"
+                            fullWidth
+                            value={subject}
+                            onChange={(e) => {
+                                console.log('Subject changed to:', e.target.value);
+                                setSubject(e.target.value);
+                            }}
+                        />
+                        <TextField
+                            label="Topic"
+                            fullWidth
+                            value={topic}
+                            onChange={(e) => {
+                                console.log('Topic changed to:', e.target.value);
+                                setTopic(e.target.value);
+                            }}
+                        />
+                        <TextField
+                            label="Greeting"
+                            fullWidth
+                            multiline
+                            rows={4}
+                            value={greeting}
+                            onChange={(e) => {
+                                console.log('Greeting changed to:', e.target.value);
+                                setGreeting(e.target.value);
+                            }}
+                        />
+                        <TextField
+                            label="Teaching Style"
+                            fullWidth
+                            multiline
+                            rows={4}
+                            value={teachingStyle}
+                            onChange={(e) => {
+                                console.log('Teaching Style changed to:', e.target.value);
+                                setTeachingStyle(e.target.value);
+                            }}
+                        />
+                        <TextField
+                            label="QA Instructions"
+                            fullWidth
+                            multiline
+                            rows={4}
+                            value={qaInstructions}
+                            onChange={(e) => {
+                                console.log('QA Instructions changed to:', e.target.value);
+                                setQaInstructions(e.target.value);
+                            }}
+                        />
+                        <TextField
+                            label="Restrictions"
+                            fullWidth
+                            multiline
+                            rows={4}
+                            value={restrictions}
+                            onChange={(e) => {
+                                console.log('Restrictions changed to:', e.target.value);
+                                setRestrictions(e.target.value);
+                            }}
+                        />
+                    </div>
                 </DialogContent>
                 <DialogActions className="p-4">
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="px-4 py-2 text-gray-500 hover:text-gray-700"
                     >
                         Cancel
