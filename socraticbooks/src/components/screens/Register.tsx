@@ -1,18 +1,37 @@
 import { useState } from 'react';
 import { register } from '../../services/auth';
+import { verifyAccessCode } from '../../services/accessCode';
 
 export default function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [accessCode, setAccessCode] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsLoading(true);
+        setError('');
+
         try {
+            // First verify access code
+            const verification = await verifyAccessCode(accessCode);
+            
+            if (!verification.valid) {
+                setError(verification.message || 'Invalid access code');
+                setIsLoading(false);
+                return;
+            }
+
+            // If access code is valid, proceed with registration
             await register(email, password);
-        } catch (err) {
-            setError('Registration failed - email might be taken');
+            // Registration successful - user will be automatically logged in
+        } catch (err: any) {
+            setError(err.message || 'Registration failed - please check your details');
             console.error(err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -26,6 +45,15 @@ export default function Register() {
                 )}
 
                 <input
+                    type="text"
+                    value={accessCode}
+                    onChange={(e) => setAccessCode(e.target.value)}
+                    placeholder="Access Code"
+                    className="w-full rounded border p-2"
+                    required
+                />
+
+                <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -33,6 +61,7 @@ export default function Register() {
                     className="w-full rounded border p-2"
                     required
                 />
+
                 <input
                     type="password"
                     value={password}
@@ -41,11 +70,13 @@ export default function Register() {
                     className="w-full rounded border p-2"
                     required
                 />
+
                 <button 
                     type="submit"
-                    className="w-full rounded bg-socratic p-2 text-white hover:bg-opacity-90"
+                    disabled={isLoading}
+                    className="w-full rounded bg-socratic p-2 text-white hover:bg-opacity-90 disabled:opacity-50"
                 >
-                    Register
+                    {isLoading ? 'Registering...' : 'Register'}
                 </button>
             </form>
         </div>
