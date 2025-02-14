@@ -4,6 +4,9 @@ interface DeploymentProps {
 }
 
 const Deployment: React.FC<DeploymentProps> = ({ chapterId }) => {
+
+    if (false) { console.log(chapterId); } // Placeholder to prevent unused variable error
+
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center mb-4">

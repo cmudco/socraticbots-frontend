@@ -81,6 +81,8 @@ interface EditChapterModalProps {
         teaching_style?: string;
         qa_instructions?: string;
         restrictions?: string;
+        selectedFiles: string[];  // Add this
+        selectedTags: string[];   // Add this
     }) => void;
 }
 
@@ -110,6 +112,8 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
         qa_instructions: '',
         restrictions: ''
     });
+    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
     const editor = useEditor({
         extensions: [
@@ -127,6 +131,15 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
         },
     });
 
+    // Reset selections when modal opens/closes
+    useEffect(() => {
+        if (open && chapter) {
+            // TODO: If you have existing selections stored, load them here
+            setSelectedFiles([]);
+            setSelectedTags([]);
+        }
+    }, [open, chapter]);
+    
     useEffect(() => {
         if (editor && advancedFields[selectedAdvancedField]) {
             editor.commands.setContent(advancedFields[selectedAdvancedField]);
@@ -155,6 +168,7 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
             [selectedAdvancedField]: value
         }));
     };
+    
 
     if (!open) return null;
 
@@ -168,7 +182,9 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                             title,
                             subject,
                             topic,
-                            ...advancedFields
+                            ...advancedFields,
+                            selectedFiles,  // Include selected files in submission
+                            selectedTags,   // Include selected tags in submission
                         });
                     }
                 }}>
@@ -265,7 +281,13 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                             )}
 
                             {currentTab === 3 && (
-                                <Files chapterId={chapter?.id || ''} />
+                                <Files 
+                                    chapterId={chapter?.id || ''}
+                                    selectedFiles={selectedFiles}
+                                    selectedTags={selectedTags}
+                                    onFileSelect={setSelectedFiles}
+                                    onTagSelect={setSelectedTags}
+                                />
                             )}
 
                             {currentTab === 4 && (
