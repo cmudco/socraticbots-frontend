@@ -114,7 +114,7 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
 
     return (
         <TableRow>
-            <TableCell colSpan={6} className="bg-gray-50">
+            <TableCell colSpan={6} className="bg-gray-200">
                 <div className="p-4">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold">Chapters</h3>
