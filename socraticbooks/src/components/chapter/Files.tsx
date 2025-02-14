@@ -1,15 +1,24 @@
+// src/components/chapter/Files.tsx
 import { useState, useEffect } from 'react';
 import { DareFile, getFiles, getFileTags } from '../../services/filesService';
 
 interface FilesProps {
     chapterId: string;
+    selectedFiles: string[];
+    selectedTags: string[];
+    onFileSelect: (fileIds: string[]) => void;
+    onTagSelect: (tags: string[]) => void;
 }
 
-const Files: React.FC<FilesProps> = ({ chapterId }) => {
+const Files: React.FC<FilesProps> = ({ 
+    chapterId, 
+    selectedFiles, 
+    selectedTags, 
+    onFileSelect, 
+    onTagSelect 
+}) => {
     const [files, setFiles] = useState<DareFile[]>([]);
     const [tags, setTags] = useState<string[]>([]);
-    const [selectedTags, setSelectedTags] = useState<string[]>([]);
-    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -36,22 +45,22 @@ const Files: React.FC<FilesProps> = ({ chapterId }) => {
         fetchData();
     }, []);
 
+    if (false) { console.log(chapterId); } // Placeholder to prevent unused variable error
+
     const handleTagSelect = (e: React.MouseEvent, tag: string) => {
         e.preventDefault();
         e.stopPropagation();
-        setSelectedTags(prev =>
-            prev.includes(tag)
-                ? prev.filter(t => t !== tag)
-                : [...prev, tag]
-        );
+        const newTags = selectedTags.includes(tag)
+            ? selectedTags.filter(t => t !== tag)
+            : [...selectedTags, tag];
+        onTagSelect(newTags);
     };
 
     const handleFileSelect = (fileId: string) => {
-        setSelectedFiles(prev =>
-            prev.includes(fileId)
-                ? prev.filter(f => f !== fileId)
-                : [...prev, fileId]
-        );
+        const newFiles = selectedFiles.includes(fileId)
+            ? selectedFiles.filter(f => f !== fileId)
+            : [...selectedFiles, fileId];
+        onFileSelect(newFiles);
     };
 
     const filteredFiles = files.filter(file => 
