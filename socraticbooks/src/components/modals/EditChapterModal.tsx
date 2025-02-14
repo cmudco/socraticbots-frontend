@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Chapter } from '../../services/chaptersService';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-
+import LearningGoals from '../chapter/LearningGoals';
 
 const MenuBar = ({ editor }: { editor: any }) => {
     if (!editor) {
@@ -258,9 +258,7 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                             )}
 
                             {currentTab === 2 && (
-                                <div>
-                                    <p>Learning Goals coming soon...</p>
-                                </div>
+                                <LearningGoals chapterId={chapter?.id || ''} />
                             )}
                         </div>
                     </div>
