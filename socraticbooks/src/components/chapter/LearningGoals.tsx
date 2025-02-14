@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getLearningGoals, LearningGoal } from '../../services/learningGoalsService';
+import { getLearningGoals, createLearningGoal, updateLearningGoal, deleteLearningGoal, LearningGoal } from '../../services/learningGoalsService';
+import AddLearningGoalModal from '../modals/AddLearningGoalModal';
+import EditLearningGoalModal from '../modals/EditLearningGoalModal';
 
 interface LearningGoalsProps {
     chapterId: string;
@@ -9,26 +11,64 @@ const LearningGoals: React.FC<LearningGoalsProps> = ({ chapterId }) => {
     const [goals, setGoals] = useState<LearningGoal[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedGoal, setSelectedGoal] = useState<LearningGoal | null>(null);
+
+    const fetchGoals = async () => {
+        try {
+            setLoading(true);
+            const data = await getLearningGoals(chapterId);
+            setGoals(data);
+            setError(null);
+        } catch (err) {
+            setError('Failed to load learning goals');
+            console.error('Error loading goals:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchGoals = async () => {
-            try {
-                setLoading(true);
-                const data = await getLearningGoals(chapterId);
-                setGoals(data);
-                setError(null);
-            } catch (err) {
-                setError('Failed to load learning goals');
-                console.error('Error loading goals:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         if (chapterId) {
             fetchGoals();
         }
     }, [chapterId]);
+
+    const handleAddGoal = async (text: string) => {
+        try {
+            await createLearningGoal(chapterId, { text });
+            setIsAddModalOpen(false);
+            fetchGoals();
+        } catch (err) {
+            setError('Failed to create learning goal');
+            console.error('Error creating goal:', err);
+        }
+    };
+
+    const handleEditGoal = async (goalId: string, text: string) => {
+        try {
+            await updateLearningGoal(goalId, { text });
+            setIsEditModalOpen(false);
+            setSelectedGoal(null);
+            await fetchGoals(); // Re-fetch goals after update
+        } catch (err) {
+            setError('Failed to update learning goal');
+            console.error('Error updating goal:', err);
+        }
+    };
+
+    const handleDeleteGoal = async (goalId: string) => {
+        if (window.confirm('Are you sure you want to delete this learning goal?')) {
+            try {
+                await deleteLearningGoal(goalId);
+                fetchGoals();
+            } catch (err) {
+                setError('Failed to delete learning goal');
+                console.error('Error deleting goal:', err);
+            }
+        }
+    };
 
     if (loading) {
         return <div className="text-center py-4">Loading learning goals...</div>;
@@ -45,7 +85,7 @@ const LearningGoals: React.FC<LearningGoalsProps> = ({ chapterId }) => {
                 <button
                     type="button"
                     className="px-4 py-2 bg-socratic text-white rounded hover:bg-socratic-dark"
-                    onClick={() => {/* TODO: Add new goal handler */}}
+                    onClick={() => setIsAddModalOpen(true)}
                 >
                     Add Goal
                 </button>
@@ -62,14 +102,17 @@ const LearningGoals: React.FC<LearningGoalsProps> = ({ chapterId }) => {
                             <button
                                 type="button"
                                 className="text-gray-600 hover:text-gray-900"
-                                onClick={() => {/* TODO: Edit handler */}}
+                                onClick={() => {
+                                    setSelectedGoal(goal);
+                                    setIsEditModalOpen(true);
+                                }}
                             >
                                 Edit
                             </button>
                             <button
                                 type="button"
                                 className="text-red-600 hover:text-red-900"
-                                onClick={() => {/* TODO: Delete handler */}}
+                                onClick={() => handleDeleteGoal(goal.id)}
                             >
                                 Delete
                             </button>
@@ -83,6 +126,22 @@ const LearningGoals: React.FC<LearningGoalsProps> = ({ chapterId }) => {
                     No learning goals yet. Click "Add Goal" to create one.
                 </div>
             )}
+
+            <AddLearningGoalModal
+                open={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onSubmit={handleAddGoal}
+            />
+
+            <EditLearningGoalModal
+                open={isEditModalOpen}
+                goal={selectedGoal}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedGoal(null);
+                }}
+                onSubmit={handleEditGoal}
+            />
         </div>
     );
 };
