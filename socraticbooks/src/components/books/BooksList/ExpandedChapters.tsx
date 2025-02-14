@@ -16,6 +16,9 @@ import { useAuthContext } from '../../../contexts/AuthContext';
 import CreateChapterModal from '../../modals/CreateChapterModal';
 import EditChapterModal from '../../modals/EditChapterModal';
 
+type ChapterFilesAndTagsType = ChapterFilesAndTags;
+if (false) console.log({} as ChapterFilesAndTagsType); // Placeholder to prevent unused variable error
+
 interface ExpandedChaptersProps {
     bookId: string;
 }
