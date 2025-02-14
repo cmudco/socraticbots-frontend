@@ -4,6 +4,9 @@ import { Chapter } from '../../services/chaptersService';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import LearningGoals from '../chapter/LearningGoals';
+import Files from '../chapter/Files';
+import Deployment from '../chapter/Deployment';
+
 
 const MenuBar = ({ editor }: { editor: any }) => {
     if (!editor) {
@@ -174,20 +177,20 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                         
                         <div className="border-b border-gray-200 mb-6">
                             <nav className="-mb-px flex">
-                                {['Basic Info', 'Advanced Settings', 'Learning Goals'].map((tab, index) => (
-                                    <button
-                                        key={tab}
-                                        type="button"
-                                        className={`mr-2 py-2 px-4 border-b-2 ${
-                                            currentTab === index
-                                                ? 'border-socratic text-socratic'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700'
-                                        }`}
-                                        onClick={() => setCurrentTab(index)}
-                                    >
-                                        {tab}
-                                    </button>
-                                ))}
+                            {['Basic Info', 'Advanced Settings', 'Learning Goals', 'Files', 'Deployment'].map((tab, index) => (
+                                <button
+                                    key={tab}
+                                    type="button"
+                                    className={`mr-2 py-2 px-4 border-b-2 ${
+                                        currentTab === index
+                                            ? 'border-socratic text-socratic'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`}
+                                    onClick={() => setCurrentTab(index)}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
                             </nav>
                         </div>
 
@@ -260,6 +263,15 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                             {currentTab === 2 && (
                                 <LearningGoals chapterId={chapter?.id || ''} />
                             )}
+
+                            {currentTab === 3 && (
+                                <Files chapterId={chapter?.id || ''} />
+                            )}
+
+                            {currentTab === 4 && (
+                                <Deployment chapterId={chapter?.id || ''} />
+                            )}
+
                         </div>
                     </div>
 
