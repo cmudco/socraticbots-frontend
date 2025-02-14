@@ -37,6 +37,11 @@ interface UpdateChapterData {
     restrictions?: string;
 }
 
+export interface ChapterFilesAndTags {
+    fileIds: string[];
+    tags: string[];
+}
+
 // Get all chapters for a user
 export const getChapters = async (userId: string): Promise<Chapter[]> => {
     try {
@@ -127,3 +132,34 @@ export const deleteChapter = async (userId: string, chapterId: string): Promise<
     }
 };
 
+export const getChapterFilesAndTags = async (chapterId: string): Promise<ChapterFilesAndTags> => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/api/socratic-books/chapters/${chapterId}/files-and-tags`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching chapter files and tags:', error);
+        throw error;
+    }
+};
+
+export const updateChapterFilesAndTags = async (
+    chapterId: string, 
+    fileIds: string[], 
+    tags: string[]
+): Promise<ChapterFilesAndTags> => {
+    try {
+        const response = await axios.put(
+            `${API_BASE_URL}/api/socratic-books/chapters/${chapterId}/files-and-tags`, 
+            { fileIds, tags },
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error updating chapter files and tags:', error);
+        throw error;
+    }
+};

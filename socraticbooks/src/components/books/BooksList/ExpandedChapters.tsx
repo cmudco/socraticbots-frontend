@@ -1,14 +1,28 @@
 // src/components/books/BooksList/ExpandedChapters.tsx
 import React, { useEffect, useState } from 'react';
 import { TableRow, TableCell } from '@mui/material';
-import { getChapters, getChapter, Chapter, createChapter, updateChapter, deleteChapter } from '../../../services/chaptersService';
+import { 
+    getChapters, 
+    getChapter, 
+    Chapter, 
+    createChapter, 
+    updateChapter, 
+    deleteChapter,
+    updateChapterFilesAndTags,
+    getChapterFilesAndTags,
+    ChapterFilesAndTags
+} from '../../../services/chaptersService';
 import { useAuthContext } from '../../../contexts/AuthContext';
 import CreateChapterModal from '../../modals/CreateChapterModal';
 import EditChapterModal from '../../modals/EditChapterModal';
 
-
 interface ExpandedChaptersProps {
     bookId: string;
+}
+
+interface ExtendedChapter extends Chapter {
+    selectedFiles?: string[];
+    selectedTags?: string[];
 }
 
 const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
@@ -16,7 +30,7 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
     const [loading, setLoading] = useState(true);
     const [openCreateModal, setOpenCreateModal] = useState(false);
     const [openEditModal, setOpenEditModal] = useState(false);
-    const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+    const [selectedChapter, setSelectedChapter] = useState<ExtendedChapter | null>(null);
     const user = useAuthContext();
 
     useEffect(() => {
@@ -40,9 +54,18 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
     const fetchSingleChapter = async (chapterId: string) => {
         try {
             if (user?.uid) {
-                const chapterData = await getChapter(user.uid, chapterId);
-                console.log('Fetched single chapter:', chapterData);
-                setSelectedChapter(chapterData);
+                const [chapterData, filesAndTags] = await Promise.all([
+                    getChapter(user.uid, chapterId),
+                    getChapterFilesAndTags(chapterId)
+                ]);
+                
+                const extendedChapter: ExtendedChapter = {
+                    ...chapterData,
+                    selectedFiles: filesAndTags.fileIds,
+                    selectedTags: filesAndTags.tags
+                };
+                
+                setSelectedChapter(extendedChapter);
             }
         } catch (error) {
             console.error('Error fetching single chapter:', error);
@@ -83,16 +106,33 @@ const ExpandedChapters: React.FC<ExpandedChaptersProps> = ({ bookId }) => {
             teaching_style?: string;
             qa_instructions?: string;
             restrictions?: string;
+            selectedFiles: string[];
+            selectedTags: string[];
         }
     ) => {
         try {
             if (user?.uid) {
-                const updatedChapter = await updateChapter(user.uid, chapterId, data);
+                const { selectedFiles, selectedTags, ...chapterData } = data;
+                
+                // Update chapter basic info
+                const updatedChapter = await updateChapter(user.uid, chapterId, chapterData);
+
+                // Update files and tags
+                await updateChapterFilesAndTags(
+                    chapterId,
+                    selectedFiles,
+                    selectedTags
+                );
+
+                // Update local state
                 setChapters(chapters.map(chapter => 
                     chapter.id === chapterId ? updatedChapter : chapter
                 ));
                 setOpenEditModal(false);
                 setSelectedChapter(null);
+                
+                // Refresh to get latest data
+                fetchChapters();
             }
         } catch (error) {
             console.error('Error updating chapter:', error);

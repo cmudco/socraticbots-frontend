@@ -6,6 +6,7 @@ import StarterKit from '@tiptap/starter-kit';
 import LearningGoals from '../chapter/LearningGoals';
 import Files from '../chapter/Files';
 import Deployment from '../chapter/Deployment';
+import { getChapterFilesAndTags } from '../../services/chaptersService';
 
 
 const MenuBar = ({ editor }: { editor: any }) => {
@@ -134,9 +135,19 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
     // Reset selections when modal opens/closes
     useEffect(() => {
         if (open && chapter) {
-            // TODO: If you have existing selections stored, load them here
-            setSelectedFiles([]);
-            setSelectedTags([]);
+            // Load existing files and tags
+            const loadFilesAndTags = async () => {
+                try {
+                    const { fileIds, tags } = await getChapterFilesAndTags(chapter.id);
+                    setSelectedFiles(fileIds);
+                    setSelectedTags(tags);
+                } catch (error) {
+                    console.error('Error loading files and tags:', error);
+                    // Optionally set some error state
+                }
+            };
+            
+            loadFilesAndTags();
         }
     }, [open, chapter]);
     
