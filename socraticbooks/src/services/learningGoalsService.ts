@@ -45,3 +45,35 @@ export const createLearningGoal = async (
 
     return response.data;
 };
+
+export const updateLearningGoal = async (
+    goalId: string,
+    data: { text: string }
+): Promise<LearningGoal> => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) throw new Error('No user logged in');
+
+    const response = await axios.put(
+        `${BASE_URL}/learning-goals/${goalId}`,
+        data,
+        {
+            params: { userId: user.uid }
+        }
+    );
+
+    return response.data;
+};
+
+export const deleteLearningGoal = async (goalId: string): Promise<void> => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) throw new Error('No user logged in');
+
+    await axios.delete(
+        `${BASE_URL}/learning-goals/${goalId}`,
+        {
+            params: { userId: user.uid }
+        }
+    );
+};
