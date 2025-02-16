@@ -89,13 +89,13 @@ const AccessCodes: React.FC = () => {
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <h1 className="text-2xl font-bold text-gray-900">Access Codes</h1>
-                    <Button
-                        variant="contained"
-                        color="primary"
+                    <button 
+                        className="h-10 px-4 bg-socratic hover:bg-socratic-dark text-socratic-font-light rounded transition-colors"
                         onClick={() => setIsModalOpen(true)}
                     >
                         Create New Access Code
-                    </Button>
+                    </button>
+
                 </div>
 
                 {error && (
