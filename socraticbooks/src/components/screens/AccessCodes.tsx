@@ -4,9 +4,11 @@ import {
     getUserAccessCodes, 
     createAccessCode, 
     generateRandomAccessCode,
+    updateAccessCodeStatus,
     AccessCode 
 } from '../../services/userAccessCodes';
 import CreateAccessCodeModal from '../modals/CreateAccessCodeModal';
+import { Switch, Button } from '@mui/material';
 
 const AccessCodes: React.FC = () => {
     const user = useAuth();
@@ -34,6 +36,24 @@ const AccessCodes: React.FC = () => {
             console.error('Error fetching access codes:', err);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleStatusToggle = async (codeId: number, currentStatus: boolean) => {
+        if (!user?.uid) return;
+
+        try {
+            await updateAccessCodeStatus(user.uid, codeId, !currentStatus);
+            setAccessCodes(codes => 
+                codes.map(code => 
+                    code.id === codeId 
+                        ? { ...code, is_active: !currentStatus }
+                        : code
+                )
+            );
+        } catch (err) {
+            setError('Failed to update access code status');
+            console.error('Error updating access code status:', err);
         }
     };
 
@@ -69,12 +89,13 @@ const AccessCodes: React.FC = () => {
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
                     <h1 className="text-2xl font-bold text-gray-900">Access Codes</h1>
-                    <button
+                    <Button
+                        variant="contained"
+                        color="primary"
                         onClick={() => setIsModalOpen(true)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-socratic hover:bg-socratic-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-socratic"
                     >
                         Create New Access Code
-                    </button>
+                    </Button>
                 </div>
 
                 {error && (
@@ -114,6 +135,9 @@ const AccessCodes: React.FC = () => {
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Created
                                     </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -139,6 +163,14 @@ const AccessCodes: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {new Date(code.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <Switch
+                                                checked={code.is_active}
+                                                onChange={() => handleStatusToggle(code.id, code.is_active)}
+                                                color="primary"
+                                                size="small"
+                                            />
                                         </td>
                                     </tr>
                                 ))}
