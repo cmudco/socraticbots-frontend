@@ -69,3 +69,19 @@ export const generateRandomAccessCode = (length: number = 8): string => {
     }
     return result;
 };
+
+export const updateAccessCodeStatus = async (
+    userId: string,
+    codeId: number,
+    isActive: boolean
+): Promise<void> => {
+    try {
+        await axios.patch(
+            `${API_BASE_URL}/api/socratic-books/users/${userId}/access-codes/${codeId}/status`,
+            { is_active: isActive }
+        );
+    } catch (error) {
+        console.error('Error updating access code status:', error);
+        throw error;
+    }
+};
