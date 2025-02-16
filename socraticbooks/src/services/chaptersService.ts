@@ -19,6 +19,10 @@ export interface Chapter {
     updated_at?: string;
 }
 
+interface PublicIdResponse {
+    public_id: string;
+}
+
 interface CreateChapterData {
     title: string;
     subject?: string;
@@ -160,6 +164,32 @@ export const updateChapterFilesAndTags = async (
         return response.data;
     } catch (error) {
         console.error('Error updating chapter files and tags:', error);
+        throw error;
+    }
+};
+
+// Get chapter's public_id
+export const getChapterPublicId = async (chapterId: string): Promise<string> => {
+    try {
+        const response = await axios.get<PublicIdResponse>(
+            `${API_BASE_URL}/api/socratic-books/chapters/${chapterId}/public-id`
+        );
+        return response.data.public_id;
+    } catch (error) {
+        console.error('Error fetching chapter public ID:', error);
+        throw error;
+    }
+};
+
+// Generate new public_id for chapter
+export const regenerateChapterPublicId = async (chapterId: string): Promise<string> => {
+    try {
+        const response = await axios.put<PublicIdResponse>(
+            `${API_BASE_URL}/api/socratic-books/chapters/${chapterId}/public-id`
+        );
+        return response.data.public_id;
+    } catch (error) {
+        console.error('Error regenerating chapter public ID:', error);
         throw error;
     }
 };
