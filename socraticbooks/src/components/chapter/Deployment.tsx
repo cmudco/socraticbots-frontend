@@ -5,6 +5,7 @@ import {
     getChapterPublishedStatus,
     updateChapterPublishedStatus
 } from '../../services/chaptersService';
+import ChapterAccessCodes from './ChapterAccessCodes';
 
 interface DeploymentProps {
     chapterId: string;
@@ -192,6 +193,9 @@ const Deployment: React.FC<DeploymentProps> = ({ chapterId }) => {
                     </tr>
                 </tbody>
             </table>
+
+            <ChapterAccessCodes />
+
         </div>
     );
 };
