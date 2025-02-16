@@ -28,6 +28,12 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
         requiresAuth: false
     },
     {
+        path: '/access-codes',
+        label: 'Access Codes',
+        requiresAuth: true,
+        requiredAffiliation: 'professor'
+    },
+    {
         path: '/settings',
         label: 'Settings',
         requiresAuth: true  
