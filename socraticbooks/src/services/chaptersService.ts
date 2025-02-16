@@ -41,6 +41,10 @@ interface UpdateChapterData {
     restrictions?: string;
 }
 
+interface PublishedStatus {
+    is_published: boolean;
+}
+
 export interface ChapterFilesAndTags {
     fileIds: string[];
     tags: string[];
@@ -190,6 +194,31 @@ export const regenerateChapterPublicId = async (chapterId: string): Promise<stri
         return response.data.public_id;
     } catch (error) {
         console.error('Error regenerating chapter public ID:', error);
+        throw error;
+    }
+};
+
+export const getChapterPublishedStatus = async (chapterId: string): Promise<boolean> => {
+    try {
+        const response = await axios.get<PublishedStatus>(
+            `${API_BASE_URL}/api/socratic-books/chapters/${chapterId}/published`
+        );
+        return response.data.is_published;
+    } catch (error) {
+        console.error('Error fetching chapter published status:', error);
+        throw error;
+    }
+};
+
+export const updateChapterPublishedStatus = async (chapterId: string, isPublished: boolean): Promise<boolean> => {
+    try {
+        const response = await axios.put<PublishedStatus>(
+            `${API_BASE_URL}/api/socratic-books/chapters/${chapterId}/published`,
+            { is_published: isPublished }
+        );
+        return response.data.is_published;
+    } catch (error) {
+        console.error('Error updating chapter published status:', error);
         throw error;
     }
 };
