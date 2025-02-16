@@ -8,6 +8,7 @@ import Books from './components/books';
 import { useAuthContext } from './contexts/AuthContext';
 import { NAVIGATION_ITEMS } from './types/navigation';
 import Settings from './components/screens/Settings';
+import AccessCodes from './components/screens/AccessCodes';
 import ThemeProvider from './providers/ThemeProvider';
 
 function App() {
@@ -74,6 +75,8 @@ const getComponent = (path: string) => {
             return <Login />;
         case '/register':
             return <Register />;
+        case '/access-codes':
+            return <AccessCodes />;
         default:
             return <Navigate to="/" />;
     }
