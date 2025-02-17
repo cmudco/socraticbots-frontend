@@ -194,7 +194,7 @@ const Deployment: React.FC<DeploymentProps> = ({ chapterId }) => {
                 </tbody>
             </table>
 
-            <ChapterAccessCodes />
+            <ChapterAccessCodes chapterId={chapterId} />
 
         </div>
     );
