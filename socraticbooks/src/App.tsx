@@ -5,6 +5,7 @@ import Home from './components/screens/Home';
 import Login from './components/screens/Login';
 import Register from './components/screens/Register';
 import Books from './components/books';
+import Chat from './components/chat';
 import { useAuthContext } from './contexts/AuthContext';
 import { NAVIGATION_ITEMS } from './types/navigation';
 import Settings from './components/screens/Settings';
@@ -77,6 +78,8 @@ const getComponent = (path: string) => {
             return <Register />;
         case '/access-codes':
             return <AccessCodes />;
+        case '/chat':
+            return <Chat />;
         default:
             return <Navigate to="/" />;
     }
