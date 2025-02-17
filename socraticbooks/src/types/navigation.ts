@@ -34,6 +34,11 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
         requiredAffiliation: 'professor'
     },
     {
+        path: '/chat',
+        label: 'Chat',
+        requiresAuth: true
+    },
+    {
         path: '/settings',
         label: 'Settings',
         requiresAuth: true  
