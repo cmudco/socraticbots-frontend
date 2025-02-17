@@ -33,7 +33,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             <div className="flex space-x-2 mb-2">
                 <button 
                     onClick={onSave}
-                    className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+                    className="px-3 py-1 text-sm bg-gray-100 text-socratic-font-dark rounded-full hover:bg-gray-200 transition-colors"
                     title="Save for later"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,7 +42,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 </button>
                 <button 
                     onClick={onGenerateStudyGuide}
-                    className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-colors"
+                    className="px-3 py-1 text-sm bg-gray-100 text-socratic-font-dark rounded-full hover:bg-gray-200 transition-colors"
                     title="Generate Study Guide"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
