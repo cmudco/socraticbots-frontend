@@ -1,3 +1,4 @@
+// src/components/chat/MainChat.tsx
 import React from 'react';
 import { Chapter } from '../../services/chatService';
 
@@ -11,15 +12,11 @@ const MainChat: React.FC<MainChatProps> = ({ chapter }) => {
             {/* Messages area */}
             <div className="flex-1 overflow-y-auto">
                 <div className="p-4 space-y-4">
-                    {Array(20).fill(0).map((_, i) => (
-                        <div key={i} className="p-2 bg-gray-50 rounded">
-                            Test Message {i + 1}
-                        </div>
-                    ))}
+                    {/* Messages will be populated here */}
                 </div>
             </div>
             
-            {/* Input area - absolutely positioned at bottom */}
+            {/* Input area */}
             <div className="sticky bottom-0 border-t bg-white p-4">
                 <input 
                     type="text" 
