@@ -89,6 +89,7 @@ const ChapterAccessCodes: React.FC<ChapterAccessCodesProps> = ({ chapterId }) =>
                 <select 
                     className="w-full p-2 border rounded focus:ring-socratic focus:border-socratic"
                     onChange={(e) => {
+                        e.stopPropagation(); // Add this
                         const id = parseInt(e.target.value);
                         if (id) handleAddAccessCode(id);
                         e.target.value = ''; // Reset after selection
@@ -124,7 +125,10 @@ const ChapterAccessCodes: React.FC<ChapterAccessCodesProps> = ({ chapterId }) =>
                                     <span className="text-gray-600 ml-2">- {code.description}</span>
                                 </div>
                                 <button
-                                    onClick={() => handleRemoveAccessCode(code.id)}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Add this to prevent event bubbling
+                                        handleRemoveAccessCode(code.id);
+                                    }}
                                     className="text-red-600 hover:text-red-800"
                                 >
                                     Remove
