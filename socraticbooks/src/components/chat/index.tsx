@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '../../contexts/AuthContext';
-import ChapterSidebar from './ChapterSidebar';
+import ChapterSelector from './ChapterSelector';
+import LeftSidebar from './LeftSidebar';
+import MainChat from './MainChat';
+import NoteSidebar from './NoteSidebar';
 import { Chapter, getAvailableChapters } from '../../services/chatService';
 
 const Chat: React.FC = () => {
-    const  user  = useAuthContext();
+    const user  = useAuthContext();
     const [chapters, setChapters] = useState<Chapter[]>([]);
     const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +21,6 @@ const Chat: React.FC = () => {
                     setChapters(availableChapters);
                 } catch (error) {
                     console.error('Error fetching chapters:', error);
-                    // You might want to add error state and show error message
                 } finally {
                     setIsLoading(false);
                 }
@@ -29,28 +31,25 @@ const Chat: React.FC = () => {
     }, [user?.uid]);
 
     return (
-        <div className="flex h-screen">
-            {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col">
-                {selectedChapter ? (
-                    <div className="p-4">
-                        <h2 className="text-xl font-semibold">{selectedChapter.title}</h2>
-                        {/* Chat interface will go here */}
-                    </div>
-                ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                        Select a chapter to start chatting
-                    </div>
-                )}
-            </div>
-
-            {/* Chapter Sidebar */}
-            <ChapterSidebar
+        <div className="h-screen flex flex-col">
+            <ChapterSelector
                 chapters={chapters}
                 selectedChapterId={selectedChapter?.id}
                 onChapterSelect={setSelectedChapter}
                 isLoading={isLoading}
             />
+
+            {selectedChapter ? (
+                <div className="flex-1 flex min-h-0"> {/* added min-h-0 here */}
+                    <LeftSidebar chapter={selectedChapter} />
+                    <MainChat chapter={selectedChapter} />
+                    <NoteSidebar />
+                </div>
+            ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-500">
+                    Select a chapter to start chatting
+                </div>
+            )}
         </div>
     );
 };
