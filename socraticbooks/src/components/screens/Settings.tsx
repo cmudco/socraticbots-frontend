@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { getUserAffiliation } from '../../services/user';
+import UserAccessCodes from '../settings/UserAccessCodes';
 
 interface ThemeColors {
     light: string;
@@ -87,6 +88,10 @@ const Settings = () => {
                         </div>
                     </div>
                 </div>
+
+
+                {/* Access Codes Section */}
+                <UserAccessCodes />
 
                 {/* Theme Colors Section */}
                 <div className="mb-8">
