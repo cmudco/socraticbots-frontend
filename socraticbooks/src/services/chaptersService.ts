@@ -46,6 +46,12 @@ interface PublishedStatus {
     is_public: boolean;
 }
 
+interface ProgressTrackerResponse {
+    progress_tracker: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
 export interface ChapterFilesAndTags {
     fileIds: string[];
     tags: string[];
@@ -104,6 +110,7 @@ export const createChapter = async (data: CreateChapterData): Promise<Chapter> =
         throw error;
     }
 };
+
 
 // Update chapter details
 export const updateChapter = async (
@@ -223,6 +230,39 @@ export const updateChapterPublishedStatus = async (
         return response.data;
     } catch (error) {
         console.error('Error updating chapter published status:', error);
+        throw error;
+    }
+};
+
+export const getChapterProgressTracker = async (chapterId: string): Promise<ProgressTrackerResponse> => {
+    try {
+        const response = await axios.get<ProgressTrackerResponse>(
+            `${API_BASE_URL}/api/socratic-books/chapters/${chapterId}/progress-tracker`
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching chapter progress tracker:', error);
+        throw error;
+    }
+};
+
+export const updateChapterProgressTracker = async (
+    chapterId: string,
+    progressTracker: string
+): Promise<ProgressTrackerResponse> => {
+    try {
+        const response = await axios.put<ProgressTrackerResponse>(
+            `${API_BASE_URL}/api/socratic-books/chapters/${chapterId}/progress-tracker`,
+            { progress_tracker: progressTracker },
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error updating chapter progress tracker:', error);
         throw error;
     }
 };

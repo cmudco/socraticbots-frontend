@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Chapter } from '../../services/chaptersService';
+import { Chapter, getChapterFilesAndTags, getChapterProgressTracker, updateChapterProgressTracker } from '../../services/chaptersService';
 import LearningGoals from '../chapter/LearningGoals';
 import Files from '../chapter/Files';
 import Deployment from '../chapter/Deployment';
 import AdvancedSettings from '../chapter/AdvancedSettings';
-import { getChapterFilesAndTags } from '../../services/chaptersService';
 
 interface EditChapterModalProps {
     open: boolean;
@@ -28,6 +27,7 @@ interface AdvancedFields {
     teaching_style: string;
     qa_instructions: string;
     restrictions: string;
+    progress_tracker: string;
 }
 
 const EditChapterModal: React.FC<EditChapterModalProps> = ({
@@ -44,7 +44,8 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
         greeting: '',
         teaching_style: '',
         qa_instructions: '',
-        restrictions: ''
+        restrictions: '',
+        progress_tracker: ''
     });
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -55,14 +56,30 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
             setTitle(chapter.title || '');
             setSubject(chapter.subject || '');
             setTopic(chapter.topic || '');
+            
+            // Load initial advanced fields
             setAdvancedFields({
                 greeting: chapter.greeting || '',
                 teaching_style: chapter.teaching_style || '',
                 qa_instructions: chapter.qa_instructions || '',
-                restrictions: chapter.restrictions || ''
+                restrictions: chapter.restrictions || '',
+                progress_tracker: ''
             });
 
-            // Load existing files and tags
+            // Load progress tracker
+            const loadProgressTracker = async () => {
+                try {
+                    const response = await getChapterProgressTracker(chapter.id);
+                    setAdvancedFields(prev => ({
+                        ...prev,
+                        progress_tracker: response.progress_tracker
+                    }));
+                } catch (error) {
+                    console.error('Error loading progress tracker:', error);
+                }
+            };
+
+            // Load files and tags
             const loadFilesAndTags = async () => {
                 try {
                     const { fileIds, tags } = await getChapterFilesAndTags(chapter.id);
@@ -72,9 +89,32 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                     console.error('Error loading files and tags:', error);
                 }
             };
+
+            loadProgressTracker();
             loadFilesAndTags();
         }
     }, [open, chapter]);
+
+    const handleFieldChange = async (field: string, value: string) => {
+        if (field === 'progress_tracker' && chapter) {
+            try {
+                // Ensure the value is properly sanitized before sending to API
+                const sanitizedValue = value.trim();
+                await updateChapterProgressTracker(chapter.id, sanitizedValue);
+                setAdvancedFields(prev => ({
+                    ...prev,
+                    [field]: sanitizedValue
+                }));
+            } catch (error) {
+                console.error('Error updating progress tracker:', error);
+            }
+        } else {
+            setAdvancedFields(prev => ({
+                ...prev,
+                [field]: value
+            }));
+        }
+    };
 
     if (!open) return null;
 
@@ -159,12 +199,8 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                             {currentTab === 1 && (
                                 <AdvancedSettings
                                     advancedFields={advancedFields}
-                                    onFieldChange={(field, value) => {
-                                        setAdvancedFields(prev => ({
-                                            ...prev,
-                                            [field]: value
-                                        }));
-                                    }}
+                                    onFieldChange={handleFieldChange}
+                                    chapterId={chapter?.id || ''}  // Add this line
                                 />
                             )}
 
