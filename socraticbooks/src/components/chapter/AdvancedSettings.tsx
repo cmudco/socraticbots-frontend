@@ -1,6 +1,4 @@
 import React from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 
 interface AdvancedSettingsProps {
   advancedFields: {
@@ -8,25 +6,16 @@ interface AdvancedSettingsProps {
     teaching_style: string;
     qa_instructions: string;
     restrictions: string;
+    progress_tracker: string;
   };
   onFieldChange: (field: string, value: string) => void;
+  chapterId: string;
 }
-
-const TOOLBAR_OPTIONS = {
-  toolbar: [
-    [{ 'header': [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    [{ 'indent': '-1'}, { 'indent': '+1' }],
-    [{ 'color': [] }, { 'background': [] }],
-    ['link'],
-    ['clean']
-  ]
-};
 
 const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
   advancedFields,
   onFieldChange,
+  chapterId,
 }) => {
   return (
     <div className="space-y-8">
@@ -35,15 +24,11 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Greeting
         </label>
-        <div className="border rounded-lg overflow-hidden">
-          <ReactQuill
-            theme="snow"
-            value={advancedFields.greeting}
-            onChange={(content) => onFieldChange('greeting', content)}
-            modules={TOOLBAR_OPTIONS}
-            className="h-[200px] mb-12" // Extra padding for toolbar
-          />
-        </div>
+        <textarea
+          value={advancedFields.greeting}
+          onChange={(e) => onFieldChange('greeting', e.target.value)}
+          className="w-full p-2 border rounded-lg focus:ring-socratic focus:border-socratic h-[200px]"
+        />
       </div>
 
       {/* Teaching Style */}
@@ -51,15 +36,11 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Teaching Style
         </label>
-        <div className="border rounded-lg overflow-hidden">
-          <ReactQuill
-            theme="snow"
-            value={advancedFields.teaching_style}
-            onChange={(content) => onFieldChange('teaching_style', content)}
-            modules={TOOLBAR_OPTIONS}
-            className="h-[200px] mb-12"
-          />
-        </div>
+        <textarea
+          value={advancedFields.teaching_style}
+          onChange={(e) => onFieldChange('teaching_style', e.target.value)}
+          className="w-full p-2 border rounded-lg focus:ring-socratic focus:border-socratic h-[200px]"
+        />
       </div>
 
       {/* QA Instructions */}
@@ -67,15 +48,11 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           QA Instructions
         </label>
-        <div className="border rounded-lg overflow-hidden">
-          <ReactQuill
-            theme="snow"
-            value={advancedFields.qa_instructions}
-            onChange={(content) => onFieldChange('qa_instructions', content)}
-            modules={TOOLBAR_OPTIONS}
-            className="h-[200px] mb-12"
-          />
-        </div>
+        <textarea
+          value={advancedFields.qa_instructions}
+          onChange={(e) => onFieldChange('qa_instructions', e.target.value)}
+          className="w-full p-2 border rounded-lg focus:ring-socratic focus:border-socratic h-[200px]"
+        />
       </div>
 
       {/* Restrictions */}
@@ -83,15 +60,23 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Restrictions
         </label>
-        <div className="border rounded-lg overflow-hidden">
-          <ReactQuill
-            theme="snow"
-            value={advancedFields.restrictions}
-            onChange={(content) => onFieldChange('restrictions', content)}
-            modules={TOOLBAR_OPTIONS}
-            className="h-[200px] mb-12"
-          />
-        </div>
+        <textarea
+          value={advancedFields.restrictions}
+          onChange={(e) => onFieldChange('restrictions', e.target.value)}
+          className="w-full p-2 border rounded-lg focus:ring-socratic focus:border-socratic h-[200px]"
+        />
+      </div>
+
+      {/* Progress Tracker */}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">
+          Progress Tracker
+        </label>
+        <textarea
+          value={advancedFields.progress_tracker}
+          onChange={(e) => onFieldChange('progress_tracker', e.target.value)}
+          className="w-full p-2 border rounded-lg focus:ring-socratic focus:border-socratic h-[200px]"
+        />
       </div>
     </div>
   );
