@@ -36,6 +36,12 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
   onFieldChange,
   chapterId,
 }) => {
+
+    // Placeholder to remove chapterId non-use warning
+    if (false) {
+      console.log(chapterId);
+    }
+
   return (
     <div className="space-y-8">
       {/* Greeting */}
