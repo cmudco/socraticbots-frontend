@@ -1,74 +1,10 @@
-// src/components/modals/EditChapterModal.tsx
 import React, { useState, useEffect } from 'react';
 import { Chapter } from '../../services/chaptersService';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
 import LearningGoals from '../chapter/LearningGoals';
 import Files from '../chapter/Files';
 import Deployment from '../chapter/Deployment';
+import AdvancedSettings from '../chapter/AdvancedSettings';
 import { getChapterFilesAndTags } from '../../services/chaptersService';
-
-
-const MenuBar = ({ editor }: { editor: any }) => {
-    if (!editor) {
-        return null;
-    }
-
-    return (
-        <div className="border-b p-2 space-x-2">
-            <button
-                type="button"
-                onClick={(e) => {
-                    e.preventDefault();
-                    editor.chain().focus().toggleBold().run();
-                }}
-                className={`px-2 py-1 rounded ${editor.isActive('bold') ? 'bg-gray-200' : ''}`}
-            >
-                Bold
-            </button>
-            <button
-                type="button"
-                onClick={(e) => {
-                    e.preventDefault();
-                    editor.chain().focus().toggleItalic().run();
-                }}
-                className={`px-2 py-1 rounded ${editor.isActive('italic') ? 'bg-gray-200' : ''}`}
-            >
-                Italic
-            </button>
-            <button
-                type="button"
-                onClick={(e) => {
-                    e.preventDefault();
-                    editor.chain().focus().toggleStrike().run();
-                }}
-                className={`px-2 py-1 rounded ${editor.isActive('strike') ? 'bg-gray-200' : ''}`}
-            >
-                Strike
-            </button>
-            <button
-                type="button"
-                onClick={(e) => {
-                    e.preventDefault();
-                    editor.chain().focus().toggleBulletList().run();
-                }}
-                className={`px-2 py-1 rounded ${editor.isActive('bulletList') ? 'bg-gray-200' : ''}`}
-            >
-                Bullet List
-            </button>
-            <button
-                type="button"
-                onClick={(e) => {
-                    e.preventDefault();
-                    editor.chain().focus().toggleOrderedList().run();
-                }}
-                className={`px-2 py-1 rounded ${editor.isActive('orderedList') ? 'bg-gray-200' : ''}`}
-            >
-                Ordered List
-            </button>
-        </div>
-    );
-};
 
 interface EditChapterModalProps {
     open: boolean;
@@ -82,12 +18,10 @@ interface EditChapterModalProps {
         teaching_style?: string;
         qa_instructions?: string;
         restrictions?: string;
-        selectedFiles: string[];  // Add this
-        selectedTags: string[];   // Add this
+        selectedFiles: string[];
+        selectedTags: string[];
     }) => void;
 }
-
-type AdvancedField = 'greeting' | 'teaching_style' | 'qa_instructions' | 'restrictions';
 
 interface AdvancedFields {
     greeting: string;
@@ -106,7 +40,6 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
     const [subject, setSubject] = useState('');
     const [topic, setTopic] = useState('');
     const [currentTab, setCurrentTab] = useState(0);
-    const [selectedAdvancedField, setSelectedAdvancedField] = useState<AdvancedField>('greeting');
     const [advancedFields, setAdvancedFields] = useState<AdvancedFields>({
         greeting: '',
         teaching_style: '',
@@ -116,25 +49,19 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-    const editor = useEditor({
-        extensions: [
-            StarterKit,
-        ],
-        content: '',
-        editable: true,
-        onUpdate: ({ editor }) => {
-            handleAdvancedValueChange(editor.getHTML());
-        },
-        editorProps: {
-            attributes: {
-                class: 'min-h-[200px] focus:outline-none prose prose-sm sm:prose lg:prose-lg xl:prose-xl p-4',
-            },
-        },
-    });
-
     // Reset selections when modal opens/closes
     useEffect(() => {
         if (open && chapter) {
+            setTitle(chapter.title || '');
+            setSubject(chapter.subject || '');
+            setTopic(chapter.topic || '');
+            setAdvancedFields({
+                greeting: chapter.greeting || '',
+                teaching_style: chapter.teaching_style || '',
+                qa_instructions: chapter.qa_instructions || '',
+                restrictions: chapter.restrictions || ''
+            });
+
             // Load existing files and tags
             const loadFilesAndTags = async () => {
                 try {
@@ -143,43 +70,11 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                     setSelectedTags(tags);
                 } catch (error) {
                     console.error('Error loading files and tags:', error);
-                    // Optionally set some error state
                 }
             };
-            
             loadFilesAndTags();
         }
     }, [open, chapter]);
-    
-    useEffect(() => {
-        if (editor && advancedFields[selectedAdvancedField]) {
-            editor.commands.setContent(advancedFields[selectedAdvancedField]);
-        }
-    }, [selectedAdvancedField, editor]);
-
-    useEffect(() => {
-        if (chapter && editor) {
-            setTitle(chapter.title || '');
-            setSubject(chapter.subject || '');
-            setTopic(chapter.topic || '');
-            const newAdvancedFields = {
-                greeting: chapter.greeting || '',
-                teaching_style: chapter.teaching_style || '',
-                qa_instructions: chapter.qa_instructions || '',
-                restrictions: chapter.restrictions || ''
-            };
-            setAdvancedFields(newAdvancedFields);
-            editor.commands.setContent(newAdvancedFields[selectedAdvancedField]);
-        }
-    }, [chapter, editor]);
-
-    const handleAdvancedValueChange = (value: string) => {
-        setAdvancedFields(prev => ({
-            ...prev,
-            [selectedAdvancedField]: value
-        }));
-    };
-    
 
     if (!open) return null;
 
@@ -194,8 +89,8 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                             subject,
                             topic,
                             ...advancedFields,
-                            selectedFiles,  // Include selected files in submission
-                            selectedTags,   // Include selected tags in submission
+                            selectedFiles,
+                            selectedTags,
                         });
                     }
                 }}>
@@ -262,29 +157,15 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                             )}
 
                             {currentTab === 1 && (
-                                <div className="space-y-4">
-                                    <select
-                                        value={selectedAdvancedField}
-                                        onChange={(e) => {
-                                            setSelectedAdvancedField(e.target.value as AdvancedField);
-                                            if (editor) {
-                                                editor.commands.setContent(advancedFields[e.target.value as AdvancedField]);
-                                            }
-                                        }}
-                                        className="w-full p-2 border rounded mb-4 focus:ring-socratic focus:border-socratic"
-                                    >
-                                        <option value="greeting">Greeting</option>
-                                        <option value="teaching_style">Teaching Style</option>
-                                        <option value="qa_instructions">QA Instructions</option>
-                                        <option value="restrictions">Restrictions</option>
-                                    </select>
-                                    <div className="border rounded-lg overflow-hidden bg-white">
-                                        <MenuBar editor={editor} />
-                                        <div className="border-t">
-                                            <EditorContent editor={editor} className="prose max-w-none" />
-                                        </div>
-                                    </div>
-                                </div>
+                                <AdvancedSettings
+                                    advancedFields={advancedFields}
+                                    onFieldChange={(field, value) => {
+                                        setAdvancedFields(prev => ({
+                                            ...prev,
+                                            [field]: value
+                                        }));
+                                    }}
+                                />
                             )}
 
                             {currentTab === 2 && (
@@ -304,7 +185,6 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                             {currentTab === 4 && (
                                 <Deployment chapterId={chapter?.id || ''} />
                             )}
-
                         </div>
                     </div>
 
