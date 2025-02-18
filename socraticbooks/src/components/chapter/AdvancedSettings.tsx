@@ -1,4 +1,5 @@
 import React from 'react';
+import { Editor } from '@tinymce/tinymce-react';
 
 interface AdvancedSettingsProps {
   advancedFields: {
@@ -12,6 +13,24 @@ interface AdvancedSettingsProps {
   chapterId: string;
 }
 
+// Place API key here
+const TINY_MCE_KEY = '3dorlo24gifjzu0ggckuuopsfagwx41i2vac1ox51mcebq87';
+
+// Common editor settings
+const EDITOR_CONFIG = {
+  height: 200,
+  menubar: false,
+  plugins: [
+    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+  ],
+  toolbar: 'undo redo | formatselect | ' +
+    'bold italic backcolor | alignleft aligncenter ' +
+    'alignright alignjustify | bullist numlist outdent indent | ' +
+    'removeformat | help',
+};
+
 const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
   advancedFields,
   onFieldChange,
@@ -24,10 +43,11 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Greeting
         </label>
-        <textarea
+        <Editor
+          apiKey={TINY_MCE_KEY}
           value={advancedFields.greeting}
-          onChange={(e) => onFieldChange('greeting', e.target.value)}
-          className="w-full p-2 border rounded-lg focus:ring-socratic focus:border-socratic h-[200px]"
+          onEditorChange={(content) => onFieldChange('greeting', content)}
+          init={EDITOR_CONFIG}
         />
       </div>
 
@@ -36,10 +56,11 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Teaching Style
         </label>
-        <textarea
+        <Editor
+          apiKey={TINY_MCE_KEY}
           value={advancedFields.teaching_style}
-          onChange={(e) => onFieldChange('teaching_style', e.target.value)}
-          className="w-full p-2 border rounded-lg focus:ring-socratic focus:border-socratic h-[200px]"
+          onEditorChange={(content) => onFieldChange('teaching_style', content)}
+          init={EDITOR_CONFIG}
         />
       </div>
 
@@ -48,10 +69,11 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           QA Instructions
         </label>
-        <textarea
+        <Editor
+          apiKey={TINY_MCE_KEY}
           value={advancedFields.qa_instructions}
-          onChange={(e) => onFieldChange('qa_instructions', e.target.value)}
-          className="w-full p-2 border rounded-lg focus:ring-socratic focus:border-socratic h-[200px]"
+          onEditorChange={(content) => onFieldChange('qa_instructions', content)}
+          init={EDITOR_CONFIG}
         />
       </div>
 
@@ -60,10 +82,11 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Restrictions
         </label>
-        <textarea
+        <Editor
+          apiKey={TINY_MCE_KEY}
           value={advancedFields.restrictions}
-          onChange={(e) => onFieldChange('restrictions', e.target.value)}
-          className="w-full p-2 border rounded-lg focus:ring-socratic focus:border-socratic h-[200px]"
+          onEditorChange={(content) => onFieldChange('restrictions', content)}
+          init={EDITOR_CONFIG}
         />
       </div>
 
@@ -72,10 +95,11 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
         <label className="block text-sm font-medium text-gray-700">
           Progress Tracker
         </label>
-        <textarea
+        <Editor
+          apiKey={TINY_MCE_KEY}
           value={advancedFields.progress_tracker}
-          onChange={(e) => onFieldChange('progress_tracker', e.target.value)}
-          className="w-full p-2 border rounded-lg focus:ring-socratic focus:border-socratic h-[200px]"
+          onEditorChange={(content) => onFieldChange('progress_tracker', content)}
+          init={EDITOR_CONFIG}
         />
       </div>
     </div>
