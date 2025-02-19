@@ -1,4 +1,4 @@
-// src/components/chat/MessageInput.tsx
+// src/components/chat/ClassicMessageInput.tsx
 import React from 'react';
 
 interface MessageInputProps {
@@ -7,7 +7,7 @@ interface MessageInputProps {
     onGenerateStudyGuide?: () => void;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({
+const ClassicMessageInput: React.FC<MessageInputProps> = ({
     onSendMessage,
     onSave,
     onGenerateStudyGuide
@@ -28,26 +28,48 @@ const MessageInput: React.FC<MessageInputProps> = ({
         }
     };
 
+    const handlePromptButton = (promptType: string) => {
+        const prompts = {
+            'Learning Goals': 'What are the key learning goals for this topic?',
+            'Guiding Questions': 'What are some guiding questions to understand this topic better?',
+            'Examples': 'Can you provide some examples to illustrate this concept?',
+            'Mastery Assessment': 'How can I assess my mastery of this topic?'
+        };
+        setMessage(prompts[promptType as keyof typeof prompts]);
+    };
+
     return (
         <div className="sticky bottom-0 border-t bg-white p-4">
             <div className="flex space-x-2 mb-2">
-                <button 
-                    onClick={onSave}
-                    className="px-3 py-1 text-sm bg-gray-100 text-socratic-font-dark rounded-full hover:bg-gray-200 transition-colors"
-                    title="Save for later"
+                <button
+                    onClick={() => handlePromptButton('Learning Goals')}
+                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-blue-100 transition-colors"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                    </svg>
+                    Learning Goals
                 </button>
-                <button 
-                    onClick={onGenerateStudyGuide}
-                    className="px-3 py-1 text-sm bg-gray-100 text-socratic-font-dark rounded-full hover:bg-gray-200 transition-colors"
-                    title="Generate Study Guide"
+                <button
+                    onClick={() => handlePromptButton('Guiding Questions')}
+                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-green-100 transition-colors"
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
+                    Guiding Questions
+                </button>
+                <button
+                    onClick={() => handlePromptButton('Examples')}
+                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-purple-100 transition-colors"
+                >
+                    Examples
+                </button>
+                <button
+                    onClick={() => handlePromptButton('Mastery Assessment')}
+                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-orange-100 transition-colors"
+                >
+                    Mastery Assessment
+                </button>
+                <button
+                    onClick={() => console.log('Clear chat - to be implemented')}
+                    className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-100 transition-colors"
+                >
+                    Clear Chat
                 </button>
             </div>
             <div className="flex items-center space-x-2">
@@ -77,4 +99,4 @@ const MessageInput: React.FC<MessageInputProps> = ({
     );
 };
 
-export default MessageInput;
+export default ClassicMessageInput;
