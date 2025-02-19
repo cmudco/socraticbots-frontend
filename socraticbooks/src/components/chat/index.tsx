@@ -64,8 +64,8 @@ const Chat: React.FC = () => {
     }, [chapters, selectedChapter]);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-3.5rem-32px)]"> {/* Match sidebar height and account for padding */}
-            <div className="flex-none">
+        <div className="h-[calc(100vh-3.5rem)] w-full"> {/* Changed to full width, adjusted height */}
+            <div className="w-full">
                 <ChapterSelector
                     chapters={chapters}
                     selectedChapterId={selectedChapter?.id}
@@ -76,7 +76,7 @@ const Chat: React.FC = () => {
                 />
             </div>
             
-            <div className="flex-1 overflow-hidden">
+            <div className="h-[calc(100%-56px)]"> {/* Adjust based on your ChapterSelector height */}
                 {selectedChapter ? (
                     interfaceType === 'classic' ? (
                         <ClassicInterface chapter={selectedChapter} />
