@@ -22,7 +22,7 @@ const AuthenticatedApp = () => {
             <Header />
             <Sidebar />
             
-            <main className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'} pt-14`}> 
+            <main className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'} pt-14 pl-5`}> 
                 <div className=""> 
                     <Routes>
                         {NAVIGATION_ITEMS
