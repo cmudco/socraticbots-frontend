@@ -4,9 +4,10 @@ interface SidebarButtonProps {
     to: string;
     label: string;
     isActive: boolean;
+    isCollapsed: boolean;
 }
 
-const SidebarButton = ({ to, label, isActive }: SidebarButtonProps) => {
+const SidebarButton = ({ to, label, isActive, isCollapsed }: SidebarButtonProps) => {
     return (
         <Link 
             to={to}
@@ -14,10 +15,12 @@ const SidebarButton = ({ to, label, isActive }: SidebarButtonProps) => {
                 ${isActive 
                     ? 'bg-socratic text-socratic-font-light' 
                     : 'text-gray-700 hover:bg-socratic-light hover:text-socratic-font-light'
-                }`
-            }
+                }
+                ${isCollapsed ? 'text-center overflow-hidden' : ''}
+            `}
+            title={isCollapsed ? label : ''}
         >
-            {label}
+            {isCollapsed ? label.charAt(0) : label}
         </Link>
     );
 };

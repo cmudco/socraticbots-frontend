@@ -11,6 +11,36 @@ import { NAVIGATION_ITEMS } from './types/navigation';
 import Settings from './components/screens/Settings';
 import AccessCodes from './components/screens/AccessCodes';
 import ThemeProvider from './providers/ThemeProvider';
+import { SidebarProvider, useSidebar } from './contexts/SidebarContext';
+
+// Create a wrapper component for the authenticated content
+const AuthenticatedApp = () => {
+    const { isCollapsed } = useSidebar();
+
+    return (
+        <div className="min-h-screen bg-gray-100">
+            <Header />
+            <Sidebar />
+            
+            <main className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'} pt-14`}> 
+                <div className="p-4"> 
+                    <Routes>
+                        {NAVIGATION_ITEMS
+                            .filter(item => item.requiresAuth)
+                            .map(item => (
+                                <Route 
+                                    key={item.path} 
+                                    path={item.path} 
+                                    element={getComponent(item.path)} 
+                                />
+                            ))}
+                        <Route path="*" element={<Navigate to="/" />} />
+                    </Routes>
+                </div>
+            </main>
+        </div>
+    );
+};
 
 function App() {
     const user = useAuthContext();
@@ -36,29 +66,11 @@ function App() {
 
     return (
         <ThemeProvider>
-        <BrowserRouter>
-            <div className="min-h-screen bg-gray-100">
-                <Header />
-                <Sidebar />
-                
-                <main className="ml-64 pt-14"> 
-                    <div className="p-4"> 
-                        <Routes>
-                            {NAVIGATION_ITEMS
-                                .filter(item => item.requiresAuth)
-                                .map(item => (
-                                    <Route 
-                                        key={item.path} 
-                                        path={item.path} 
-                                        element={getComponent(item.path)} 
-                                    />
-                                ))}
-                            <Route path="*" element={<Navigate to="/" />} />
-                        </Routes>
-                    </div>
-                </main>
-            </div>
-        </BrowserRouter>
+            <SidebarProvider>
+                <BrowserRouter>
+                    <AuthenticatedApp />
+                </BrowserRouter>
+            </SidebarProvider>
         </ThemeProvider>
     );
 }
