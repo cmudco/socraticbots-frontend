@@ -15,19 +15,23 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter }) => {
 
     useEffect(() => {
         if (chapter.greeting) {
+            // Check if the greeting already contains HTML tags
+            const greetingContent = chapter.greeting.startsWith('<') 
+                ? chapter.greeting  // If it starts with '<', assume it's already HTML
+                : `<p>${chapter.greeting}</p>`; // If not, wrap it in p tags
+    
             const greetingMessage: Message = {
                 id: 'greeting',
-                content: chapter.greeting,
+                content: greetingContent,
                 type: 'system',
                 timestamp: new Date()
             };
             setMessages([greetingMessage]);
-            console.log("Messages set to:", [greetingMessage]);
         }
     }, [chapter]);
 
     const handleSendMessage = async (messageText: string) => {
-        // Create and add user message
+        // Create and add user message - keeping it as plain text
         const userMessage: Message = {
             id: Date.now().toString(),
             content: messageText,
@@ -44,7 +48,7 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter }) => {
         setTimeout(() => {
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
-                content: `<p>I received your message: "${messageText}". This is a temporary response.</p>`,
+                content: `<p>I received your message: "<strong>${messageText}</strong>". This is a temporary response.</p>`,
                 type: 'ai',
                 timestamp: new Date()
             };
