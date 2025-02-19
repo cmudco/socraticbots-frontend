@@ -13,14 +13,14 @@ const ClassicInterface: React.FC<ClassicInterfaceProps> = ({ chapter }) => {
     console.log('ClassicInterface', chapter);
 
     return (
-        <div className="flex-1 flex min-h-0">
-            <div className="w-64 flex-shrink-0"> {/* Fixed width for left sidebar */}
+        <div className="h-full flex">
+            <div className="w-64 flex-none"> {/* Changed to flex-none */}
                 <LeftSidebar chapter={chapter} />
             </div>
-            <div className="flex-1 min-w-0"> {/* Chat area with min-w-0 to prevent overflow */}
+            <div className="flex-1 min-w-0"> {/* Keep this as is */}
                 <ClassicChat chapter={chapter} />
             </div>
-            <div className="w-80 flex-shrink-0"> {/* Fixed width for notes */}
+            <div className="w-80 flex-none"> {/* Changed to flex-none */}
                 <NoteSidebar />
             </div>
         </div>

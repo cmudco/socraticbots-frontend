@@ -23,7 +23,7 @@ const AuthenticatedApp = () => {
             <Sidebar />
             
             <main className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'} pt-14`}> 
-                <div className="p-4"> 
+                <div className=""> 
                     <Routes>
                         {NAVIGATION_ITEMS
                             .filter(item => item.requiresAuth)

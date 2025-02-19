@@ -64,27 +64,31 @@ const Chat: React.FC = () => {
     }, [chapters, selectedChapter]);
 
     return (
-        <div className="h-screen flex flex-col">
-            <ChapterSelector
-                chapters={chapters}
-                selectedChapterId={selectedChapter?.id}
-                onChapterSelect={handleChapterSelect} // Use the new handler
-                isLoading={isLoading}
-                interfaceType={interfaceType}
-                onInterfaceToggle={setInterfaceType}
-            />
+        <div className="flex flex-col h-[calc(100vh-80px)]"> {/* Adjust for header + padding */}
+            <div className="flex-none"> {/* Keep selector from scrolling */}
+                <ChapterSelector
+                    chapters={chapters}
+                    selectedChapterId={selectedChapter?.id}
+                    onChapterSelect={handleChapterSelect}
+                    isLoading={isLoading}
+                    interfaceType={interfaceType}
+                    onInterfaceToggle={setInterfaceType}
+                />
+            </div>
             
-            {selectedChapter ? (
-                interfaceType === 'classic' ? (
-                    <ClassicInterface chapter={selectedChapter} />
+            <div className="flex-1 overflow-hidden"> {/* Container for chat interface */}
+                {selectedChapter ? (
+                    interfaceType === 'classic' ? (
+                        <ClassicInterface chapter={selectedChapter} />
+                    ) : (
+                        <NewInterface chapter={selectedChapter} />
+                    )
                 ) : (
-                    <NewInterface chapter={selectedChapter} />
-                )
-            ) : (
-                <div className="flex-1 flex items-center justify-center text-gray-500">
-                    Select a chapter to start chatting
-                </div>
-            )}
+                    <div className="flex-1 flex items-center justify-center text-gray-500">
+                        Select a chapter to start chatting
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
