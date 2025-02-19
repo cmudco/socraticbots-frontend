@@ -9,11 +9,20 @@ interface ClassicInterfaceProps {
 }
 
 const ClassicInterface: React.FC<ClassicInterfaceProps> = ({ chapter }) => {
+
+    console.log('ClassicInterface', chapter);
+
     return (
         <div className="flex-1 flex min-h-0">
-            <LeftSidebar chapter={chapter} />
-            <ClassicChat chapter={chapter} />
-            <NoteSidebar />
+            <div className="w-64 flex-shrink-0"> {/* Fixed width for left sidebar */}
+                <LeftSidebar chapter={chapter} />
+            </div>
+            <div className="flex-1 min-w-0"> {/* Chat area with min-w-0 to prevent overflow */}
+                <ClassicChat chapter={chapter} />
+            </div>
+            <div className="w-80 flex-shrink-0"> {/* Fixed width for notes */}
+                <NoteSidebar />
+            </div>
         </div>
     );
 };
