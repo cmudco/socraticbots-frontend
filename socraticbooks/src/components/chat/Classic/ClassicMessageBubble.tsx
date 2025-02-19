@@ -10,10 +10,22 @@ interface ClassicMessageBubbleProps {
 const ClassicMessageBubble: React.FC<ClassicMessageBubbleProps> = ({ message }) => {
     const isSystem = message.type === 'system' || message.type === 'ai';
 
-    const sanitizedContent = DOMPurify.sanitize(message.content, {
-        ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br'],
-        ALLOWED_ATTR: ['href', 'target']
-    });
+    // Sanitize and format content based on message type
+    const getFormattedContent = () => {
+        // Always sanitize, but handle formatting differently based on type
+        if (message.type === 'user') {
+            // Just sanitize the plain text, no wrapping needed
+            return DOMPurify.sanitize(message.content, {
+                ALLOWED_TAGS: [] // Strip all HTML tags for user messages
+            });
+        }
+        
+        // For system/AI messages, allow more HTML tags
+        return DOMPurify.sanitize(message.content, {
+            ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br'],
+            ALLOWED_ATTR: ['href', 'target']
+        });
+    };
 
     return (
         <div className={`flex ${isSystem ? 'justify-start' : 'justify-end'} mb-4 w-full`}>
@@ -45,6 +57,7 @@ const ClassicMessageBubble: React.FC<ClassicMessageBubbleProps> = ({ message }) 
                             shadow-sm
                             border border-gray-200
                             relative
+                            prose prose-sm max-w-none
                             before:content-['']
                             before:absolute
                             before:left-[-8px]
@@ -59,7 +72,7 @@ const ClassicMessageBubble: React.FC<ClassicMessageBubbleProps> = ({ message }) 
                             before:rotate-45
                             before:-z-10
                         `}>
-                            <div dangerouslySetInnerHTML={{ __html: message.content }} />
+                            <div dangerouslySetInnerHTML={{ __html: getFormattedContent() }} />
                         </div>
                     </div>
                 </div>
@@ -77,6 +90,7 @@ const ClassicMessageBubble: React.FC<ClassicMessageBubbleProps> = ({ message }) 
                         break-words
                         shadow-sm
                         relative
+                        prose prose-sm prose-invert max-w-none
                         before:content-['']
                         before:absolute
                         before:right-[-8px]
@@ -88,7 +102,7 @@ const ClassicMessageBubble: React.FC<ClassicMessageBubbleProps> = ({ message }) 
                         before:rotate-45
                         before:-z-10
                     `}>
-                        <div dangerouslySetInnerHTML={{ __html: message.content }} />
+                        <div dangerouslySetInnerHTML={{ __html: getFormattedContent() }} />
                     </div>
                 </div>
             )}
