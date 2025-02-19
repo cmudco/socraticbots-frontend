@@ -11,6 +11,7 @@ interface ClassicChatProps {
 
 const ClassicChat: React.FC<ClassicChatProps> = ({ chapter }) => {
     const [messages, setMessages] = useState<Message[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (chapter.greeting) {
@@ -25,9 +26,32 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter }) => {
         }
     }, [chapter]);
 
-    const handleSendMessage = (message: string) => {
-        // Will implement later
-        console.log('Sending message:', message);
+    const handleSendMessage = async (messageText: string) => {
+        // Create and add user message
+        const userMessage: Message = {
+            id: Date.now().toString(),
+            content: messageText,
+            type: 'user',
+            timestamp: new Date()
+        };
+        
+        setMessages(prevMessages => [...prevMessages, userMessage]);
+
+        // Simulate AI thinking
+        setIsLoading(true);
+
+        // TODO: Replace this with actual API call
+        setTimeout(() => {
+            const aiMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                content: `<p>I received your message: "${messageText}". This is a temporary response.</p>`,
+                type: 'ai',
+                timestamp: new Date()
+            };
+            
+            setMessages(prevMessages => [...prevMessages, aiMessage]);
+            setIsLoading(false);
+        }, 1000);
     };
 
     const handleSave = () => {
@@ -41,12 +65,24 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter }) => {
     };
 
     return (
-        <div className="flex-1 flex flex-col h-full min-w-0"> {/* Added min-w-0 */}
+        <div className="flex-1 flex flex-col h-full min-w-0">
             <div className="flex-1 overflow-y-auto">
                 <div className="p-4 space-y-4">
                     {messages.map((message) => (
                         <ClassicMessageBubble key={message.id} message={message} />
                     ))}
+                    {isLoading && (
+                        <div className="flex justify-start mb-4 w-full">
+                            <div className="flex items-center space-x-2 max-w-[80%]">
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-socratic flex items-center justify-center">
+                                    <div className="w-5 h-5 bg-white/30 rounded-full animate-pulse" />
+                                </div>
+                                <div className="bg-gray-100 rounded-2xl px-4 py-2">
+                                    <div className="w-8 h-4 bg-gray-200 rounded animate-pulse" />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             
