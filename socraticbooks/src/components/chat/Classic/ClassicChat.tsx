@@ -1,5 +1,5 @@
 // src/components/chat/Classic/ClassicChat.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Chapter } from '../../../services/chatService';
 import MessageInput from './ClassicMessageInput';
 import ClassicMessageBubble from './ClassicMessageBubble';
@@ -12,6 +12,7 @@ interface ClassicChatProps {
 const ClassicChat: React.FC<ClassicChatProps> = ({ chapter }) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (chapter.greeting) {
@@ -29,6 +30,10 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter }) => {
             setMessages([greetingMessage]);
         }
     }, [chapter]);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const handleSendMessage = async (messageText: string) => {
         // Create and add user message - keeping it as plain text
@@ -68,6 +73,11 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter }) => {
         console.log('Generating study guide...');
     };
 
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+
     return (
         <div className="flex-1 flex flex-col h-full min-w-0">
             <div className="flex-1 overflow-y-auto">
@@ -87,6 +97,7 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter }) => {
                             </div>
                         </div>
                     )}
+                    <div ref={messagesEndRef} />
                 </div>
             </div>
             
