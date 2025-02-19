@@ -1,12 +1,12 @@
 import React from 'react';
-import { Chapter } from '../../services/chatService';
-import MessageInput from './MessageInput';
+import { Chapter } from '../../../services/chatService';
+import MessageInput from './ClassicMessageInput';
 
-interface MainChatProps {
+interface ClassicChatProps {
     chapter: Chapter;
 }
 
-const MainChat: React.FC<MainChatProps> = ({ chapter }) => {
+const ClassicChat: React.FC<ClassicChatProps> = ({ chapter }) => {
     const handleSendMessage = (message: string) => {
         // Will implement later
         console.log('Sending message:', message);
@@ -40,4 +40,4 @@ const MainChat: React.FC<MainChatProps> = ({ chapter }) => {
     );
 };
 
-export default MainChat;
+export default ClassicChat;

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import ChapterSelector from './ChapterSelector';
-import ClassicInterface from './ClassicInterface';
-import NewInterface from './NewInterface';
+import ClassicInterface from './Classic/ClassicInterface';
+import NewInterface from './New/NewInterface';
 import { Chapter, getAvailableChapters } from '../../services/chatService';
 
 type InterfaceType = 'classic' | 'new';

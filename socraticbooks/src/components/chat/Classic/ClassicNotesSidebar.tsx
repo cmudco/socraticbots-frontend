@@ -1,6 +1,6 @@
 import React from 'react';
 
-const NoteSidebar: React.FC = () => {
+const ClassicNotesSidebar: React.FC = () => {
     return (
         <div className="w-64 border-r bg-white h-full overflow-y-auto">
             <div className="p-4">
@@ -11,4 +11,4 @@ const NoteSidebar: React.FC = () => {
     );
 };
 
-export default NoteSidebar;
+export default ClassicNotesSidebar;
