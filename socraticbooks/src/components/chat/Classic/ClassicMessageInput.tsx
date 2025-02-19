@@ -30,10 +30,10 @@ const ClassicMessageInput: React.FC<MessageInputProps> = ({
 
     const handlePromptButton = (promptType: string) => {
         const prompts = {
-            'Learning Goals': 'What are the key learning goals for this topic?',
-            'Guiding Questions': 'What are some guiding questions to understand this topic better?',
-            'Examples': 'Can you provide some examples to illustrate this concept?',
-            'Mastery Assessment': 'How can I assess my mastery of this topic?'
+            'Learning Goals': 'What are the learning goals?',
+            'Guiding Questions': 'Can you give me some guiding questions?',
+            'Examples': 'Can you give me some examples on this topic?',
+            'Mastery Assessment': 'Can you give me the mastery assessment questions for this learning goal?'
         };
         setMessage(prompts[promptType as keyof typeof prompts]);
     };
@@ -43,31 +43,31 @@ const ClassicMessageInput: React.FC<MessageInputProps> = ({
             <div className="flex space-x-2 mb-2">
                 <button
                     onClick={() => handlePromptButton('Learning Goals')}
-                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-blue-100 transition-colors"
+                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-socratic-light transition-colors"
                 >
                     Learning Goals
                 </button>
                 <button
                     onClick={() => handlePromptButton('Guiding Questions')}
-                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-green-100 transition-colors"
+                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-socratic-light transition-colors"
                 >
                     Guiding Questions
                 </button>
                 <button
                     onClick={() => handlePromptButton('Examples')}
-                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-purple-100 transition-colors"
+                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-socratic-light transition-colors"
                 >
                     Examples
                 </button>
                 <button
                     onClick={() => handlePromptButton('Mastery Assessment')}
-                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-orange-100 transition-colors"
+                    className="px-3 py-1 text-sm bg-socratic text-socratic-font-light rounded-md hover:bg-socratic-light transition-colors"
                 >
                     Mastery Assessment
                 </button>
                 <button
                     onClick={() => console.log('Clear chat - to be implemented')}
-                    className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-100 transition-colors"
+                    className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-300 transition-colors"
                 >
                     Clear Chat
                 </button>
