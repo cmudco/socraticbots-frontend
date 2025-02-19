@@ -6,13 +6,17 @@ interface ChapterSelectorProps {
     selectedChapterId?: string;
     onChapterSelect: (chapter: Chapter) => void;
     isLoading: boolean;
+    interfaceType: 'classic' | 'new';
+    onInterfaceToggle: (type: 'classic' | 'new') => void;
 }
 
 const ChapterSelector: React.FC<ChapterSelectorProps> = ({
     chapters,
     selectedChapterId,
     onChapterSelect,
-    isLoading
+    isLoading,
+    interfaceType,
+    onInterfaceToggle
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const selectedChapter = chapters.find(c => c.id === selectedChapterId);
@@ -21,27 +25,57 @@ const ChapterSelector: React.FC<ChapterSelectorProps> = ({
         <div className="relative border-b bg-white">
             {/* Compact Header */}
             <div className="h-12 px-4 flex items-center justify-between">
-                <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center space-x-2 hover:bg-gray-50 rounded px-2 py-1"
-                >
-                    <span className="font-medium">
-                        {selectedChapter ? selectedChapter.title : 'Select Chapter'}
-                    </span>
-                    <svg 
-                        className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
+                <div className="flex items-center space-x-4">
+                    {/* Interface Toggle */}
+                    <div className="flex items-center rounded-md bg-gray-100 p-0.5">
+                        <button
+                            onClick={() => onInterfaceToggle('classic')}
+                            className={`px-3 py-1 rounded-md text-sm transition-colors
+                                ${interfaceType === 'classic' 
+                                    ? 'bg-white text-socratic shadow-sm' 
+                                    : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                        >
+                            Classic
+                        </button>
+                        <button
+                            onClick={() => onInterfaceToggle('new')}
+                            className={`px-3 py-1 rounded-md text-sm transition-colors
+                                ${interfaceType === 'new' 
+                                    ? 'bg-white text-socratic shadow-sm' 
+                                    : 'text-gray-600 hover:text-gray-900'
+                                }`}
+                        >
+                            New
+                        </button>
+                    </div>
+
+                    {/* Chapter Selector Button */}
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        className="flex items-center space-x-2 hover:bg-gray-50 rounded px-2 py-1"
                     >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                </button>
-                {selectedChapter?.is_owner && (
-                    <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded">
-                        Owner
-                    </span>
-                )}
+                        <span className="font-medium">
+                            {selectedChapter ? selectedChapter.title : 'Select Chapter'}
+                        </span>
+                        <svg 
+                            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                    {selectedChapter?.is_owner && (
+                        <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded">
+                            Owner
+                        </span>
+                    )}
+                </div>
             </div>
 
             {/* Dropdown Content */}
