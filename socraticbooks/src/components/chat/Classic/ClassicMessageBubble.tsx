@@ -1,6 +1,7 @@
 // src/components/chat/Classic/ClassicMessageBubble.tsx
 import React from 'react';
 import { Message } from '../../../types/chat';
+import DOMPurify from 'dompurify';
 
 interface ClassicMessageBubbleProps {
     message: Message;
@@ -8,6 +9,11 @@ interface ClassicMessageBubbleProps {
 
 const ClassicMessageBubble: React.FC<ClassicMessageBubbleProps> = ({ message }) => {
     const isSystem = message.type === 'system' || message.type === 'ai';
+
+    const sanitizedContent = DOMPurify.sanitize(message.content, {
+        ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br'],
+        ALLOWED_ATTR: ['href', 'target']
+    });
 
     return (
         <div className={`flex ${isSystem ? 'justify-start' : 'justify-end'} mb-4 w-full`}>
