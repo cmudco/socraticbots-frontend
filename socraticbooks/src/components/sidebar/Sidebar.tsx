@@ -1,17 +1,19 @@
+// src/components/sidebar/Sidebar.tsx
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { getUserAffiliation } from '../../services/user';
 import SidebarButton from './SidebarButton';
 import { NAVIGATION_ITEMS } from '../../types/navigation';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'; // You'll need to install react-icons
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { useSidebar } from '../../contexts/SidebarContext';
 
 const Sidebar = () => {
     const user = useAuthContext();
     const [affiliation, setAffiliation] = useState<string | null>(null);
     const location = useLocation();
     const [isLoading, setIsLoading] = useState(true);
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const { isCollapsed, setIsCollapsed } = useSidebar();
 
     useEffect(() => {
         if (user) {
@@ -41,7 +43,7 @@ const Sidebar = () => {
                 {isCollapsed ? <FaChevronRight size={12} /> : <FaChevronLeft size={12} />}
             </button>
 
-            <div className="flex flex-col h-full p-4">
+            <div className={`flex flex-col h-full ${isCollapsed ? 'p-2' : 'p-4'}`}>
                 {/* Main navigation items */}
                 <div className="flex-grow space-y-2">
                     {NAVIGATION_ITEMS
@@ -55,6 +57,7 @@ const Sidebar = () => {
                                 key={item.path}
                                 to={item.path}
                                 label={item.label}
+                                icon={item.icon}
                                 isActive={location.pathname === item.path}
                                 isCollapsed={isCollapsed}
                             />
@@ -65,6 +68,7 @@ const Sidebar = () => {
                     <SidebarButton
                         to="/settings"
                         label="Settings"
+                        icon={NAVIGATION_ITEMS.find(item => item.path === '/settings')?.icon!}
                         isActive={location.pathname === '/settings'}
                         isCollapsed={isCollapsed}
                     />

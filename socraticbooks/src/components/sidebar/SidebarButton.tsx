@@ -1,26 +1,36 @@
+// src/components/sidebar/SidebarButton.tsx
 import { Link } from 'react-router-dom';
+import { IconType } from 'react-icons';
 
 interface SidebarButtonProps {
     to: string;
     label: string;
+    icon: IconType;
     isActive: boolean;
     isCollapsed: boolean;
 }
 
-const SidebarButton = ({ to, label, isActive, isCollapsed }: SidebarButtonProps) => {
+const SidebarButton = ({ to, label, icon: Icon, isActive, isCollapsed }: SidebarButtonProps) => {
     return (
         <Link 
             to={to}
-            className={`block w-full text-left px-4 py-2 rounded-lg transition-colors duration-200
+            className={`
+                block w-full rounded-lg transition-all duration-200
+                ${isCollapsed ? 'px-3' : 'px-4'} py-2
                 ${isActive 
                     ? 'bg-socratic text-socratic-font-light' 
                     : 'text-gray-700 hover:bg-socratic-light hover:text-socratic-font-light'
                 }
-                ${isCollapsed ? 'text-center overflow-hidden' : ''}
             `}
             title={isCollapsed ? label : ''}
         >
-            {isCollapsed ? label.charAt(0) : label}
+            <div className={`
+                flex items-center
+                ${isCollapsed ? 'justify-center' : 'space-x-3'}
+            `}>
+                <Icon size={20} className="min-w-[20px]" />
+                {!isCollapsed && <span>{label}</span>}
+            </div>
         </Link>
     );
 };
