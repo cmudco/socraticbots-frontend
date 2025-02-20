@@ -27,49 +27,18 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter, onTrackingUpdate }) 
                 const history = await getChatHistory(chapter.id, user.uid);
                 console.log('Loaded history:', history);
                 
-                if (history.messages && history.messages.messages && history.messages.messages.length > 0) {
-                    const formattedMessages = history.messages.messages.map((msg, index): Message => {
-                        let content = msg.content;
-                        
-                        // Format AI/system messages with proper HTML structure
-                        if (msg.role === 'assistant') {
-                            // Split into lines and wrap each in <p> tags if not already wrapped
-                            content = content.split('\n')
-                                .map(line => line.trim())
-                                .filter(line => line.length > 0)
-                                .map(line => {
-                                    if (line.startsWith('<') && line.endsWith('>')) {
-                                        return line; // Already has HTML
-                                    }
-                                    // Handle bullet points
-                                    if (line.startsWith('- ')) {
-                                        return `<p>${line}</p>`;
-                                    }
-                                    // Handle numbered points
-                                    if (/^\d+\./.test(line)) {
-                                        return `<p>${line}</p>`;
-                                    }
-                                    return `<p>${line}</p>`;
-                                })
-                                .join('');
-                        }
-    
-                        return {
-                            id: `history-${msg.timestamp}-${index}`,
-                            content: content,
-                            type: msg.role === 'user' ? 'user' : 'ai',
-                            timestamp: new Date(msg.timestamp)
-                        };
-                    });
+                if (history.messages?.messages?.length > 0) {
+                    const formattedMessages = history.messages.messages.map((msg, index): Message => ({
+                        id: `history-${msg.timestamp}-${index}`,
+                        content: msg.content, // Just pass the raw content
+                        type: msg.role === 'user' ? 'user' : 'ai',
+                        timestamp: new Date(msg.timestamp)
+                    }));
                     setMessages(formattedMessages);
                 } else if (chapter.greeting) {
-                    const greetingContent = chapter.greeting.startsWith('<') 
-                        ? chapter.greeting 
-                        : `<p>${chapter.greeting}</p>`;
-                    
                     const greetingMessage: Message = {
                         id: `greeting-${Date.now()}`,
-                        content: greetingContent,
+                        content: chapter.greeting, // Just pass the raw content
                         type: 'system',
                         timestamp: new Date()
                     };
@@ -148,27 +117,8 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter, onTrackingUpdate }) 
     
                             if (data.type === 'chat') {
                                 currentAiMessage.current += data.content;
-                                // Format the message content with proper HTML
-                                const formattedContent = currentAiMessage.current.split('\n')
-                                    .map(line => line.trim())
-                                    .filter(line => line.length > 0)
-                                    .map(line => {
-                                        if (line.startsWith('<') && line.endsWith('>')) {
-                                            return line;
-                                        }
-                                        // Handle bullet points
-                                        if (line.startsWith('- ')) {
-                                            return `<p>${line}</p>`;
-                                        }
-                                        // Handle numbered points
-                                        if (/^\d+\./.test(line)) {
-                                            return `<p>${line}</p>`;
-                                        }
-                                        return `<p>${line}</p>`;
-                                    })
-                                    .join('');
-    
-                                aiMessage.content = formattedContent;
+                                
+                                aiMessage.content = currentAiMessage.current; // Just pass the raw content
                                 
                                 setMessages(prev => {
                                     const exists = prev.some(m => m.id === aiMessage.id);
