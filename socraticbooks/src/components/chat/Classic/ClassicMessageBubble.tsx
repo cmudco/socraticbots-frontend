@@ -1,7 +1,8 @@
 // src/components/chat/Classic/ClassicMessageBubble.tsx
 import React from 'react';
 import { Message } from '../../../types/chat';
-import DOMPurify from 'dompurify';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ClassicMessageBubbleProps {
     message: Message;
@@ -9,23 +10,6 @@ interface ClassicMessageBubbleProps {
 
 const ClassicMessageBubble: React.FC<ClassicMessageBubbleProps> = ({ message }) => {
     const isSystem = message.type === 'system' || message.type === 'ai';
-
-    // Sanitize and format content based on message type
-    const getFormattedContent = () => {
-        // Always sanitize, but handle formatting differently based on type
-        if (message.type === 'user') {
-            // Just sanitize the plain text, no wrapping needed
-            return DOMPurify.sanitize(message.content, {
-                ALLOWED_TAGS: [] // Strip all HTML tags for user messages
-            });
-        }
-        
-        // For system/AI messages, allow more HTML tags
-        return DOMPurify.sanitize(message.content, {
-            ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'br'],
-            ALLOWED_ATTR: ['href', 'target']
-        });
-    };
 
     return (
         <div className={`flex ${isSystem ? 'justify-start' : 'justify-end'} mb-4 w-full`}>
@@ -47,32 +31,12 @@ const ClassicMessageBubble: React.FC<ClassicMessageBubbleProps> = ({ message }) 
                         </svg>
                     </div>
                     <div className="min-w-0 flex-1">
-                        <div className={`
-                            rounded-2xl 
-                            px-4 
-                            py-2 
-                            bg-gray-100 
-                            rounded-tl-none 
-                            break-words
-                            shadow-sm
-                            border border-gray-200
-                            relative
-                            prose prose-sm max-w-none
-                            before:content-['']
-                            before:absolute
-                            before:left-[-8px]
-                            before:top-[12px]
-                            before:w-4
-                            before:h-4
-                            before:bg-gray-100
-                            before:border-l
-                            before:border-t
-                            before:border-gray-200
-                            before:transform
-                            before:rotate-45
-                            before:-z-10
-                        `}>
-                            <div dangerouslySetInnerHTML={{ __html: getFormattedContent() }} />
+                        <div className="rounded-2xl px-4 py-2 bg-gray-100 rounded-tl-none break-words shadow-sm border border-gray-200 relative prose prose-sm max-w-none">
+                            <div className="markdown-content">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {message.content}
+                                </ReactMarkdown>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -80,29 +44,12 @@ const ClassicMessageBubble: React.FC<ClassicMessageBubbleProps> = ({ message }) 
             
             {!isSystem && (
                 <div className="max-w-[80%]">
-                    <div className={`
-                        rounded-2xl 
-                        px-4 
-                        py-2 
-                        bg-socratic 
-                        text-white 
-                        rounded-tr-none 
-                        break-words
-                        shadow-sm
-                        relative
-                        prose prose-sm prose-invert max-w-none
-                        before:content-['']
-                        before:absolute
-                        before:right-[-8px]
-                        before:top-[12px]
-                        before:w-4
-                        before:h-4
-                        before:bg-socratic
-                        before:transform
-                        before:rotate-45
-                        before:-z-10
-                    `}>
-                        <div dangerouslySetInnerHTML={{ __html: getFormattedContent() }} />
+                    <div className="rounded-2xl px-4 py-2 bg-socratic rounded-tr-none break-words shadow-sm relative">
+                        <div className="markdown-content user-message">  {/* ADD THIS CLASS */}
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {message.content}
+                            </ReactMarkdown>
+                        </div>
                     </div>
                 </div>
             )}

@@ -58,3 +58,15 @@
 .tracking-content li {
     @apply text-sm;
 }
+
+.user-message p {
+  @apply text-white !important;
+}
+
+.user-message li {
+  @apply text-white !important;
+}
+
+.user-message strong {
+  @apply text-white !important;
+}
