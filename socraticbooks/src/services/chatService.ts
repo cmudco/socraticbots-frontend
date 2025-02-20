@@ -1,6 +1,28 @@
 // src/services/chatService.ts
 import axios from 'axios';
-const API_BASE_URL  = 'https://dare.hss.cmu.edu';
+export const API_BASE_URL  = 'https://dare.hss.cmu.edu';
+
+export interface ChatMessage {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    timestamp: string;
+}
+
+export interface ChatHistory {
+    messages: ChatMessage[];
+}
+
+interface ChatHistoryMessage {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    timestamp: string;
+}
+
+interface ChatHistoryResponse {
+    messages: {
+        messages: ChatHistoryMessage[];
+    };
+}
 
 export interface Chapter {
     id: string;
@@ -79,3 +101,36 @@ export const updateChapterModelSettings = async (
         throw error;
     }
 };
+
+export const getChatHistory = async (chapterId: string, userId: string): Promise<ChatHistoryResponse> => {
+    try {
+        const response = await axios.get(
+            `${API_BASE_URL}/api/socratic-books/chapters/${chapterId}/chat-history`,
+            { params: { userId } }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching chat history:', error);
+        throw error;
+    }
+}
+
+export const sendChatMessage = async (
+    message: string,
+    chapterId: string,
+    uid: string
+): Promise<EventSource> => {
+    const eventSource = new EventSource(
+        `${API_BASE_URL}/api/socratic-books/chat/message?` + 
+        new URLSearchParams({
+            message,
+            chapter_id: chapterId,
+            uid
+        })
+    );
+    return eventSource;
+};
+
+
+
+
