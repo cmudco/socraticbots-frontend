@@ -4,6 +4,13 @@ import LearningGoals from '../chapter/LearningGoals';
 import Files from '../chapter/Files';
 import Deployment from '../chapter/Deployment';
 import AdvancedSettings from '../chapter/AdvancedSettings';
+import { 
+    getLLMModels, 
+    getChapterModelSettings, 
+    updateChapterModelSettings,
+    LLMModel,
+    ChapterModelSettings 
+} from '../../services/chatService';
 
 interface EditChapterModalProps {
     open: boolean;
@@ -49,6 +56,12 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
     });
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [models, setModels] = useState<LLMModel[]>([]);
+    const [modelSettings, setModelSettings] = useState<ChapterModelSettings>({
+        basic_prompt_model_id: 2,
+        tracking_prompt_model_id: 2
+    });
+    const [isUpdatingModel, setIsUpdatingModel] = useState(false);
 
     // Reset selections when modal opens/closes
     useEffect(() => {
@@ -92,6 +105,20 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
 
             loadProgressTracker();
             loadFilesAndTags();
+
+            const loadModelsAndSettings = async () => {
+                try {
+                    const availableModels = await getLLMModels();
+                    setModels(availableModels);
+            
+                    const settings = await getChapterModelSettings(chapter.id);
+                    setModelSettings(settings);
+                } catch (error) {
+                    console.error('Error loading models or settings:', error);
+                }
+            };
+            
+            loadModelsAndSettings();
         }
     }, [open, chapter]);
 
@@ -115,6 +142,25 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
             }));
         }
     };
+
+    const handleModelChange = async (type: 'basic' | 'tracking', modelId: number) => {
+        if (!chapter) return;
+    
+        setIsUpdatingModel(true);
+        try {
+            const newSettings = {
+                ...modelSettings,
+                [type === 'basic' ? 'basic_prompt_model_id' : 'tracking_prompt_model_id']: modelId
+            };
+            await updateChapterModelSettings(chapter.id, newSettings);
+            setModelSettings(newSettings);
+        } catch (error) {
+            console.error('Error updating model settings:', error);
+        } finally {
+            setIsUpdatingModel(false);
+        }
+    };
+
 
     if (!open) return null;
 
@@ -193,6 +239,46 @@ const EditChapterModal: React.FC<EditChapterModalProps> = ({
                                             className="w-full p-2 border rounded focus:ring-socratic focus:border-socratic"
                                         />
                                     </div>
+
+                                    <div className="space-y-4 mt-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Basic Prompt Model
+                                            </label>
+                                            <select
+                                                value={modelSettings.basic_prompt_model_id}
+                                                onChange={(e) => handleModelChange('basic', Number(e.target.value))}
+                                                className="w-full p-2 border rounded focus:ring-socratic focus:border-socratic"
+                                                disabled={isUpdatingModel}
+                                            >
+                                                {models.map(model => (
+                                                    <option key={model.id} value={model.id}>
+                                                        {model.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Progress Tracking Model
+                                            </label>
+                                            <select
+                                                value={modelSettings.tracking_prompt_model_id}
+                                                onChange={(e) => handleModelChange('tracking', Number(e.target.value))}
+                                                className="w-full p-2 border rounded focus:ring-socratic focus:border-socratic"
+                                                disabled={isUpdatingModel}
+                                            >
+                                                {models.map(model => (
+                                                    <option key={model.id} value={model.id}>
+                                                        {model.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+
                                 </div>
                             )}
 
