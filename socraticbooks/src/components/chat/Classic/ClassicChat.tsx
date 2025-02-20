@@ -8,7 +8,7 @@ import { useAuth } from '../../../services/auth';
 
 interface ClassicChatProps {
     chapter: Chapter;
-    onTrackingUpdate?: (tracking: string) => void;
+    onTrackingUpdate?: (tracking: string, isLoading: boolean) => void;
 }
 
 const ClassicChat: React.FC<ClassicChatProps> = ({ chapter, onTrackingUpdate }) => {
@@ -92,7 +92,7 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter, onTrackingUpdate }) 
             console.error('No user ID available');
             return;
         }
-
+    
         const messageId = Date.now().toString();
         const userMessage: Message = {
             id: `user-${messageId}`,
@@ -103,8 +103,11 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter, onTrackingUpdate }) 
         
         setMessages(prevMessages => [...prevMessages, userMessage]);
         setIsLoading(true);
+        if (onTrackingUpdate) {
+            onTrackingUpdate('', true); // Start tracking loading
+        }
         currentAiMessage.current = '';
-
+    
         try {
             const response = await fetch(`${API_BASE_URL}/api/socratic-books/chat/message`, {
                 method: 'POST',
@@ -117,41 +120,54 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter, onTrackingUpdate }) 
                     uid: user.uid
                 })
             });
-
+    
             if (!response.body) throw new Error('No response body');
-
+    
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let trackingContent = '';
-
+    
             const aiMessage: Message = {
                 id: `ai-${messageId}`,
                 content: '',
                 type: 'ai',
                 timestamp: new Date()
             };
-
+    
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
-
+    
                 const chunk = decoder.decode(value);
                 const lines = chunk.split('\n');
-
+    
                 for (const line of lines) {
                     if (line.startsWith('data: ')) {
                         try {
                             const data = JSON.parse(line.slice(6));
-
+    
                             if (data.type === 'chat') {
                                 currentAiMessage.current += data.content;
                                 // Format the message content with proper HTML
                                 const formattedContent = currentAiMessage.current.split('\n')
                                     .map(line => line.trim())
                                     .filter(line => line.length > 0)
-                                    .map(line => `<p>${line}</p>`)
+                                    .map(line => {
+                                        if (line.startsWith('<') && line.endsWith('>')) {
+                                            return line;
+                                        }
+                                        // Handle bullet points
+                                        if (line.startsWith('- ')) {
+                                            return `<p>${line}</p>`;
+                                        }
+                                        // Handle numbered points
+                                        if (/^\d+\./.test(line)) {
+                                            return `<p>${line}</p>`;
+                                        }
+                                        return `<p>${line}</p>`;
+                                    })
                                     .join('');
-
+    
                                 aiMessage.content = formattedContent;
                                 
                                 setMessages(prev => {
@@ -165,13 +181,34 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter, onTrackingUpdate }) 
                                 });
                             }
                             else if (data.type === 'tracker') {
-                                trackingContent += data.content;
+                                const newContent: string = data.content;
+                                trackingContent = trackingContent + newContent;
+                                
                                 if (onTrackingUpdate) {
-                                    onTrackingUpdate(trackingContent);
+                                    // Format the accumulated content
+                                    const formattedContent: string = trackingContent
+                                        .split('\n')
+                                        .map((line: string) => line.trim())
+                                        .filter((line: string) => line.length > 0)
+                                        .map((line: string) => {
+                                            if (line.startsWith('- ')) {
+                                                return `<p class="ml-4 text-gray-600">• ${line.substring(2)}</p>`;
+                                            }
+                                            if (/^\d+\./.test(line)) {
+                                                return `<p class="ml-4 text-gray-600">${line}</p>`;
+                                            }
+                                            return `<p class="text-gray-600">${line}</p>`;
+                                        })
+                                        .join('');
+                                    
+                                    onTrackingUpdate(formattedContent, true);
                                 }
                             }
                             else if (data.type === 'complete') {
                                 setIsLoading(false);
+                                if (onTrackingUpdate) {
+                                    onTrackingUpdate(trackingContent, false);
+                                }
                             }
                         } catch (e) {
                             console.error('Error parsing stream data:', e);
@@ -182,8 +219,12 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter, onTrackingUpdate }) 
         } catch (error) {
             console.error('Error sending message:', error);
             setIsLoading(false);
+            if (onTrackingUpdate) {
+                onTrackingUpdate('', false);
+            }
         }
     };
+    
 
     const handleSave = () => {
         console.log('Saving...');
