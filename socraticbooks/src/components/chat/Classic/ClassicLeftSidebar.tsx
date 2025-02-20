@@ -1,6 +1,8 @@
-// ClassicLeftSidebar.tsx
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Chapter } from '../../../services/chatService';
+
 
 interface LeftSidebarProps {
     chapter: Chapter;
@@ -25,10 +27,13 @@ const ClassicLeftSidebar: React.FC<LeftSidebarProps> = ({
                         <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                     </div>
                 )}
-                <div 
-                    className="prose prose-sm space-y-2"
-                    dangerouslySetInnerHTML={{ __html: trackingContent }}
-                />
+                <div className="markdown-content tracking-content">
+                    <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]}
+                    >
+                        {trackingContent}
+                    </ReactMarkdown>
+                </div>
             </div>
         </div>
     );

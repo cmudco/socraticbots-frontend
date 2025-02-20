@@ -181,27 +181,10 @@ const ClassicChat: React.FC<ClassicChatProps> = ({ chapter, onTrackingUpdate }) 
                                 });
                             }
                             else if (data.type === 'tracker') {
-                                const newContent: string = data.content;
-                                trackingContent = trackingContent + newContent;
-                                
+                                trackingContent += data.content;
                                 if (onTrackingUpdate) {
-                                    // Format the accumulated content
-                                    const formattedContent: string = trackingContent
-                                        .split('\n')
-                                        .map((line: string) => line.trim())
-                                        .filter((line: string) => line.length > 0)
-                                        .map((line: string) => {
-                                            if (line.startsWith('- ')) {
-                                                return `<p class="ml-4 text-gray-600">• ${line.substring(2)}</p>`;
-                                            }
-                                            if (/^\d+\./.test(line)) {
-                                                return `<p class="ml-4 text-gray-600">${line}</p>`;
-                                            }
-                                            return `<p class="text-gray-600">${line}</p>`;
-                                        })
-                                        .join('');
-                                    
-                                    onTrackingUpdate(formattedContent, true);
+                                    // Just pass the raw markdown content
+                                    onTrackingUpdate(trackingContent, true);
                                 }
                             }
                             else if (data.type === 'complete') {
