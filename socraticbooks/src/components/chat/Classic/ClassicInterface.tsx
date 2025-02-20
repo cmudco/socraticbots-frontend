@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import LeftSidebar from './ClassicLeftSidebar';
 import ClassicChat from './ClassicChat';
 import NoteSidebar from './ClassicNotesSidebar';
@@ -9,18 +9,30 @@ interface ClassicInterfaceProps {
 }
 
 const ClassicInterface: React.FC<ClassicInterfaceProps> = ({ chapter }) => {
+    const [trackingContent, setTrackingContent] = useState<string>('');
+    const [isTrackingLoading, setIsTrackingLoading] = useState(false);
 
-    console.log('ClassicInterface', chapter);
+    const handleTrackingUpdate = (content: string, isLoading: boolean) => {
+        setTrackingContent(content);
+        setIsTrackingLoading(isLoading);
+    };
 
     return (
         <div className="h-full flex">
-            <div className="w-64 flex-none"> {/* Changed to flex-none */}
-                <LeftSidebar chapter={chapter} />
+            <div className="w-64 flex-none">
+                <LeftSidebar 
+                    chapter={chapter}
+                    trackingContent={trackingContent}
+                    isLoading={isTrackingLoading}
+                />
             </div>
-            <div className="flex-1 min-w-0"> {/* Keep this as is */}
-                <ClassicChat chapter={chapter} />
+            <div className="flex-1 min-w-0">
+                <ClassicChat 
+                    chapter={chapter}
+                    onTrackingUpdate={handleTrackingUpdate}
+                />
             </div>
-            <div className="w-80 flex-none"> {/* Changed to flex-none */}
+            <div className="w-80 flex-none">
                 <NoteSidebar />
             </div>
         </div>
