@@ -2,11 +2,11 @@
 import React from 'react';
 
 const Header: React.FC = () => {
-  return (
-    <header style={{ padding: '1rem', backgroundColor: '#f0f0f0' }}>
-      <h1>My App</h1>
-    </header>
-  );
-};
-
-export default Header;
+    return (
+      <header className="bg-gray-800 text-white p-4">
+        <h1 className="text-2xl font-bold">My App</h1>
+      </header>
+    );
+  };
+  
+  export default Header;
