@@ -1,6 +1,7 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthTokens, AuthState } from '../types/auth';
+import { authService } from '../services/auth.service';
 
 interface AuthContextType extends AuthState {
   login: (username: string, password: string) => Promise<boolean>;
@@ -29,6 +30,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: false,
     isLoading: true,
   });
+  
+  // Track which tokens we've already tried to refresh
+  const [hasAttemptedRefresh, setHasAttemptedRefresh] = useState<{[key: string]: boolean}>({});
 
   // Check for existing tokens on load
   useEffect(() => {
@@ -39,14 +43,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (storedTokens) {
           const tokens = JSON.parse(storedTokens) as AuthTokens;
           
-          // TODO: Fetch user info with the token
-          // For now, we'll just set isAuthenticated to true
-          setAuth({
-            tokens,
-            isAuthenticated: true,
-            user: null, // We'll fetch user data in the next step
-            isLoading: false,
-          });
+          // Check if token is valid
+          const isValid = await authService.validateToken(tokens.access);
+          
+          if (isValid) {
+            // Fetch user data
+            const userData = await authService.fetchUserProfile(tokens.access);
+            
+            setAuth({
+              tokens,
+              isAuthenticated: true,
+              user: userData,
+              isLoading: false,
+            });
+          } else {
+            // Create a unique key for this refresh token to track attempts
+            const refreshTokenKey = tokens.refresh.substring(0, 20);
+            
+            // Only attempt refresh if we haven't tried this token before
+            if (!hasAttemptedRefresh[refreshTokenKey]) {
+              console.log('First attempt to refresh this token');
+              
+              // Mark this token as attempted
+              setHasAttemptedRefresh(prev => ({
+                ...prev,
+                [refreshTokenKey]: true
+              }));
+              
+              // Try to refresh the token
+              const refreshed = await refreshToken();
+              if (!refreshed) {
+                setAuth(prev => ({ ...prev, isLoading: false }));
+              }
+            } else {
+              console.log('Skipping duplicate refresh attempt for token');
+              setAuth(prev => ({ ...prev, isLoading: false }));
+            }
+          }
         } else {
           setAuth(prev => ({ ...prev, isLoading: false }));
         }
@@ -57,38 +90,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     loadStoredAuth();
-  }, []);
+  }, [hasAttemptedRefresh]);
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('https://api.socraticbooks.com/api/users/token/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.detail || 'Login failed');
-      }
+      const tokens = await authService.login(username, password);
       
       // Store tokens
-      localStorage.setItem('auth_tokens', JSON.stringify(data));
+      localStorage.setItem('auth_tokens', JSON.stringify(tokens));
       
-      // TODO: Fetch user data
-      // For now we'll just set a basic user object
-      const user: User = {
-        id: 1, // This is placeholder, we should fetch the real user ID
-        username: username,
-        email: '', // This should come from a user profile API call
-      };
+      // Reset the refresh attempts tracking when logging in
+      setHasAttemptedRefresh({});
+      
+      // Fetch user data
+      const userData = await authService.fetchUserProfile(tokens.access);
       
       setAuth({
-        user,
-        tokens: data,
+        user: userData,
+        tokens,
         isAuthenticated: true,
         isLoading: false,
       });
@@ -104,6 +123,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Remove tokens from storage
     localStorage.removeItem('auth_tokens');
     
+    // Reset the refresh attempts tracking
+    setHasAttemptedRefresh({});
+    
     // Reset auth state
     setAuth({
       user: null,
@@ -115,42 +137,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshToken = async (): Promise<boolean> => {
     try {
-      if (!auth.tokens?.refresh) {
+      const storedTokens = localStorage.getItem('auth_tokens');
+      if (!storedTokens) {
+        console.log('No tokens in storage, cannot refresh');
         throw new Error('No refresh token available');
       }
       
-      const response = await fetch('https://api.socraticbooks.com/api/users/token/refresh/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh: auth.tokens.refresh }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.detail || 'Token refresh failed');
+      const tokens = JSON.parse(storedTokens) as AuthTokens;
+      if (!tokens.refresh) {
+        console.log('No refresh token in stored tokens');
+        throw new Error('No refresh token available');
       }
       
-      // Update tokens in storage - keep the same refresh token unless the API sends a new one
-      const newTokens = {
-        access: data.access,
-        refresh: data.refresh || auth.tokens.refresh,
-      };
+      console.log('Using refresh token from storage:', tokens.refresh.substring(0, 10) + '...');
       
+      // Get new tokens
+      const newTokens = await authService.refreshToken(tokens.refresh);
+      
+      console.log('Got new tokens, updating storage immediately');
+      
+      // Update tokens in storage IMMEDIATELY
       localStorage.setItem('auth_tokens', JSON.stringify(newTokens));
       
-      setAuth(prev => ({
+      // Reset tracking for the new refresh token
+      const newRefreshTokenKey = newTokens.refresh.substring(0, 20);
+      setHasAttemptedRefresh(prev => ({
         ...prev,
-        tokens: newTokens,
+        [newRefreshTokenKey]: false
       }));
+      
+      // Fetch user data
+      const userData = await authService.fetchUserProfile(newTokens.access);
+      
+      setAuth({
+        tokens: newTokens,
+        user: userData,
+        isAuthenticated: true,
+        isLoading: false,
+      });
       
       return true;
     } catch (error) {
-      console.error('Token refresh failed:', error);
-      // If refresh fails, log the user out
-      logout();
+      console.error('Token refresh failed in AuthContext:', error);
+      logout(); // Log out on refresh failure
       return false;
     }
   };
