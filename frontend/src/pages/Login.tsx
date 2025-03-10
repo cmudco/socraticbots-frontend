@@ -1,6 +1,6 @@
 // src/pages/Login.tsx
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 interface LocationState {
@@ -16,11 +16,17 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
 
   // Get the previous location with a fallback to home page
   const locationState = location.state as LocationState;
   const redirectPath = locationState?.from?.pathname || '/';
+
+  // Redirect if already authenticated
+  if (isAuthenticated && !isLoading) {
+    console.log("User is authenticated, redirecting to:", redirectPath);
+    return <Navigate to={redirectPath} replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +52,11 @@ const Login: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Show loading state while initial auth check is in progress
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Checking authentication...</div>;
+  }
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
