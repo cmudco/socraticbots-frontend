@@ -6,11 +6,18 @@ import { NAVIGATION_ITEMS } from '../../types/navigation';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { toggleSidebar } from '../../store/slices/sidebarSlice';
+import { useAuth } from '../../context/AuthContext';
 
 const Sidebar: React.FC = () => {
     const location = useLocation();
     const dispatch = useAppDispatch();
     const { isCollapsed } = useAppSelector(state => state.sidebar);
+    const { isAuthenticated } = useAuth();
+    
+    // Don't render sidebar at all if not authenticated
+    if (!isAuthenticated) {
+        return null;
+    }
     
     const mainNavItems = NAVIGATION_ITEMS.filter(item => item.path !== '/settings');
     const settingsItem = NAVIGATION_ITEMS.find(item => item.path === '/settings');
