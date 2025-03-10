@@ -7,8 +7,8 @@ const Header: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
 
   return (
-    <header className="bg-white shadow-md">
-      <div className="container mx-auto px-4 py-2 flex justify-between items-center">
+    <header className="bg-white shadow-md fixed top-0 left-0 right-0 h-14 z-20">
+      <div className="h-full flex justify-between items-center px-4"> {/* Reduced padding here */}
         <div className="flex items-center">
           <Link to="/" className="text-xl font-bold text-blue-600">Socratic Books</Link>
         </div>
