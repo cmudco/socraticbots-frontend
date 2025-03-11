@@ -12,8 +12,8 @@ const Books: React.FC = () => {
     // Use the book service hook directly
     const bookService = useBookService();
     
+    // Fetch books on initial render
     useEffect(() => {
-        // Only fetch once
         if (!hasFetched) {
             const fetchBooks = async () => {
                 try {
@@ -34,14 +34,17 @@ const Books: React.FC = () => {
         }
     }, [hasFetched, bookService]);
     
+    // Loading state
     if (loading) {
         return <div className="text-center p-4">Loading books...</div>;
     }
     
+    // Error state
     if (error) {
         return <div className="text-center p-4 text-red-500">{error}</div>;
     }
     
+    // User has no books
     if (books.length === 0) {
         return (
             <div className="p-4">
@@ -51,6 +54,7 @@ const Books: React.FC = () => {
         );
     }
     
+    // Render books
     return (
         <div className="p-4">
             <h1 className="text-3xl font-bold mb-4">Books</h1>
