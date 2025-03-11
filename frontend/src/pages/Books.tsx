@@ -1,57 +1,38 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { setupApi } from '../services/api';
+// src/pages/Books.tsx
+import React, { useEffect, useState } from 'react';
+import { useBookService } from '../services/books.service';
 import { Book } from '../types/book';
-
-// Define a BookService class outside your component
-class BookService {
-  private readonly baseUrl = '/books';
-  
-  constructor(private apiClient: any) {}
-  
-  async getBooks(): Promise<Book[]> {
-    try {
-      const response = await this.apiClient.get(this.baseUrl);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching books:', error);
-      throw error;
-    }
-  }
-}
 
 const Books: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [hasFetched, setHasFetched] = useState(false);
     
-    // Get auth context only once
-    const auth = useAuth();
+    // Use the book service hook directly
+    const bookService = useBookService();
     
-    // Use useCallback to memoize the fetch function
-    const fetchBooks = useCallback(async () => {
-        try {
-            setLoading(true);
-            
-            // Create API client and service only when needed
-            const apiClient = setupApi(auth);
-            const bookService = new BookService(apiClient);
-            
-            const fetchedBooks = await bookService.getBooks();
-            setBooks(fetchedBooks);
-            setError(null);
-        } catch (err) {
-            setError('Could not load books. Please try again later.');
-            console.error('Error loading books:', err);
-        } finally {
-            setLoading(false);
-        }
-    }, [auth]); // Only depends on auth, which shouldn't change frequently
-    
-    // Use the memoized function in useEffect
     useEffect(() => {
-        fetchBooks();
-    }, [fetchBooks]); // Now this only re-runs when fetchBooks changes, which is only when auth changes
+        // Only fetch once
+        if (!hasFetched) {
+            const fetchBooks = async () => {
+                try {
+                    setLoading(true);
+                    const fetchedBooks = await bookService.getBooks();
+                    setBooks(fetchedBooks);
+                    setError(null);
+                } catch (err) {
+                    setError('Could not load books. Please try again later.');
+                    console.error('Error loading books:', err);
+                } finally {
+                    setLoading(false);
+                    setHasFetched(true);
+                }
+            };
+            
+            fetchBooks();
+        }
+    }, [hasFetched, bookService]);
     
     if (loading) {
         return <div className="text-center p-4">Loading books...</div>;
