@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { useBookService } from '../services/books.service';
 import { Book } from '../types/book';
+import BookTable from '../components/books/BookTable';
+import BookListEmpty from '../components/books/BookListEmpty';
 
 const Books: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
@@ -20,6 +22,7 @@ const Books: React.FC = () => {
                     setLoading(true);
                     const fetchedBooks = await bookService.getBooks();
                     setBooks(fetchedBooks);
+                    console.log('Fetched books:', fetchedBooks);
                     setError(null);
                 } catch (err) {
                     setError('Could not load books. Please try again later.');
@@ -34,41 +37,32 @@ const Books: React.FC = () => {
         }
     }, [hasFetched, bookService]);
     
-    // Loading state
-    if (loading) {
-        return <div className="text-center p-4">Loading books...</div>;
-    }
+    const renderContent = () => {
+        if (loading) {
+            return <div className="text-center p-4">Loading books...</div>;
+        }
+        
+        if (error) {
+            return <div className="text-center p-4 text-red-500">{error}</div>;
+        }
+        
+        if (books.length === 0) {
+            return <BookListEmpty />;
+        }
+        
+        return <BookTable books={books} />;
+    };
     
-    // Error state
-    if (error) {
-        return <div className="text-center p-4 text-red-500">{error}</div>;
-    }
-    
-    // User has no books
-    if (books.length === 0) {
-        return (
-            <div className="p-4">
-                <h1 className="text-3xl font-bold mb-4">Books</h1>
-                <p>You don't have any books yet.</p>
-            </div>
-        );
-    }
-    
-    // Render books
     return (
         <div className="p-4">
-            <h1 className="text-3xl font-bold mb-4">Books</h1>
-            <div className="grid gap-4">
-                {books.map(book => (
-                    <div key={book.id} className="border p-4 rounded-lg">
-                        <h2 className="text-xl font-semibold">{book.title}</h2>
-                        {book.description && <p className="mt-2">{book.description}</p>}
-                        <p className="text-sm text-gray-500 mt-2">
-                            Created: {new Date(book.created_at).toLocaleDateString()}
-                        </p>
-                    </div>
-                ))}
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">Books</h1>
+                <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    Create New Book
+                </button>
             </div>
+            
+            {renderContent()}
         </div>
     );
 };
