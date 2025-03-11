@@ -10,6 +10,7 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import Books from './pages/Books';
 
 const App: React.FC = () => {
   return (
@@ -43,6 +44,14 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <Settings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/books" 
+                element={
+                  <ProtectedRoute>
+                    <Books />
                   </ProtectedRoute>
                 } 
               />

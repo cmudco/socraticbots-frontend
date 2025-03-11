@@ -1,6 +1,6 @@
 // src/types/navigation.ts
 import { IconType } from 'react-icons/lib';
-import { FaHome, FaInfoCircle, FaCog } from 'react-icons/fa';
+import { FaHome, FaInfoCircle, FaCog, FaBook } from 'react-icons/fa';
 
 interface NavigationItem {
     path: string;
@@ -23,5 +23,10 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
         path: '/settings',
         label: 'Settings',
         icon: FaCog
+    },
+    {
+        path: '/books',
+        label: 'Books',
+        icon: FaBook
     }
 ];
