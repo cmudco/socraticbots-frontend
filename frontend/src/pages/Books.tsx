@@ -5,13 +5,20 @@ import { Book } from '../types/book';
 import BookTable from '../components/books/BookTable';
 import BookListEmpty from '../components/books/BookListEmpty';
 import BookFormModal from '../components/books/BookFormModal';
+import BookDetailModal from '../components/books/BookDetailModal';
+import DeleteBookModal from '../components/books/DeleteBookModal';
 
 const Books: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    // Modal states
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [selectedBook, setSelectedBook] = useState<Book | null>(null);
     
     // Fetch books on initial render
     const fetchBooks = async () => {
@@ -36,16 +43,41 @@ const Books: React.FC = () => {
         }
     }, [hasFetched]);
 
-    const handleOpenModal = () => {
-        setIsModalOpen(true);
+    // Modal handlers
+    const handleOpenCreateModal = () => {
+        setSelectedBook(null); // Ensure no book is selected for create mode
+        setIsFormModalOpen(true);
     };
     
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
+    const handleOpenEditModal = (book: Book) => {
+        setSelectedBook(book);
+        setIsFormModalOpen(true);
     };
     
-    const handleBookCreated = () => {
-        // Refresh the book list after creating a new book
+    const handleOpenViewModal = (book: Book) => {
+        setSelectedBook(book);
+        setIsDetailModalOpen(true);
+    };
+    
+    const handleOpenDeleteModal = (book: Book) => {
+        setSelectedBook(book);
+        setIsDeleteModalOpen(true);
+    };
+    
+    const handleCloseFormModal = () => {
+        setIsFormModalOpen(false);
+    };
+    
+    const handleCloseDetailModal = () => {
+        setIsDetailModalOpen(false);
+    };
+    
+    const handleCloseDeleteModal = () => {
+        setIsDeleteModalOpen(false);
+    };
+    
+    const handleBookSuccess = () => {
+        // Refresh the book list after creating/updating a book
         fetchBooks();
     };
     
@@ -59,28 +91,59 @@ const Books: React.FC = () => {
         }
         
         if (books.length === 0) {
-            return <BookListEmpty onCreateClick={handleOpenModal} />;
+            return <BookListEmpty onCreateClick={handleOpenCreateModal} />;
         }
         
-        return <BookTable books={books} />;
+        return (
+            <BookTable 
+                books={books} 
+                onEdit={handleOpenEditModal}
+                onView={handleOpenViewModal}
+                onDelete={handleOpenDeleteModal}
+            />
+        );
     };
     
     return (
         <div className="p-4">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Books</h1>
-                <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={handleOpenModal}>
+                <button 
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" 
+                    onClick={handleOpenCreateModal}
+                >
                     Create New Book
                 </button>
             </div>
             
             {renderContent()}
 
+            {/* Create/Edit Book Modal */}
             <BookFormModal 
-                isOpen={isModalOpen} 
-                onClose={handleCloseModal} 
-                onBookCreated={handleBookCreated}
+                isOpen={isFormModalOpen} 
+                onClose={handleCloseFormModal} 
+                onBookCreated={handleBookSuccess}
+                book={selectedBook || undefined}
             />
+            
+            {/* View Book Details Modal */}
+            {selectedBook && (
+                <BookDetailModal
+                    isOpen={isDetailModalOpen}
+                    onClose={handleCloseDetailModal}
+                    book={selectedBook}
+                />
+            )}
+            
+            {/* Delete Confirmation Modal */}
+            {selectedBook && (
+                <DeleteBookModal
+                    isOpen={isDeleteModalOpen}
+                    onClose={handleCloseDeleteModal}
+                    onSuccess={handleBookSuccess}
+                    book={selectedBook}
+                />
+            )}
         </div>
     );
 };

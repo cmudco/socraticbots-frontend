@@ -1,23 +1,35 @@
 // src/components/books/BookFormModal.tsx
-import React, { useState } from 'react';
-// Update this import to use the singleton service
+import React, { useState, useEffect } from 'react';
 import { bookService } from '../../services/books.service';
-import { CreateBookRequest } from '../../services/books.service';
+import { Book } from '../../types/book';
 
 interface BookFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onBookCreated: () => void;
+  onBookCreated: () => void;  // Keep your existing name
+  book?: Book; // Optional - if provided, we're in edit mode
 }
 
-const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCreated }) => {
+const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCreated, book }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Remove this line - no longer needed
-  // const bookService = useBookService();
+  // Determine if we're in edit mode
+  const isEditMode = !!book;
+  
+  // Set form values when book changes (for edit mode)
+  useEffect(() => {
+    if (book) {
+      setTitle(book.title);
+      setDescription(book.description || '');
+    } else {
+      // Reset form when not in edit mode
+      setTitle('');
+      setDescription('');
+    }
+  }, [book]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,12 +43,19 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
       setIsSubmitting(true);
       setError(null);
       
-      const newBook: CreateBookRequest = {
-        title,
-        description: description || undefined,
-      };
-      
-      await bookService.createBook(newBook);
+      if (isEditMode && book) {
+        // Update existing book
+        await bookService.updateBook(book.id, {
+          title,
+          description: description || undefined,
+        });
+      } else {
+        // Create new book
+        await bookService.createBook({
+          title,
+          description: description || undefined,
+        });
+      }
       
       // Reset form
       setTitle('');
@@ -44,10 +63,10 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
       
       // Close modal and notify parent
       onClose();
-      onBookCreated();
+      onBookCreated(); // Use this callback name
     } catch (err) {
-      setError('Failed to create book. Please try again.');
-      console.error('Error creating book:', err);
+      setError(`Failed to ${isEditMode ? 'update' : 'create'} book. Please try again.`);
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} book:`, err);
     } finally {
       setIsSubmitting(false);
     }
@@ -58,7 +77,9 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Create New Book</h2>
+        <h2 className="text-xl font-bold mb-4">
+          {isEditMode ? 'Edit Book' : 'Create New Book'}
+        </h2>
         
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
@@ -109,7 +130,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creating...' : 'Create Book'}
+              {isSubmitting ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Book')}
             </button>
           </div>
         </form>
