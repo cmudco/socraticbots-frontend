@@ -1,14 +1,8 @@
 // src/components/books/BookFormModal.tsx
-import React, { useState, useEffect } from 'react';
-import { useBookService } from '../../services/books.service';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Alert from '@mui/material/Alert';
+import React, { useState } from 'react';
+// Update this import to use the singleton service
+import { bookService } from '../../services/books.service';
+import { CreateBookRequest } from '../../services/books.service';
 
 interface BookFormModalProps {
   isOpen: boolean;
@@ -22,16 +16,8 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const bookService = useBookService();
-  
-  // Reset form when opened
-  useEffect(() => {
-    if (isOpen) {
-      setTitle('');
-      setDescription('');
-      setError(null);
-    }
-  }, [isOpen]);
+  // Remove this line - no longer needed
+  // const bookService = useBookService();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,91 +31,90 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
       setIsSubmitting(true);
       setError(null);
       
-      await bookService.createBook({
-        title: title.trim(),
-        description: description.trim() || undefined
-      });
+      const newBook: CreateBookRequest = {
+        title,
+        description: description || undefined,
+      };
       
-      // Notify parent and close modal
-      onBookCreated();
+      await bookService.createBook(newBook);
+      
+      // Reset form
+      setTitle('');
+      setDescription('');
+      
+      // Close modal and notify parent
       onClose();
-      
+      onBookCreated();
     } catch (err) {
-      console.error('Error creating book:', err);
       setError('Failed to create book. Please try again.');
+      console.error('Error creating book:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
   
+  if (!isOpen) return null;
+  
   return (
-    <Dialog 
-      open={isOpen} 
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      aria-labelledby="form-dialog-title"
-    >
-      <DialogTitle id="form-dialog-title">Create New Book</DialogTitle>
-      
-      <form onSubmit={handleSubmit}>
-        <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          
-          <DialogContentText>
-            Fill in the details below to create a new book.
-          </DialogContentText>
-          
-          <TextField
-            autoFocus
-            margin="dense"
-            id="title"
-            label="Title"
-            type="text"
-            fullWidth
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            disabled={isSubmitting}
-            sx={{ mb: 2 }}
-          />
-          
-          <TextField
-            margin="dense"
-            id="description"
-            label="Description"
-            multiline
-            rows={3}
-            fullWidth
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={isSubmitting}
-          />
-        </DialogContent>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4">Create New Book</h2>
         
-        <DialogActions>
-          <Button 
-            onClick={onClose} 
-            color="inherit"
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="submit"
-            color="primary"
-            variant="contained"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Creating...' : 'Create Book'}
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2" htmlFor="title">
+              Title*
+            </label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full p-2 border rounded"
+              disabled={isSubmitting}
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2" htmlFor="description">
+              Description
+            </label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full p-2 border rounded"
+              rows={4}
+              disabled={isSubmitting}
+            />
+          </div>
+          
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border rounded"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Book'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 
