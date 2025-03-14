@@ -4,9 +4,12 @@ import { Book } from '../../types/book';
 
 interface BookTableProps {
   books: Book[];
+  onEdit: (book: Book) => void;
+  onDelete: (book: Book) => void;
+  onView: (book: Book) => void;
 }
 
-const BookTable: React.FC<BookTableProps> = ({ books }) => {
+const BookTable: React.FC<BookTableProps> = ({ books, onEdit, onDelete, onView }) => {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white">
@@ -22,13 +25,29 @@ const BookTable: React.FC<BookTableProps> = ({ books }) => {
           {books.map(book => (
             <tr key={book.id} className="border-b hover:bg-gray-50">
               <td className="py-2 px-4 font-medium">{book.title}</td>
-              <td className="py-2 px-4">{book.description || '-'}</td>
+              <td className="py-2 px-4">{book.description ? book.description.substring(0, 50) + (book.description.length > 50 ? '...' : '') : '-'}</td>
               <td className="py-2 px-4 text-sm text-gray-500">
                 {new Date(book.created_at).toLocaleDateString()}
               </td>
               <td className="py-2 px-4">
-                <button className="text-blue-500 hover:text-blue-700 mr-2">Edit</button>
-                <button className="text-blue-500 hover:text-blue-700">View</button>
+                <button 
+                  onClick={() => onEdit(book)}
+                  className="text-blue-500 hover:text-blue-700 mr-2"
+                >
+                  Edit
+                </button>
+                <button 
+                  onClick={() => onView(book)}
+                  className="text-blue-500 hover:text-blue-700 mr-2"
+                >
+                  View
+                </button>
+                <button 
+                  onClick={() => onDelete(book)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
