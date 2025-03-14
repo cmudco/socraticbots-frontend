@@ -1,6 +1,6 @@
 // src/pages/Books.tsx
 import React, { useEffect, useState } from 'react';
-import { useBookService } from '../services/books.service';
+import { bookService } from '../services/books.service';
 import { Book } from '../types/book';
 import BookTable from '../components/books/BookTable';
 import BookListEmpty from '../components/books/BookListEmpty';
@@ -12,10 +12,6 @@ const Books: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
-    
-    // Use the book service hook directly
-    const bookService = useBookService();
     
     // Fetch books on initial render
     const fetchBooks = async () => {
