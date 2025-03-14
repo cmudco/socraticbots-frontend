@@ -11,11 +11,13 @@ import Login from './pages/Login';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Books from './pages/Books';
+import ApiProvider from './components/common/ApiProvider';
 
 const App: React.FC = () => {
   return (
     <Provider store={store}>
       <AuthProvider>
+        <ApiProvider>
         <BrowserRouter>
           <Layout>
             <Routes>
@@ -61,6 +63,7 @@ const App: React.FC = () => {
             </Routes>
           </Layout>
         </BrowserRouter>
+        </ApiProvider>
       </AuthProvider>
     </Provider>
   );
