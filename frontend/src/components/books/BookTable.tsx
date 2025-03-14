@@ -6,10 +6,10 @@ interface BookTableProps {
   books: Book[];
   onEdit: (book: Book) => void;
   onDelete: (book: Book) => void;
-  onView: (book: Book) => void;
+  // Removed onView prop
 }
 
-const BookTable: React.FC<BookTableProps> = ({ books, onEdit, onDelete, onView }) => {
+const BookTable: React.FC<BookTableProps> = ({ books, onEdit, onDelete }) => {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white">
@@ -35,12 +35,6 @@ const BookTable: React.FC<BookTableProps> = ({ books, onEdit, onDelete, onView }
                   className="text-blue-500 hover:text-blue-700 mr-2"
                 >
                   Edit
-                </button>
-                <button 
-                  onClick={() => onView(book)}
-                  className="text-blue-500 hover:text-blue-700 mr-2"
-                >
-                  View
                 </button>
                 <button 
                   onClick={() => onDelete(book)}

@@ -5,7 +5,6 @@ import { Book } from '../types/book';
 import BookTable from '../components/books/BookTable';
 import BookListEmpty from '../components/books/BookListEmpty';
 import BookFormModal from '../components/books/BookFormModal';
-import BookDetailModal from '../components/books/BookDetailModal';
 import DeleteBookModal from '../components/books/DeleteBookModal';
 
 const Books: React.FC = () => {
@@ -16,7 +15,6 @@ const Books: React.FC = () => {
     
     // Modal states
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedBook, setSelectedBook] = useState<Book | null>(null);
     
@@ -54,10 +52,7 @@ const Books: React.FC = () => {
         setIsFormModalOpen(true);
     };
     
-    const handleOpenViewModal = (book: Book) => {
-        setSelectedBook(book);
-        setIsDetailModalOpen(true);
-    };
+    
     
     const handleOpenDeleteModal = (book: Book) => {
         setSelectedBook(book);
@@ -68,9 +63,7 @@ const Books: React.FC = () => {
         setIsFormModalOpen(false);
     };
     
-    const handleCloseDetailModal = () => {
-        setIsDetailModalOpen(false);
-    };
+    
     
     const handleCloseDeleteModal = () => {
         setIsDeleteModalOpen(false);
@@ -98,7 +91,6 @@ const Books: React.FC = () => {
             <BookTable 
                 books={books} 
                 onEdit={handleOpenEditModal}
-                onView={handleOpenViewModal}
                 onDelete={handleOpenDeleteModal}
             />
         );
@@ -126,14 +118,7 @@ const Books: React.FC = () => {
                 book={selectedBook || undefined}
             />
             
-            {/* View Book Details Modal */}
-            {selectedBook && (
-                <BookDetailModal
-                    isOpen={isDetailModalOpen}
-                    onClose={handleCloseDetailModal}
-                    book={selectedBook}
-                />
-            )}
+            
             
             {/* Delete Confirmation Modal */}
             {selectedBook && (
