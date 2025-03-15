@@ -1,9 +1,13 @@
 // src/components/chapters/tabs/BasicInfoTab.tsx
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { CreateChapterRequest } from '../../../services/chapters.service';
+import { modelsService, AIModel } from '../../../services/models.service';
 
 interface BasicInfoTabProps {
-  formData: CreateChapterRequest;
+  formData: CreateChapterRequest & { 
+    chat_model_id?: string;
+    progress_tracking_model_id?: string;
+  };
   onChange: (field: string, value: string) => void;
   onSubmit: () => void;
   onCancel: () => void;
@@ -26,7 +30,19 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
   // Track last save time for status message
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  // Models state
+  const [models, setModels] = useState<AIModel[]>([]);
+  
+  // Fetch models
+  useEffect(() => {
+    modelsService.getModels().then(data => {
+      setModels(data);
+    }).catch(err => {
+      console.error('Error loading models:', err);
+    });
+  }, []);
+  
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     // Store the field's initial value when it gains focus
     const { name, value } = e.target;
     fieldInitialValue.current = value;
@@ -34,7 +50,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     setHasChanges(false);
   };
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     onChange(name, value);
     
@@ -124,6 +140,51 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
           className="w-full p-2 border rounded"
           required
         />
+      </div>
+      
+      {/* Model Dropdowns */}
+      <div className="mb-4">
+        <label className="block text-gray-700 mb-1" htmlFor="chat_model_id">
+          Chat Model
+        </label>
+        <select
+          id="chat_model_id"
+          name="chat_model_id"
+          value={(formData as any).chat_model_id || ''}
+          onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          className="w-full p-2 border rounded"
+        >
+          <option value="">Select Chat Model</option>
+          {models.map(model => (
+            <option key={model.id} value={model.id}>
+              {model.name} ({model.provider})
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      <div className="mb-4">
+        <label className="block text-gray-700 mb-1" htmlFor="progress_tracking_model_id">
+          Progress Tracking Model
+        </label>
+        <select
+          id="progress_tracking_model_id"
+          name="progress_tracking_model_id"
+          value={(formData as any).progress_tracking_model_id || ''}
+          onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur} 
+          className="w-full p-2 border rounded"
+        >
+          <option value="">Select Progress Tracking Model</option>
+          {models.map(model => (
+            <option key={model.id} value={model.id}>
+              {model.name} ({model.provider})
+            </option>
+          ))}
+        </select>
       </div>
       
       {/* Status indicator */}
