@@ -6,6 +6,7 @@ import BookTable from '../components/books/BookTable';
 import BookListEmpty from '../components/books/BookListEmpty';
 import BookFormModal from '../components/books/BookFormModal';
 import DeleteBookModal from '../components/books/DeleteBookModal';
+import { chapterService } from '../services/chapters.service';
 
 const Books: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
@@ -25,6 +26,15 @@ const Books: React.FC = () => {
             const fetchedBooks = await bookService.getBooks();
             setBooks(fetchedBooks);
             setError(null);
+
+            if (fetchedBooks.length > 0) {
+                console.log("Testing chapters API for first book");
+                chapterService.getChapters(fetchedBooks[0].id)
+                  .then(data => console.log("Chapters data:", data))
+                  .catch(err => console.log("Error:", err));
+            }
+
+
         } catch (err) {
             setError('Could not load books. Please try again later.');
             console.error('Error loading books:', err);
