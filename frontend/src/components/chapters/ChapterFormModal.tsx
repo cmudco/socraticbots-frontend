@@ -66,8 +66,10 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     }));
   };
 
-  const handleSubmit = () => {
+  // This is used for auto-save - it doesn't close the modal
+  const handleAutoSave = () => {
     onSubmit(formData);
+    // Don't close the modal here
   };
 
   if (!isOpen) return null;
@@ -157,7 +159,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           <BasicInfoTab 
             formData={formData}
             onChange={handleChange}
-            onSubmit={handleSubmit}
+            onSubmit={handleAutoSave} // Only passing auto-save here - it won't close the modal
             onCancel={onClose}
             isEdit={!!chapter}
           />
