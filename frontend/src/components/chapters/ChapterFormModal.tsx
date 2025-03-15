@@ -1,5 +1,5 @@
 // src/components/chapters/ChapterFormModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Chapter, CreateChapterRequest } from '../../services/chapters.service';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import PromptsTab from './tabs/PromptsTab';
@@ -28,6 +28,9 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   
   // Add active tab state
   const [activeTab, setActiveTab] = useState('basic');
+  
+  // Create a ref for the modal content
+  const modalContentRef = useRef<HTMLDivElement>(null);
 
   // Reset form when modal opens/closes or chapter changes
   useEffect(() => {
@@ -47,6 +50,14 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     // Reset to first tab when opening modal
     setActiveTab('basic');
   }, [chapter, isOpen]);
+  
+  // Close modal when clicking outside
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only close if clicking the backdrop (not the modal content)
+    if (modalContentRef.current && !modalContentRef.current.contains(e.target as Node)) {
+      onClose();
+    }
+  };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -62,8 +73,16 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        ref={modalContentRef}
+        className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+        // Stop propagation to prevent closing when clicking on the modal content
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="text-xl font-bold mb-4">
           {chapter ? 'Edit Chapter' : 'Create New Chapter'}
         </h2>
