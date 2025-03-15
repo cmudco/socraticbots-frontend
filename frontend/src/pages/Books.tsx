@@ -7,19 +7,25 @@ import BookListEmpty from '../components/books/BookListEmpty';
 import BookFormModal from '../components/books/BookFormModal';
 import DeleteBookModal from '../components/books/DeleteBookModal';
 import { chapterService } from '../services/chapters.service';
+import { useAuth } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
 
 const Books: React.FC = () => {
     const [books, setBooks] = useState<Book[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [hasFetched, setHasFetched] = useState(false);
+
+    // Get auth and API ready status
+    const auth = useAuth();
+    const apiReady = useAppSelector(state => state.api.isReady);
     
     // Modal states
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedBook, setSelectedBook] = useState<Book | null>(null);
     
-    // Fetch books on initial render
+    // Fetch books function
     const fetchBooks = async () => {
         try {
             setLoading(true);
@@ -27,14 +33,13 @@ const Books: React.FC = () => {
             setBooks(fetchedBooks);
             setError(null);
 
+            // Test chapters API if we have books
             if (fetchedBooks.length > 0) {
                 console.log("Testing chapters API for first book");
                 chapterService.getChapters(fetchedBooks[0].id)
                   .then(data => console.log("Chapters data:", data))
                   .catch(err => console.log("Error:", err));
             }
-
-
         } catch (err) {
             setError('Could not load books. Please try again later.');
             console.error('Error loading books:', err);
@@ -44,17 +49,19 @@ const Books: React.FC = () => {
         }
     };
     
-    // Fetch books on initial render after slight delay.
+    // Fetch books when conditions are met
     useEffect(() => {
-        if (!hasFetched) {
-            // Add a small delay to ensure auth token is fully processed
-            const timer = setTimeout(() => {
-                fetchBooks();
-            }, 100); // 100ms delay
+        const shouldFetch = 
+            !hasFetched && 
+            !auth.isLoading && 
+            auth.isAuthenticated && 
+            apiReady;
             
-            return () => clearTimeout(timer);
+        if (shouldFetch) {
+            console.log("API is ready and auth is ready - fetching books");
+            fetchBooks();
         }
-    }, [hasFetched]);
+    }, [hasFetched, auth.isLoading, auth.isAuthenticated, apiReady]);
 
     // Modal handlers
     const handleOpenCreateModal = () => {
