@@ -84,6 +84,12 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
   };
 
   const handleBlur = () => {
+
+    if (!isEdit && (!formData.title || !formData.subject || !formData.topic)) {
+      setHasChanges(false);
+      return; // Don't autosave yet
+    }
+
     // Only submit if there were changes in the field that is being left
     if (hasChanges) {
       onSubmit(); // This auto-saves but doesn't close modal
@@ -98,8 +104,24 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
     e.preventDefault();
   };
   
+  
   // Status indicator
   const renderStatus = () => {
+    // For new chapters, show what fields are still required for autosave
+    if (!isEdit && (!formData.title || !formData.subject || !formData.topic)) {
+      const missingFields = [];
+      if (!formData.title) missingFields.push('Title');
+      if (!formData.subject) missingFields.push('Subject');
+      if (!formData.topic) missingFields.push('Topic');
+      
+      return (
+        <p className="text-amber-500 text-sm mt-2">
+          Fill in {missingFields.join(', ')} {missingFields.length === 1 ? 'field' : 'fields'} to enable autosave
+        </p>
+      );
+    }
+    
+    // Existing status messages
     if (hasChanges) {
       return <p className="text-blue-500 text-sm mt-2">Changes will save when you tab out</p>;
     }
@@ -107,8 +129,15 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
       const timeString = lastSaved.toLocaleTimeString();
       return <p className="text-green-500 text-sm mt-2">Last saved at {timeString}</p>;
     }
+    
+    // Default message for new chapters with all required fields
+    if (!isEdit && formData.title && formData.subject && formData.topic && !lastSaved) {
+      return <p className="text-blue-500 text-sm mt-2">Ready to autosave</p>;
+    }
+    
     return null;
   };
+
 
   return (
     <form onSubmit={handleSubmit}>
