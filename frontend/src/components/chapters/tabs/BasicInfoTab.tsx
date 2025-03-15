@@ -33,14 +33,35 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
   // Models state
   const [models, setModels] = useState<AIModel[]>([]);
   
-  // Fetch models
   useEffect(() => {
     modelsService.getModels().then(data => {
       setModels(data);
+      
+      // Only set default values if this is not edit mode and no models are selected
+      if (!isEdit && (!formData.chat_model_id || !formData.progress_tracking_model_id)) {
+        // Find Claude 3.5 Haiku (Latest) for chat
+        const defaultChatModel = data.find(model => 
+          model.name.includes("Claude 3.7 Sonnet") && model.name.includes("Latest"));
+        
+        // Find Claude 3.7 Sonnet (Latest) for progress tracking
+        const defaultProgressModel = data.find(model => 
+          model.name.includes("Claude 3.7 Sonnet") && model.name.includes("Latest"));
+        
+        // Set defaults if found
+        if (defaultChatModel) {
+          onChange('chat_model_id', defaultChatModel.id);
+        }
+        
+        if (defaultProgressModel) {
+          onChange('progress_tracking_model_id', defaultProgressModel.id);
+        }
+      }
     }).catch(err => {
       console.error('Error loading models:', err);
     });
   }, []);
+
+
   
   const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     // Store the field's initial value when it gains focus
