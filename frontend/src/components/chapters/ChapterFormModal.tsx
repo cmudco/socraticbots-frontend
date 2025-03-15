@@ -1,6 +1,11 @@
 // src/components/chapters/ChapterFormModal.tsx
 import React, { useState, useEffect } from 'react';
 import { Chapter, CreateChapterRequest } from '../../services/chapters.service';
+import BasicInfoTab from './tabs/BasicInfoTab';
+import PromptsTab from './tabs/PromptsTab';
+import LearningGoalsTab from './tabs/LearningGoalsTab';
+import FilesTab from './tabs/FilesTab';
+import DeploymentTab from './tabs/DeploymentTab';
 
 interface ChapterFormModalProps {
   isOpen: boolean;
@@ -20,6 +25,9 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     subject: '',
     topic: ''
   });
+  
+  // Add active tab state
+  const [activeTab, setActiveTab] = useState('basic');
 
   // Reset form when modal opens/closes or chapter changes
   useEffect(() => {
@@ -36,18 +44,18 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         topic: ''
       });
     }
+    // Reset to first tab when opening modal
+    setActiveTab('basic');
   }, [chapter, isOpen]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+  const handleChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [field]: value
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     onSubmit(formData);
   };
 
@@ -55,73 +63,102 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">
           {chapter ? 'Edit Chapter' : 'Create New Chapter'}
         </h2>
         
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-1" htmlFor="title">
-              Title
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-1" htmlFor="subject">
-              Subject
-            </label>
-            <input
-              type="text"
-              id="subject"
-              name="subject"
-              value={formData.subject}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-1" htmlFor="topic">
-              Topic
-            </label>
-            <input
-              type="text"
-              id="topic"
-              name="topic"
-              value={formData.topic}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          
-          <div className="flex justify-end space-x-2 mt-6">
+        {/* Tab Navigation */}
+        <div className="border-b mb-6">
+          <nav className="flex -mb-px">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100"
+              className={`mr-4 py-2 px-4 ${
+                activeTab === 'basic'
+                  ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('basic')}
             >
-              Cancel
+              Basic Info
             </button>
+            
             <button
-              type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              type="button"
+              className={`mr-4 py-2 px-4 ${
+                activeTab === 'prompts'
+                  ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('prompts')}
             >
-              {chapter ? 'Update' : 'Create'}
+              Prompts
             </button>
-          </div>
-        </form>
+            
+            <button
+              type="button"
+              className={`mr-4 py-2 px-4 ${
+                activeTab === 'goals'
+                  ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('goals')}
+            >
+              Learning Goals
+            </button>
+            
+            <button
+              type="button"
+              className={`mr-4 py-2 px-4 ${
+                activeTab === 'files'
+                  ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('files')}
+            >
+              Files
+            </button>
+            
+            <button
+              type="button"
+              className={`mr-4 py-2 px-4 ${
+                activeTab === 'deployment'
+                  ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('deployment')}
+            >
+              Deployment
+            </button>
+          </nav>
+        </div>
+        
+        {/* Tab Content */}
+        {activeTab === 'basic' && (
+          <BasicInfoTab 
+            formData={formData}
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+            onCancel={onClose}
+            isEdit={!!chapter}
+          />
+        )}
+        
+        {activeTab === 'prompts' && (
+          <PromptsTab />
+        )}
+        
+        {activeTab === 'goals' && (
+          <LearningGoalsTab />
+        )}
+        
+        {activeTab === 'files' && (
+          <FilesTab />
+        )}
+        
+        {activeTab === 'deployment' && (
+          <DeploymentTab />
+        )}
       </div>
     </div>
   );
