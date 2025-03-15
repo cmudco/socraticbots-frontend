@@ -94,7 +94,7 @@ const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     const readyTimer = setTimeout(() => {
       dispatch(setApiReady());
       console.log('API marked as ready in Redux store');
-    }, 300); // 300ms delay
+    }, 800); 
     
     // Clean up interceptors on unmount
     return () => {
