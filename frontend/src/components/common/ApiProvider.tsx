@@ -2,6 +2,8 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api/instance';
+import { useAppDispatch } from '../../store/hooks';
+import { setApiReady, resetApiState } from '../../store/slices/apiSlice';
 
 interface ApiProviderProps {
   children: React.ReactNode;
@@ -9,8 +11,12 @@ interface ApiProviderProps {
 
 const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
   const auth = useAuth();
+  const dispatch = useAppDispatch();
   
   useEffect(() => {
+    // Reset API ready state when component mounts or auth changes
+    dispatch(resetApiState());
+    
     // Request interceptor to add auth token
     const requestInterceptor = api.interceptors.request.use(
       (config) => {
@@ -84,12 +90,19 @@ const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
       }
     );
     
+    // Set API as ready with a delay to ensure auth is fully processed
+    const readyTimer = setTimeout(() => {
+      dispatch(setApiReady());
+      console.log('API marked as ready in Redux store');
+    }, 300); // 300ms delay
+    
     // Clean up interceptors on unmount
     return () => {
       api.interceptors.request.eject(requestInterceptor);
       api.interceptors.response.eject(responseInterceptor);
+      clearTimeout(readyTimer);
     };
-  }, [auth]);
+  }, [auth, dispatch]);
   
   return <>{children}</>;
 };
