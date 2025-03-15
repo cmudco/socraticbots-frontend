@@ -44,10 +44,15 @@ const Books: React.FC = () => {
         }
     };
     
-    // Fetch books on initial render
+    // Fetch books on initial render after slight delay.
     useEffect(() => {
         if (!hasFetched) {
-            fetchBooks();
+            // Add a small delay to ensure auth token is fully processed
+            const timer = setTimeout(() => {
+                fetchBooks();
+            }, 100); // 100ms delay
+            
+            return () => clearTimeout(timer);
         }
     }, [hasFetched]);
 
