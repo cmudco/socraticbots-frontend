@@ -112,6 +112,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
 
   return (
     <form onSubmit={handleSubmit}>
+      
       <div className="mb-4">
         <label className="block text-gray-700 mb-1" htmlFor="title">
           Title
@@ -212,6 +213,8 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
       <div className="mt-4 text-right">
         {renderStatus()}
       </div>
+      
+
     </form>
   );
 };

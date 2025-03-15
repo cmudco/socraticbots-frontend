@@ -81,8 +81,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     >
       <div 
         ref={modalContentRef}
-        className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-        // Stop propagation to prevent closing when clicking on the modal content
+        className="bg-white rounded-lg p-6 w-full max-w-4xl h-[650px] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold mb-4">
@@ -155,34 +154,37 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         </div>
         
         {/* Tab Content */}
-        {activeTab === 'basic' && (
-          <BasicInfoTab 
-            formData={formData}
-            onChange={handleChange}
-            onSubmit={handleAutoSave} // Only passing auto-save here - it won't close the modal
-            onCancel={onClose}
-            isEdit={!!chapter}
-          />
-        )}
-        
-        {activeTab === 'prompts' && (
-          <PromptsTab />
-        )}
-        
-        {activeTab === 'goals' && (
-          <LearningGoalsTab />
-        )}
-        
-        {activeTab === 'files' && (
-          <FilesTab />
-        )}
-        
-        {activeTab === 'deployment' && (
-          <DeploymentTab />
-        )}
+        <div className="flex-1 overflow-y-auto">
+          {activeTab === 'basic' && (
+            <BasicInfoTab 
+              formData={formData}
+              onChange={handleChange}
+              onSubmit={handleAutoSave} // Only passing auto-save here - it won't close the modal
+              onCancel={onClose}
+              isEdit={!!chapter}
+            />
+          )}
+          
+          {activeTab === 'prompts' && (
+            <PromptsTab />
+          )}
+          
+          {activeTab === 'goals' && (
+            <LearningGoalsTab />
+          )}
+          
+          {activeTab === 'files' && (
+            <FilesTab />
+          )}
+          
+          {activeTab === 'deployment' && (
+            <DeploymentTab />
+          )}
+        </div>
       </div>
     </div>
   );
+  
 };
 
 export default ChapterFormModal;
