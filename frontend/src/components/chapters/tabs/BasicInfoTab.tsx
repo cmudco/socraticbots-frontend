@@ -1,5 +1,5 @@
 // src/components/chapters/tabs/BasicInfoTab.tsx
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { CreateChapterRequest } from '../../../services/chapters.service';
 
 interface BasicInfoTabProps {
@@ -17,14 +17,60 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
   onCancel,
   isEdit
 }) => {
+  // Track the currently focused field's initial value
+  const fieldInitialValue = useRef<string>('');
+  // Track the active field name
+  const activeField = useRef<string | null>(null);
+  // Track if there are unsaved changes
+  const [hasChanges, setHasChanges] = useState(false);
+  // Track last save time for status message
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    // Store the field's initial value when it gains focus
+    const { name, value } = e.target;
+    fieldInitialValue.current = value;
+    activeField.current = name;
+    setHasChanges(false);
+  };
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     onChange(name, value);
+    
+    // Check if this change is different from initial value
+    if (name === activeField.current && value !== fieldInitialValue.current) {
+      setHasChanges(true);
+    } else {
+      setHasChanges(false);
+    }
   };
 
+  const handleBlur = () => {
+    // Only submit if there were changes in the field that is being left
+    if (hasChanges) {
+      onSubmit(); // This auto-saves but doesn't close modal
+      setHasChanges(false);
+      setLastSaved(new Date());
+    }
+    activeField.current = null;
+  };
+
+  // Prevent form submission from causing issues
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit();
+  };
+  
+  // Status indicator
+  const renderStatus = () => {
+    if (hasChanges) {
+      return <p className="text-blue-500 text-sm mt-2">Changes will save when you tab out</p>;
+    }
+    if (lastSaved) {
+      const timeString = lastSaved.toLocaleTimeString();
+      return <p className="text-green-500 text-sm mt-2">Last saved at {timeString}</p>;
+    }
+    return null;
   };
 
   return (
@@ -39,6 +85,8 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
           name="title"
           value={formData.title}
           onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           className="w-full p-2 border rounded"
           required
         />
@@ -54,6 +102,8 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
           name="subject"
           value={formData.subject}
           onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           className="w-full p-2 border rounded"
           required
         />
@@ -69,25 +119,16 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
           name="topic"
           value={formData.topic}
           onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           className="w-full p-2 border rounded"
           required
         />
       </div>
       
-      <div className="flex justify-end space-x-2 mt-6">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-100"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          {isEdit ? 'Update' : 'Create'}
-        </button>
+      {/* Status indicator */}
+      <div className="mt-4 text-right">
+        {renderStatus()}
       </div>
     </form>
   );
