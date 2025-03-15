@@ -1,13 +1,13 @@
 // src/components/books/BookFormModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { bookService } from '../../services/books.service';
 import { Book } from '../../types/book';
 
 interface BookFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onBookCreated: () => void;  // Keep your existing name
-  book?: Book; // Optional - if provided, we're in edit mode
+  onBookCreated: () => void;  
+  book?: Book; 
 }
 
 const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCreated, book }) => {
@@ -15,6 +15,9 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Create a ref for the modal content
+  const modalContentRef = useRef<HTMLDivElement>(null);
   
   // Determine if we're in edit mode
   const isEditMode = !!book;
@@ -30,6 +33,31 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
       setDescription('');
     }
   }, [book]);
+  
+  // Handle clicks outside of the modal content
+  const handleOutsideClick = (e: MouseEvent) => {
+    if (
+      modalContentRef.current && 
+      !modalContentRef.current.contains(e.target as Node) && 
+      !isSubmitting
+    ) {
+      onClose();
+    }
+  };
+  
+  // Add event listener when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    } else {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    }
+    
+    // Clean up event listener
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [isOpen, isSubmitting]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +91,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
       
       // Close modal and notify parent
       onClose();
-      onBookCreated(); // Use this callback name
+      onBookCreated(); 
     } catch (err) {
       setError(`Failed to ${isEditMode ? 'update' : 'create'} book. Please try again.`);
       console.error(`Error ${isEditMode ? 'updating' : 'creating'} book:`, err);
@@ -76,7 +104,10 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-md">
+      <div 
+        ref={modalContentRef}
+        className="bg-white p-6 rounded-lg w-full max-w-md"
+      >
         <h2 className="text-xl font-bold mb-4">
           {isEditMode ? 'Edit Book' : 'Create New Book'}
         </h2>

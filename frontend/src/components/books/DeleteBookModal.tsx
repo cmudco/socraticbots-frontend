@@ -1,8 +1,7 @@
 // src/components/books/DeleteBookModal.tsx
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { bookService } from '../../services/books.service';
 import { Book } from '../../types/book';
-import { useState } from 'react';
 
 interface DeleteBookModalProps {
   isOpen: boolean;
@@ -14,6 +13,34 @@ interface DeleteBookModalProps {
 const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSuccess, book }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Create ref for modal content
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  
+  // Handle clicks outside the modal
+  const handleOutsideClick = (e: MouseEvent) => {
+    if (
+      modalContentRef.current && 
+      !modalContentRef.current.contains(e.target as Node) && 
+      !isDeleting
+    ) {
+      onClose();
+    }
+  };
+  
+  // Add event listener when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    } else {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    }
+    
+    // Clean up event listener on unmount
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [isOpen, isDeleting]);
   
   const handleDelete = async () => {
     try {
@@ -36,7 +63,10 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-md">
+      <div 
+        ref={modalContentRef}
+        className="bg-white p-6 rounded-lg w-full max-w-md"
+      >
         <h2 className="text-xl font-bold mb-4">Delete Book</h2>
         
         {error && (
