@@ -66,10 +66,9 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     }));
   };
 
-  // This is used for auto-save - it doesn't close the modal
-  const handleAutoSave = () => {
+  const handleSubmit = () => {
     onSubmit(formData);
-    // Don't close the modal here
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -81,7 +80,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     >
       <div 
         ref={modalContentRef}
-        className="bg-white rounded-lg p-6 w-full max-w-4xl h-[650px] overflow-hidden flex flex-col"
+        className="bg-white rounded-lg p-6 w-full max-w-4xl h-[650px] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold mb-4">
@@ -153,38 +152,48 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           </nav>
         </div>
         
-        {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === 'basic' && (
-            <BasicInfoTab 
-              formData={formData}
-              onChange={handleChange}
-              onSubmit={handleAutoSave} // Only passing auto-save here - it won't close the modal
-              onCancel={onClose}
-              isEdit={!!chapter}
-            />
-          )}
+        {/* Tab Content - Notice how I've changed this to have a scrollable content area */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-y-auto">
+            {activeTab === 'basic' && (
+              <BasicInfoTab 
+                formData={formData}
+                onChange={handleChange}
+                isEdit={!!chapter}
+              />
+            )}
+            
+            {activeTab === 'prompts' && (
+              <PromptsTab />
+            )}
+            
+            {activeTab === 'goals' && (
+              <LearningGoalsTab />
+            )}
+            
+            {activeTab === 'files' && (
+              <FilesTab />
+            )}
+            
+            {activeTab === 'deployment' && (
+              <DeploymentTab />
+            )}
+          </div>
           
-          {activeTab === 'prompts' && (
-            <PromptsTab />
-          )}
-          
-          {activeTab === 'goals' && (
-            <LearningGoalsTab />
-          )}
-          
-          {activeTab === 'files' && (
-            <FilesTab />
-          )}
-          
-          {activeTab === 'deployment' && (
-            <DeploymentTab />
-          )}
+          {/* Fixed Footer with Save Button */}
+          <div className="border-t mt-6 pt-4 flex justify-end">
+            <button
+              type="button"
+              className="px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600"
+              onClick={handleSubmit}
+            >
+              {chapter ? 'Save Changes' : 'Create Chapter'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
-  
 };
 
 export default ChapterFormModal;
