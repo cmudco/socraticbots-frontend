@@ -41,13 +41,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
     try {
       const newChapter = await chapterService.createChapter(bookId, chapterData);
       onChapterAdded(newChapter);
-      
-      // If this is called from an auto-save, don't close and update selectedChapter
-      if (!selectedChapter) {
-        setSelectedChapter(newChapter);
-      } else {
-        setIsFormModalOpen(false);
-      }
+      // With our new approach, the modal is already closed by the modal component
     } catch (error) {
       console.error('Error creating chapter:', error);
     }
@@ -57,9 +51,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
     try {
       const updatedChapter = await chapterService.updateChapter(bookId, chapterId, chapterData);
       onChapterUpdated(updatedChapter);
-      
-      // Don't close the modal on auto-save
-      // We'll handle modal closing in the ChapterFormModal component
+      // With our new approach, the modal is already closed by the modal component
     } catch (error) {
       console.error('Error updating chapter:', error);
     }
