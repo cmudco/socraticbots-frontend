@@ -1,6 +1,6 @@
 // src/components/chapters/ChapterFormModal.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Chapter, CreateChapterRequest } from '../../services/chapters.service';
+import { Chapter, CreateChapterRequest, ChapterModelPreferenceRequest } from '../../services/chapters.service';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import PromptsTab from './tabs/PromptsTab';
 import LearningGoalsTab from './tabs/LearningGoalsTab';
@@ -10,7 +10,7 @@ import DeploymentTab from './tabs/DeploymentTab';
 interface ChapterFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateChapterRequest) => void;
+  onSubmit: (data: CreateChapterRequest, modelPreferences?: ChapterModelPreferenceRequest) => void;
   chapter?: Chapter | null;
 }
 
@@ -24,6 +24,11 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     title: '',
     subject: '',
     topic: ''
+  });
+  
+  const [modelPreferences, setModelPreferences] = useState<ChapterModelPreferenceRequest>({
+    chat_model_id: undefined,
+    tracking_model_id: undefined
   });
   
   // Add active tab state
@@ -40,11 +45,28 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         subject: chapter.subject,
         topic: chapter.topic
       });
+      
+      // Set model preferences if they exist
+      if (chapter.model_preference) {
+        setModelPreferences({
+          chat_model_id: chapter.model_preference.chat_model?.id,
+          tracking_model_id: chapter.model_preference.tracking_model?.id
+        });
+      } else {
+        setModelPreferences({
+          chat_model_id: undefined,
+          tracking_model_id: undefined
+        });
+      }
     } else {
       setFormData({
         title: '',
         subject: '',
         topic: ''
+      });
+      setModelPreferences({
+        chat_model_id: undefined,
+        tracking_model_id: undefined
       });
     }
     // Reset to first tab when opening modal
@@ -60,14 +82,34 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   };
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    console.log(`Field changed: ${field}, value: ${value}`);
+    
+    if (field === 'chat_model_id' || field === 'tracking_model_id' || field === 'progress_tracking_model_id') {
+      // Handle the case for progress_tracking_model_id as well for backward compatibility
+      const mappedField = field === 'progress_tracking_model_id' ? 'tracking_model_id' : field;
+      
+      setModelPreferences(prev => ({
+        ...prev,
+        [mappedField]: value || undefined
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
 
   const handleSubmit = () => {
-    onSubmit(formData);
+    // Only include model preferences if at least one is set
+    const hasModelPreferences = !!modelPreferences.chat_model_id || !!modelPreferences.tracking_model_id;
+    
+    console.log("Submitting model preferences:", modelPreferences);
+    
+    onSubmit(
+      formData, 
+      hasModelPreferences ? modelPreferences : undefined
+    );
     onClose();
   };
 
@@ -157,7 +199,11 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'basic' && (
               <BasicInfoTab 
-                formData={formData}
+                formData={{
+                  ...formData,
+                  chat_model_id: modelPreferences.chat_model_id,
+                  tracking_model_id: modelPreferences.tracking_model_id
+                }}
                 onChange={handleChange}
                 isEdit={!!chapter}
               />
@@ -184,7 +230,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           <div className="border-t mt-6 pt-4 flex justify-end">
             <button
               type="button"
-              className="px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={handleSubmit}
             >
               {chapter ? 'Save Changes' : 'Create Chapter'}
