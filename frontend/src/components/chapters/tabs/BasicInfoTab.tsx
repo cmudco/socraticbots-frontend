@@ -6,7 +6,7 @@ import { modelsService, AIModel } from '../../../services/models.service';
 interface BasicInfoTabProps {
   formData: CreateChapterRequest & { 
     chat_model_id?: string;
-    progress_tracking_model_id?: string;
+    tracking_model_id?: string;
   };
   onChange: (field: string, value: string) => void;
   isEdit: boolean;
@@ -25,7 +25,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
       setModels(data);
       
       // Only set default values if this is not edit mode and no models are selected
-      if (!isEdit && (!formData.chat_model_id || !formData.progress_tracking_model_id)) {
+      if (!isEdit && (!formData.chat_model_id || !formData.tracking_model_id)) {
         // Find Claude 3.7 Sonnet (Latest) for chat
         const defaultChatModel = data.find(model => 
           model.name.includes("Claude 3.7 Sonnet") && model.name.includes("Latest"));
@@ -40,7 +40,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
         }
         
         if (defaultProgressModel) {
-          onChange('progress_tracking_model_id', defaultProgressModel.id);
+          onChange('tracking_model_id', defaultProgressModel.id);
         }
       }
     }).catch(err => {
@@ -122,13 +122,13 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
       </div>
       
       <div className="mb-4">
-        <label className="block text-gray-700 mb-1" htmlFor="progress_tracking_model_id">
+        <label className="block text-gray-700 mb-1" htmlFor="tracking_model_id">
           Progress Tracking Model
         </label>
         <select
-          id="progress_tracking_model_id"
-          name="progress_tracking_model_id"
-          value={(formData as any).progress_tracking_model_id || ''}
+          id="tracking_model_id"
+          name="tracking_model_id"
+          value={(formData as any).tracking_model_id || ''}
           onChange={handleChange}
           className="w-full p-2 border rounded"
         >

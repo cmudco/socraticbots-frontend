@@ -1,6 +1,6 @@
 // src/components/chapters/ChapterList.tsx
 import React, { useState } from 'react';
-import { Chapter, CreateChapterRequest } from '../../services/chapters.service';
+import { Chapter, CreateChapterRequest, ChapterModelPreferenceRequest,UpdateChapterRequest } from '../../services/chapters.service';
 import { chapterService } from '../../services/chapters.service';
 import ChapterItem from './ChapterItem';
 import ChapterFormModal from './ChapterFormModal';
@@ -37,21 +37,31 @@ const ChapterList: React.FC<ChapterListProps> = ({
     setIsFormModalOpen(false);
   };
 
-  const handleCreateChapter = async (chapterData: CreateChapterRequest) => {
+  const handleCreateChapter = async (
+    chapterData: CreateChapterRequest, 
+    modelPreferences?: ChapterModelPreferenceRequest
+  ) => {
     try {
-      const newChapter = await chapterService.createChapter(bookId, chapterData);
+      const newChapter = await chapterService.createChapter(bookId, chapterData, modelPreferences);
       onChapterAdded(newChapter);
-      // With our new approach, the modal is already closed by the modal component
     } catch (error) {
       console.error('Error creating chapter:', error);
     }
   };
 
-  const handleUpdateChapter = async (chapterId: string, chapterData: Partial<CreateChapterRequest>) => {
+  const handleUpdateChapter = async (
+    chapterId: string, 
+    chapterData: UpdateChapterRequest,
+    modelPreferences?: ChapterModelPreferenceRequest
+  ) => {
     try {
-      const updatedChapter = await chapterService.updateChapter(bookId, chapterId, chapterData);
+      const updatedChapter = await chapterService.updateChapter(
+        bookId, 
+        chapterId, 
+        chapterData, 
+        modelPreferences
+      );
       onChapterUpdated(updatedChapter);
-      // With our new approach, the modal is already closed by the modal component
     } catch (error) {
       console.error('Error updating chapter:', error);
     }
