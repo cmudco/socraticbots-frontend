@@ -18,6 +18,9 @@ export const createChapter = createAsyncThunk(
         title, subject, topic, 
         chat_model_id, tracking_model_id 
       } = state.chapterForm;
+
+      const greeting = state.chapterForm.greeting;
+      console.log("ON CREATE THE GREETING IS ", greeting);
       
       // Prepare request data
       const chapterData = {
@@ -69,6 +72,9 @@ export const updateChapter = createAsyncThunk(
         title, subject, topic, 
         chat_model_id, tracking_model_id 
       } = state.chapterForm;
+
+      const greeting = state.chapterForm.greeting;
+      console.log("ON UPDATE THE GREETING IS ", greeting);
       
       // Prepare request data
       const chapterData = {
@@ -121,3 +127,4 @@ export const deleteChapter = createAsyncThunk(
     }
   }
 );
+

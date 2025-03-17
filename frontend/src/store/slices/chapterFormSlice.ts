@@ -17,6 +17,9 @@ interface ChapterFormState {
   isOpen: boolean;
   isEdit: boolean;
   originalChapter: Chapter | null;
+
+  // Prompts tab 
+  greeting: string;
   
   // Models data
   availableModels: AIModel[];
@@ -41,6 +44,9 @@ const initialState: ChapterFormState = {
   isOpen: false,
   isEdit: false,
   originalChapter: null,
+
+  // Prompts tab 
+  greeting: '',
   
   // Models data
   availableModels: [],
