@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { setField } from '../../../store/slices/chapterFormSlice';
 
 // Simplified menu bar with only bold and italic
 const MenuBar = ({ editor }: { editor: any }) => {
@@ -93,9 +95,18 @@ const TiptapEditor = ({ value, onChange, placeholder }: { value: string, onChang
 };
 
 const PromptsTab: React.FC = () => {
-  const [greeting, setGreeting] = useState('');
+  const dispatch = useAppDispatch();
+  // Get greeting from Redux store
+  const greeting = useAppSelector(state => state.chapterForm.greeting);
+  
+  // We're keeping these in local state for now
   const [chatPrompt, setChatPrompt] = useState('');
   const [trackingPrompt, setTrackingPrompt] = useState('');
+
+  // Handler to update greeting in Redux
+  const handleGreetingChange = (html: string) => {
+    dispatch(setField({ field: 'greeting', value: html }));
+  };
 
   return (
     <div className="space-y-8">
@@ -106,7 +117,7 @@ const PromptsTab: React.FC = () => {
         </p>
         <TiptapEditor 
           value={greeting} 
-          onChange={setGreeting} 
+          onChange={handleGreetingChange} 
           placeholder="Enter the greeting message for students..."
         />
       </div>
