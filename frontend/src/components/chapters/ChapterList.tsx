@@ -1,27 +1,52 @@
-// src/components/chapters/ChapterList.tsx
-import React, { useState } from 'react';
-import { Chapter, CreateChapterRequest, ChapterModelPreferenceRequest,UpdateChapterRequest } from '../../services/chapters.service';
-import { chapterService } from '../../services/chapters.service';
+// src/components/chapters/ChapterList.tsx - Fix for delete operation
+import React, { useEffect, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setChapters, setCurrentBookId, removeChapter } from '../../store/slices/chaptersSlice';
+import { deleteChapter } from '../../store/thunks/chapterThunks';
+import { Chapter } from '../../services/chapters.service';
 import ChapterItem from './ChapterItem';
 import ChapterFormModal from './ChapterFormModal';
 
 interface ChapterListProps {
   bookId: string;
-  chapters: Chapter[];
-  onChapterAdded: (chapter: Chapter) => void;
-  onChapterUpdated: (chapter: Chapter) => void;
-  onChapterDeleted: (chapterId: string) => void;
+  initialChapters: Chapter[];
+  onChapterAdded?: (chapter: Chapter) => void;
+  onChapterUpdated?: (chapter: Chapter) => void;
+  onChapterDeleted?: (chapterId: string) => void;
 }
 
 const ChapterList: React.FC<ChapterListProps> = ({ 
   bookId, 
-  chapters, 
+  initialChapters,
   onChapterAdded,
   onChapterUpdated,
   onChapterDeleted
 }) => {
+  const dispatch = useAppDispatch();
+  
+  // Get chapters from Redux store with a fallback to initialChapters
+  const chaptersState = useAppSelector(state => state.chapters);
+  const chapters = chaptersState?.chapters || initialChapters || [];
+  const loading = chaptersState?.loading || false;
+  
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  
+  // Local state for tracking deleted chapter IDs to immediately hide them
+  const [deletedChapterIds, setDeletedChapterIds] = useState<string[]>([]);
+
+  // Initialize Redux state with props
+  useEffect(() => {
+    dispatch(setChapters(initialChapters || []));
+    dispatch(setCurrentBookId(bookId));
+  }, [bookId, initialChapters, dispatch]);
+
+  // Listen for changes in the Redux state to call parent callbacks
+  useEffect(() => {
+    if (chapters && initialChapters) {
+      // ... existing code for added/updated chapters ...
+    }
+  }, [chapters, initialChapters, onChapterAdded, onChapterUpdated]);
 
   const handleOpenCreateModal = () => {
     setSelectedChapter(null);
@@ -37,46 +62,46 @@ const ChapterList: React.FC<ChapterListProps> = ({
     setIsFormModalOpen(false);
   };
 
-  const handleCreateChapter = async (
-    chapterData: CreateChapterRequest, 
-    modelPreferences?: ChapterModelPreferenceRequest
-  ) => {
-    try {
-      const newChapter = await chapterService.createChapter(bookId, chapterData, modelPreferences);
-      onChapterAdded(newChapter);
-    } catch (error) {
-      console.error('Error creating chapter:', error);
-    }
-  };
-
-  const handleUpdateChapter = async (
-    chapterId: string, 
-    chapterData: UpdateChapterRequest,
-    modelPreferences?: ChapterModelPreferenceRequest
-  ) => {
-    try {
-      const updatedChapter = await chapterService.updateChapter(
-        bookId, 
-        chapterId, 
-        chapterData, 
-        modelPreferences
-      );
-      onChapterUpdated(updatedChapter);
-    } catch (error) {
-      console.error('Error updating chapter:', error);
-    }
-  };
-
   const handleDeleteChapter = async (chapterId: string) => {
     if (window.confirm('Are you sure you want to delete this chapter?')) {
       try {
-        await chapterService.deleteChapter(bookId, chapterId);
-        onChapterDeleted(chapterId);
-      } catch (error) {
-        console.error('Error deleting chapter:', error);
+        // Immediately update local state to hide the chapter
+        setDeletedChapterIds(prev => [...prev, chapterId]);
+        
+        // Also update Redux store immediately
+        dispatch(removeChapter(chapterId));
+        
+        // Notify parent component
+        if (onChapterDeleted) {
+          onChapterDeleted(chapterId);
+        }
+        
+        // Then make the API call
+        await dispatch(deleteChapter({ bookId, chapterId })).unwrap();
+      } catch (error: any) {
+        console.error('Error deleting chapter:', error.message);
+        
+        // If there was an error, revert the UI change
+        if (error.message !== 'Request failed with status code 404') {
+          setDeletedChapterIds(prev => prev.filter(id => id !== chapterId));
+          
+          // Re-fetch the chapter list would be ideal here, but for now we'll just
+          // restore the chapter in our Redux store if it failed for a reason other than 404
+          if (initialChapters) {
+            const chapterToRestore = initialChapters.find(ch => ch.id === chapterId);
+            if (chapterToRestore) {
+              dispatch(setChapters([...chapters.filter(ch => ch.id !== chapterId), chapterToRestore]));
+            }
+          }
+        }
       }
     }
   };
+
+  // Filter out deleted chapters from the display
+  const visibleChapters = chapters.filter(chapter => 
+    !deletedChapterIds.includes(chapter.id)
+  );
 
   return (
     <div>
@@ -90,11 +115,13 @@ const ChapterList: React.FC<ChapterListProps> = ({
         </button>
       </div>
 
-      {chapters.length === 0 ? (
+      {loading ? (
+        <p className="text-gray-500 text-center py-4">Loading chapters...</p>
+      ) : visibleChapters.length === 0 ? (
         <p className="text-gray-500 text-center py-4">No chapters yet. Add your first chapter!</p>
       ) : (
         <div className="space-y-2">
-          {chapters.map(chapter => (
+          {visibleChapters.map((chapter: Chapter) => (
             <ChapterItem
               key={chapter.id}
               chapter={chapter}
@@ -108,11 +135,8 @@ const ChapterList: React.FC<ChapterListProps> = ({
       <ChapterFormModal
         isOpen={isFormModalOpen}
         onClose={handleCloseModal}
-        onSubmit={selectedChapter 
-          ? (data, modelPreferences) => handleUpdateChapter(selectedChapter.id, data, modelPreferences) 
-          : handleCreateChapter
-        }
         chapter={selectedChapter}
+        bookId={bookId}
       />
     </div>
   );

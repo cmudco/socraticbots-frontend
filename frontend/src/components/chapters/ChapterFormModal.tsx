@@ -5,9 +5,11 @@ import {
   setActiveTab, 
   closeForm, 
   initNewChapter, 
-  initEditChapter 
+  initEditChapter,
+  setSubmitting
 } from '../../store/slices/chapterFormSlice';
-import { Chapter, CreateChapterRequest, ChapterModelPreferenceRequest } from '../../services/chapters.service';
+import { createChapter, updateChapter } from '../../store/thunks/chapterThunks';
+import { Chapter } from '../../services/chapters.service';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import PromptsTab from './tabs/PromptsTab';
 import LearningGoalsTab from './tabs/LearningGoalsTab';
@@ -17,25 +19,24 @@ import DeploymentTab from './tabs/DeploymentTab';
 interface ChapterFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateChapterRequest, modelPreferences?: ChapterModelPreferenceRequest) => void;
   chapter?: Chapter | null;
+  bookId: string; // Added bookId for API calls
 }
 
 const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   isOpen,
   onClose,
-  onSubmit,
-  chapter
+  chapter,
+  bookId
 }) => {
   const dispatch = useAppDispatch();
   const { 
     activeTab, 
-    title, 
-    subject, 
-    topic, 
-    chat_model_id, 
-    tracking_model_id,
-    isEdit
+    isEdit,
+    isSubmitting,
+    title,
+    subject,
+    topic
   } = useAppSelector(state => state.chapterForm);
   
   // Create a ref for the modal content
@@ -61,26 +62,36 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     }
   };
 
-  const handleSubmit = () => {
-    const formData: CreateChapterRequest = {
-      title,
-      subject,
-      topic
-    };
+  const handleSubmit = async () => {
+    // Set submitting state to true
+    dispatch(setSubmitting(true));
     
-    // Only include model preferences if at least one is set
-    const hasModelPreferences = !!chat_model_id || !!tracking_model_id;
-    const modelPreferences = hasModelPreferences ? {
-      chat_model_id,
-      tracking_model_id
-    } : undefined;
-    
-    console.log("Submitting form data:", formData);
-    console.log("Submitting model preferences:", modelPreferences);
-    
-    onSubmit(formData, modelPreferences);
-    onClose();
-    dispatch(closeForm());
+    try {
+      if (isEdit && chapter) {
+        // If editing, dispatch update thunk
+        await dispatch(updateChapter({ 
+          bookId, 
+          chapterId: chapter.id 
+        })).unwrap(); // unwrap to get the result or throw error
+      } else {
+        // If creating, dispatch create thunk
+        await dispatch(createChapter({ bookId })).unwrap();
+      }
+      
+      // Close the modal after successful submission
+      onClose();
+      dispatch(closeForm());
+    } catch (error) {
+      console.error('Error saving chapter:', error);
+      // You could display an error message here
+    } finally {
+      dispatch(setSubmitting(false));
+    }
+  };
+
+  // Form validation
+  const isFormValid = () => {
+    return title.trim() !== '' && subject.trim() !== '' && topic.trim() !== '';
   };
 
   if (!isOpen) return null;
@@ -164,7 +175,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           </nav>
         </div>
         
-        {/* Tab Content - Notice how I've changed this to have a scrollable content area */}
+        {/* Tab Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'basic' && <BasicInfoTab />}
@@ -179,13 +190,39 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           </div>
           
           {/* Fixed Footer with Save Button */}
-          <div className="border-t mt-6 pt-4 flex justify-end">
+          <div className="border-t mt-6 pt-4 flex justify-end space-x-2">
             <button
               type="button"
-              className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-              onClick={handleSubmit}
+              className="px-3 py-1.5 text-sm bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+              onClick={() => {
+                onClose();
+                dispatch(closeForm());
+              }}
+              disabled={isSubmitting}
             >
-              {isEdit ? 'Save Changes' : 'Create Chapter'}
+              Cancel
+            </button>
+            
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-sm rounded ${
+                isFormValid() 
+                  ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                  : 'bg-blue-300 text-white cursor-not-allowed'
+              }`}
+              onClick={handleSubmit}
+              disabled={isSubmitting || !isFormValid()}
+            >
+              {isSubmitting ? 
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </span> : 
+                (isEdit ? 'Save Changes' : 'Create Chapter')
+              }
             </button>
           </div>
         </div>
