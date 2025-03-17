@@ -109,7 +109,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
         isOpen={isFormModalOpen}
         onClose={handleCloseModal}
         onSubmit={selectedChapter 
-          ? (data) => handleUpdateChapter(selectedChapter.id, data) 
+          ? (data, modelPreferences) => handleUpdateChapter(selectedChapter.id, data, modelPreferences) 
           : handleCreateChapter
         }
         chapter={selectedChapter}
