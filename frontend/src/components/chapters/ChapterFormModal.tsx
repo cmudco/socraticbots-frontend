@@ -1,5 +1,12 @@
 // src/components/chapters/ChapterFormModal.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { 
+  setActiveTab, 
+  closeForm, 
+  initNewChapter, 
+  initEditChapter 
+} from '../../store/slices/chapterFormSlice';
 import { Chapter, CreateChapterRequest, ChapterModelPreferenceRequest } from '../../services/chapters.service';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import PromptsTab from './tabs/PromptsTab';
@@ -20,97 +27,60 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   onSubmit,
   chapter
 }) => {
-  const [formData, setFormData] = useState<CreateChapterRequest>({
-    title: '',
-    subject: '',
-    topic: ''
-  });
-  
-  const [modelPreferences, setModelPreferences] = useState<ChapterModelPreferenceRequest>({
-    chat_model_id: undefined,
-    tracking_model_id: undefined
-  });
-  
-  // Add active tab state
-  const [activeTab, setActiveTab] = useState('basic');
+  const dispatch = useAppDispatch();
+  const { 
+    activeTab, 
+    title, 
+    subject, 
+    topic, 
+    chat_model_id, 
+    tracking_model_id,
+    isEdit
+  } = useAppSelector(state => state.chapterForm);
   
   // Create a ref for the modal content
   const modalContentRef = useRef<HTMLDivElement>(null);
 
-  // Reset form when modal opens/closes or chapter changes
+  // Initialize form when modal opens/closes or chapter changes
   useEffect(() => {
-    if (chapter) {
-      setFormData({
-        title: chapter.title,
-        subject: chapter.subject,
-        topic: chapter.topic
-      });
-      
-      // Set model preferences if they exist
-      if (chapter.model_preference) {
-        setModelPreferences({
-          chat_model_id: chapter.model_preference.chat_model?.id,
-          tracking_model_id: chapter.model_preference.tracking_model?.id
-        });
+    if (isOpen) {
+      if (chapter) {
+        dispatch(initEditChapter(chapter));
       } else {
-        setModelPreferences({
-          chat_model_id: undefined,
-          tracking_model_id: undefined
-        });
+        dispatch(initNewChapter());
       }
-    } else {
-      setFormData({
-        title: '',
-        subject: '',
-        topic: ''
-      });
-      setModelPreferences({
-        chat_model_id: undefined,
-        tracking_model_id: undefined
-      });
     }
-    // Reset to first tab when opening modal
-    setActiveTab('basic');
-  }, [chapter, isOpen]);
+  }, [chapter, isOpen, dispatch]);
   
   // Close modal when clicking outside
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Only close if clicking the backdrop (not the modal content)
     if (modalContentRef.current && !modalContentRef.current.contains(e.target as Node)) {
       onClose();
-    }
-  };
-
-  const handleChange = (field: string, value: string) => {
-    console.log(`Field changed: ${field}, value: ${value}`);
-    
-    if (field === 'chat_model_id' || field === 'tracking_model_id' || field === 'progress_tracking_model_id') {
-      // Handle the case for progress_tracking_model_id as well for backward compatibility
-      const mappedField = field === 'progress_tracking_model_id' ? 'tracking_model_id' : field;
-      
-      setModelPreferences(prev => ({
-        ...prev,
-        [mappedField]: value || undefined
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [field]: value
-      }));
+      dispatch(closeForm());
     }
   };
 
   const handleSubmit = () => {
-    // Only include model preferences if at least one is set
-    const hasModelPreferences = !!modelPreferences.chat_model_id || !!modelPreferences.tracking_model_id;
+    const formData: CreateChapterRequest = {
+      title,
+      subject,
+      topic
+    };
     
+    // Only include model preferences if at least one is set
+    const hasModelPreferences = !!chat_model_id || !!tracking_model_id;
+    const modelPreferences = hasModelPreferences ? {
+      chat_model_id,
+      tracking_model_id
+    } : undefined;
+    
+    console.log("Submitting form data:", formData);
     console.log("Submitting model preferences:", modelPreferences);
     
-    onSubmit(
-      formData, 
-      hasModelPreferences ? modelPreferences : undefined
-    );
+    onSubmit(formData, modelPreferences);
     onClose();
+    dispatch(closeForm());
   };
 
   if (!isOpen) return null;
@@ -126,7 +96,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold mb-4">
-          {chapter ? 'Edit Chapter' : 'Create New Chapter'}
+          {isEdit ? 'Edit Chapter' : 'Create New Chapter'}
         </h2>
         
         {/* Tab Navigation */}
@@ -139,7 +109,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
                   ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab('basic')}
+              onClick={() => dispatch(setActiveTab('basic'))}
             >
               Basic Info
             </button>
@@ -151,7 +121,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
                   ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab('prompts')}
+              onClick={() => dispatch(setActiveTab('prompts'))}
             >
               Prompts
             </button>
@@ -163,7 +133,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
                   ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab('goals')}
+              onClick={() => dispatch(setActiveTab('goals'))}
             >
               Learning Goals
             </button>
@@ -175,7 +145,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
                   ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab('files')}
+              onClick={() => dispatch(setActiveTab('files'))}
             >
               Files
             </button>
@@ -187,7 +157,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
                   ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab('deployment')}
+              onClick={() => dispatch(setActiveTab('deployment'))}
             >
               Deployment
             </button>
@@ -197,33 +167,15 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         {/* Tab Content - Notice how I've changed this to have a scrollable content area */}
         <div className="flex-1 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto">
-            {activeTab === 'basic' && (
-              <BasicInfoTab 
-                formData={{
-                  ...formData,
-                  chat_model_id: modelPreferences.chat_model_id,
-                  tracking_model_id: modelPreferences.tracking_model_id
-                }}
-                onChange={handleChange}
-                isEdit={!!chapter}
-              />
-            )}
+            {activeTab === 'basic' && <BasicInfoTab />}
             
-            {activeTab === 'prompts' && (
-              <PromptsTab />
-            )}
+            {activeTab === 'prompts' && <PromptsTab />}
             
-            {activeTab === 'goals' && (
-              <LearningGoalsTab />
-            )}
+            {activeTab === 'goals' && <LearningGoalsTab />}
             
-            {activeTab === 'files' && (
-              <FilesTab />
-            )}
+            {activeTab === 'files' && <FilesTab />}
             
-            {activeTab === 'deployment' && (
-              <DeploymentTab />
-            )}
+            {activeTab === 'deployment' && <DeploymentTab />}
           </div>
           
           {/* Fixed Footer with Save Button */}
@@ -233,7 +185,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
               className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
               onClick={handleSubmit}
             >
-              {chapter ? 'Save Changes' : 'Create Chapter'}
+              {isEdit ? 'Save Changes' : 'Create Chapter'}
             </button>
           </div>
         </div>
