@@ -322,7 +322,9 @@ const LearningGoalsTab: React.FC = () => {
                       <div className="flex mt-2">
                         <input
                           type="text"
-                          placeholder="Add new subgoal..."
+                          placeholder={goal.id.startsWith('temp-') 
+                            ? "Save the main goal first before adding subgoals" 
+                            : "Add new subgoal..."}
                           className="flex-1 px-3 py-1 text-sm border rounded-l"
                           value={newSubgoalTexts[goal.id] || ''}
                           onChange={(e) => setNewSubgoalTexts(prev => ({
@@ -330,16 +332,23 @@ const LearningGoalsTab: React.FC = () => {
                             [goal.id]: e.target.value
                           }))}
                           onKeyPress={(e) => {
-                            if (e.key === 'Enter') handleAddSubgoal(goal.id);
+                            if (e.key === 'Enter' && !goal.id.startsWith('temp-')) handleAddSubgoal(goal.id);
                           }}
+                          disabled={goal.id.startsWith('temp-')}
                         />
                         <button
                           onClick={() => handleAddSubgoal(goal.id)}
-                          className="px-3 py-1 rounded-r bg-blue-500 text-white hover:bg-blue-600 text-sm"
+                          className={`px-3 py-1 rounded-r text-white text-sm ${
+                            goal.id.startsWith('temp-') 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : 'bg-blue-500 hover:bg-blue-600'
+                          }`}
+                          disabled={goal.id.startsWith('temp-')}
                         >
                           Add
                         </button>
                       </div>
+                                   
                     </div>
                   ) : (
                     // When collapsed, show just the subgoal count
