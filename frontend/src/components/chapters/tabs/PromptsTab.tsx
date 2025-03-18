@@ -96,16 +96,23 @@ const TiptapEditor = ({ value, onChange, placeholder }: { value: string, onChang
 
 const PromptsTab: React.FC = () => {
   const dispatch = useAppDispatch();
-  // Get greeting from Redux store
-  const greeting = useAppSelector(state => state.chapterForm.greeting);
   
-  // We're keeping these in local state for now
-  const [chatPrompt, setChatPrompt] = useState('');
-  const [trackingPrompt, setTrackingPrompt] = useState('');
-
+  // Get all prompts from Redux store
+  const { greeting, chat_prompt, tracking_prompt } = useAppSelector(state => state.chapterForm);
+  
   // Handler to update greeting in Redux
   const handleGreetingChange = (html: string) => {
     dispatch(setField({ field: 'greeting', value: html }));
+  };
+
+  // Handler to update chat prompt in Redux
+  const handleChatPromptChange = (html: string) => {
+    dispatch(setField({ field: 'chat_prompt', value: html }));
+  };
+
+  // Handler to update tracking prompt in Redux
+  const handleTrackingPromptChange = (html: string) => {
+    dispatch(setField({ field: 'tracking_prompt', value: html }));
   };
 
   return (
@@ -128,8 +135,8 @@ const PromptsTab: React.FC = () => {
           This prompt guides the AI in how to respond to student messages during the chapter.
         </p>
         <TiptapEditor 
-          value={chatPrompt} 
-          onChange={setChatPrompt} 
+          value={chat_prompt} 
+          onChange={handleChatPromptChange} 
           placeholder="Enter instructions for the AI on how to respond to student messages..."
         />
       </div>
@@ -140,8 +147,8 @@ const PromptsTab: React.FC = () => {
           This prompt guides the AI in tracking student progress and understanding.
         </p>
         <TiptapEditor 
-          value={trackingPrompt} 
-          onChange={setTrackingPrompt} 
+          value={tracking_prompt} 
+          onChange={handleTrackingPromptChange} 
           placeholder="Enter instructions for the AI on how to track student progress..."
         />
       </div>
