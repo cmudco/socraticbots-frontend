@@ -99,6 +99,32 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    const keyHandler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (!title.trim()) {
+          setError('Title is required');
+          return;
+        }
+        
+        const syntheticEvent = {
+          preventDefault: () => {}
+        } as unknown as React.FormEvent;
+        
+        handleSubmit(syntheticEvent);
+      }
+    };
+  
+    if (isOpen) {
+      document.addEventListener('keydown', keyHandler);
+    }
+  
+    return () => {
+      document.removeEventListener('keydown', keyHandler);
+    };
+  }, [isOpen, title, description]);
+  
   
   if (!isOpen) return null;
   
