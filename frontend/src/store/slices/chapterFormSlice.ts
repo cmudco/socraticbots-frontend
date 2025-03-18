@@ -141,6 +141,46 @@ const chapterFormSlice = createSlice({
       state.learningGoals.sort((a, b) => a.order - b.order);
       state.isDirty = true;
     },
+
+    // Add a subgoal to a learning goal
+    addSubGoal: (state, action: PayloadAction<{learningGoalId: string, subgoal: SubGoal}>) => {
+      const { learningGoalId, subgoal } = action.payload;
+      const learningGoal = state.learningGoals.find(lg => lg.id === learningGoalId);
+      if (learningGoal) {
+        if (!learningGoal.subgoals) {
+          learningGoal.subgoals = [];
+        }
+        learningGoal.subgoals.push(subgoal);
+        state.isDirty = true;
+      }
+    },
+
+    // Remove a subgoal from a learning goal
+    removeSubGoal: (state, action: PayloadAction<{learningGoalId: string, subgoalId: string}>) => {
+      const { learningGoalId, subgoalId } = action.payload;
+      const learningGoal = state.learningGoals.find(lg => lg.id === learningGoalId);
+      if (learningGoal && learningGoal.subgoals) {
+        learningGoal.subgoals = learningGoal.subgoals.filter(sg => sg.id !== subgoalId);
+        state.isDirty = true;
+      }
+    },
+    
+    // Update a subgoal
+    updateSubGoal: (state, action: PayloadAction<{
+      learningGoalId: string, 
+      subgoalId: string, 
+      updates: Partial<{title: string, order: number}>
+    }>) => {
+      const { learningGoalId, subgoalId, updates } = action.payload;
+      const learningGoal = state.learningGoals.find(lg => lg.id === learningGoalId);
+      if (learningGoal && learningGoal.subgoals) {
+        const subgoal = learningGoal.subgoals.find(sg => sg.id === subgoalId);
+        if (subgoal) {
+          Object.assign(subgoal, updates);
+          state.isDirty = true;
+        }
+      }
+    },
     
     // Initialize form for creating a new chapter
     initNewChapter: (state) => {
@@ -203,7 +243,7 @@ const chapterFormSlice = createSlice({
       } else {
         state.learningGoals = [];
       }
-      
+
       state.isEdit = true;
       state.originalChapter = chapter;
       state.isDirty = false;
@@ -250,7 +290,10 @@ export const {
   addLearningGoal,
   updateLearningGoal,
   removeLearningGoal,
-  reorderLearningGoals
+  reorderLearningGoals,
+  addSubGoal,
+  removeSubGoal,
+  updateSubGoal
 } = chapterFormSlice.actions;
 
 export default chapterFormSlice.reducer;
