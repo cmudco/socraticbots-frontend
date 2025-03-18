@@ -1,14 +1,16 @@
 // src/components/chapters/tabs/LearningGoalsTab.tsx
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
-import { addLearningGoal, removeLearningGoal } from '../../../store/slices/chapterFormSlice';
-import { LearningGoal, chapterService } from '../../../services/chapters.service';
+import { addLearningGoal, removeLearningGoal, addSubGoal, removeSubGoal } from '../../../store/slices/chapterFormSlice';
+import { LearningGoal, chapterService, SubGoal } from '../../../services/chapters.service';
 import axios from 'axios';
 
 const LearningGoalsTab: React.FC = () => {
   const [newGoalText, setNewGoalText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [hoveredGoalId, setHoveredGoalId] = useState<string | null>(null);
+  const [expandedGoalIds, setExpandedGoalIds] = useState<Set<string>>(new Set());
+  const [newSubgoalTexts, setNewSubgoalTexts] = useState<Record<string, string>>({});
   
   const dispatch = useAppDispatch();
 
@@ -20,6 +22,19 @@ const LearningGoalsTab: React.FC = () => {
   const currentBookId = useAppSelector(state => state.chapters.currentBookId);
   // Get learning goals from Redux state (already loaded in initEditChapter)
   const learningGoals = useAppSelector(state => state.chapterForm.learningGoals);
+  
+  // Function to toggle goal expansion
+  const toggleGoalExpansion = (goalId: string) => {
+    setExpandedGoalIds(prevState => {
+      const newState = new Set(prevState);
+      if (newState.has(goalId)) {
+        newState.delete(goalId);
+      } else {
+        newState.add(goalId);
+      }
+      return newState;
+    });
+  };
   
   const handleAddMainGoal = () => {
     if (!newGoalText.trim() || !chapter) {
@@ -101,7 +116,102 @@ const LearningGoalsTab: React.FC = () => {
       }
     }
   };
+
+  const handleAddSubgoal = async (learningGoalId: string) => {
+    const subgoalText = newSubgoalTexts[learningGoalId] || '';
+    if (!subgoalText.trim() || !chapter || !currentBookId) {
+      setError('Missing subgoal title or chapter information');
+      return;
+    }
+    
+    const learningGoal = learningGoals.find(g => g.id === learningGoalId);
+    if (!learningGoal) {
+      console.error('Learning goal not found');
+      return;
+    }
+    
+    // Calculate next order
+    const nextOrder = learningGoal.subgoals && learningGoal.subgoals.length > 0
+      ? Math.max(...learningGoal.subgoals.map(sg => sg.order)) + 1
+      : 1;
+    
+    try {
+      let newSubgoal: SubGoal;
+      
+      // If the learning goal is temporary, just create a temp subgoal
+      if (learningGoalId.startsWith('temp-')) {
+        newSubgoal = {
+          id: `temp-sub-${Date.now()}`,
+          title: subgoalText,
+          order: nextOrder,
+          parent_goal_id: learningGoalId,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+      } else {
+        // Otherwise, create the subgoal in the database
+        const response = await chapterService.createSubGoal(
+          currentBookId,
+          chapter.id,
+          learningGoalId,
+          { title: subgoalText, order: nextOrder }
+        );
+        
+        newSubgoal = {
+          id: response.id,
+          title: response.title,
+          order: response.order,
+          parent_goal_id: learningGoalId,
+          created_at: response.created_at,
+          updated_at: response.updated_at
+        };
+      }
+      
+      // Add to Redux
+      dispatch(addSubGoal({ learningGoalId, subgoal: newSubgoal }));
+      
+      // Clear input
+      setNewSubgoalTexts(prev => ({
+        ...prev,
+        [learningGoalId]: ''
+      }));
+      setError(null);
+    } catch (error) {
+      console.error('Error adding subgoal:', error);
+      setError('Failed to add subgoal');
+    }
+  };
   
+  const handleDeleteSubgoal = async (learningGoalId: string, subgoalId: string) => {
+    if (window.confirm("Are you sure you want to delete this subgoal?")) {
+      try {
+        // First update the UI by removing from Redux
+        dispatch(removeSubGoal({ learningGoalId, subgoalId }));
+        
+        // Only try to delete from database if it's not a temporary subgoal
+        if (!subgoalId.startsWith('temp-') && chapter && currentBookId) {
+          try {
+            await chapterService.deleteSubGoal(
+              currentBookId,
+              chapter.id,
+              learningGoalId,
+              subgoalId
+            );
+          } catch (error) {
+            // Handle error with proper typing
+            if (axios.isAxiosError(error)) {
+              console.log("Database deletion error:", error.message, error.response?.status);
+            } else {
+              console.log("Unknown error during database deletion:", error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error in delete process:', error);
+        setError('There was an issue with the deletion process.');
+      }
+    }
+  };
 
   return (
     <div className="p-4">
@@ -139,7 +249,20 @@ const LearningGoalsTab: React.FC = () => {
                   onMouseLeave={() => setHoveredGoalId(null)}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center">
+                    <div 
+                      className="flex items-center cursor-pointer" 
+                      onClick={() => toggleGoalExpansion(goal.id)}
+                    >
+                      <span className="mr-2 text-gray-500">
+                        {expandedGoalIds.has(goal.id) ? 
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg> : 
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        }
+                      </span>
                       <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium mr-2">
                         LG{index + 1}
                       </span>
@@ -149,7 +272,10 @@ const LearningGoalsTab: React.FC = () => {
                     {/* Delete button - only visible on hover */}
                     {hoveredGoalId === goal.id && (
                       <button 
-                        onClick={() => handleDeleteGoal(goal.id)}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent expansion toggle
+                          handleDeleteGoal(goal.id);
+                        }}
                         className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
                         title="Delete learning goal"
                       >
@@ -160,12 +286,69 @@ const LearningGoalsTab: React.FC = () => {
                     )}
                   </div>
                   
-                  {/* Sub-goals count */}
-                  <div className="ml-6 mt-3 text-sm text-gray-500">
-                    {goal.subgoals && goal.subgoals.length > 0 ? 
-                      `${goal.subgoals.length} sub-goal${goal.subgoals.length !== 1 ? 's' : ''}` : 
-                      'No sub-goals'}
-                  </div>
+                  {/* Subgoals section - only visible when expanded */}
+                  {expandedGoalIds.has(goal.id) ? (
+                    <div className="ml-8 mt-3 space-y-3">
+                      {/* Subgoals list */}
+                      {goal.subgoals && goal.subgoals.length > 0 ? (
+                        <div className="space-y-2">
+                          {goal.subgoals.map((subgoal, subIndex) => (
+                            <div key={subgoal.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                              <div className="flex items-center">
+                                <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-xs font-medium mr-2">
+                                  {index + 1}.{subIndex + 1}
+                                </span>
+                                <span>{subgoal.title}</span>
+                              </div>
+                              
+                              {/* Subgoal delete button */}
+                              <button 
+                                onClick={() => handleDeleteSubgoal(goal.id, subgoal.id)}
+                                className="text-red-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors"
+                                title="Delete subgoal"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 italic text-sm">No subgoals yet</div>
+                      )}
+                      
+                      {/* Add subgoal input */}
+                      <div className="flex mt-2">
+                        <input
+                          type="text"
+                          placeholder="Add new subgoal..."
+                          className="flex-1 px-3 py-1 text-sm border rounded-l"
+                          value={newSubgoalTexts[goal.id] || ''}
+                          onChange={(e) => setNewSubgoalTexts(prev => ({
+                            ...prev,
+                            [goal.id]: e.target.value
+                          }))}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') handleAddSubgoal(goal.id);
+                          }}
+                        />
+                        <button
+                          onClick={() => handleAddSubgoal(goal.id)}
+                          className="px-3 py-1 rounded-r bg-blue-500 text-white hover:bg-blue-600 text-sm"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // When collapsed, show just the subgoal count
+                    <div className="ml-8 mt-1 text-sm text-gray-500">
+                      {goal.subgoals && goal.subgoals.length > 0 ? 
+                        `${goal.subgoals.length} sub-goal${goal.subgoals.length !== 1 ? 's' : ''}` : 
+                        'No sub-goals'}
+                    </div>
+                  )}
                 </div>
               ))
             )}
