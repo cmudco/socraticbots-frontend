@@ -62,6 +62,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     }
   };
 
+
   const handleSubmit = async () => {
     // Set submitting state to true
     dispatch(setSubmitting(true));
@@ -93,6 +94,20 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   const isFormValid = () => {
     return title.trim() !== '' && subject.trim() !== '' && topic.trim() !== '';
   };
+
+  // Handle Ctrl+Enter for form submission
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'Enter' && isFormValid() && !isSubmitting) {
+        handleSubmit();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFormValid, isSubmitting, handleSubmit]);
 
   if (!isOpen) return null;
 
