@@ -20,6 +20,8 @@ interface ChapterFormState {
 
   // Prompts tab 
   greeting: string;
+  chat_prompt: string;
+  tracking_prompt: string;
   
   // Models data
   availableModels: AIModel[];
@@ -47,6 +49,8 @@ const initialState: ChapterFormState = {
 
   // Prompts tab 
   greeting: '',
+  chat_prompt: '',
+  tracking_prompt: '',
   
   // Models data
   availableModels: [],
@@ -122,7 +126,7 @@ const chapterFormSlice = createSlice({
         state.chat_model_id = undefined;
         state.tracking_model_id = undefined;
       }
-      
+
       state.isEdit = true;
       state.originalChapter = chapter;
       state.isDirty = false;

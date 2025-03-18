@@ -20,7 +20,13 @@ export const createChapter = createAsyncThunk(
       } = state.chapterForm;
 
       const greeting = state.chapterForm.greeting;
+      const chat_prompt = state.chapterForm.chat_prompt;
+      const tracking_prompt = state.chapterForm.tracking_prompt;
       console.log("ON CREATE THE GREETING IS ", greeting);
+      console.log("ON CREATE THE CHAT PROMPT IS ", chat_prompt);
+      console.log("ON CREATE THE TRACKING PROMPT IS ", tracking_prompt);
+      console.log(bookId);
+      
       
       // Prepare request data
       const chapterData = {
@@ -75,6 +81,12 @@ export const updateChapter = createAsyncThunk(
 
       const greeting = state.chapterForm.greeting;
       console.log("ON UPDATE THE GREETING IS ", greeting);
+      const chat_prompt = state.chapterForm.chat_prompt;
+      const tracking_prompt = state.chapterForm.tracking_prompt;
+      console.log("ON UPDATE THE CHAT PROMPT IS ", chat_prompt);
+      console.log("ON UPDATE THE TRACKING PROMPT IS ", tracking_prompt);
+      
+      
       
       // Prepare request data
       const chapterData = {
