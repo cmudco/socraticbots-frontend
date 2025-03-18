@@ -17,7 +17,8 @@ export const createChapter = createAsyncThunk(
       const { 
         title, subject, topic, 
         chat_model_id, tracking_model_id,
-        greeting, chat_prompt, tracking_prompt  // Get all prompts together
+        greeting, chat_prompt, tracking_prompt,
+        learningGoals  // Get learning goals
       } = state.chapterForm;
       
       // Prepare request data
@@ -47,14 +48,31 @@ export const createChapter = createAsyncThunk(
         bookId, 
         chapterData, 
         modelPreferences,
-        promptData  // Pass the prompt data
+        promptData
       );
+      
+      // Save learning goals if they exist
+      if (learningGoals && learningGoals.length > 0) {
+        for (const goal of learningGoals) {
+          try {
+            await chapterService.createLearningGoal(bookId, newChapter.id, {
+              title: goal.title,
+              order: goal.order
+            });
+          } catch (error) {
+            console.error(`Error creating learning goal:`, error);
+          }
+        }
+      }
+      
+      // Fetch the updated chapter with the latest learning goals
+      const refreshedChapter = await chapterService.getChapter(bookId, newChapter.id);
       
       // Clean up form state
       dispatch(closeForm());
       dispatch(resetForm());
       
-      return newChapter;
+      return refreshedChapter;
     } catch (error: any) {
       console.error('Error creating chapter:', error);
       return rejectWithValue(error.message || 'Failed to create chapter');
@@ -63,7 +81,6 @@ export const createChapter = createAsyncThunk(
     }
   }
 );
-
 
 export const updateChapter = createAsyncThunk(
   'chapters/updateChapter',

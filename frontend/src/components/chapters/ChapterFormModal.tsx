@@ -110,6 +110,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   }, [isFormValid, isSubmitting, handleSubmit]);
 
   if (!isOpen) return null;
+  const isNewChapter = !isEdit;
 
   return (
     <div 
@@ -154,14 +155,29 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
             
             <button
               type="button"
-              className={`mr-4 py-2 px-4 ${
+              className={`mr-4 py-2 px-4 relative ${
                 activeTab === 'goals'
                   ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                   : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => dispatch(setActiveTab('goals'))}
+              } ${!isEdit ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
+              onClick={() => isEdit && dispatch(setActiveTab('goals'))}
+              disabled={!isEdit}
+              title={!isEdit ? "Save the chapter first to add learning goals" : ""}
             >
               Learning Goals
+              {!isEdit && (
+                <>
+                  <div className="absolute -top-1 -right-1 bg-gray-400 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-gray-200 bg-opacity-40">
+                    Save first
+                  </span>
+                </>
+              )}
+              
             </button>
             
             <button
