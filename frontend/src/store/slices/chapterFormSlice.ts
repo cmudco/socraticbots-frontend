@@ -1,7 +1,7 @@
 // src/store/slices/chapterFormSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AIModel } from '../../services/models.service';
-import { Chapter } from '../../services/chapters.service';
+import { Chapter, LearningGoal, SubGoal } from '../../services/chapters.service';
 
 // Define the state structure for the chapter form
 interface ChapterFormState {
@@ -22,6 +22,9 @@ interface ChapterFormState {
   greeting: string;
   chat_prompt: string;
   tracking_prompt: string;
+
+  //Learning Goals Tab
+  learningGoals: LearningGoal[];
   
   // Models data
   availableModels: AIModel[];
@@ -51,6 +54,10 @@ const initialState: ChapterFormState = {
   greeting: '',
   chat_prompt: '',
   tracking_prompt: '',
+
+
+  //Learning Goals Tab
+  learningGoals: [],
   
   // Models data
   availableModels: [],
@@ -92,6 +99,48 @@ const chapterFormSlice = createSlice({
     setModelsLoading: (state, action: PayloadAction<boolean>) => {
       state.modelsLoading = action.payload;
     },
+
+    // Set all learning goals
+    setLearningGoals: (state, action: PayloadAction<LearningGoal[]>) => {
+      state.learningGoals = action.payload;
+      state.isDirty = true;
+    },
+
+    // Add a single learning goal
+    addLearningGoal: (state, action: PayloadAction<LearningGoal>) => {
+      state.learningGoals.push(action.payload);
+      state.isDirty = true;
+    },
+
+    // Update a learning goal
+    updateLearningGoal: (state, action: PayloadAction<LearningGoal>) => {
+      const index = state.learningGoals.findIndex(goal => goal.id === action.payload.id);
+      if (index !== -1) {
+        state.learningGoals[index] = action.payload;
+        state.isDirty = true;
+      }
+    },
+
+    // Remove a learning goal
+    removeLearningGoal: (state, action: PayloadAction<string>) => {
+      state.learningGoals = state.learningGoals.filter(goal => goal.id !== action.payload);
+      state.isDirty = true;
+    },
+
+    // Reorder learning goals
+    reorderLearningGoals: (state, action: PayloadAction<{ id: string; order: number }[]>) => {
+      // Update the order property of each goal
+      action.payload.forEach(item => {
+        const goal = state.learningGoals.find(g => g.id === item.id);
+        if (goal) {
+          goal.order = item.order;
+        }
+      });
+      
+      // Sort the goals array based on the new order
+      state.learningGoals.sort((a, b) => a.order - b.order);
+      state.isDirty = true;
+    },
     
     // Initialize form for creating a new chapter
     initNewChapter: (state) => {
@@ -106,6 +155,9 @@ const chapterFormSlice = createSlice({
       state.greeting = '';
       state.chat_prompt = '';
       state.tracking_prompt = '';
+
+      // Clear learning goals
+      state.learningGoals = [];
 
       state.isEdit = false;
       state.originalChapter = null;
@@ -144,6 +196,14 @@ const chapterFormSlice = createSlice({
         state.tracking_prompt = '';
       }
 
+      // Set learning goals if they exist
+      if (chapter.learning_goals && Array.isArray(chapter.learning_goals)) {
+        // Just assign directly since the types match
+        state.learningGoals = chapter.learning_goals;
+      } else {
+        state.learningGoals = [];
+      }
+      
       state.isEdit = true;
       state.originalChapter = chapter;
       state.isDirty = false;
@@ -185,7 +245,12 @@ export const {
   closeForm,
   setSubmitting,
   setErrors,
-  resetForm
+  resetForm,
+  setLearningGoals,
+  addLearningGoal,
+  updateLearningGoal,
+  removeLearningGoal,
+  reorderLearningGoals
 } = chapterFormSlice.actions;
 
 export default chapterFormSlice.reducer;

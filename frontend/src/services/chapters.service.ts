@@ -18,6 +18,26 @@ export interface Chapter {
   topic: string;
   model_preference?: ModelPreference;
   prompts?: ChapterPrompt;
+  learning_goals ?: LearningGoal[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LearningGoal {
+  id: string;
+  title: string;
+  order: number;
+  subgoals: SubGoal[];
+  chapter_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubGoal {
+  id: string;
+  title: string;
+  order: number;
+  parent_goal_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -52,6 +72,31 @@ export interface ChapterPromptRequest {
   greeting?: string;
   chat_prompt?: string;
   tracking_prompt?: string;
+}
+
+export interface CreateLearningGoalRequest {
+  title: string;
+  order?: number;
+}
+
+export interface UpdateLearningGoalRequest {
+  title?: string;
+  order?: number;
+}
+
+export interface CreateSubGoalRequest {
+  title: string;
+  order?: number;
+}
+
+export interface UpdateSubGoalRequest {
+  title?: string;
+  order?: number;
+}
+
+export interface ReorderGoalsRequest {
+  id: string;
+  order: number;
 }
 
 class ChapterService {
@@ -267,6 +312,163 @@ class ChapterService {
         }
       }
       console.error(`Error setting prompts for chapter ${chapterId}:`, error);
+      throw error;
+    }
+  }
+
+  // Get learning goals for a chapter
+  async getLearningGoals(bookId: string, chapterId: string): Promise<LearningGoal[]> {
+    try {
+      const response = await api.get<LearningGoal[]>(
+        `/books/${bookId}/chapters/${chapterId}/learning-goals/`
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error getting learning goals for chapter ${chapterId}:`, error);
+      throw error;
+    }
+  }
+
+  // Get a specific learning goal
+  async getLearningGoal(
+    bookId: string, 
+    chapterId: string, 
+    goalId: string
+  ): Promise<LearningGoal> {
+    try {
+      const response = await api.get<LearningGoal>(
+        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error getting learning goal ${goalId}:`, error);
+      throw error;
+    }
+  }
+
+  // Create a learning goal
+  async createLearningGoal(
+    bookId: string,
+    chapterId: string,
+    goalData: CreateLearningGoalRequest
+  ): Promise<LearningGoal> {
+    try {
+      const response = await api.post<LearningGoal>(
+        `/books/${bookId}/chapters/${chapterId}/learning-goals/`,
+        goalData
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error creating learning goal for chapter ${chapterId}:`, error);
+      throw error;
+    }
+  }
+
+  // Update a learning goal
+  async updateLearningGoal(
+    bookId: string,
+    chapterId: string,
+    goalId: string,
+    goalData: UpdateLearningGoalRequest
+  ): Promise<LearningGoal> {
+    try {
+      const response = await api.put<LearningGoal>(
+        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`,
+        goalData
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating learning goal ${goalId}:`, error);
+      throw error;
+    }
+  }
+
+  // Delete a learning goal
+  async deleteLearningGoal(
+    bookId: string,
+    chapterId: string,
+    goalId: string
+  ): Promise<void> {
+    try {
+      await api.delete(
+        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`
+      );
+    } catch (error) {
+      console.error(`Error deleting learning goal ${goalId}:`, error);
+      throw error;
+    }
+  }
+
+  // Reorder learning goals
+  async reorderLearningGoals(
+    bookId: string,
+    chapterId: string,
+    reorderData: ReorderGoalsRequest[]
+  ): Promise<LearningGoal[]> {
+    try {
+      const response = await api.post<LearningGoal[]>(
+        `/books/${bookId}/chapters/${chapterId}/learning-goals/reorder/`,
+        reorderData
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error reordering learning goals for chapter ${chapterId}:`, error);
+      throw error;
+    }
+  }
+
+  // Create a subgoal
+  async createSubGoal(
+    bookId: string,
+    chapterId: string,
+    goalId: string,
+    subgoalData: CreateSubGoalRequest
+  ): Promise<SubGoal> {
+    try {
+      const response = await api.post<SubGoal>(
+        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/subgoals/`,
+        subgoalData
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error creating subgoal for goal ${goalId}:`, error);
+      throw error;
+    }
+  }
+
+  // Update a subgoal
+  async updateSubGoal(
+    bookId: string,
+    chapterId: string,
+    goalId: string,
+    subgoalId: string,
+    subgoalData: UpdateSubGoalRequest
+  ): Promise<SubGoal> {
+    try {
+      const response = await api.put<SubGoal>(
+        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/subgoals/${subgoalId}/`,
+        subgoalData
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating subgoal ${subgoalId}:`, error);
+      throw error;
+    }
+  }
+
+  // Delete a subgoal
+  async deleteSubGoal(
+    bookId: string,
+    chapterId: string,
+    goalId: string,
+    subgoalId: string
+  ): Promise<void> {
+    try {
+      await api.delete(
+        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/subgoals/${subgoalId}/`
+      );
+    } catch (error) {
+      console.error(`Error deleting subgoal ${subgoalId}:`, error);
       throw error;
     }
   }
