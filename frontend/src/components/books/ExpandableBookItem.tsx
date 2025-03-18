@@ -88,7 +88,7 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, o
           ) : (
             <ChapterList 
               bookId={book.id}
-              chapters={chapters}
+              initialChapters={chapters}
               onChapterAdded={handleChapterAdded}
               onChapterUpdated={handleChapterUpdated}
               onChapterDeleted={handleChapterDeleted}
