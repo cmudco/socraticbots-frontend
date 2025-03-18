@@ -16,17 +16,9 @@ export const createChapter = createAsyncThunk(
       const state = getState() as any;
       const { 
         title, subject, topic, 
-        chat_model_id, tracking_model_id 
+        chat_model_id, tracking_model_id,
+        greeting, chat_prompt, tracking_prompt  // Get all prompts together
       } = state.chapterForm;
-
-      const greeting = state.chapterForm.greeting;
-      const chat_prompt = state.chapterForm.chat_prompt;
-      const tracking_prompt = state.chapterForm.tracking_prompt;
-      console.log("ON CREATE THE GREETING IS ", greeting);
-      console.log("ON CREATE THE CHAT PROMPT IS ", chat_prompt);
-      console.log("ON CREATE THE TRACKING PROMPT IS ", tracking_prompt);
-      console.log(bookId);
-      
       
       // Prepare request data
       const chapterData = {
@@ -42,11 +34,20 @@ export const createChapter = createAsyncThunk(
         tracking_model_id
       } : undefined;
       
-      // Call the service
+      // Prepare prompt data if any are set
+      const hasPromptData = !!greeting || !!chat_prompt || !!tracking_prompt;
+      const promptData = hasPromptData ? {
+        greeting,
+        chat_prompt,
+        tracking_prompt
+      } : undefined;
+      
+      // Call the service with prompts data
       const newChapter = await chapterService.createChapter(
         bookId, 
         chapterData, 
-        modelPreferences
+        modelPreferences,
+        promptData  // Pass the prompt data
       );
       
       // Clean up form state
@@ -63,6 +64,7 @@ export const createChapter = createAsyncThunk(
   }
 );
 
+
 export const updateChapter = createAsyncThunk(
   'chapters/updateChapter',
   async (
@@ -76,17 +78,9 @@ export const updateChapter = createAsyncThunk(
       const state = getState() as any;
       const { 
         title, subject, topic, 
-        chat_model_id, tracking_model_id 
+        chat_model_id, tracking_model_id,
+        greeting, chat_prompt, tracking_prompt  // Get all prompts together
       } = state.chapterForm;
-
-      const greeting = state.chapterForm.greeting;
-      console.log("ON UPDATE THE GREETING IS ", greeting);
-      const chat_prompt = state.chapterForm.chat_prompt;
-      const tracking_prompt = state.chapterForm.tracking_prompt;
-      console.log("ON UPDATE THE CHAT PROMPT IS ", chat_prompt);
-      console.log("ON UPDATE THE TRACKING PROMPT IS ", tracking_prompt);
-      
-      
       
       // Prepare request data
       const chapterData = {
@@ -102,12 +96,21 @@ export const updateChapter = createAsyncThunk(
         tracking_model_id
       } : undefined;
       
-      // Call the service
+      // Prepare prompt data if any are set
+      const hasPromptData = !!greeting || !!chat_prompt || !!tracking_prompt;
+      const promptData = hasPromptData ? {
+        greeting,
+        chat_prompt,
+        tracking_prompt
+      } : undefined;
+      
+      // Call the service with prompts data
       const updatedChapter = await chapterService.updateChapter(
         bookId, 
-        chapterId, 
+        chapterId,
         chapterData, 
-        modelPreferences
+        modelPreferences,
+        promptData  // Pass the prompt data
       );
       
       // Clean up form state
@@ -123,6 +126,7 @@ export const updateChapter = createAsyncThunk(
     }
   }
 );
+
 
 export const deleteChapter = createAsyncThunk(
   'chapters/deleteChapter',

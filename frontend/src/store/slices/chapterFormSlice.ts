@@ -101,6 +101,12 @@ const chapterFormSlice = createSlice({
       state.topic = '';
       state.chat_model_id = undefined;
       state.tracking_model_id = undefined;
+
+      // Clear prompts
+      state.greeting = '';
+      state.chat_prompt = '';
+      state.tracking_prompt = '';
+
       state.isEdit = false;
       state.originalChapter = null;
       state.isDirty = false;
@@ -127,6 +133,17 @@ const chapterFormSlice = createSlice({
         state.tracking_model_id = undefined;
       }
 
+      // Set prompts if they exist - this part was outside the function
+      if (chapter.prompts) {
+        state.greeting = chapter.prompts.greeting || '';
+        state.chat_prompt = chapter.prompts.chat_prompt || '';
+        state.tracking_prompt = chapter.prompts.tracking_prompt || '';
+      } else {
+        state.greeting = '';
+        state.chat_prompt = '';
+        state.tracking_prompt = '';
+      }
+
       state.isEdit = true;
       state.originalChapter = chapter;
       state.isDirty = false;
@@ -134,6 +151,7 @@ const chapterFormSlice = createSlice({
       state.activeTab = 'basic';
       state.isOpen = true;
     },
+    
     
     // Close the form
     closeForm: (state) => {
