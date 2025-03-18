@@ -79,9 +79,12 @@ export const updateChapter = createAsyncThunk(
       const { 
         title, subject, topic, 
         chat_model_id, tracking_model_id,
-        greeting, chat_prompt, tracking_prompt  // Get all prompts together
+        greeting, chat_prompt, tracking_prompt, 
+        learningGoals
       } = state.chapterForm;
       
+      console.log("Learning goals to save:", learningGoals);
+
       // Prepare request data
       const chapterData = {
         title,
@@ -110,14 +113,35 @@ export const updateChapter = createAsyncThunk(
         chapterId,
         chapterData, 
         modelPreferences,
-        promptData  // Pass the prompt data
+        promptData
       );
+
+      // Save learning goals
+      if (learningGoals && learningGoals.length > 0) {
+        // Process each goal in the current array - keep it simple
+        for (const goal of learningGoals) {
+          try {
+            // Skip temp goals for now
+            if (String(goal.id).startsWith('temp-')) {
+              await chapterService.createLearningGoal(bookId, chapterId, {
+                title: goal.title,
+                order: goal.order
+              });
+            }
+          } catch (error) {
+            console.error(`Error saving learning goal:`, error);
+          }
+        }
+      }
+      
+      // Fetch the updated chapter with the latest learning goals
+      const refreshedChapter = await chapterService.getChapter(bookId, chapterId);
       
       // Clean up form state
       dispatch(closeForm());
       dispatch(resetForm());
       
-      return updatedChapter;
+      return refreshedChapter;
     } catch (error: any) {
       console.error('Error updating chapter:', error);
       return rejectWithValue(error.message || 'Failed to update chapter');
