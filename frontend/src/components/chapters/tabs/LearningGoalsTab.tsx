@@ -36,31 +36,39 @@ const LearningGoalsTab: React.FC = () => {
     });
   };
   
-  const handleAddMainGoal = () => {
-    if (!newGoalText.trim() || !chapter) {
+  const handleAddMainGoal = async () => {
+    if (!newGoalText.trim() || !chapter || !currentBookId) {
       setError('Missing title or chapter information');
       return;
     }
     
-    const nextOrder = learningGoals.length > 0 
-      ? Math.max(...learningGoals.map(g => g.order)) + 1 
-      : 1;
-    
-    // Create a temporary goal object
-    const newGoal: LearningGoal = {
-      id: `temp-${Date.now()}`, // Simple temp ID
-      title: newGoalText,
-      order: nextOrder,
-      subgoals: [],
-      chapter_id: chapter.id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    // Add to Redux state only
-    dispatch(addLearningGoal(newGoal));
-    setNewGoalText('');
+    try {
+      // Calculate next order
+      const nextOrder = learningGoals.length > 0 
+        ? Math.max(...learningGoals.map(g => g.order)) + 1 
+        : 1;
+      
+      // Create in the database immediately
+      const response = await chapterService.createLearningGoal(
+        currentBookId,
+        chapter.id,
+        { 
+          title: newGoalText,
+          order: nextOrder
+        }
+      );
+      
+      // Add to Redux with the REAL ID from the database
+      dispatch(addLearningGoal(response));
+      
+      setNewGoalText('');
+      setError(null);
+    } catch (error) {
+      console.error('Error creating learning goal:', error);
+      setError('Failed to create learning goal');
+    }
   };
+  
 
   const handleDeleteGoal = async (goalId: string) => {
     if (window.confirm("Are you sure you want to delete this learning goal?")) {
