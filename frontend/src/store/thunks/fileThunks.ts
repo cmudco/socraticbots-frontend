@@ -45,13 +45,9 @@ export const uploadChapterFile = createAsyncThunk(
     { dispatch }
   ) => {
     try {
-      // Create temporary ID for tracking progress
       const tempId = `temp-${Date.now()}`;
-      
-      // Clear any existing errors for this temp ID
       dispatch(clearFileError(tempId));
       
-      // Start upload with progress tracking
       const uploadedFile = await fileService.uploadChapterFile(
         chapterPublicId, 
         file,
@@ -60,20 +56,21 @@ export const uploadChapterFile = createAsyncThunk(
         }
       );
 
-      // Clear progress tracking
       dispatch(clearUploadProgress(tempId));
       
-      // If file needs processing (PDF, DOC, etc.), set processing status
-      if (uploadedFile.processing_status === 'processing') {
+      if (uploadedFile.processing_status === 'processing' || 
+          uploadedFile.processing_status === 'pending') {
         dispatch(setFileProcessing(uploadedFile.id));
+        // Start polling for processing status
+        dispatch(pollFileProcessing({ 
+          chapterPublicId, 
+          fileId: uploadedFile.id 
+        }));
       }
 
-      // Add file to state
       dispatch(addFile(uploadedFile));
-
       return uploadedFile;
     } catch (error: any) {
-      // Handle error
       console.error('File upload failed:', error);
       dispatch(setFileError({ 
         fileId: `temp-${Date.now()}`, 
