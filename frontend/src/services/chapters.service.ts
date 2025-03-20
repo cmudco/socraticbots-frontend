@@ -2,6 +2,7 @@
 import { api } from './api/instance';
 import { AIModel } from './models.service';
 import axios, { AxiosError } from 'axios';
+import { ChapterFile } from './files.service';
 
 export interface ModelPreference {
   id: string;
@@ -19,6 +20,7 @@ export interface Chapter {
   model_preference?: ModelPreference;
   prompts?: ChapterPrompt;
   learning_goals ?: LearningGoal[];
+  files?: ChapterFile[]; 
   created_at: string;
   updated_at: string;
 }

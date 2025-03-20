@@ -2,6 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AIModel } from '../../services/models.service';
 import { Chapter, LearningGoal, SubGoal } from '../../services/chapters.service';
+import { ChapterFile } from '../../services/files.service';
 
 // Define the state structure for the chapter form
 interface ChapterFormState {
@@ -29,6 +30,12 @@ interface ChapterFormState {
   // Models data
   availableModels: AIModel[];
   modelsLoading: boolean;
+
+  // Files tab
+  files: ChapterFile[];
+  uploadProgress: Record<string, number>; // Track upload progress by tempId
+  processingFiles: string[]; // Track files being processed
+  fileErrors: Record<string, string>; // Track errors by fileId
   
   // Form state
   isDirty: boolean;
@@ -62,6 +69,12 @@ const initialState: ChapterFormState = {
   // Models data
   availableModels: [],
   modelsLoading: false,
+
+  // Files tab
+  files: [],
+  uploadProgress: {},
+  processingFiles: [],
+  fileErrors: {},
   
   // Form state
   isDirty: false,
@@ -181,6 +194,51 @@ const chapterFormSlice = createSlice({
         }
       }
     },
+
+    // Set all files
+    setFiles: (state, action: PayloadAction<ChapterFile[]>) => {
+      state.files = action.payload;
+    },
+
+    // Add a new file
+    addFile: (state, action: PayloadAction<ChapterFile>) => {
+      state.files.push(action.payload);
+    },
+
+    // Remove a file
+    removeFile: (state, action: PayloadAction<string>) => {
+      state.files = state.files.filter(file => file.id !== action.payload);
+    },
+
+    // Update upload progress
+    setUploadProgress: (state, action: PayloadAction<{ fileId: string; progress: number }>) => {
+      state.uploadProgress[action.payload.fileId] = action.payload.progress;
+    },
+
+    // Clear upload progress
+    clearUploadProgress: (state, action: PayloadAction<string>) => {
+      delete state.uploadProgress[action.payload];
+    },
+
+    // Set processing status
+    setFileProcessing: (state, action: PayloadAction<string>) => {
+      state.processingFiles.push(action.payload);
+    },
+
+    // Clear processing status
+    clearFileProcessing: (state, action: PayloadAction<string>) => {
+      state.processingFiles = state.processingFiles.filter(id => id !== action.payload);
+    },
+
+    // Set file error
+    setFileError: (state, action: PayloadAction<{ fileId: string; error: string }>) => {
+      state.fileErrors[action.payload.fileId] = action.payload.error;
+    },
+
+    // Clear file error
+    clearFileError: (state, action: PayloadAction<string>) => {
+      delete state.fileErrors[action.payload];
+    },
     
     // Initialize form for creating a new chapter
     initNewChapter: (state) => {
@@ -198,6 +256,12 @@ const chapterFormSlice = createSlice({
 
       // Clear learning goals
       state.learningGoals = [];
+
+      // Clear file-related state
+      state.files = [];
+      state.uploadProgress = {};
+      state.processingFiles = [];
+      state.fileErrors = {};
 
       state.isEdit = false;
       state.originalChapter = null;
@@ -243,6 +307,16 @@ const chapterFormSlice = createSlice({
       } else {
         state.learningGoals = [];
       }
+
+      // Initialize file-related state
+      if (chapter.files && Array.isArray(chapter.files)) {
+        state.files = chapter.files;
+      } else {
+        state.files = [];
+      }
+      state.uploadProgress = {};
+      state.processingFiles = [];
+      state.fileErrors = {};
 
       state.isEdit = true;
       state.originalChapter = chapter;
@@ -293,7 +367,16 @@ export const {
   reorderLearningGoals,
   addSubGoal,
   removeSubGoal,
-  updateSubGoal
+  updateSubGoal,
+  setFiles,
+  addFile,
+  removeFile,
+  setUploadProgress,
+  clearUploadProgress,
+  setFileProcessing,
+  clearFileProcessing,
+  setFileError,
+  clearFileError
 } = chapterFormSlice.actions;
 
 export default chapterFormSlice.reducer;
