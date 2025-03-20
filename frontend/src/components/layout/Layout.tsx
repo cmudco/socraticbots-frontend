@@ -1,3 +1,4 @@
+//src/components/layout/Layout.tsx
 import React from 'react';
 import Header from '../common/Header'; // Update path as needed
 import Sidebar from '../sidebar/Sidebar';
