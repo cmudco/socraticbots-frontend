@@ -74,13 +74,19 @@ const FilesTab: React.FC = () => {
 
   // Handle file deletion
   const handleDelete = async (file: ChapterFile) => {
+    if (!originalChapter?.id) {
+      alert("Can't delete file: chapter information missing");
+      return;
+    }
+    
     if (window.confirm(`Are you sure you want to delete ${file.name}?`)) {
       try {
-        await dispatch(deleteChapterFile({ fileId: file.id })).unwrap();
-        // Refresh the file list after deletion
-        if (originalChapter?.id) {
-          dispatch(fetchChapterFiles({ chapterPublicId: originalChapter.id }));
-        }
+        await dispatch(deleteChapterFile({ 
+          chapterPublicId: originalChapter.id, 
+          fileId: file.id 
+        })).unwrap();
+        
+        dispatch(fetchChapterFiles({ chapterPublicId: originalChapter.id }));
       } catch (error) {
         console.error('Delete failed:', error);
       }

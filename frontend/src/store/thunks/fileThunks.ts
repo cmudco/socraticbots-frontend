@@ -111,11 +111,11 @@ export const uploadMultipleFiles = createAsyncThunk(
 export const deleteChapterFile = createAsyncThunk(
   'files/delete',
   async (
-    { fileId }: { fileId: string },
+    { chapterPublicId, fileId }: { chapterPublicId: string, fileId: string },
     { dispatch, rejectWithValue }
   ) => {
     try {
-      await fileService.deleteFile(fileId);
+      await fileService.deleteFile(fileId, chapterPublicId);
       dispatch(removeFile(fileId));
       return fileId;
     } catch (error: any) {
