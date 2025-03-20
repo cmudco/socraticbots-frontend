@@ -1,15 +1,15 @@
 // src/components/chapters/tabs/FilesTab.tsx
 import React, { useCallback, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone'; // We'll need to install this
+import { useDropzone } from 'react-dropzone';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { 
   uploadChapterFile, 
   uploadMultipleFiles,
   deleteChapterFile,
-  pollFileProcessing
+  fetchChapterFiles
 } from '../../../store/thunks/fileThunks';
 import { ChapterFile } from '../../../services/files.service';
-import FileListItem from './FileListItem'; // We'll create this next
+import FileListItem from './FileListItem';
 
 const FilesTab: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -20,6 +20,25 @@ const FilesTab: React.FC = () => {
     fileErrors,
     originalChapter
   } = useAppSelector(state => state.chapterForm);
+
+  // Add refresh interval for processing files
+  useEffect(() => {
+    if (!originalChapter?.id || processingFiles.length === 0) return;
+
+    // Refresh file list every 3 seconds while files are processing
+    const intervalId = setInterval(() => {
+      dispatch(fetchChapterFiles({ chapterPublicId: originalChapter.id }));
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [dispatch, originalChapter?.id, processingFiles.length]);
+
+  // Initial file fetch
+  useEffect(() => {
+    if (originalChapter?.id) {
+      dispatch(fetchChapterFiles({ chapterPublicId: originalChapter.id }));
+    }
+  }, [dispatch, originalChapter?.id]);
 
   // File drop handler
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -58,6 +77,10 @@ const FilesTab: React.FC = () => {
     if (window.confirm(`Are you sure you want to delete ${file.name}?`)) {
       try {
         await dispatch(deleteChapterFile({ fileId: file.id })).unwrap();
+        // Refresh the file list after deletion
+        if (originalChapter?.id) {
+          dispatch(fetchChapterFiles({ chapterPublicId: originalChapter.id }));
+        }
       } catch (error) {
         console.error('Delete failed:', error);
       }
@@ -103,17 +126,30 @@ const FilesTab: React.FC = () => {
 
       {/* File List */}
       <div className="mt-6 space-y-4">
-        {files.map(file => (
-          <FileListItem
-            key={file.id}
-            file={file}
-            progress={uploadProgress[file.id]}
-            isProcessing={processingFiles.includes(file.id)}
-            error={fileErrors[file.id]}
-            onDelete={() => handleDelete(file)}
-          />
-        ))}
+        {files.length === 0 ? (
+          <div className="text-center text-gray-500 py-4">
+            No files uploaded yet
+          </div>
+        ) : (
+          files.map(file => (
+            <FileListItem
+              key={file.id}
+              file={file}
+              progress={uploadProgress[file.id]}
+              isProcessing={processingFiles.includes(file.id)}
+              error={fileErrors[file.id]}
+              onDelete={() => handleDelete(file)}
+            />
+          ))
+        )}
       </div>
+
+      {/* Optional: Add a processing files indicator */}
+      {processingFiles.length > 0 && (
+        <div className="mt-4 text-sm text-yellow-600">
+          Processing {processingFiles.length} file(s)...
+        </div>
+      )}
     </div>
   );
 };

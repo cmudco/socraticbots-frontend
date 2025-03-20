@@ -54,9 +54,9 @@ const FileListItem: React.FC<FileListItemProps> = ({
   // Get status text
   const getStatusText = () => {
     if (error) return 'Error';
-    if (isProcessing) return 'Processing';
     if (progress !== undefined) return 'Uploading';
-    return file.processing_status === 'completed' ? 'Ready' : 'Pending';
+    if (isProcessing || file.processing_status === 'processing' || file.processing_status === 'pending') return 'Processing';
+    return file.processing_status === 'completed' ? 'Ready' : 'Failed';
   };
 
   return (
