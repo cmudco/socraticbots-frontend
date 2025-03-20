@@ -140,6 +140,9 @@ export const pollFileProcessing = createAsyncThunk(
   ) => {
     const maxAttempts = 10;
     const interval = 2000; // 2 seconds
+    if (false) {
+      console.log('getState', getState());
+    }
     
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       // Fetch latest files
