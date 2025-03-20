@@ -110,7 +110,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   }, [isFormValid, isSubmitting, handleSubmit]);
 
   if (!isOpen) return null;
-  const isNewChapter = !isEdit;
 
   return (
     <div 
