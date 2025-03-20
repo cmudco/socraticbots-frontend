@@ -1,7 +1,6 @@
 // src/components/chapters/tabs/FileListItem.tsx
 import React from 'react';
 import { ChapterFile } from '../../../services/files.service';
-import { fileService } from '../../../services/files.service';
 
 interface FileListItemProps {
   file: ChapterFile;
@@ -93,19 +92,6 @@ const FileListItem: React.FC<FileListItemProps> = ({
 
           {/* Actions */}
           <div className="flex space-x-2">
-            {/* Download button - only show if processing is complete */}
-            {file.processing_status === 'completed' && (
-              <a
-                href={fileService.getSecureFileUrl(file.id)}
-                className="text-blue-500 hover:text-blue-700"
-                download
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </a>
-            )}
-
             {/* Delete button */}
             <button
               onClick={onDelete}
