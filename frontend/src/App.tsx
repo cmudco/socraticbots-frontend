@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Books from './pages/Books';
+import Chat from './pages/Chat';
 import ApiProvider from './components/common/ApiProvider';
 
 const App: React.FC = () => {
@@ -54,6 +55,14 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <Books />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/chat" 
+                element={
+                  <ProtectedRoute>
+                    <Chat />
                   </ProtectedRoute>
                 } 
               />
