@@ -59,9 +59,9 @@ class FileService {
   }
 
   // Delete a file
-  async deleteFile(fileId: string): Promise<void> {
+  async deleteFile(fileId: string, chapterPublicId: string): Promise<void> {
     try {
-      await api.delete(`/files/chapters/file/${fileId}/`);
+      await api.delete(`/files/chapters/${chapterPublicId}/${fileId}/`);
     } catch (error) {
       console.error('Error deleting file:', error);
       throw error;
