@@ -3,25 +3,25 @@ import React from 'react';
 
 const ChatInterface: React.FC = () => {
   return (
-    <div className="flex-grow h-full flex flex-col">
-      {/* Chat Messages */}
-      <div className="flex-grow p-4 overflow-y-auto">
+    <div className="flex-1 flex flex-col h-full">
+      {/* Scrollable Message Area */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
         {/* Example AI Message */}
-        <div className="max-w-3xl mx-auto mb-4 bg-purple-100 p-4 rounded-lg">
+        <div className="max-w-3xl mx-auto my-4 bg-purple-100 p-4 rounded-lg">
           <p className="text-purple-900">
             MQ1 the thiking patterns you want someone to use
           </p>
         </div>
         
         {/* Example User Response */}
-        <div className="max-w-3xl mx-auto mb-4">
+        <div className="max-w-3xl mx-auto my-4">
           <p className="text-gray-800">
             Good attempt! However, let's refine your answer.
           </p>
         </div>
         
         {/* Example AI Follow-up */}
-        <div className="max-w-3xl mx-auto mb-4">
+        <div className="max-w-3xl mx-auto my-4">
           <p className="font-medium">MQ1) What is the main idea behind Tree of Thought (ToT) prompting?</p>
           <p className="mt-2">
             ToT helps AI think in structured steps, rather than providing an instant response. Just like a detective solving a case, ToT breaks down complex problems, considers multiple possibilities, and self-corrects to find the best solution.
@@ -32,16 +32,16 @@ const ChatInterface: React.FC = () => {
         </div>
       </div>
       
-      {/* Chat Controls */}
-      <div className="border-t border-gray-200 p-2">
-        <div className="max-w-3xl mx-auto flex space-x-2">
+      {/* Fixed Chat Controls - Will always be at the bottom */}
+      <div className="border-t border-gray-200 py-3 px-4 bg-white">
+        <div className="max-w-3xl mx-auto flex space-x-2 mb-3 justify-center">
           <button className="px-3 py-2 bg-purple-600 text-white rounded-md text-sm">Learning Goals</button>
           <button className="px-3 py-2 bg-purple-600 text-white rounded-md text-sm">Guiding Questions</button>
           <button className="px-3 py-2 bg-purple-600 text-white rounded-md text-sm">Examples</button>
           <button className="px-3 py-2 bg-purple-600 text-white rounded-md text-sm">Mastery Assessment</button>
           <button className="px-3 py-2 bg-red-600 text-white rounded-md text-sm">Clear Chat</button>
         </div>
-        <div className="max-w-3xl mx-auto mt-2">
+        <div className="max-w-3xl mx-auto">
           <div className="flex items-center border rounded-md">
             <input 
               type="text" 
