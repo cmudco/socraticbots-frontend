@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { fetchConversationForChapter } from '../../store/thunks/chatThunks';
 import MessageList from './MessageList';
+import { chatService } from '../../services/chat.service';
 
 const ChatInterface: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -29,7 +30,7 @@ const ChatInterface: React.FC = () => {
   }, [selectedChapterId, dispatch]);
   
   // Handle sending a message
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim() || !selectedChapterId || !conversation) return;
     
     // Log the message being sent and conversation details
@@ -39,10 +40,20 @@ const ChatInterface: React.FC = () => {
     console.log('Chapter ID:', selectedChapterId);
     console.log('----------------------------');
     
-    // TODO: Implement actual sending logic
+    // Store the message (so we can clear the input right away)
+    const messageToSend = message.trim();
     
     // Clear input after sending
     setMessage('');
+
+    try {
+        await chatService.sendMessage(conversation.id, messageToSend);
+        dispatch(fetchConversationForChapter(selectedChapterId));
+      } catch (error) {
+        console.error('Failed to send message:', error);
+      }
+    
+
   };
   
   // Handle keypress for sending message

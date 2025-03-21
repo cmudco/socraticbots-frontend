@@ -52,6 +52,21 @@ class ChatService {
     }
   }
 
+  async sendMessage(conversationId: string, message: string): Promise<any> {
+    try {
+      const response = await api.post('/chat/send-message/', {
+        conversation_id: conversationId,
+        message: message
+      });
+      
+      console.log('Message sent successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+  }
+
 }
 
 // Export a singleton instance
