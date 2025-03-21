@@ -6,6 +6,7 @@ export interface Chapter {
   title: string;
   subject?: string;
   topic?: string;
+  greeting?: string;
   created_at?: string;
   updated_at?: string;
 }
