@@ -7,46 +7,26 @@ const TrackingSidebar: React.FC = () => {
       <div className="p-4">
         <h2 className="text-lg font-semibold mb-4">Learning Progress</h2>
         
-        <div className="mb-4">
-          <h3 className="font-medium mb-2">Progress Report</h3>
-          <div className="mb-2">
-            <div className="text-sm mb-1">Progress Key:</div>
-            <div className="flex space-x-1">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="w-4 h-4 rounded-full bg-red-500"></div>
-              ))}
-            </div>
-            <div className="flex space-x-1 mt-1">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="w-4 h-4 rounded-full bg-orange-500"></div>
-              ))}
-            </div>
-            <div className="flex space-x-1 mt-1">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="w-4 h-4 rounded-full bg-green-500"></div>
-              ))}
-            </div>
-            <div className="text-xs text-gray-600 mt-1">0% 20% 40% 60% 80% 100%</div>
-          </div>
-        </div>
-        
-        <div className="mb-4">
-          <h3 className="font-medium mb-2">LG1: Understanding Concept</h3>
-          <div className="text-sm mb-2">
-            Coverage: <span className="px-2 py-0.5 bg-orange-500 text-white rounded-full text-xs">50%</span>
-          </div>
-          <p className="text-sm text-gray-700">
-            The student has been introduced to the concept but needs more practice.
+        <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+          <svg 
+            className="w-12 h-12 mb-3" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24" 
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={1.5} 
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" 
+            />
+          </svg>
+          <p className="text-sm">
+            Progress tracking will appear here
           </p>
-        </div>
-        
-        <div className="mb-4">
-          <h3 className="font-medium mb-2">LG2: Problem Solving</h3>
-          <div className="text-sm mb-2">
-            Coverage: <span className="px-2 py-0.5 bg-orange-500 text-white rounded-full text-xs">50%</span>
-          </div>
-          <p className="text-sm text-gray-700">
-            The student can solve basic problems but struggles with complex ones.
+          <p className="text-xs mt-2">
+            Start a conversation to track your learning progress
           </p>
         </div>
       </div>
