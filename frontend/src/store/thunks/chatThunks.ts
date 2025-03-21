@@ -68,3 +68,28 @@ export const fetchConversationForChapter = createAsyncThunk(
       }
     }
   );
+
+export const sendChatMessage = createAsyncThunk(
+    'chat/sendMessage',
+    async ({ conversationId, message }: { conversationId: string, message: string }, 
+            { dispatch, rejectWithValue, getState }) => {
+        try {
+        // Get the current chapter ID from state
+        const state = getState() as { chat: { selectedChapterId: string } };
+        const chapterId = state.chat.selectedChapterId;
+        
+        // Send the message through the service
+        const response = await chatService.sendMessage(conversationId, message);
+        
+        // Refresh the conversation to get the updated messages
+        if (chapterId) {
+            dispatch(fetchConversationForChapter(chapterId));
+        }
+        
+        return response;
+        } catch (error: any) { // Add the `: any` type annotation
+        // Now you can safely access error.message
+        return rejectWithValue(error.message || 'Failed to send message');
+        }
+    }
+);
