@@ -8,9 +8,14 @@ import { ChatMessage } from '../../services/chat.service';
 interface MessageBubbleProps {
   message: ChatMessage;
   isGreeting?: boolean;
+  isPending?: boolean;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isGreeting = false }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ 
+  message, 
+  isGreeting = false,
+  isPending = false
+}) => {
   const isAssistant = message.role === 'assistant' || message.role === 'system';
   
   // Function to render content based on type (HTML for greeting, Markdown for messages)
@@ -57,9 +62,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isGreeting = fal
         </div>
       )}
       
-      <div className={`relative max-w-3/4 ${isAssistant ? 'bg-gray-100 text-gray-800' : 'bg-purple-600 text-white'} rounded-lg px-4 py-2`}>
+      <div className={`relative max-w-3/4 ${isAssistant ? 'bg-gray-100 text-gray-800' : 'bg-purple-600 text-white'} ${isPending ? 'opacity-70' : ''} rounded-lg px-4 py-2`}>
         {/* Render content using our helper function */}
         {renderContent()}
+        
+        {/* Show pending indicator if message is pending */}
+        {isPending && (
+          <span className="ml-2 text-xs text-gray-400">(sending...)</span>
+        )}
         
         {/* Timestamp */}
         <div className={`text-xs mt-1 ${isAssistant ? 'text-gray-500' : 'text-purple-200'}`}>

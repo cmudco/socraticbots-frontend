@@ -1,13 +1,15 @@
 // src/store/thunks/chatThunks.ts
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { chatService } from '../../services/chat.service';
+import { chatService, ChatMessage } from '../../services/chat.service';
 import { 
   setLoading, 
   setAvailableChapters,
   setError,
-    setConversation,
-    setConversationLoading,
-    setConversationError
+  setConversation,
+  setConversationLoading,
+  setConversationError,
+  addPendingUserMessage,
+  clearPendingUserMessage,
 } from '../slices/chatSlice';
 
 // Async thunk to fetch available chapters
@@ -49,47 +51,70 @@ export const fetchAvailableChapters = createAsyncThunk(
 );
 
 export const fetchConversationForChapter = createAsyncThunk(
-    'chat/fetchConversationForChapter',
-    async (chapterId: string, { dispatch }) => {
-      try {
-        dispatch(setConversationLoading(true));
-        dispatch(setConversationError(null));
-        
-        const conversation = await chatService.getConversationForChapter(chapterId);
-        dispatch(setConversation(conversation));
-        
-        return conversation;
-      } catch (error) {
-        console.error('Error fetching conversation:', error);
-        dispatch(setConversationError('Failed to load conversation'));
-        throw error;
-      } finally {
-        dispatch(setConversationLoading(false));
-      }
+  'chat/fetchConversationForChapter',
+  async (chapterId: string, { dispatch }) => {
+    try {
+      dispatch(setConversationLoading(true));
+      dispatch(setConversationError(null));
+      
+      const conversation = await chatService.getConversationForChapter(chapterId);
+      dispatch(setConversation(conversation));
+      
+      return conversation;
+    } catch (error) {
+      console.error('Error fetching conversation:', error);
+      dispatch(setConversationError('Failed to load conversation'));
+      throw error;
+    } finally {
+      dispatch(setConversationLoading(false));
     }
-  );
+  }
+);
 
 export const sendChatMessage = createAsyncThunk(
-    'chat/sendMessage',
-    async ({ conversationId, message }: { conversationId: string, message: string }, 
-            { dispatch, rejectWithValue, getState }) => {
-        try {
-        // Get the current chapter ID from state
-        const state = getState() as { chat: { selectedChapterId: string } };
-        const chapterId = state.chat.selectedChapterId;
+  'chat/sendMessage',
+  async ({ conversationId, message }: { conversationId: string, message: string }, 
+         { dispatch, getState }) => {
+    try {
+      // Add the pending user message immediately to show in UI
+      dispatch(addPendingUserMessage(message));
+      
+      // Send the message to get the assistant's response
+      const assistantMessage = await chatService.sendMessage(conversationId, message);
+      
+      // Get the current state
+      const state = getState() as any;
+      
+      // If we have a conversation, update it with both the user and assistant messages
+      if (state.chat.conversation) {
+        // Create a user message object
+        const userMessage: ChatMessage = {
+          id: 'user-' + Date.now(),
+          role: 'user',
+          content: message,
+          created_at: new Date().toISOString()
+        };
         
-        // Send the message through the service
-        const response = await chatService.sendMessage(conversationId, message);
+        // Create a copy of the current conversation with both messages added
+        const updatedConversation = {
+          ...state.chat.conversation,
+          messages: [
+            ...state.chat.conversation.messages,
+            userMessage,        // Add the user message
+            assistantMessage    // Add the assistant message
+          ]
+        };
         
-        // Refresh the conversation to get the updated messages
-        if (chapterId) {
-            dispatch(fetchConversationForChapter(chapterId));
-        }
-        
-        return response;
-        } catch (error: any) { // Add the `: any` type annotation
-        // Now you can safely access error.message
-        return rejectWithValue(error.message || 'Failed to send message');
-        }
+        // Update the conversation with the new messages
+        dispatch(setConversation(updatedConversation));
+      }
+      
+      // Clear the pending message now that we've added the real one
+      dispatch(clearPendingUserMessage());
+      
+      return assistantMessage;
+    } catch (error: any) {
+      return error.message || 'Failed to send message';
     }
+  }
 );
