@@ -17,10 +17,11 @@ const Chat: React.FC = () => {
     }
   }, [dispatch, apiIsReady]);
 
+  // Apply negative margins to counteract the Layout padding
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col -m-6 h-[calc(100vh-3.5rem)] overflow-hidden">
       <ChatHeader />
-      <div className="flex flex-grow overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         <TrackingSidebar />
         <ChatInterface />
         <NotesSidebar />
