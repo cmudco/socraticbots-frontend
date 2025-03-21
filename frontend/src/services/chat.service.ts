@@ -10,6 +10,23 @@ export interface Chapter {
   updated_at?: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  created_at: string;
+}
+
+export interface Conversation {
+  id: string;
+  user: string;
+  chapter: string;
+  chapter_details: Chapter;
+  created_at: string;
+  updated_at: string;
+  messages: ChatMessage[];
+}
+
 class ChatService {
   // Fetch available chapters
   async getAvailableChapters(): Promise<Chapter[]> {
@@ -22,6 +39,18 @@ class ChatService {
       throw error;
     }
   }
+
+  async getConversationForChapter(chapterId: string): Promise<Conversation> {
+    try {
+      const response = await api.get<Conversation>(`/chat/conversations/for_chapter/${chapterId}/`);
+      console.log('Fetched conversation for chapter:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching conversation for chapter ${chapterId}:`, error);
+      throw error;
+    }
+  }
+
 }
 
 // Export a singleton instance
