@@ -1,7 +1,8 @@
 // src/components/chat/ChatInterface.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { fetchConversationForChapter } from '../../store/thunks/chatThunks';
+import MessageList from './MessageList';
 
 const ChatInterface: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -12,13 +13,39 @@ const ChatInterface: React.FC = () => {
     conversationError
   } = useAppSelector(state => state.chat);
   
+  const [message, setMessage] = useState('');
+  const messageInputRef = useRef<HTMLInputElement>(null);
+  
   // Fetch conversation when chapter is selected
   useEffect(() => {
     if (selectedChapterId) {
       console.log('Chapter Selected:', selectedChapterId);
       dispatch(fetchConversationForChapter(selectedChapterId));
+      // Focus the input field when a chapter is selected
+      if (messageInputRef.current) {
+        messageInputRef.current.focus();
+      }
     }
   }, [selectedChapterId, dispatch]);
+  
+  // Handle sending a message
+  const handleSendMessage = () => {
+    if (!message.trim() || !selectedChapterId || !conversation) return;
+    
+    // TODO: Implement sending message
+    console.log('Sending message:', message);
+    
+    // Clear input after sending
+    setMessage('');
+  };
+  
+  // Handle keypress for sending message
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
   
   // Render the appropriate content based on state
   const renderContent = () => {
@@ -68,47 +95,12 @@ const ChatInterface: React.FC = () => {
     }
     
     if (conversation) {
-      if (conversation.messages && conversation.messages.length > 0) {
-        // Show existing conversation history
-        return (
-          <div className="space-y-4 py-4">
-            {conversation.messages.map((message) => (
-              <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-3/4 rounded-lg px-4 py-2 ${
-                  message.role === 'user' 
-                    ? 'bg-purple-600 text-white' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {message.content}
-                </div>
-              </div>
-            ))}
-          </div>
-        );
-      } else {
-        // New conversation - check for greeting in chapter_details
-        const greeting = conversation.chapter_details?.greeting;
-        
-        if (greeting) {
-          // Show the greeting message as if it were from the assistant
-          return (
-            <div className="space-y-4 py-4">
-              <div className="flex justify-start">
-                <div className="max-w-3/4 rounded-lg px-4 py-2 bg-gray-100 text-gray-800">
-                  {greeting}
-                </div>
-              </div>
-            </div>
-          );
-        } else {
-          // No greeting - show empty conversation
-          return (
-            <div className="flex justify-center items-center h-64 text-gray-400">
-              <p>Start a new conversation</p>
-            </div>
-          );
-        }
-      }
+      return (
+        <MessageList 
+          messages={conversation.messages || []} 
+          greeting={conversation.chapter_details?.greeting}
+        />
+      );
     }
     
     // Fallback
@@ -125,22 +117,27 @@ const ChatInterface: React.FC = () => {
       {/* Input Area */}
       <div className="border-t border-gray-200 py-3 px-4 bg-white">
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-center border rounded-md">
+          <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex items-center border rounded-md">
             <input 
+              ref={messageInputRef}
               type="text" 
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
               placeholder={selectedChapterId ? "Type your message..." : "Please select a chapter first"}
               className="flex-grow px-4 py-2 focus:outline-none"
               disabled={!selectedChapterId || conversationLoading}
             />
             <button 
-              className="px-4 py-2 text-gray-400"
-              disabled={!selectedChapterId || conversationLoading}
+              type="submit"
+              className={`px-4 py-2 ${message.trim() && selectedChapterId ? 'text-purple-600' : 'text-gray-400'}`}
+              disabled={!message.trim() || !selectedChapterId || conversationLoading}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
