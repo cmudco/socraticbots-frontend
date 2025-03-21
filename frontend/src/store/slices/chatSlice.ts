@@ -2,6 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Chapter } from '../../services/chat.service';
 import { Conversation } from '../../services/chat.service';
+import { fetchAvailableChapters, fetchConversationForChapter, sendChatMessage } from '../thunks/chatThunks';
 
 interface ChatState {
   availableChapters: Chapter[];
@@ -11,6 +12,9 @@ interface ChatState {
   conversation: Conversation | null;
   conversationLoading: boolean;
   conversationError: string | null;
+  // Add these states for message sending
+  messageSending: boolean;
+  messageError: string | null;
 }
 
 const initialState: ChatState = {
@@ -21,6 +25,9 @@ const initialState: ChatState = {
   conversation: null,
   conversationLoading: false,
   conversationError: null,
+  // Add initial values for new states
+  messageSending: false,
+  messageError: null,
 };
 
 const chatSlice = createSlice({
@@ -42,15 +49,61 @@ const chatSlice = createSlice({
       state.loading = false;
     },
     setConversation: (state, action: PayloadAction<Conversation | null>) => {
-        state.conversation = action.payload;
+      state.conversation = action.payload;
     },
     setConversationLoading: (state, action: PayloadAction<boolean>) => {
-        state.conversationLoading = action.payload;
+      state.conversationLoading = action.payload;
     },
     setConversationError: (state, action: PayloadAction<string | null>) => {
-        state.conversationError = action.payload;
+      state.conversationError = action.payload;
     },
-}
+    clearMessageError: (state) => {
+      state.messageError = null;
+    },
+  },
+  extraReducers: (builder) => {
+    // Handle fetchAvailableChapters states
+    builder
+      .addCase(fetchAvailableChapters.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAvailableChapters.fulfilled, (state, action) => {
+        state.loading = false;
+        state.availableChapters = action.payload;
+      })
+      .addCase(fetchAvailableChapters.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      
+    // Handle fetchConversationForChapter states
+      .addCase(fetchConversationForChapter.pending, (state) => {
+        state.conversationLoading = true;
+        state.conversationError = null;
+      })
+      .addCase(fetchConversationForChapter.fulfilled, (state, action) => {
+        state.conversationLoading = false;
+        state.conversation = action.payload;
+      })
+      .addCase(fetchConversationForChapter.rejected, (state, action) => {
+        state.conversationLoading = false;
+        state.conversationError = action.payload as string;
+      })
+      
+    // Handle sendChatMessage states
+      .addCase(sendChatMessage.pending, (state) => {
+        state.messageSending = true;
+        state.messageError = null;
+      })
+      .addCase(sendChatMessage.fulfilled, (state) => {
+        state.messageSending = false;
+      })
+      .addCase(sendChatMessage.rejected, (state, action) => {
+        state.messageSending = false;
+        state.messageError = action.payload as string;
+      });
+  }
 });
 
 export const { 
@@ -60,7 +113,8 @@ export const {
   setError,
   setConversation, 
   setConversationLoading, 
-  setConversationError 
+  setConversationError,
+  clearMessageError
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

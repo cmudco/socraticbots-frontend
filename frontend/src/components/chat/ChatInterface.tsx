@@ -1,9 +1,8 @@
 // src/components/chat/ChatInterface.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { fetchConversationForChapter } from '../../store/thunks/chatThunks';
+import { fetchConversationForChapter, sendChatMessage } from '../../store/thunks/chatThunks';
 import MessageList from './MessageList';
-import { chatService } from '../../services/chat.service';
 
 const ChatInterface: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -11,7 +10,9 @@ const ChatInterface: React.FC = () => {
     selectedChapterId,
     conversation,
     conversationLoading,
-    conversationError
+    conversationError,
+    messageSending,
+    messageError
   } = useAppSelector(state => state.chat);
   
   const [message, setMessage] = useState('');
@@ -30,7 +31,7 @@ const ChatInterface: React.FC = () => {
   }, [selectedChapterId, dispatch]);
   
   // Handle sending a message
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (!message.trim() || !selectedChapterId || !conversation) return;
     
     // Log the message being sent and conversation details
@@ -40,20 +41,17 @@ const ChatInterface: React.FC = () => {
     console.log('Chapter ID:', selectedChapterId);
     console.log('----------------------------');
     
-    // Store the message (so we can clear the input right away)
+    // Store the message text before clearing the input
     const messageToSend = message.trim();
     
-    // Clear input after sending
+    // Clear input immediately for better UX
     setMessage('');
-
-    try {
-        await chatService.sendMessage(conversation.id, messageToSend);
-        dispatch(fetchConversationForChapter(selectedChapterId));
-      } catch (error) {
-        console.error('Failed to send message:', error);
-      }
     
-
+    // Use the thunk instead of calling the service directly
+    dispatch(sendChatMessage({
+      conversationId: conversation.id,
+      message: messageToSend
+    }));
   };
   
   // Handle keypress for sending message
@@ -134,6 +132,12 @@ const ChatInterface: React.FC = () => {
       {/* Message Area */}
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         {renderContent()}
+        {/* Show message error if there is one */}
+        {messageError && (
+          <div className="p-3 bg-red-100 text-red-800 rounded-md mt-2 mx-auto max-w-md">
+            <p>Error sending message: {messageError}</p>
+          </div>
+        )}
       </div>
       
       {/* Input Area */}
@@ -146,19 +150,38 @@ const ChatInterface: React.FC = () => {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={selectedChapterId ? "Type your message... (Ctrl+Enter to send)" : "Please select a chapter first"}
+              placeholder={
+                messageSending 
+                  ? "Sending message..." 
+                  : (selectedChapterId 
+                      ? "Type your message... (Ctrl+Enter to send)" 
+                      : "Please select a chapter first")
+              }
               className="flex-grow px-4 py-2 focus:outline-none"
-              disabled={!selectedChapterId || conversationLoading}
+              disabled={!selectedChapterId || conversationLoading || messageSending}
             />
             <button 
               type="button"
               onClick={handleSendMessage}
-              className={`px-4 py-2 ${message.trim() && selectedChapterId ? 'text-purple-600' : 'text-gray-400'}`}
-              disabled={!message.trim() || !selectedChapterId || conversationLoading}
+              className={`px-4 py-2 ${
+                message.trim() && selectedChapterId && !messageSending 
+                  ? 'text-purple-600' 
+                  : 'text-gray-400'
+              }`}
+              disabled={!message.trim() || !selectedChapterId || conversationLoading || messageSending}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
+              {messageSending ? (
+                // Show a spinner when sending
+                <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                // Show regular send icon otherwise
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              )}
             </button>
           </form>
         </div>
