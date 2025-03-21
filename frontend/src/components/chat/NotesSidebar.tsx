@@ -6,7 +6,6 @@ const NotesSidebar: React.FC = () => {
     <div className="w-72 h-full flex flex-col border-l border-gray-200 bg-white">
       <div className="flex justify-between items-center p-4 border-b border-gray-200">
         <h2 className="text-lg font-semibold">Notes</h2>
-        <button className="px-3 py-1 bg-purple-600 text-white rounded-md text-sm">Save Notes</button>
       </div>
       <div className="flex-1 p-4">
         <textarea 

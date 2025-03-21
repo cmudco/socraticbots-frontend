@@ -47,16 +47,14 @@ const ChatInterface: React.FC = () => {
   
   // Handle keypress for sending message
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Send on Enter (without Shift)
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-    
-    // Also send on Ctrl+Enter
+    // Only send on Ctrl+Enter
     if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+    // Prevent form submission on regular Enter
+    else if (e.key === 'Enter') {
+      e.preventDefault();
     }
   };
   
@@ -130,19 +128,20 @@ const ChatInterface: React.FC = () => {
       {/* Input Area */}
       <div className="border-t border-gray-200 py-3 px-4 bg-white">
         <div className="max-w-3xl mx-auto">
-          <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex items-center border rounded-md">
+          <form onSubmit={(e) => { e.preventDefault(); }} className="flex items-center border rounded-md">
             <input 
               ref={messageInputRef}
               type="text" 
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown} // Changed from onKeyPress to onKeyDown for better Ctrl+Enter handling
-              placeholder={selectedChapterId ? "Type your message... (Press Enter or Ctrl+Enter to send)" : "Please select a chapter first"}
+              onKeyDown={handleKeyDown}
+              placeholder={selectedChapterId ? "Type your message... (Ctrl+Enter to send)" : "Please select a chapter first"}
               className="flex-grow px-4 py-2 focus:outline-none"
               disabled={!selectedChapterId || conversationLoading}
             />
             <button 
-              type="submit"
+              type="button"
+              onClick={handleSendMessage}
               className={`px-4 py-2 ${message.trim() && selectedChapterId ? 'text-purple-600' : 'text-gray-400'}`}
               disabled={!message.trim() || !selectedChapterId || conversationLoading}
             >
