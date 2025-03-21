@@ -32,16 +32,29 @@ const ChatInterface: React.FC = () => {
   const handleSendMessage = () => {
     if (!message.trim() || !selectedChapterId || !conversation) return;
     
-    // TODO: Implement sending message
-    console.log('Sending message:', message);
+    // Log the message being sent and conversation details
+    console.log('------ SENDING MESSAGE ------');
+    console.log('Message:', message);
+    console.log('Conversation ID:', conversation.id);
+    console.log('Chapter ID:', selectedChapterId);
+    console.log('----------------------------');
+    
+    // TODO: Implement actual sending logic
     
     // Clear input after sending
     setMessage('');
   };
   
   // Handle keypress for sending message
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Send on Enter (without Shift)
     if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+    
+    // Also send on Ctrl+Enter
+    if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -123,8 +136,8 @@ const ChatInterface: React.FC = () => {
               type="text" 
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={selectedChapterId ? "Type your message..." : "Please select a chapter first"}
+              onKeyDown={handleKeyDown} // Changed from onKeyPress to onKeyDown for better Ctrl+Enter handling
+              placeholder={selectedChapterId ? "Type your message... (Press Enter or Ctrl+Enter to send)" : "Please select a chapter first"}
               className="flex-grow px-4 py-2 focus:outline-none"
               disabled={!selectedChapterId || conversationLoading}
             />
