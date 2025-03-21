@@ -4,6 +4,7 @@ import sidebarReducer from './slices/sidebarSlice';
 import apiReducer from './slices/apiSlice';
 import chapterFormReducer from './slices/chapterFormSlice';
 import chaptersReducer from './slices/chaptersSlice';
+import chatReducer from './slices/chatSlice';
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     api: apiReducer,
     chapterForm: chapterFormReducer,
     chapters: chaptersReducer,
+    chat: chatReducer,
   },
 });
 
