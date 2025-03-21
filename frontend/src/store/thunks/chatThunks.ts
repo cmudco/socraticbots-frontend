@@ -4,7 +4,10 @@ import { chatService } from '../../services/chat.service';
 import { 
   setLoading, 
   setAvailableChapters,
-  setError
+  setError,
+    setConversation,
+    setConversationLoading,
+    setConversationError
 } from '../slices/chatSlice';
 
 // Async thunk to fetch available chapters
@@ -44,3 +47,24 @@ export const fetchAvailableChapters = createAsyncThunk(
     }
   }
 );
+
+export const fetchConversationForChapter = createAsyncThunk(
+    'chat/fetchConversationForChapter',
+    async (chapterId: string, { dispatch }) => {
+      try {
+        dispatch(setConversationLoading(true));
+        dispatch(setConversationError(null));
+        
+        const conversation = await chatService.getConversationForChapter(chapterId);
+        dispatch(setConversation(conversation));
+        
+        return conversation;
+      } catch (error) {
+        console.error('Error fetching conversation:', error);
+        dispatch(setConversationError('Failed to load conversation'));
+        throw error;
+      } finally {
+        dispatch(setConversationLoading(false));
+      }
+    }
+  );
