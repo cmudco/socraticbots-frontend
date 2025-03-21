@@ -1,6 +1,6 @@
 // src/store/slices/chatSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Chapter } from '../../services/chat.service';
+import { Chapter, ChatMessage } from '../../services/chat.service';
 import { Conversation } from '../../services/chat.service';
 import { fetchAvailableChapters, fetchConversationForChapter, sendChatMessage } from '../thunks/chatThunks';
 
@@ -12,9 +12,11 @@ interface ChatState {
   conversation: Conversation | null;
   conversationLoading: boolean;
   conversationError: string | null;
-  // Add these states for message sending
+  // Message sending states
   messageSending: boolean;
   messageError: string | null;
+  // Pending message state for immediate UI updates
+  pendingUserMessage: ChatMessage | null;
 }
 
 const initialState: ChatState = {
@@ -25,9 +27,9 @@ const initialState: ChatState = {
   conversation: null,
   conversationLoading: false,
   conversationError: null,
-  // Add initial values for new states
   messageSending: false,
   messageError: null,
+  pendingUserMessage: null,
 };
 
 const chatSlice = createSlice({
@@ -60,6 +62,18 @@ const chatSlice = createSlice({
     clearMessageError: (state) => {
       state.messageError = null;
     },
+    // New reducers for handling pending messages
+    addPendingUserMessage: (state, action: PayloadAction<string>) => {
+      state.pendingUserMessage = {
+        id: 'pending-' + Date.now(),
+        role: 'user',
+        content: action.payload,
+        created_at: new Date().toISOString()
+      };
+    },
+    clearPendingUserMessage: (state) => {
+      state.pendingUserMessage = null;
+    },
   },
   extraReducers: (builder) => {
     // Handle fetchAvailableChapters states
@@ -85,6 +99,8 @@ const chatSlice = createSlice({
       .addCase(fetchConversationForChapter.fulfilled, (state, action) => {
         state.conversationLoading = false;
         state.conversation = action.payload;
+        // Clear any pending message as we now have the official one from the server
+        state.pendingUserMessage = null;
       })
       .addCase(fetchConversationForChapter.rejected, (state, action) => {
         state.conversationLoading = false;
@@ -95,13 +111,16 @@ const chatSlice = createSlice({
       .addCase(sendChatMessage.pending, (state) => {
         state.messageSending = true;
         state.messageError = null;
+        // We don't clear pendingUserMessage here because we want to show it while sending
       })
       .addCase(sendChatMessage.fulfilled, (state) => {
         state.messageSending = false;
+        // We'll leave the pending message until the conversation refresh brings in the real one
       })
       .addCase(sendChatMessage.rejected, (state, action) => {
         state.messageSending = false;
         state.messageError = action.payload as string;
+        // Even on error, keep the pending message visible to the user
       });
   }
 });
@@ -114,7 +133,10 @@ export const {
   setConversation, 
   setConversationLoading, 
   setConversationError,
-  clearMessageError
+  clearMessageError,
+  // Export the new actions
+  addPendingUserMessage,
+  clearPendingUserMessage
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
