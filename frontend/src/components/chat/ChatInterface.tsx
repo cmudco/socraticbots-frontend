@@ -1,5 +1,5 @@
 // src/components/chat/ChatInterface.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { fetchConversationForChapter } from '../../store/thunks/chatThunks';
 
@@ -86,13 +86,28 @@ const ChatInterface: React.FC = () => {
           </div>
         );
       } else {
-        // Empty conversation - we would need to get the greeting separately
-        // For now, just show a blank slate message
-        return (
-          <div className="flex justify-center items-center h-64 text-gray-400">
-            <p>Start a new conversation</p>
-          </div>
-        );
+        // New conversation - check for greeting in chapter_details
+        const greeting = conversation.chapter_details?.greeting;
+        
+        if (greeting) {
+          // Show the greeting message as if it were from the assistant
+          return (
+            <div className="space-y-4 py-4">
+              <div className="flex justify-start">
+                <div className="max-w-3/4 rounded-lg px-4 py-2 bg-gray-100 text-gray-800">
+                  {greeting}
+                </div>
+              </div>
+            </div>
+          );
+        } else {
+          // No greeting - show empty conversation
+          return (
+            <div className="flex justify-center items-center h-64 text-gray-400">
+              <p>Start a new conversation</p>
+            </div>
+          );
+        }
       }
     }
     
