@@ -106,7 +106,7 @@ class ChatService {
     callbacks: StreamCallbacks
   ): Promise<string> {
     try {
-      // Get fresh token
+      console.log('Starting streamMessage...'); // Add this
       const token = await this.getFreshToken();
       if (!token) throw new Error('No auth token available');
 
@@ -122,6 +122,8 @@ class ChatService {
         })
       });
 
+      console.log('Got response:', response.status); // Add this
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -130,16 +132,22 @@ class ChatService {
       if (!reader) throw new Error('No reader available');
 
       callbacks.onStart?.();
+      console.log('Stream started'); // Add this
 
       let fullResponse = '';
       
       // Read the stream
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('Stream complete'); // Add this
+          break;
+        }
 
         // Convert the chunk to text
         const chunk = new TextDecoder().decode(value);
+        console.log('Raw chunk received:', chunk); // Add this
+        
         const lines = chunk.split('\n');
 
         // Process each line
@@ -149,17 +157,20 @@ class ChatService {
               const data = JSON.parse(line.slice(5));
               if (data.content) {
                 fullResponse += data.content;
+                console.log('Token received:', data.content); // Add this
                 callbacks.onToken?.(data.content);
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);
             }
           } else if (line.startsWith('event: end')) {
+            console.log('End event received'); // Add this
             callbacks.onComplete?.();
           }
         }
       }
 
+      console.log('Final response:', fullResponse); // Add this
       return fullResponse;
 
     } catch (error) {
@@ -168,6 +179,7 @@ class ChatService {
       throw error;
     }
   }
+
 
 }
 
