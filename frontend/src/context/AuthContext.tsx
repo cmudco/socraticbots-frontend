@@ -1,6 +1,6 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthTokens, AuthState } from '../types/auth';
+import { AuthTokens, AuthState } from '../types/auth';
 import { authService } from '../services/auth.service';
 
 interface AuthContextType extends AuthState {

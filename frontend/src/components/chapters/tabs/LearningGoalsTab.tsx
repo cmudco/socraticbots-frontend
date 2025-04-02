@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import { addLearningGoal, removeLearningGoal, addSubGoal, removeSubGoal } from '../../../store/slices/chapterFormSlice';
-import { LearningGoal, chapterService, SubGoal } from '../../../services/chapters.service';
+import { chapterService, SubGoal } from '../../../services/chapters.service';
 import axios from 'axios';
+
+
 
 const LearningGoalsTab: React.FC = () => {
   const [newGoalText, setNewGoalText] = useState('');
@@ -14,7 +16,6 @@ const LearningGoalsTab: React.FC = () => {
   
   const dispatch = useAppDispatch();
 
-  const isNewChapter = useAppSelector(state => !state.chapterForm.isEdit);
   
   // Get current chapter from the form state
   const chapter = useAppSelector(state => state.chapterForm.originalChapter);

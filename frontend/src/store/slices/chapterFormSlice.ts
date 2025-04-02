@@ -344,6 +344,7 @@ const chapterFormSlice = createSlice({
     
     // Clear all form data and state
     resetForm: (state) => {
+      if (false) {console.log(state);}
       return initialState;
     }
   }

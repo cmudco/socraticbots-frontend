@@ -133,6 +133,8 @@ export const updateChapter = createAsyncThunk(
         promptData
       );
 
+      if (false) {console.log("Updated chapter:", updatedChapter);} 
+
       // Save learning goals
       if (learningGoals && learningGoals.length > 0) {
         // Process each goal in the current array - keep it simple

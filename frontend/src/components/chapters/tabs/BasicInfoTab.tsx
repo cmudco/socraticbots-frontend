@@ -19,6 +19,10 @@ const BasicInfoTab: React.FC = () => {
     isEdit
   } = useAppSelector(state => state.chapterForm);
   
+  // Not used.
+  if (false) {console.log(isEdit);}
+
+
   // Fetch models when component mounts
   useEffect(() => {
     dispatch(fetchModels());
