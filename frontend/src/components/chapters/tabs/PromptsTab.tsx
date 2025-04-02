@@ -1,5 +1,5 @@
 // src/components/chapters/tabs/PromptsTab.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -114,6 +114,8 @@ const PromptsTab: React.FC = () => {
   const handleTrackingPromptChange = (html: string) => {
     dispatch(setField({ field: 'tracking_prompt', value: html }));
   };
+
+
 
   return (
     <div className="space-y-8">
