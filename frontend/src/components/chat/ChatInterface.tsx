@@ -21,6 +21,7 @@ const ChatInterface: React.FC = () => {
   
   const [message, setMessage] = useState('');
   const messageInputRef = useRef<HTMLInputElement>(null);
+  const messageAreaRef = useRef<HTMLDivElement>(null);
   
   // Fetch conversation when chapter is selected
   useEffect(() => {
@@ -132,11 +133,24 @@ const ChatInterface: React.FC = () => {
     // Fallback
     return null;
   };
+
+  const scrollToBottom = () => {
+    if (messageAreaRef.current) {
+      messageAreaRef.current.scrollTop = messageAreaRef.current.scrollHeight;
+    }
+  };
+
+  // Add useEffect to handle scrolling when streaming or messages change
+  useEffect(() => {
+    if (isStreaming || pendingAssistantMessage) {
+      scrollToBottom();
+    }
+  }, [isStreaming, pendingAssistantMessage?.content]);
   
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Message Area */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      <div ref={messageAreaRef} className="flex-1 overflow-y-auto px-4 pb-4 scroll-smooth">
         {renderContent()}
         {/* Show message error if there is one */}
         {(messageError || streamingError) && (
