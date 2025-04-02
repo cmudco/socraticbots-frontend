@@ -7,9 +7,17 @@ interface MessageListProps {
   messages: ChatMessage[];
   greeting?: string;
   pendingUserMessage?: ChatMessage | null;
+  isStreaming?: boolean;
+  pendingAssistantMessage?: ChatMessage | null;  // Add this prop
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, greeting, pendingUserMessage }) => {
+const MessageList: React.FC<MessageListProps> = ({ 
+  messages, 
+  greeting, 
+  pendingUserMessage,
+  isStreaming,
+  pendingAssistantMessage
+}) => {
   // Create a copy of messages to avoid mutating props
   const allMessages = [...messages];
   
@@ -24,13 +32,14 @@ const MessageList: React.FC<MessageListProps> = ({ messages, greeting, pendingUs
     allMessages.unshift(greetingMessage);
   }
   
-  // Check if we should display a typing indicator
-  const isTyping = false; // This would come from props or state in the future
-  
   // Add pending user message if it exists and isn't already in the message list
-  // We check to avoid duplicating messages
   if (pendingUserMessage && !allMessages.some(msg => msg.content === pendingUserMessage.content)) {
     allMessages.push(pendingUserMessage);
+  }
+
+  // Add pending assistant message if streaming
+  if (pendingAssistantMessage) {
+    allMessages.push(pendingAssistantMessage);
   }
   
   if (allMessages.length === 0) {
@@ -49,18 +58,19 @@ const MessageList: React.FC<MessageListProps> = ({ messages, greeting, pendingUs
           message={message} 
           isGreeting={message.id === 'greeting'}
           isPending={message.id.startsWith('pending-')}
+          isStreaming={isStreaming && message.id.startsWith('streaming-')}  // Add this prop
         />
       ))}
       
-      {/* Optional typing indicator */}
-      {isTyping && (
+      {/* Streaming indicator */}
+      {isStreaming && (
         <div className="flex items-center text-gray-500 ml-2 mt-2">
           <div className="typing-indicator">
             <span></span>
             <span></span>
             <span></span>
           </div>
-          <span className="ml-2 text-sm">Assistant is typing...</span>
+          <span className="ml-2 text-sm">Assistant is responding...</span>
         </div>
       )}
     </div>

@@ -1,8 +1,9 @@
 // src/components/chat/ChatInterface.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { fetchConversationForChapter, sendChatMessage } from '../../store/thunks/chatThunks';
+import { fetchConversationForChapter, sendStreamingMessage } from '../../store/thunks/chatThunks';
 import MessageList from './MessageList';
+
 
 const ChatInterface: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -12,7 +13,10 @@ const ChatInterface: React.FC = () => {
     conversationLoading,
     conversationError,
     messageSending,
-    messageError
+    messageError,
+    isStreaming,
+    streamingError,
+    pendingAssistantMessage
   } = useAppSelector(state => state.chat);
   
   const [message, setMessage] = useState('');
@@ -48,7 +52,7 @@ const ChatInterface: React.FC = () => {
     setMessage('');
     
     // Use the thunk instead of calling the service directly
-    dispatch(sendChatMessage({
+    dispatch(sendStreamingMessage({
       conversationId: conversation.id,
       message: messageToSend
     }));
