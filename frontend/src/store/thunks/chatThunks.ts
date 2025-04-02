@@ -128,6 +128,8 @@ export const sendStreamingMessage = createAsyncThunk(
   async ({ conversationId, message }: { conversationId: string, message: string }, 
          { dispatch, getState }) => {
     try {
+      console.log('Starting streaming message process...');
+      
       // Add the pending user message immediately
       dispatch(addPendingUserMessage(message));
       
@@ -136,6 +138,7 @@ export const sendStreamingMessage = createAsyncThunk(
       
       // If we have a conversation, add the user message
       if (state.chat.conversation) {
+        console.log('Adding user message to conversation');
         const userMessage: ChatMessage = {
           id: 'user-' + Date.now(),
           role: 'user',
@@ -152,6 +155,7 @@ export const sendStreamingMessage = createAsyncThunk(
       }
 
       // Start streaming
+      console.log('Dispatching startStreaming');
       dispatch(startStreaming());
 
       // Use the streaming service with callbacks
@@ -160,24 +164,37 @@ export const sendStreamingMessage = createAsyncThunk(
         message,
         {
           onStart: () => {
-            console.log('Streaming started');
+            console.log('Stream started - onStart callback');
           },
           onToken: (token) => {
+            console.log('Token received in thunk:', token);
             dispatch(updateStreamingMessage(token));
+            
+            // Log current streaming message state after dispatch
+            const currentState = getState() as any;
+            console.log('Current pending message:', currentState.chat.pendingAssistantMessage);
           },
           onComplete: () => {
+            console.log('Stream complete - dispatching completeStreaming');
             dispatch(completeStreaming());
             dispatch(clearPendingUserMessage());
+            
+            // Log final state
+            const finalState = getState() as any;
+            console.log('Final conversation state:', finalState.chat.conversation);
           },
           onError: (error) => {
+            console.error('Streaming error:', error);
             dispatch(setStreamingError(error.message || 'Streaming failed'));
           }
         }
       );
 
+      console.log('Full response received:', fullResponse);
       return fullResponse;
       
     } catch (error: any) {
+      console.error('Error in sendStreamingMessage:', error);
       dispatch(setStreamingError(error.message || 'Failed to send streaming message'));
       return null;
     }

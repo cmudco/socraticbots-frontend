@@ -95,7 +95,16 @@ const chatSlice = createSlice({
     },
 
     updateStreamingMessage: (state, action: PayloadAction<string>) => {
-      if (state.pendingAssistantMessage) {
+      if (!state.pendingAssistantMessage) {
+        // Create new streaming message if none exists
+        state.pendingAssistantMessage = {
+          id: 'streaming-' + Date.now(),
+          role: 'assistant',
+          content: action.payload,
+          created_at: new Date().toISOString()
+        };
+      } else {
+        // Append to existing streaming message
         state.pendingAssistantMessage.content += action.payload;
       }
     },
