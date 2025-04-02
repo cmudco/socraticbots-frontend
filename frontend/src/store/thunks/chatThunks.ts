@@ -10,6 +10,10 @@ import {
   setConversationError,
   addPendingUserMessage,
   clearPendingUserMessage,
+  startStreaming,
+  updateStreamingMessage,
+  completeStreaming,
+  setStreamingError,
 } from '../slices/chatSlice';
 
 // Async thunk to fetch available chapters
@@ -115,6 +119,67 @@ export const sendChatMessage = createAsyncThunk(
       return assistantMessage;
     } catch (error: any) {
       return error.message || 'Failed to send message';
+    }
+  }
+);
+
+export const sendStreamingMessage = createAsyncThunk(
+  'chat/sendStreamingMessage',
+  async ({ conversationId, message }: { conversationId: string, message: string }, 
+         { dispatch, getState }) => {
+    try {
+      // Add the pending user message immediately
+      dispatch(addPendingUserMessage(message));
+      
+      // Get current state
+      const state = getState() as any;
+      
+      // If we have a conversation, add the user message
+      if (state.chat.conversation) {
+        const userMessage: ChatMessage = {
+          id: 'user-' + Date.now(),
+          role: 'user',
+          content: message,
+          created_at: new Date().toISOString()
+        };
+        
+        // Update conversation with user message
+        const updatedConversation = {
+          ...state.chat.conversation,
+          messages: [...state.chat.conversation.messages, userMessage]
+        };
+        dispatch(setConversation(updatedConversation));
+      }
+
+      // Start streaming
+      dispatch(startStreaming());
+
+      // Use the streaming service with callbacks
+      const fullResponse = await chatService.streamMessage(
+        conversationId,
+        message,
+        {
+          onStart: () => {
+            console.log('Streaming started');
+          },
+          onToken: (token) => {
+            dispatch(updateStreamingMessage(token));
+          },
+          onComplete: () => {
+            dispatch(completeStreaming());
+            dispatch(clearPendingUserMessage());
+          },
+          onError: (error) => {
+            dispatch(setStreamingError(error.message || 'Streaming failed'));
+          }
+        }
+      );
+
+      return fullResponse;
+      
+    } catch (error: any) {
+      dispatch(setStreamingError(error.message || 'Failed to send streaming message'));
+      return null;
     }
   }
 );

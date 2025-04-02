@@ -17,6 +17,10 @@ interface ChatState {
   messageError: string | null;
   // Pending message state for immediate UI updates
   pendingUserMessage: ChatMessage | null;
+  // New streaming states
+  isStreaming: boolean;
+  streamingError: string | null;
+  pendingAssistantMessage: ChatMessage | null; 
 }
 
 const initialState: ChatState = {
@@ -30,6 +34,9 @@ const initialState: ChatState = {
   messageSending: false,
   messageError: null,
   pendingUserMessage: null,
+  isStreaming: false,
+  streamingError: null,
+  pendingAssistantMessage: null,
 };
 
 const chatSlice = createSlice({
@@ -73,6 +80,42 @@ const chatSlice = createSlice({
     },
     clearPendingUserMessage: (state) => {
       state.pendingUserMessage = null;
+    },
+    // New streaming reducers
+    startStreaming: (state) => {
+      state.isStreaming = true;
+      state.streamingError = null;
+      // Initialize empty assistant message
+      state.pendingAssistantMessage = {
+        id: 'streaming-' + Date.now(),
+        role: 'assistant',
+        content: '',
+        created_at: new Date().toISOString()
+      };
+    },
+
+    updateStreamingMessage: (state, action: PayloadAction<string>) => {
+      if (state.pendingAssistantMessage) {
+        state.pendingAssistantMessage.content += action.payload;
+      }
+    },
+
+    completeStreaming: (state) => {
+      state.isStreaming = false;
+      // If we have a conversation and a complete streaming message, add it
+      if (state.conversation && state.pendingAssistantMessage) {
+        state.conversation.messages.push({
+          ...state.pendingAssistantMessage,
+          id: 'msg-' + Date.now() // Generate a proper ID
+        });
+      }
+      state.pendingAssistantMessage = null;
+    },
+
+    setStreamingError: (state, action: PayloadAction<string>) => {
+      state.isStreaming = false;
+      state.streamingError = action.payload;
+      state.pendingAssistantMessage = null;
     },
   },
   extraReducers: (builder) => {
@@ -136,7 +179,11 @@ export const {
   clearMessageError,
   // Export the new actions
   addPendingUserMessage,
-  clearPendingUserMessage
+  clearPendingUserMessage,
+  startStreaming,
+  updateStreamingMessage,
+  completeStreaming,
+  setStreamingError,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

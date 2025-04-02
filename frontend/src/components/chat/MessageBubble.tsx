@@ -9,12 +9,14 @@ interface MessageBubbleProps {
   message: ChatMessage;
   isGreeting?: boolean;
   isPending?: boolean;
+  isStreaming?: boolean;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ 
   message, 
   isGreeting = false,
-  isPending = false
+  isPending = false,
+  isStreaming = false
 }) => {
   const isAssistant = message.role === 'assistant' || message.role === 'system';
   
@@ -22,7 +24,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   const renderContent = () => {
     // For greeting messages, sanitize and render HTML
     if (isGreeting) {
-      // Sanitize HTML content
       const sanitizedHTML = DOMPurify.sanitize(message.content, {
         USE_PROFILES: { html: true },
         ALLOWED_TAGS: [
@@ -47,6 +48,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         <ReactMarkdown>
           {message.content}
         </ReactMarkdown>
+        {/* Add blinking cursor for streaming messages */}
+        {isStreaming && (
+          <span className="inline-block w-1 h-4 ml-1 bg-current animate-blink">|</span>
+        )}
       </div>
     );
   };
@@ -57,18 +62,34 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       {isAssistant && (
         <div className="flex-shrink-0 mr-3">
           <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white">
-            AI
+            {isStreaming ? (
+              // Spinning indicator for streaming
+              <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : 'AI'}
           </div>
         </div>
       )}
       
-      <div className={`relative max-w-3/4 ${isAssistant ? 'bg-gray-100 text-gray-800' : 'bg-purple-600 text-white'} ${isPending ? 'opacity-70' : ''} rounded-lg px-4 py-2`}>
+      <div 
+        className={`
+          relative max-w-3/4 
+          ${isAssistant ? 'bg-gray-100 text-gray-800' : 'bg-purple-600 text-white'} 
+          ${isPending ? 'opacity-70' : ''} 
+          ${isStreaming ? 'animate-pulse-subtle' : ''} 
+          rounded-lg px-4 py-2
+        `}
+      >
         {/* Render content using our helper function */}
         {renderContent()}
         
-        {/* Show pending indicator if message is pending */}
-        {isPending && (
-          <span className="ml-2 text-xs text-gray-400">(sending...)</span>
+        {/* Show status indicators */}
+        {(isPending || isStreaming) && (
+          <span className="ml-2 text-xs text-gray-400">
+            {isPending ? '(sending...)' : isStreaming ? '(typing...)' : ''}
+          </span>
         )}
         
         {/* Timestamp */}
@@ -76,8 +97,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           {isGreeting ? 'Greeting' : formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
         </div>
         
-        {/* Action buttons - only for messages, not for greetings */}
-        {!isGreeting && (
+        {/* Action buttons - only for completed messages */}
+        {!isGreeting && !isStreaming && !isPending && (
           <div className="absolute -bottom-6 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
             {isAssistant && (
               <>
