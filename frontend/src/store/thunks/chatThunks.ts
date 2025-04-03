@@ -64,8 +64,20 @@ export const fetchConversationForChapter = createAsyncThunk(
       dispatch(setConversationLoading(true));
       dispatch(setConversationError(null));
       
+      // First get the conversation
       const conversation = await chatService.getConversationForChapter(chapterId);
       dispatch(setConversation(conversation));
+      
+      // Then fetch latest progress
+      try {
+        const progress = await chatService.getLatestProgress(conversation.id);
+        if (progress.content) {
+          dispatch(setTrackingResult(progress.content));
+        }
+      } catch (error) {
+        console.error('Error fetching initial progress:', error);
+        // Don't fail the whole operation if progress fetch fails
+      }
       
       return conversation;
     } catch (error) {
@@ -77,6 +89,7 @@ export const fetchConversationForChapter = createAsyncThunk(
     }
   }
 );
+
 
 export const trackConversationProgress = createAsyncThunk(
   'chat/trackProgress',

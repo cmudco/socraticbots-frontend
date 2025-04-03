@@ -16,7 +16,8 @@ const ChatInterface: React.FC = () => {
     messageError,
     isStreaming,
     streamingError,
-    pendingAssistantMessage
+    pendingAssistantMessage,
+    trackingResult,
   } = useAppSelector(state => state.chat);
   
   const [message, setMessage] = useState('');
@@ -142,10 +143,10 @@ const ChatInterface: React.FC = () => {
 
   // Add useEffect to handle scrolling when streaming or messages change
   useEffect(() => {
-    if (isStreaming || pendingAssistantMessage || conversation) {
+    if (isStreaming || pendingAssistantMessage || conversation || trackingResult) {
       scrollToBottom();
     }
-  }, [isStreaming, pendingAssistantMessage?.content, conversation]);
+  }, [isStreaming, pendingAssistantMessage?.content, conversation, trackingResult]);
   
   // Add new effect for chapter selection
   useEffect(() => {
