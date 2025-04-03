@@ -4,7 +4,6 @@ import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 import DOMPurify from 'dompurify';
 import { ChatMessage } from '../../services/chat.service';
-import remarkGfm from 'remark-gfm';
 
 interface MessageBubbleProps {
   message: ChatMessage;
