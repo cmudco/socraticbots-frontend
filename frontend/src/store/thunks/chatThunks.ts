@@ -226,6 +226,9 @@ export const sendStreamingMessage = createAsyncThunk(
             const finalState = getState() as any;
             console.log('Final conversation state:', finalState.chat.conversation);
 
+            // Clear previous tracking and start new tracking
+            dispatch(startTracking());
+
             // Start tracking progress after message completion
             console.log('Starting tracking progress...');
             try {
