@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow } from 'date-fns';
 import DOMPurify from 'dompurify';
 import { ChatMessage } from '../../services/chat.service';
+import remarkGfm from 'remark-gfm';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -41,17 +42,35 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         />
       );
     }
+
+    // SPLIT INTO ASSISTANT VS USER MESSAGES
+    console.log(message.content)
+    if (isAssistant) {
+      return (
+        <div className="prose prose-sm max-w-none space-y-8">
+          <ReactMarkdown 
+            components={{
+              h1: ({children}) => <h1 className="text-xl font-bold mt-8 mb-6 border-b pb-2">{children}</h1>,
+              h2: ({children}) => <h2 className="text-lg font-semibold mt-8 mb-4 border-b pb-2">{children}</h2>,
+              ul: ({children}) => <ul className="mt-4 mb-8 space-y-2 list-disc pl-5">{children}</ul>,
+              ol: ({children}) => <ol className="mt-4 mb-8 space-y-2 list-decimal pl-5">{children}</ol>,
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
+          {isStreaming && (
+            <span className="inline-block w-1 h-4 ml-1 bg-current animate-blink">|</span>
+          )}
+        </div>
+      );
+    }
     
-    // For regular messages, render as Markdown
+    // Regular user messages get basic markdown
     return (
       <div className="markdown-content">
         <ReactMarkdown>
           {message.content}
         </ReactMarkdown>
-        {/* Add blinking cursor for streaming messages */}
-        {isStreaming && (
-          <span className="inline-block w-1 h-4 ml-1 bg-current animate-blink">|</span>
-        )}
       </div>
     );
   };
