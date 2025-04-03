@@ -142,11 +142,18 @@ const ChatInterface: React.FC = () => {
 
   // Add useEffect to handle scrolling when streaming or messages change
   useEffect(() => {
-    if (isStreaming || pendingAssistantMessage) {
+    if (isStreaming || pendingAssistantMessage || conversation) {
       scrollToBottom();
     }
-  }, [isStreaming, pendingAssistantMessage?.content]);
+  }, [isStreaming, pendingAssistantMessage?.content, conversation]);
   
+  // Add new effect for chapter selection
+  useEffect(() => {
+    if (selectedChapterId && conversation) {
+      scrollToBottom();
+    }
+  }, [selectedChapterId, conversation]);
+
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Message Area */}
