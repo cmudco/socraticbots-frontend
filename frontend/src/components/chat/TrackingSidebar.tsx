@@ -71,8 +71,16 @@ const TrackingSidebar: React.FC = () => {
     // If we have tracking results
     if (trackingResult) {
       return (
-        <div className="prose prose-sm max-w-none">
-          <ReactMarkdown>{trackingResult}</ReactMarkdown>
+        <div className="prose prose-sm max-w-none space-y-8">
+          <ReactMarkdown 
+            components={{
+              h1: ({children}) => <h1 className="text-xl font-bold mt-8 mb-6 border-b pb-2">{children}</h1>,
+              h2: ({children}) => <h2 className="text-lg font-semibold mt-8 mb-4 border-b pb-2">{children}</h2>,
+              ul: ({children}) => <ul className="mt-4 mb-8 space-y-2 list-disc pl-5">{children}</ul>,
+            }}
+          >
+            {trackingResult}
+          </ReactMarkdown>
         </div>
       );
     }
