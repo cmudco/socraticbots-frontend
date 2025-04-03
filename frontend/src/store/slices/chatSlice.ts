@@ -20,7 +20,11 @@ interface ChatState {
   // New streaming states
   isStreaming: boolean;
   streamingError: string | null;
-  pendingAssistantMessage: ChatMessage | null; 
+  pendingAssistantMessage: ChatMessage | null;
+  // Tracking States
+  trackingProgress: boolean;
+  trackingError: string | null;
+  trackingResult: string | null;
 }
 
 const initialState: ChatState = {
@@ -37,6 +41,9 @@ const initialState: ChatState = {
   isStreaming: false,
   streamingError: null,
   pendingAssistantMessage: null,
+  trackingProgress: false,
+  trackingError: null,
+  trackingResult: null,
 };
 
 const chatSlice = createSlice({
@@ -126,6 +133,27 @@ const chatSlice = createSlice({
       state.streamingError = action.payload;
       state.pendingAssistantMessage = null;
     },
+    startTracking: (state) => {
+      state.trackingProgress = true;
+      state.trackingError = null;
+    },
+    
+    setTrackingResult: (state, action: PayloadAction<string>) => {
+      state.trackingProgress = false;
+      state.trackingResult = (state.trackingResult || '') + action.payload;
+      state.trackingError = null;
+    },
+    
+    setTrackingError: (state, action: PayloadAction<string>) => {
+      state.trackingProgress = false;
+      state.trackingError = action.payload;
+    },
+    
+    clearTracking: (state) => {
+      state.trackingProgress = false;
+      state.trackingError = null;
+      state.trackingResult = null;
+    },
   },
   extraReducers: (builder) => {
     // Handle fetchAvailableChapters states
@@ -193,6 +221,10 @@ export const {
   updateStreamingMessage,
   completeStreaming,
   setStreamingError,
+  startTracking,
+  setTrackingResult,
+  setTrackingError,
+  clearTracking,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
