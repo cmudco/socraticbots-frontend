@@ -45,7 +45,6 @@ class AuthService {
   
   // Refresh tokens (still using fetch for bootstrap)
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
-    console.log('Attempting to refresh token with:', refreshToken.substring(0, 10) + '...');
     
     try {
       const response = await fetch(`${this.baseUrl}/users/token/refresh/`, {
@@ -63,14 +62,14 @@ class AuthService {
       }
       
       const data = await response.json();
-      console.log('Token refresh successful, got new tokens');
+      
       
       // Check if we got a new refresh token
       const newRefreshToken = data.refresh || refreshToken;
       
       // Log if refresh token changed
       if (data.refresh && data.refresh !== refreshToken) {
-        console.log('Refresh token was rotated');
+        //console.log('Refresh token was rotated');
       }
       
       return {

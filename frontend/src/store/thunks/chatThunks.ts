@@ -96,7 +96,6 @@ export const trackConversationProgress = createAsyncThunk(
   async (conversationId: string, { dispatch }) => {
     try {
       // Start tracking state
-      console.log('Starting tracking progress for conversation:', conversationId);
       dispatch(startTracking());
 
       // Use the streaming version of tracking
@@ -104,15 +103,14 @@ export const trackConversationProgress = createAsyncThunk(
         conversationId,
         {
           onStart: () => {
-            console.log('Tracking stream started');
+            if (false) console.log('Tracking stream started');
           },
           onToken: (token) => {
-            console.log('Tracking token received:', token);
             // Update the tracking result progressively
             dispatch(setTrackingResult(token));
           },
           onComplete: () => {
-            console.log('Tracking stream completed');
+            if (false) console.log('Tracking stream completed');
           },
           onError: (error) => {
             console.error('Tracking stream error:', error);
@@ -184,7 +182,6 @@ export const sendStreamingMessage = createAsyncThunk(
   async ({ conversationId, message }: { conversationId: string, message: string }, 
          { dispatch, getState }) => {
     try {
-      console.log('Starting streaming message process...');
       
       // Add the pending user message immediately
       dispatch(addPendingUserMessage(message));
@@ -194,7 +191,6 @@ export const sendStreamingMessage = createAsyncThunk(
       
       // If we have a conversation, add the user message
       if (state.chat.conversation) {
-        console.log('Adding user message to conversation');
         const userMessage: ChatMessage = {
           id: 'user-' + Date.now(),
           role: 'user',
@@ -211,7 +207,6 @@ export const sendStreamingMessage = createAsyncThunk(
       }
 
       // Start streaming
-      console.log('Dispatching startStreaming');
       dispatch(startStreaming());
 
       // Use the streaming service with callbacks
@@ -220,30 +215,21 @@ export const sendStreamingMessage = createAsyncThunk(
         message,
         {
           onStart: () => {
-            console.log('Stream started - onStart callback');
+            if (false) console.log('Stream started - onStart callback');
           },
           onToken: (token) => {
-            console.log('Token received in thunk:', token);
             dispatch(updateStreamingMessage(token));
-            
-            // Log current streaming message state after dispatch
-            const currentState = getState() as any;
-            console.log('Current pending message:', currentState.chat.pendingAssistantMessage);
           },
           onComplete: async () => {
-            console.log('Stream complete - dispatching completeStreaming');
+            
             dispatch(completeStreaming());
             dispatch(clearPendingUserMessage());
             
-            // Log final state
-            const finalState = getState() as any;
-            console.log('Final conversation state:', finalState.chat.conversation);
-
+            
             // Clear previous tracking and start new tracking
             dispatch(startTracking());
 
             // Start tracking progress after message completion
-            console.log('Starting tracking progress...');
             try {
               dispatch(trackConversationProgress(conversationId));
             } catch (error) {
@@ -257,7 +243,6 @@ export const sendStreamingMessage = createAsyncThunk(
         }
       );
 
-      console.log('Full response received:', fullResponse);
       return fullResponse;
       
     } catch (error: any) {
