@@ -136,6 +136,8 @@ const chatSlice = createSlice({
     startTracking: (state) => {
       state.trackingProgress = true;
       state.trackingError = null;
+      // Clear previous tracking result
+      state.trackingResult = null;
     },
     
     setTrackingResult: (state, action: PayloadAction<string>) => {
