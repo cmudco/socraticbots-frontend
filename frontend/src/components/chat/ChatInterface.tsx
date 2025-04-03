@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { fetchConversationForChapter, sendStreamingMessage } from '../../store/thunks/chatThunks';
+import ChatControls from './ChatControls';
 import MessageList from './MessageList';
 
 
@@ -50,6 +51,23 @@ const ChatInterface: React.FC = () => {
       conversationId: conversation.id,
       message: messageToSend
     }));
+  };
+
+  // Handle action button click - sets the message but doesn't send
+  const handleActionClick = (actionMessage: string) => {
+    setMessage(actionMessage);
+    if (messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
+  };
+  
+  // Handle clear conversation - placeholder for now
+  const handleClearConversation = () => {
+    // For now, just show a confirmation dialog
+    if (window.confirm('Are you sure you want to clear this conversation? This action cannot be undone.')) {
+      console.log('Clear conversation functionality will be implemented later');
+      // We'll implement this functionality later
+    }
   };
   
   // Handle keypress for sending message
@@ -160,9 +178,17 @@ const ChatInterface: React.FC = () => {
         )}
       </div>
       
-      {/* Input Area */}
+      {/* Input Area with new buttons */}
       <div className="border-t border-gray-200 py-3 px-4 bg-white">
         <div className="max-w-3xl mx-auto">
+          {/* New ChatControls component */}
+          <ChatControls 
+            onActionClick={handleActionClick}
+            onClearConversation={handleClearConversation}
+            disabled={!selectedChapterId || conversationLoading || messageSending || isStreaming}
+          />
+          
+          {/* Existing chat input form */}
           <form onSubmit={(e) => { e.preventDefault(); }} className="flex items-center border rounded-md">
             <input 
               ref={messageInputRef}
