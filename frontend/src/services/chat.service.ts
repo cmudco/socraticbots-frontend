@@ -180,7 +180,66 @@ class ChatService {
     }
   }
 
+  async streamTrackingProgress(
+    conversationId: string,
+    callbacks: StreamCallbacks
+  ): Promise<string> {
+    try {
+      const token = await this.getFreshToken();
+      
+      const response = await fetch(`${api.defaults.baseURL}/chat/track-progress/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          conversation_id: conversationId
+        })
+      });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader available');
+
+      callbacks.onStart?.();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            try {
+              const data = JSON.parse(line.slice(5));
+              if (data.content) {
+                fullResponse += data.content;
+                callbacks.onToken?.(data.content);
+              }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          } else if (line.startsWith('event: end')) {
+            callbacks.onComplete?.();
+          }
+        }
+      }
+
+      return fullResponse;
+
+    } catch (error) {
+      console.error('Error in streamTrackingProgress:', error);
+      callbacks.onError?.(error);
+      throw error;
+    }
+  }
 }
 
 // Export a singleton instance

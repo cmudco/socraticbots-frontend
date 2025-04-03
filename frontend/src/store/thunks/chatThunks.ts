@@ -14,6 +14,9 @@ import {
   updateStreamingMessage,
   completeStreaming,
   setStreamingError,
+  setTrackingError,
+  setTrackingResult,
+  startTracking,
 } from '../slices/chatSlice';
 
 // Async thunk to fetch available chapters
@@ -71,6 +74,46 @@ export const fetchConversationForChapter = createAsyncThunk(
       throw error;
     } finally {
       dispatch(setConversationLoading(false));
+    }
+  }
+);
+
+export const trackConversationProgress = createAsyncThunk(
+  'chat/trackProgress',
+  async (conversationId: string, { dispatch }) => {
+    try {
+      // Start tracking state
+      console.log('Starting tracking progress for conversation:', conversationId);
+      dispatch(startTracking());
+
+      // Use the streaming version of tracking
+      const fullResponse = await chatService.streamTrackingProgress(
+        conversationId,
+        {
+          onStart: () => {
+            console.log('Tracking stream started');
+          },
+          onToken: (token) => {
+            console.log('Tracking token received:', token);
+            // Update the tracking result progressively
+            dispatch(setTrackingResult(token));
+          },
+          onComplete: () => {
+            console.log('Tracking stream completed');
+          },
+          onError: (error) => {
+            console.error('Tracking stream error:', error);
+            dispatch(setTrackingError(error.message || 'Failed to track progress'));
+          }
+        }
+      );
+
+      return fullResponse;
+
+    } catch (error: any) {
+      console.error('Error in trackConversationProgress:', error);
+      dispatch(setTrackingError(error.message || 'Failed to track progress'));
+      return null;
     }
   }
 );
@@ -174,7 +217,7 @@ export const sendStreamingMessage = createAsyncThunk(
             const currentState = getState() as any;
             console.log('Current pending message:', currentState.chat.pendingAssistantMessage);
           },
-          onComplete: () => {
+          onComplete: async () => {
             console.log('Stream complete - dispatching completeStreaming');
             dispatch(completeStreaming());
             dispatch(clearPendingUserMessage());
@@ -182,6 +225,14 @@ export const sendStreamingMessage = createAsyncThunk(
             // Log final state
             const finalState = getState() as any;
             console.log('Final conversation state:', finalState.chat.conversation);
+
+            // Start tracking progress after message completion
+            console.log('Starting tracking progress...');
+            try {
+              dispatch(trackConversationProgress(conversationId));
+            } catch (error) {
+              console.error('Error starting tracking:', error);
+            }
           },
           onError: (error) => {
             console.error('Streaming error:', error);
@@ -200,3 +251,4 @@ export const sendStreamingMessage = createAsyncThunk(
     }
   }
 );
+
