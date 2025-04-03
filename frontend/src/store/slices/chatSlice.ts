@@ -59,6 +59,7 @@ const chatSlice = createSlice({
     },
     setSelectedChapter: (state, action: PayloadAction<string | null>) => {
       state.selectedChapterId = action.payload;
+      state.trackingResult = null;
     },
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
@@ -139,7 +140,9 @@ const chatSlice = createSlice({
       // Clear previous tracking result
       state.trackingResult = null;
     },
-    
+    clearTrackingResult: (state) => {
+      state.trackingResult = null;
+    },
     setTrackingResult: (state, action: PayloadAction<string>) => {
       state.trackingProgress = false;
       state.trackingResult = (state.trackingResult || '') + action.payload;
@@ -227,6 +230,7 @@ export const {
   setTrackingResult,
   setTrackingError,
   clearTracking,
+  clearTrackingResult,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
