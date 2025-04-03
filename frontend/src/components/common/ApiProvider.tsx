@@ -30,7 +30,6 @@ const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
         }
         
         if (accessToken && config.headers) {
-          console.log('Adding token to request:', accessToken.substring(0, 10) + '...');
           config.headers.Authorization = `Bearer ${accessToken}`;
         }
         return config;
@@ -93,7 +92,6 @@ const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
     // Set API as ready with a delay to ensure auth is fully processed
     const readyTimer = setTimeout(() => {
       dispatch(setApiReady());
-      console.log('API marked as ready in Redux store');
     }, 800); 
     
     // Clean up interceptors on unmount

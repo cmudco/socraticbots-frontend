@@ -27,7 +27,6 @@ const ChatInterface: React.FC = () => {
   // Fetch conversation when chapter is selected
   useEffect(() => {
     if (selectedChapterId) {
-      console.log('Chapter Selected:', selectedChapterId);
       dispatch(fetchConversationForChapter(selectedChapterId));
       // Focus the input field when a chapter is selected
       if (messageInputRef.current) {
@@ -39,13 +38,6 @@ const ChatInterface: React.FC = () => {
   // Handle sending a message
   const handleSendMessage = () => {
     if (!message.trim() || !selectedChapterId || !conversation) return;
-    
-    // Log the message being sent and conversation details
-    console.log('------ SENDING MESSAGE ------');
-    console.log('Message:', message);
-    console.log('Conversation ID:', conversation.id);
-    console.log('Chapter ID:', selectedChapterId);
-    console.log('----------------------------');
     
     // Store the message text before clearing the input
     const messageToSend = message.trim();
