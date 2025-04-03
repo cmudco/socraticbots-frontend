@@ -240,6 +240,17 @@ class ChatService {
       throw error;
     }
   }
+
+  async getLatestProgress(conversationId: string): Promise<{content: string | null, created_at: string | null}> {
+    try {
+      const response = await api.get(`/chat/latest-progress/${conversationId}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching latest progress:', error);
+      throw error;
+    }
+  }
+
 }
 
 // Export a singleton instance
