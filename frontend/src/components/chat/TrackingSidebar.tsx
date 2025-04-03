@@ -78,6 +78,7 @@ const TrackingSidebar: React.FC = () => {
               h2: ({children}) => <h2 className="text-lg font-semibold mt-1 mb-1 border-b pb-2">{children}</h2>,
               ul: ({children}) => <ul className="mt-1 mb-1 space-y-2 list-disc pl-5">{children}</ul>,
               ol: ({children}) => <ol className="mt-1 mb-1 space-y-2 list-decimal pl-5">{children}</ol>,
+              h3: ({children}) => <h3 className="text-lg font-semibold mt-1 mb-1 border-b pb-2">{children}</h3>,
             }}
           >
             {trackingResult}
