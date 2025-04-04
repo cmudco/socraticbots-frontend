@@ -17,7 +17,8 @@ import {
   setTrackingError,
   setTrackingResult,
   startTracking,
-  setClearingConversation
+  setClearingConversation,
+  clearTrackingResult,
 } from '../slices/chatSlice';
 
 // Async thunk to fetch available chapters
@@ -100,6 +101,8 @@ export const clearConversation = createAsyncThunk(
       const newConversation = await chatService.clearConversation(conversationId);
       // Update the Redux state with the new conversation
       dispatch(setConversation(newConversation));
+      // Clear the tracking result as well
+      dispatch(clearTrackingResult());
     } catch (error) {
       console.error('Error clearing conversation:', error);
       dispatch(setConversationError('Failed to clear conversation'));
