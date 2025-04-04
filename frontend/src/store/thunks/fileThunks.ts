@@ -177,8 +177,9 @@ export const pollFileProcessing = createAsyncThunk(
     dispatch(clearFileProcessing(fileId));
     dispatch(setFileError({ 
       fileId, 
-      error: 'Processing timeout' 
+      error: 'Large file is still processing. Please check back later for results.' 
     }));
-    throw new Error('Processing timeout');
+    // Don't throw an error, just return a status
+    return { id: fileId, status: 'long_running' };
   }
 );

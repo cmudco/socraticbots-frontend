@@ -42,21 +42,33 @@ const FileListItem: React.FC<FileListItemProps> = ({
     }
   };
 
-  // Get status color
-  const getStatusColor = () => {
-    if (error) return 'text-red-500';
-    if (isProcessing) return 'text-yellow-500';
-    if (file.processing_status === 'completed') return 'text-green-500';
-    return 'text-gray-500';
-  };
+// Get status color
+const getStatusColor = () => {
+  if (error) {
+    // Check if it's the large file processing message
+    if (error.includes('Large file is still processing')) {
+      return 'text-yellow-500';  // Keep it yellow like processing
+    }
+    return 'text-red-500';
+  }
+  if (isProcessing) return 'text-yellow-500';
+  if (file.processing_status === 'completed') return 'text-green-500';
+  return 'text-gray-500';
+};
 
-  // Get status text
-  const getStatusText = () => {
-    if (error) return 'Error';
-    if (progress !== undefined) return 'Uploading';
-    if (isProcessing || file.processing_status === 'processing' || file.processing_status === 'pending') return 'Processing';
-    return file.processing_status === 'completed' ? 'Ready' : 'Failed';
-  };
+// Get status text
+const getStatusText = () => {
+  if (error) {
+    // Check if it's the large file processing message
+    if (error.includes('Large file is still processing')) {
+      return 'Processing';  // Still show as "Processing"
+    }
+    return 'Error';
+  }
+  if (progress !== undefined) return 'Uploading';
+  if (isProcessing || file.processing_status === 'processing' || file.processing_status === 'pending') return 'Processing';
+  return file.processing_status === 'completed' ? 'Ready' : 'Failed';
+};
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -108,7 +120,11 @@ const FileListItem: React.FC<FileListItemProps> = ({
 
       {/* Error Message */}
       {error && (
-        <div className="mt-2 text-sm text-red-500">
+        <div className={`mt-2 text-sm ${
+          error.includes('Large file is still processing') 
+            ? 'text-yellow-500' 
+            : 'text-red-500'
+        }`}>
           {error}
         </div>
       )}
