@@ -1,7 +1,7 @@
 // src/components/chat/ChatInterface.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { fetchConversationForChapter, sendStreamingMessage } from '../../store/thunks/chatThunks';
+import { fetchConversationForChapter, sendStreamingMessage, clearConversation } from '../../store/thunks/chatThunks';
 import ChatControls from './ChatControls';
 import MessageList from './MessageList';
 
@@ -63,10 +63,10 @@ const ChatInterface: React.FC = () => {
   
   // Handle clear conversation - placeholder for now
   const handleClearConversation = () => {
-    // For now, just show a confirmation dialog
+    if (!conversation) return;
+  
     if (window.confirm('Are you sure you want to clear this conversation? This action cannot be undone.')) {
-      console.log('Clear conversation functionality will be implemented later');
-      // We'll implement this functionality later
+      dispatch(clearConversation(conversation.id)); // Dispatch the thunk
     }
   };
   

@@ -25,6 +25,8 @@ interface ChatState {
   trackingProgress: boolean;
   trackingError: string | null;
   trackingResult: string | null;
+  //Clear Conversation State
+  clearingConversation: boolean; 
 }
 
 const initialState: ChatState = {
@@ -44,6 +46,7 @@ const initialState: ChatState = {
   trackingProgress: false,
   trackingError: null,
   trackingResult: null,
+  clearingConversation: false,
 };
 
 const chatSlice = createSlice({
@@ -159,6 +162,9 @@ const chatSlice = createSlice({
       state.trackingError = null;
       state.trackingResult = null;
     },
+    setClearingConversation: (state, action: PayloadAction<boolean>) => {
+      state.clearingConversation = action.payload;
+    },
   },
   extraReducers: (builder) => {
     // Handle fetchAvailableChapters states
@@ -231,6 +237,7 @@ export const {
   setTrackingError,
   clearTracking,
   clearTrackingResult,
+  setClearingConversation,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
