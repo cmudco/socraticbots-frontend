@@ -241,6 +241,16 @@ class ChatService {
     }
   }
 
+  async clearConversation(conversationId: string): Promise<Conversation> {
+    try {
+      const response = await api.post<Conversation>(`/chat/clear-conversation/${conversationId}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error clearing conversation:', error);
+      throw error;
+    }
+  }
+
 }
 
 // Export a singleton instance
