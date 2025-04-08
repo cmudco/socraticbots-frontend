@@ -53,14 +53,30 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     }
   }, [chapter, isOpen, dispatch]);
   
-  // Close modal when clicking outside
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only close if clicking the backdrop (not the modal content)
-    if (modalContentRef.current && !modalContentRef.current.contains(e.target as Node)) {
-      onClose();
-      dispatch(closeForm());
-    }
+  const handleOutsideClick = (e: MouseEvent) => {
+  if (
+    modalContentRef.current && 
+    !modalContentRef.current.contains(e.target as Node) && 
+    !isSubmitting
+  ) {
+    onClose();
+    dispatch(closeForm());
+  }
+};
+
+// Add event listener when modal is open
+useEffect(() => {
+  if (isOpen) {
+    document.addEventListener('mousedown', handleOutsideClick);
+  } else {
+    document.removeEventListener('mousedown', handleOutsideClick);
+  }
+  
+  // Clean up event listener
+  return () => {
+    document.removeEventListener('mousedown', handleOutsideClick);
   };
+}, [isOpen, isSubmitting]);
 
 
   const handleSubmit = async () => {
@@ -112,10 +128,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={handleBackdropClick}
-    >
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div 
         ref={modalContentRef}
         className="bg-white rounded-lg p-6 w-full max-w-4xl h-[650px] flex flex-col"
