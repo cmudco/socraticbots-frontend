@@ -18,7 +18,7 @@ const ChatHeader: React.FC = () => {
       {/* Mode Toggle */}
       <div className="flex space-x-2 mr-4">
         <button 
-          className="px-3 py-1 bg-purple-600 text-white rounded-md font-medium text-sm"
+          className="px-3 py-1 bg-blue-600 text-white rounded-md font-medium text-sm"
           disabled
         >
           Classic
