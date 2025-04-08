@@ -98,7 +98,7 @@ const PromptsTab: React.FC = () => {
   const dispatch = useAppDispatch();
   
   // Get all prompts from Redux store
-  const { greeting, chat_prompt, tracking_prompt } = useAppSelector(state => state.chapterForm);
+  const { greeting, chat_prompt, tracking_prompt, learning_goals } = useAppSelector(state => state.chapterForm);
   
   // Handler to update greeting in Redux
   const handleGreetingChange = (html: string) => {
@@ -113,6 +113,10 @@ const PromptsTab: React.FC = () => {
   // Handler to update tracking prompt in Redux
   const handleTrackingPromptChange = (html: string) => {
     dispatch(setField({ field: 'tracking_prompt', value: html }));
+  };
+
+  const handleLearningGoalsChange = (html: string) => {
+    dispatch(setField({ field: 'learning_goals', value: html }));
   };
 
 
@@ -154,6 +158,20 @@ const PromptsTab: React.FC = () => {
           placeholder="Enter instructions for the AI on how to track student progress..."
         />
       </div>
+
+      <div className="mt-10">
+        <h3 className="text-lg font-medium mb-2">Learning Goals</h3>
+        <p className="text-sm text-gray-600 mb-2">
+          Define the learning goals for this chapter.  The more structure you are able to provide the better the AI will be able to help students achieve their goals.
+        </p>
+        <TiptapEditor 
+          value={learning_goals} 
+          onChange={handleLearningGoalsChange} 
+          placeholder="Enter the learning goals for this chapter, e.g., 'Understand photosynthesis, Describe the carbon cycle...'"
+        />
+      </div>
+
+
     </div>
   );
 };
