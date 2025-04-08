@@ -12,7 +12,7 @@ import { createChapter, updateChapter } from '../../store/thunks/chapterThunks';
 import { Chapter } from '../../services/chapters.service';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import PromptsTab from './tabs/PromptsTab';
-import LearningGoalsTab from './tabs/LearningGoalsTab';
+//import LearningGoalsTab from './tabs/LearningGoalsTab';
 import FilesTab from './tabs/FilesTab';
 import DeploymentTab from './tabs/DeploymentTab';
 

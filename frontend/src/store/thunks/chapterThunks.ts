@@ -28,6 +28,8 @@ export const createChapter = createAsyncThunk(
         topic
       };
       
+      if (false) { console.log(learningGoals); } // Unused for not clears error on build.
+
       // Prepare model preferences if any are set
       const hasModelPreferences = !!chat_model_id || !!tracking_model_id;
       const modelPreferences = hasModelPreferences ? {
@@ -103,6 +105,8 @@ export const updateChapter = createAsyncThunk(
         learningGoals // Keep old learning goals for comment-out code compatibility
       } = state.chapterForm;
       
+      if (false) { console.log(learningGoals); } // Unused for not clears error on build.
+
       // Prepare request data
       const chapterData = {
         title,
@@ -134,6 +138,8 @@ export const updateChapter = createAsyncThunk(
         modelPreferences,
         promptData
       );
+
+      if (false) { console.log(updatedChapter); } // Unused for not clears error on build.
 
       /*
       // Save learning goals (keeping this for reference)
