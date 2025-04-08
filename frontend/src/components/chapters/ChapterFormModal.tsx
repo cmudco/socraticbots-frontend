@@ -151,7 +151,8 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
             >
               Prompts
             </button>
-            
+
+            {/* 
             <button
               type="button"
               className={`mr-4 py-2 px-4 relative ${
@@ -178,6 +179,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
               )}
               
             </button>
+            */}
             
             <button
               type="button"
@@ -212,7 +214,9 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
             
             {activeTab === 'prompts' && <PromptsTab />}
             
+            {/*
             {activeTab === 'goals' && <LearningGoalsTab />}
+            */}
             
             {activeTab === 'files' && <FilesTab />}
             

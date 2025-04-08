@@ -17,8 +17,8 @@ export const createChapter = createAsyncThunk(
       const { 
         title, subject, topic, 
         chat_model_id, tracking_model_id,
-        greeting, chat_prompt, tracking_prompt,
-        learningGoals  // Get learning goals
+        greeting, chat_prompt, tracking_prompt, learning_goals,
+        learningGoals  // Keep old learning goals for comment-out code compatibility
       } = state.chapterForm;
       
       // Prepare request data
@@ -35,12 +35,13 @@ export const createChapter = createAsyncThunk(
         tracking_model_id
       } : undefined;
       
-      // Prepare prompt data if any are set
-      const hasPromptData = !!greeting || !!chat_prompt || !!tracking_prompt;
+      // Prepare prompt data if any are set - now including learning_goals
+      const hasPromptData = !!greeting || !!chat_prompt || !!tracking_prompt || !!learning_goals;
       const promptData = hasPromptData ? {
         greeting,
         chat_prompt,
-        tracking_prompt
+        tracking_prompt,
+        learning_goals
       } : undefined;
       
       // Call the service with prompts data
@@ -51,7 +52,8 @@ export const createChapter = createAsyncThunk(
         promptData
       );
       
-      // Save learning goals if they exist
+      /*
+      // Save learning goals if they exist (keeping this for reference)
       if (learningGoals && learningGoals.length > 0) {
         for (const goal of learningGoals) {
           try {
@@ -64,8 +66,9 @@ export const createChapter = createAsyncThunk(
           }
         }
       }
+      */
       
-      // Fetch the updated chapter with the latest learning goals
+      // Fetch the updated chapter with the latest data
       const refreshedChapter = await chapterService.getChapter(bookId, newChapter.id);
       
       // Clean up form state
@@ -96,12 +99,10 @@ export const updateChapter = createAsyncThunk(
       const { 
         title, subject, topic, 
         chat_model_id, tracking_model_id,
-        greeting, chat_prompt, tracking_prompt, 
-        learningGoals
+        greeting, chat_prompt, tracking_prompt, learning_goals,
+        learningGoals // Keep old learning goals for comment-out code compatibility
       } = state.chapterForm;
       
-      console.log("Learning goals to save:", learningGoals);
-
       // Prepare request data
       const chapterData = {
         title,
@@ -116,12 +117,13 @@ export const updateChapter = createAsyncThunk(
         tracking_model_id
       } : undefined;
       
-      // Prepare prompt data if any are set
-      const hasPromptData = !!greeting || !!chat_prompt || !!tracking_prompt;
+      // Prepare prompt data if any are set - now including learning_goals
+      const hasPromptData = !!greeting || !!chat_prompt || !!tracking_prompt || !!learning_goals;
       const promptData = hasPromptData ? {
         greeting,
         chat_prompt,
-        tracking_prompt
+        tracking_prompt,
+        learning_goals
       } : undefined;
       
       // Call the service with prompts data
@@ -133,9 +135,8 @@ export const updateChapter = createAsyncThunk(
         promptData
       );
 
-      if (false) {console.log("Updated chapter:", updatedChapter);} 
-
-      // Save learning goals
+      /*
+      // Save learning goals (keeping this for reference)
       if (learningGoals && learningGoals.length > 0) {
         // Process each goal in the current array - keep it simple
         for (const goal of learningGoals) {
@@ -152,8 +153,9 @@ export const updateChapter = createAsyncThunk(
           }
         }
       }
+      */
       
-      // Fetch the updated chapter with the latest learning goals
+      // Fetch the updated chapter with the latest data
       const refreshedChapter = await chapterService.getChapter(bookId, chapterId);
       
       // Clean up form state
@@ -169,6 +171,7 @@ export const updateChapter = createAsyncThunk(
     }
   }
 );
+
 
 
 export const deleteChapter = createAsyncThunk(

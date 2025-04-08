@@ -49,6 +49,7 @@ export interface ChapterPrompt {
   greeting: string;
   chat_prompt: string;
   tracking_prompt: string;
+  learning_goals: string;
   created_at: string;
   updated_at: string;
 }
@@ -74,6 +75,7 @@ export interface ChapterPromptRequest {
   greeting?: string;
   chat_prompt?: string;
   tracking_prompt?: string;
+  learning_goals?: string;
 }
 
 export interface CreateLearningGoalRequest {

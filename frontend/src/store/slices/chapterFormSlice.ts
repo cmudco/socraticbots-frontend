@@ -23,6 +23,7 @@ interface ChapterFormState {
   greeting: string;
   chat_prompt: string;
   tracking_prompt: string;
+  learning_goals: string;
 
   //Learning Goals Tab
   learningGoals: LearningGoal[];
@@ -61,6 +62,7 @@ const initialState: ChapterFormState = {
   greeting: '',
   chat_prompt: '',
   tracking_prompt: '',
+  learning_goals: '',
 
 
   //Learning Goals Tab
@@ -253,6 +255,7 @@ const chapterFormSlice = createSlice({
       state.greeting = '';
       state.chat_prompt = '';
       state.tracking_prompt = '';
+      state.learning_goals = '';
 
       // Clear learning goals
       state.learningGoals = [];
@@ -294,10 +297,12 @@ const chapterFormSlice = createSlice({
         state.greeting = chapter.prompts.greeting || '';
         state.chat_prompt = chapter.prompts.chat_prompt || '';
         state.tracking_prompt = chapter.prompts.tracking_prompt || '';
+        state.learning_goals = chapter.prompts.learning_goals || '';
       } else {
         state.greeting = '';
         state.chat_prompt = '';
         state.tracking_prompt = '';
+        state.learning_goals = '';
       }
 
       // Set learning goals if they exist
