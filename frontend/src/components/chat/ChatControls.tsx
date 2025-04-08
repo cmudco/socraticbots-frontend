@@ -21,6 +21,7 @@ const ChatControls: React.FC<ChatControlsProps> = ({
 }) => {
   // Define our preset action buttons - easy to add more or modify
   const actionButtons: ActionButton[] = [
+    /** 
     {
       id: 'learning-goals',
       label: 'Learning Goals',
@@ -37,6 +38,7 @@ const ChatControls: React.FC<ChatControlsProps> = ({
       label: 'Give Example',
       message: 'Can you give me an example related to this topic?'
     }
+    */
   ];
 
   return (
