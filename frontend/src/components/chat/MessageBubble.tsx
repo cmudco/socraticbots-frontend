@@ -43,6 +43,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     }
 
     // SPLIT INTO ASSISTANT VS USER MESSAGES
+    console.log(message.content);
     if (isAssistant) {
       return (
         <div className="prose prose-sm max-w-none space-y-8">
