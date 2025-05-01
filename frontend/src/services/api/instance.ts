@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create the API instance
 export const api = axios.create({
-  baseURL: 'https://api.socraticbooks.com/api',
+  baseURL: 'https://dare-design-api.hss.cmu.edu/api',
   headers: {
     'Content-Type': 'application/json',
   },

@@ -3,7 +3,7 @@ import { User, AuthTokens } from '../types/auth';
 import { api } from './api/instance';
 
 class AuthService {
-  private readonly baseUrl = 'https://api.socraticbooks.com/api';
+  private readonly baseUrl = 'https://dare-design-api.hss.cmu.edu/api';
   
   // Bootstrap methods (still using fetch)
   // Check if a token is valid
