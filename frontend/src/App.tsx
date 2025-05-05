@@ -25,11 +25,21 @@ const App: React.FC = () => {
               {/* Public route */}
               <Route path="/login" element={<Login />} />
               
-              {/* Protected routes */}
+              {/* Chat route - accessible by all users including Honda users */}
+              <Route 
+                path="/chat" 
+                element={
+                  <ProtectedRoute allowHondaUsers={true}>
+                    <Chat />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Routes restricted for Honda users */}
               <Route 
                 path="/" 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowHondaUsers={false}>
                     <Home />
                   </ProtectedRoute>
                 } 
@@ -37,7 +47,7 @@ const App: React.FC = () => {
               <Route 
                 path="/about" 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowHondaUsers={false}>
                     <About />
                   </ProtectedRoute>
                 } 
@@ -45,7 +55,7 @@ const App: React.FC = () => {
               <Route 
                 path="/settings" 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowHondaUsers={false}>
                     <Settings />
                   </ProtectedRoute>
                 } 
@@ -53,16 +63,8 @@ const App: React.FC = () => {
               <Route 
                 path="/books" 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute allowHondaUsers={false}>
                     <Books />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/chat" 
-                element={
-                  <ProtectedRoute>
-                    <Chat />
                   </ProtectedRoute>
                 } 
               />
