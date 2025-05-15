@@ -107,7 +107,7 @@ class ChatService {
       const token = await this.getFreshToken();
       if (!token) throw new Error('No auth token available');
 
-      const response = await fetch(`https://api.socraticbooks.com/api/chat/send-message/`, {
+      const response = await fetch(`https://socratic-bots-api.hss.cmu.edu/api/chat/send-message/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
