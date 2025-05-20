@@ -26,7 +26,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     },
     {
         path: '/books',
-        label: 'ChatBot Groups',
+        label: 'Chatbot Groups',
         icon: FaBook
     },
     {
