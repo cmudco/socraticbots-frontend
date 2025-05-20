@@ -36,11 +36,11 @@ const ChatHeader: React.FC = () => {
         {!apiIsReady ? (
           <div className="text-sm text-gray-500">Connecting to API...</div>
         ) : loading ? (
-          <div className="text-sm text-gray-500">Loading chapters...</div>
+          <div className="text-sm text-gray-500">Loading bots...</div>
         ) : error ? (
           <div className="text-sm text-red-500">Error: {error}</div>
         ) : availableChapters.length === 0 ? (
-          <div className="text-sm text-gray-500">No chapters available</div>
+          <div className="text-sm text-gray-500">No bots available</div>
         ) : (
           <select
             className="w-64 pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
