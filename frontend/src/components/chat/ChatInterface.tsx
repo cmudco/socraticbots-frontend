@@ -73,13 +73,9 @@ const ChatInterface: React.FC = () => {
   // Handle keypress for sending message
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Only send on Ctrl+Enter
-    if (e.key === 'Enter' && e.ctrlKey) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleSendMessage();
-    }
-    // Prevent form submission on regular Enter
-    else if (e.key === 'Enter') {
-      e.preventDefault();
     }
   };
   
@@ -103,10 +99,10 @@ const ChatInterface: React.FC = () => {
               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" 
             />
           </svg>
-          <p className="text-xl font-medium mb-2">Please Select a Chapter</p>
+          <p className="text-xl font-medium mb-2">Please Select a Bot</p>
           <p className="text-center max-w-md">
-            Use the dropdown box along the top of the screen to select a chapter.
-            Once you select a chapter, you can begin chatting.
+            Use the dropdown box along the top of the screen to select a bot.
+            Once you select a bot, you can begin chatting.
           </p>
         </div>
       );
@@ -202,8 +198,8 @@ const ChatInterface: React.FC = () => {
                   : messageSending 
                     ? "Sending message..." 
                     : selectedChapterId 
-                      ? "Type your message... (Ctrl+Enter to send)" 
-                      : "Please select a chapter first"
+                      ? "Type your message... (Enter to send)" 
+                      : "Please select a bot first"
               }
               className="flex-grow px-4 py-2 focus:outline-none"
               disabled={!selectedChapterId || conversationLoading || messageSending || isStreaming}
