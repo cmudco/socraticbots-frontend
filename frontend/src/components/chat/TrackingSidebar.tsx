@@ -112,7 +112,7 @@ const TrackingSidebar: React.FC = () => {
   return (
     <div className="w-72 h-full overflow-y-auto border-r border-gray-200 bg-white">
       <div className="p-4">
-        <h2 className="text-lg font-semibold mb-4">Analysis (Helper Bot)</h2>
+        <h2 className="text-lg font-semibold mb-4">Analysis (Helper)</h2>
         {renderContent()}
       </div>
     </div>
