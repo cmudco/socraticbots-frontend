@@ -136,7 +136,7 @@ const PromptsTab: React.FC = () => {
       </div>
 
       <div className="mt-10">
-        <h3 className="text-lg font-medium mb-2">Chat Prompt</h3>
+        <h3 className="text-lg font-medium mb-2">Agent Prompt</h3>
         <p className="text-sm text-gray-600 mb-2">
           This prompt guides the AI in how to respond to student messages during the chapter.
         </p>
@@ -148,26 +148,26 @@ const PromptsTab: React.FC = () => {
       </div>
 
       <div className="mt-10">
-        <h3 className="text-lg font-medium mb-2">Tracking Prompt</h3>
+        <h3 className="text-lg font-medium mb-2">Helper Prompt</h3>
         <p className="text-sm text-gray-600 mb-2">
-          This prompt guides the AI in tracking student progress and understanding.
+          This prompt monitors the conversation and keeps track of chat progress and tracking Items.
         </p>
         <TiptapEditor 
           value={tracking_prompt} 
           onChange={handleTrackingPromptChange} 
-          placeholder="Enter instructions for the AI on how to track student progress..."
+          placeholder="Enter instructions for the AI helper."
         />
       </div>
 
       <div className="mt-10">
-        <h3 className="text-lg font-medium mb-2">Learning Goals</h3>
+        <h3 className="text-lg font-medium mb-2">Tracking Items</h3>
         <p className="text-sm text-gray-600 mb-2">
-          Define the learning goals for this chapter.  The more structure you are able to provide the better the AI will be able to help students achieve their goals.
+          Define what you are tracking in the conversation.  The more structure you are able to provide the better the AI will be able to help students achieve their goals.
         </p>
         <TiptapEditor 
           value={learning_goals} 
           onChange={handleLearningGoalsChange} 
-          placeholder="Enter the learning goals for this chapter, e.g., 'Understand photosynthesis, Describe the carbon cycle...'"
+          placeholder="Enter the tracking items for this chapter, e.g., 'Understand photosynthesis, Describe the carbon cycle...'"
         />
       </div>
 

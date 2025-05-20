@@ -106,19 +106,19 @@ const ChapterList: React.FC<ChapterListProps> = ({
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-md">Chapters</h3>
+        <h3 className="font-semibold text-md">Bots</h3>
         <button
           onClick={handleOpenCreateModal}
           className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
         >
-          Add Chapter
+          Add Bot
         </button>
       </div>
 
       {loading ? (
-        <p className="text-gray-500 text-center py-4">Loading chapters...</p>
+        <p className="text-gray-500 text-center py-4">Loading bots...</p>
       ) : visibleChapters.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">No chapters yet. Add your first chapter!</p>
+        <p className="text-gray-500 text-center py-4">No bots yet. Add your first bot!</p>
       ) : (
         <div className="space-y-2">
           {visibleChapters.map((chapter: Chapter) => (

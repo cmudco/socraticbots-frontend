@@ -135,7 +135,7 @@ useEffect(() => {
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold mb-4">
-          {isEdit ? 'Edit Chapter' : 'Create New Chapter'}
+          {isEdit ? 'Edit Bot' : 'Create New Bot'}
         </h2>
         
         {/* Tab Navigation */}

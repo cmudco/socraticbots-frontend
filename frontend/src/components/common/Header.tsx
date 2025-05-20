@@ -16,7 +16,10 @@ const Header: React.FC = () => {
             alt="Socratic Books Logo" 
             className="h-8 w-8 object-contain" // Adjust size as needed
           />
-          <Link to="/" className="text-xl font-bold text-gray-600">Socratic Bots</Link>
+          <div className="flex flex-col">
+        <Link to="/" className="text-xl font-bold text-gray-600 leading-tight">Socratic Bots</Link>
+        <span className="text-s text-gray-500 -mt-1">Agent + Helper Framework</span>
+      </div>
         </div>
         
         <nav>

@@ -47,7 +47,7 @@ const ChatHeader: React.FC = () => {
             value={selectedChapterId || ''}
             onChange={handleChapterChange}
           >
-            <option value="" disabled>Select a chapter</option>
+            <option value="" disabled>Select a bot</option>
             {availableChapters.map((chapter) => (
               <option key={chapter.id} value={chapter.id}>
                 {chapter.title}

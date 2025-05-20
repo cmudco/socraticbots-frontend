@@ -83,7 +83,7 @@ const BasicInfoTab: React.FC = () => {
       {/* Model Dropdowns */}
       <div className="mb-4">
         <label className="block text-gray-700 mb-1" htmlFor="chat_model_id">
-          Chat Model
+          Agent Model
         </label>
         {modelsLoading ? (
           <div className="text-gray-500">Loading models...</div>
@@ -107,7 +107,7 @@ const BasicInfoTab: React.FC = () => {
       
       <div className="mb-4">
         <label className="block text-gray-700 mb-1" htmlFor="tracking_model_id">
-          Progress Tracking Model
+          Helper Model
         </label>
         {modelsLoading ? (
           <div className="text-gray-500">Loading models...</div>
