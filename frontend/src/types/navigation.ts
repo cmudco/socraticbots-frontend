@@ -15,11 +15,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
         icon: FaHome
     },
     {
-        path: '/about',
-        label: 'About',
-        icon: FaInfoCircle
-    },
-    {
         path: '/settings',
         label: 'Settings',
         icon: FaCog

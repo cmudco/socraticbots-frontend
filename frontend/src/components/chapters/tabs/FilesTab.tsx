@@ -18,7 +18,8 @@ const FilesTab: React.FC = () => {
     uploadProgress,
     processingFiles,
     fileErrors,
-    originalChapter
+    originalChapter,
+    isEdit
   } = useAppSelector(state => state.chapterForm);
 
   // Add refresh interval for processing files
@@ -69,7 +70,8 @@ const FilesTab: React.FC = () => {
       'application/pdf': ['.pdf'],
       'application/msword': ['.doc'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
-    }
+    },
+    disabled: !isEdit
   });
 
   // Handle file deletion
@@ -118,7 +120,12 @@ const FilesTab: React.FC = () => {
             />
           </svg>
           <div className="text-gray-600">
-            {isDragActive ? (
+            {!isEdit ? (
+              <div>
+              <p className="font-medium text-amber-600">You must create the chapter before uploading files!</p>
+              <p>After creating the chapter you can edit it to add file context.</p>
+              </div>
+            ) : isDragActive ? (
               <p>Drop the files here ...</p>
             ) : (
               <p>Drag & drop files here, or click to select files</p>
