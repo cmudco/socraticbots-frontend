@@ -135,7 +135,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
         className="bg-white p-6 rounded-lg w-full max-w-md"
       >
         <h2 className="text-xl font-bold mb-4">
-          {isEditMode ? 'Edit Book' : 'Create New Book'}
+          {isEditMode ? 'Edit Book' : 'Create New Group'}
         </h2>
         
         {error && (
@@ -187,7 +187,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300"
               disabled={isSubmitting}
             >
-              {isSubmitting ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Book')}
+              {isSubmitting ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Group')}
             </button>
           </div>
         </form>

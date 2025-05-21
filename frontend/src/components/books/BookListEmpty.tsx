@@ -14,7 +14,7 @@ const BookListEmpty: React.FC<BookListEmptyProps> = ({ onCreateClick }) => {
         onClick={onCreateClick}
         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
       >
-        Create Your First Bot
+        Create Your First Chatbot Group
       </button>
     </div>
   );

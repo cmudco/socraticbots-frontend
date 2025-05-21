@@ -55,6 +55,11 @@ const Home: React.FC = () => {
             <h3 className="text-xl font-semibold mb-3">Cross Platform</h3>
             <p className="text-gray-700">Flexibility to use different AI models including OpenAI and Anthropic's Claude, allowing you to choose the best foundation model for your specific use case.</p>
           </div>
+
+          <div className="bg-gray-50 p-6 rounded-lg shadow">
+            <h3 className="text-xl font-semibold mb-3">Multi-Session Learning</h3>
+            <p className="text-gray-700">Bots remember previous conversations, allowing for continuous learning experiences across multiple sessions and building on previously covered material.</p>
+          </div>
         </div>
       </div>
 
