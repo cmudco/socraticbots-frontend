@@ -1,15 +1,16 @@
 // src/components/chapters/ChapterFormModal.tsx
 import React, { useRef, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { 
-  setActiveTab, 
-  closeForm, 
-  initNewChapter, 
+import {
+  setActiveTab,
+  closeForm,
+  initNewChapter,
   initEditChapter,
   setSubmitting
 } from '../../store/slices/chapterFormSlice';
 import { createChapter, updateChapter } from '../../store/thunks/chapterThunks';
 import { Chapter } from '../../services/chapters.service';
+import { useCustomForm, bookSchemas } from '../../lib/forms';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import PromptsTab from './tabs/PromptsTab';
 //import LearningGoalsTab from './tabs/LearningGoalsTab';
@@ -30,17 +31,58 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   bookId
 }) => {
   const dispatch = useAppDispatch();
-  const { 
-    activeTab, 
+  const {
+    activeTab,
     isEdit,
     isSubmitting,
     title,
     subject,
-    topic
+    topic,
+    greeting,
+    chat_prompt,
+    tracking_prompt,
+    learning_goals,
+    chat_model_id,
+    tracking_model_id
   } = useAppSelector(state => state.chapterForm);
-  
+
   // Create a ref for the modal content
   const modalContentRef = useRef<HTMLDivElement>(null);
+
+  // Formik form for validation
+  const formik = useCustomForm(
+    {
+      title: title || '',
+      subject: subject || '',
+      topic: topic || '',
+      greeting: greeting || '',
+      chat_prompt: chat_prompt || '',
+      tracking_prompt: tracking_prompt || '',
+      learning_goals: learning_goals || '',
+      chat_model_id: chat_model_id || '',
+      tracking_model_id: tracking_model_id || '',
+    },
+    bookSchemas.createChapter,
+    async (_values) => {
+      // Handle form submission - values are managed by Redux
+      await handleSubmit();
+    }
+  );
+
+  // Update formik values when Redux state changes (without triggering validation)
+  useEffect(() => {
+    formik.setValues({
+      title: title || '',
+      subject: subject || '',
+      topic: topic || '',
+      greeting: greeting || '',
+      chat_prompt: chat_prompt || '',
+      tracking_prompt: tracking_prompt || '',
+      learning_goals: learning_goals || '',
+      chat_model_id: chat_model_id || '',
+      tracking_model_id: tracking_model_id || '',
+    }, false); // false prevents validation from running
+  }, [title, subject, topic, greeting, chat_prompt, tracking_prompt, learning_goals, chat_model_id, tracking_model_id]);
 
   // Initialize form when modal opens/closes or chapter changes
   useEffect(() => {
@@ -50,13 +92,19 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
       } else {
         dispatch(initNewChapter());
       }
+      // Reset formik touched state when modal opens
+      formik.resetForm({
+        values: formik.values,
+        touched: {},
+        errors: {}
+      });
     }
   }, [chapter, isOpen, dispatch]);
-  
+
   const handleOutsideClick = (e: MouseEvent) => {
   if (
-    modalContentRef.current && 
-    !modalContentRef.current.contains(e.target as Node) && 
+    modalContentRef.current &&
+    !modalContentRef.current.contains(e.target as Node) &&
     !isSubmitting
   ) {
     onClose();
@@ -71,7 +119,7 @@ useEffect(() => {
   } else {
     document.removeEventListener('mousedown', handleOutsideClick);
   }
-  
+
   // Clean up event listener
   return () => {
     document.removeEventListener('mousedown', handleOutsideClick);
@@ -82,19 +130,19 @@ useEffect(() => {
   const handleSubmit = async () => {
     // Set submitting state to true
     dispatch(setSubmitting(true));
-    
+
     try {
       if (isEdit && chapter) {
         // If editing, dispatch update thunk
-        await dispatch(updateChapter({ 
-          bookId, 
-          chapterId: chapter.id 
+        await dispatch(updateChapter({
+          bookId,
+          chapterId: chapter.id
         })).unwrap(); // unwrap to get the result or throw error
       } else {
         // If creating, dispatch create thunk
         await dispatch(createChapter({ bookId })).unwrap();
       }
-      
+
       // Close the modal after successful submission
       onClose();
       dispatch(closeForm());
@@ -106,16 +154,16 @@ useEffect(() => {
     }
   };
 
-  // Form validation
+  // Form validation using Formik
   const isFormValid = () => {
-    return title.trim() !== '' && subject.trim() !== '' && topic.trim() !== '';
+    return formik.isValid && formik.dirty;
   };
 
   // Handle Ctrl+Enter for form submission
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'Enter' && isFormValid() && !isSubmitting) {
-        handleSubmit();
+        formik.handleSubmit();
       }
     };
 
@@ -123,13 +171,13 @@ useEffect(() => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isFormValid, isSubmitting, handleSubmit]);
+  }, [isFormValid, isSubmitting, formik]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div 
+      <div
         ref={modalContentRef}
         className="bg-white rounded-lg p-6 w-full max-w-4xl h-[650px] flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -137,7 +185,7 @@ useEffect(() => {
         <h2 className="text-xl font-bold mb-4">
           {isEdit ? 'Edit Chapter' : 'Create New Chapter'}
         </h2>
-        
+
         {/* Tab Navigation */}
         <div className="border-b mb-6">
           <nav className="flex -mb-px">
@@ -152,7 +200,7 @@ useEffect(() => {
             >
               Basic Info
             </button>
-            
+
             <button
               type="button"
               className={`mr-4 py-2 px-4 ${
@@ -165,7 +213,7 @@ useEffect(() => {
               Prompts
             </button>
 
-            {/* 
+            {/*
             <button
               type="button"
               className={`mr-4 py-2 px-4 relative ${
@@ -190,10 +238,10 @@ useEffect(() => {
                   </span>
                 </>
               )}
-              
+
             </button>
             */}
-            
+
             <button
               type="button"
               className={`mr-4 py-2 px-4 ${
@@ -205,7 +253,7 @@ useEffect(() => {
             >
               Files
             </button>
-            
+
             <button
               type="button"
               className={`mr-4 py-2 px-4 ${
@@ -219,23 +267,23 @@ useEffect(() => {
             </button>
           </nav>
         </div>
-        
+
         {/* Tab Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto">
-            {activeTab === 'basic' && <BasicInfoTab />}
-            
+            {activeTab === 'basic' && <BasicInfoTab formik={formik} />}
+
             {activeTab === 'prompts' && <PromptsTab />}
-            
+
             {/*
             {activeTab === 'goals' && <LearningGoalsTab />}
             */}
-            
+
             {activeTab === 'files' && <FilesTab />}
-            
+
             {activeTab === 'deployment' && <DeploymentTab />}
           </div>
-          
+
           {/* Fixed Footer with Save Button */}
           <div className="border-t mt-6 pt-4 flex justify-end space-x-2">
             <button
@@ -249,25 +297,25 @@ useEffect(() => {
             >
               Cancel
             </button>
-            
+
             <button
               type="button"
               className={`px-3 py-1.5 text-sm rounded ${
-                isFormValid() 
-                  ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                isFormValid()
+                  ? 'bg-blue-500 text-white hover:bg-blue-600'
                   : 'bg-blue-300 text-white cursor-not-allowed'
               }`}
-              onClick={handleSubmit}
+              onClick={() => formik.handleSubmit()}
               disabled={isSubmitting || !isFormValid()}
             >
-              {isSubmitting ? 
+              {isSubmitting ?
                 <span className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   Saving...
-                </span> : 
+                </span> :
                 (isEdit ? 'Save Changes' : 'Create Chapter')
               }
             </button>
