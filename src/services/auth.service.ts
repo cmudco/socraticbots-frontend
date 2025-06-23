@@ -1,9 +1,10 @@
 // src/services/auth.service.ts
 import { User, AuthTokens } from '../types/auth';
 import { api } from './api/instance';
+import config from '../lib/config';
 
 class AuthService {
-  private readonly baseUrl = 'https://api.socraticbooks.com/api';
+  private readonly baseUrl = config.apiUrl;
   
   // Bootstrap methods (still using fetch)
   // Check if a token is valid
