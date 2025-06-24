@@ -1,4 +1,3 @@
-// src/components/chat/ChatInterface.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { fetchConversationForChapter, sendStreamingMessage, clearConversation } from '../../store/thunks/chatThunks';
@@ -8,7 +7,7 @@ import MessageList from './MessageList';
 
 const ChatInterface: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { 
+  const {
     selectedChapterId,
     conversation,
     conversationLoading,
@@ -20,11 +19,11 @@ const ChatInterface: React.FC = () => {
     pendingAssistantMessage,
     trackingResult,
   } = useAppSelector(state => state.chat);
-  
+
   const [message, setMessage] = useState('');
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messageAreaRef = useRef<HTMLDivElement>(null);
-  
+
   // Fetch conversation when chapter is selected
   useEffect(() => {
     if (selectedChapterId) {
@@ -35,17 +34,17 @@ const ChatInterface: React.FC = () => {
       }
     }
   }, [selectedChapterId, dispatch]);
-  
+
   // Handle sending a message
   const handleSendMessage = () => {
     if (!message.trim() || !selectedChapterId || !conversation) return;
-    
+
     // Store the message text before clearing the input
     const messageToSend = message.trim();
-    
+
     // Clear input immediately for better UX
     setMessage('');
-    
+
     // Use the thunk instead of calling the service directly
     dispatch(sendStreamingMessage({
       conversationId: conversation.id,
@@ -60,47 +59,43 @@ const ChatInterface: React.FC = () => {
       messageInputRef.current.focus();
     }
   };
-  
+
   // Handle clear conversation - placeholder for now
   const handleClearConversation = () => {
     if (!conversation) return;
-  
+
     if (window.confirm('Are you sure you want to clear this conversation? This action cannot be undone.')) {
       dispatch(clearConversation(conversation.id)); // Dispatch the thunk
     }
   };
-  
+
   // Handle keypress for sending message
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Only send on Ctrl+Enter
-    if (e.key === 'Enter' && e.ctrlKey) {
+    // Send on Enter
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleSendMessage();
     }
-    // Prevent form submission on regular Enter
-    else if (e.key === 'Enter') {
-      e.preventDefault();
-    }
   };
-  
+
   // Render the appropriate content based on state
   const renderContent = () => {
     if (!selectedChapterId) {
       // No chapter selected
       return (
         <div className="flex flex-col items-center justify-center h-64 text-gray-400 mt-8">
-          <svg 
-            className="w-16 h-16 mb-4" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24" 
+          <svg
+            className="w-16 h-16 mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={1.5} 
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" 
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
             />
           </svg>
           <p className="text-xl font-medium mb-2">Please Select a Chapter</p>
@@ -111,7 +106,7 @@ const ChatInterface: React.FC = () => {
         </div>
       );
     }
-    
+
     if (conversationLoading) {
       // Loading conversation
       return (
@@ -120,7 +115,7 @@ const ChatInterface: React.FC = () => {
         </div>
       );
     }
-    
+
     if (conversationError) {
       // Error loading conversation
       return (
@@ -129,18 +124,18 @@ const ChatInterface: React.FC = () => {
         </div>
       );
     }
-    
+
     if (conversation) {
       return (
-        <MessageList 
-          messages={conversation.messages || []} 
+        <MessageList
+          messages={conversation.messages || []}
           greeting={conversation.chapter_details?.greeting}
           isStreaming={isStreaming}                    // Add this
           pendingAssistantMessage={pendingAssistantMessage}  // Add this
         />
       );
     }
-    
+
     // Fallback
     return null;
   };
@@ -157,7 +152,7 @@ const ChatInterface: React.FC = () => {
       scrollToBottom();
     }
   }, [isStreaming, pendingAssistantMessage?.content, conversation, trackingResult]);
-  
+
   // Add new effect for chapter selection
   useEffect(() => {
     if (selectedChapterId && conversation) {
@@ -177,43 +172,43 @@ const ChatInterface: React.FC = () => {
           </div>
         )}
       </div>
-      
+
       {/* Input Area with new buttons */}
       <div className="border-t border-gray-200 py-3 px-4 bg-white">
         <div className="max-w-3xl mx-auto">
           {/* New ChatControls component */}
-          <ChatControls 
+          <ChatControls
             onActionClick={handleActionClick}
             onClearConversation={handleClearConversation}
             disabled={!selectedChapterId || conversationLoading || messageSending || isStreaming}
           />
-          
+
           {/* Existing chat input form */}
           <form onSubmit={(e) => { e.preventDefault(); }} className="flex items-center border rounded-md">
-            <input 
+            <input
               ref={messageInputRef}
-              type="text" 
+              type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={
-                isStreaming 
-                  ? "Assistant is responding..." 
-                  : messageSending 
-                    ? "Sending message..." 
-                    : selectedChapterId 
-                      ? "Type your message... (Ctrl+Enter to send)" 
+                isStreaming
+                  ? "Assistant is responding..."
+                  : messageSending
+                    ? "Sending message..."
+                    : selectedChapterId
+                      ? "Type your message..."
                       : "Please select a chapter first"
               }
               className="flex-grow px-4 py-2 focus:outline-none"
               disabled={!selectedChapterId || conversationLoading || messageSending || isStreaming}
             />
-            <button 
+            <button
               type="button"
               onClick={handleSendMessage}
               className={`px-4 py-2 ${
                 message.trim() && selectedChapterId && !messageSending && !isStreaming
-                  ? 'text-purple-600 hover:text-purple-700' 
+                  ? 'text-purple-600 hover:text-purple-700'
                   : 'text-gray-400'
               }`}
               disabled={!message.trim() || !selectedChapterId || conversationLoading || messageSending || isStreaming}
@@ -236,7 +231,7 @@ const ChatInterface: React.FC = () => {
       </div>
     </div>
   );
-  
+
 };
 
 export default ChatInterface;
