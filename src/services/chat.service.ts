@@ -2,6 +2,7 @@
 import { api } from './api/instance';
 import { authService } from './auth.service';
 import { AuthTokens } from '../types/auth';
+import config from '../lib/config';
 
 export interface Chapter {
   id: string;
@@ -107,7 +108,7 @@ class ChatService {
       const token = await this.getFreshToken();
       if (!token) throw new Error('No auth token available');
 
-      const response = await fetch(`https://api.socraticbooks.com/api/chat/send-message/`, {
+      const response = await fetch(`${config.apiUrl}/chat/send-message/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
