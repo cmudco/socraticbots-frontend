@@ -9,3 +9,6 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Note: Interceptors will be set up in the ApiProvider component
+// to access the current auth state and trigger mutations
