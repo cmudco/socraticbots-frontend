@@ -1,161 +1,154 @@
 // src/components/chapters/tabs/FilesTab.tsx
-import React, { useCallback, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import { 
-  uploadChapterFile, 
-  uploadMultipleFiles,
-  deleteChapterFile,
-  fetchChapterFiles
-} from '../../../store/thunks/fileThunks';
-import { ChapterFile } from '../../../services/files.service';
-import FileListItem from './FileListItem';
+import React, { useEffect } from 'react';
+import { useChapterFormStore } from '../../../stores/chapterFormStore';
+import { useChapterFiles } from '../../../hooks/queries/useFiles';
+import { useFileUpload } from '../../../hooks/useFileUpload';
+import { FileProcessingStatus } from '../../../types/file';
+import FileUploadArea from '../../files/FileUploadArea';
+import FileStatusSummary from '../../files/FileStatusSummary';
+import FileItem from '../../files/FileItem';
+import UploadingFileItem from '../../files/UploadingFileItem';
+import ConfirmationModal from '../../ui/confirmation-modal';
 
 const FilesTab: React.FC = () => {
-  const dispatch = useAppDispatch();
+  const { originalChapter } = useChapterFormStore();
+  const chapterId = originalChapter?.id;
+
   const {
-    files,
-    uploadProgress,
-    processingFiles,
-    fileErrors,
-    originalChapter
-  } = useAppSelector(state => state.chapterForm);
+    data: files = [],
+    isLoading,
+    error,
+    refetch
+  } = useChapterFiles(chapterId || '', undefined, !!chapterId);
 
-  // Add refresh interval for processing files
+  const {
+    uploadingFiles,
+    deleteModal,
+    handleFilesSelected,
+    handleDelete,
+    confirmDelete,
+    cancelDelete,
+    isUploading,
+    isDeleting
+  } = useFileUpload(chapterId || '');
+
+  // Auto-refresh to check for processing status updates
   useEffect(() => {
-    if (!originalChapter?.id || processingFiles.length === 0) return;
+    const processingFiles = files.filter(f =>
+      f.processing_status === FileProcessingStatus.PROCESSING ||
+      f.processing_status === FileProcessingStatus.PENDING
+    );
 
-    // Refresh file list every 3 seconds while files are processing
-    const intervalId = setInterval(() => {
-      dispatch(fetchChapterFiles({ chapterPublicId: originalChapter.id }));
-    }, 3000);
-
-    return () => clearInterval(intervalId);
-  }, [dispatch, originalChapter?.id, processingFiles.length]);
-
-  // Initial file fetch
-  useEffect(() => {
-    if (originalChapter?.id) {
-      dispatch(fetchChapterFiles({ chapterPublicId: originalChapter.id }));
+    if (processingFiles.length > 0) {
+      const interval = setInterval(() => {
+        refetch();
+      }, 3000);
+      return () => clearInterval(interval);
     }
-  }, [dispatch, originalChapter?.id]);
+  }, [files, refetch]);
 
-  // File drop handler
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    if (!originalChapter?.id) return;
-    
-    try {
-      if (acceptedFiles.length === 1) {
-        await dispatch(uploadChapterFile({
-          chapterPublicId: originalChapter.id,
-          file: acceptedFiles[0]
-        })).unwrap();
-      } else {
-        await dispatch(uploadMultipleFiles({
-          chapterPublicId: originalChapter.id,
-          files: acceptedFiles
-        })).unwrap();
-      }
-    } catch (error) {
-      console.error('Upload failed:', error);
-    }
-  }, [dispatch, originalChapter]);
-
-  // Setup dropzone
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'text/plain': ['.txt'],
-      'application/pdf': ['.pdf'],
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
-    }
-  });
-
-  // Handle file deletion
-  const handleDelete = async (file: ChapterFile) => {
-    if (!originalChapter?.id) {
-      alert("Can't delete file: chapter information missing");
-      return;
-    }
-    
-    if (window.confirm(`Are you sure you want to delete ${file.name}?`)) {
-      try {
-        await dispatch(deleteChapterFile({ 
-          chapterPublicId: originalChapter.id, 
-          fileId: file.id 
-        })).unwrap();
-        
-        dispatch(fetchChapterFiles({ chapterPublicId: originalChapter.id }));
-      } catch (error) {
-        console.error('Delete failed:', error);
-      }
-    }
-  };
-
-  return (
-    <div className="p-4">
-      {/* Upload Area */}
-      <div
-        {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-          ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}
-      >
-        <input {...getInputProps()} />
-        <div className="space-y-2">
-          <svg 
-            className="mx-auto h-12 w-12 text-gray-400" 
-            stroke="currentColor" 
-            fill="none" 
-            viewBox="0 0 48 48" 
-            aria-hidden="true"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M8 14v20c0 4.418 3.582 8 8 8h16c4.418 0 8-3.582 8-8V14M8 14c0-4.418 3.582-8 8-8h16c4.418 0 8 3.582 8 8m-9 8v12m-6-12v12"
-            />
+  // Show message if no chapter ID (chapter not saved yet)
+  if (!chapterId) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <div className="text-gray-600">
-            {isDragActive ? (
-              <p>Drop the files here ...</p>
-            ) : (
-              <p>Drag & drop files here, or click to select files</p>
-            )}
-          </div>
-          <p className="text-sm text-gray-500">
-            Supports: PDF, DOC, DOCX, TXT
+          <h3 className="mt-2 text-lg font-medium text-gray-900">File Upload</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            File upload will be available after the chapter is created and saved.
           </p>
         </div>
       </div>
+    );
+  }
 
-      {/* File List */}
-      <div className="mt-6 space-y-4">
-        {files.length === 0 ? (
-          <div className="text-center text-gray-500 py-4">
-            No files uploaded yet
-          </div>
-        ) : (
-          files.map(file => (
-            <FileListItem
-              key={file.id}
-              file={file}
-              progress={uploadProgress[file.id]}
-              isProcessing={processingFiles.includes(file.id)}
-              error={fileErrors[file.id]}
-              onDelete={() => handleDelete(file)}
-            />
-          ))
-        )}
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <svg className="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Error loading files</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            There was an error loading the files. Please try again.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">Files</h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Upload and manage files for this chapter
+        </p>
+        <FileStatusSummary files={files} uploadingFiles={uploadingFiles} />
       </div>
 
-      {/* Optional: Add a processing files indicator */}
-      {processingFiles.length > 0 && (
-        <div className="mt-4 text-sm text-yellow-600">
-          Processing {processingFiles.length} file(s)...
+      {/* Upload Area */}
+      <FileUploadArea onFilesSelected={handleFilesSelected} disabled={isUploading} />
+
+      {/* Uploading Files */}
+      {uploadingFiles.length > 0 && (
+        <div>
+          <h4 className="font-medium text-gray-900 mb-2">Uploading Files</h4>
+          <div className="space-y-2">
+            {uploadingFiles.map((file) => (
+              <UploadingFileItem key={file.id} file={file} />
+            ))}
+          </div>
         </div>
       )}
+
+      {/* Files List */}
+      {isLoading ? (
+        <div className="flex justify-center items-center py-6">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        </div>
+      ) : files.length > 0 ? (
+        <div>
+          <h4 className="font-medium text-gray-900 mb-2">Uploaded Files</h4>
+          <div className="space-y-2">
+            {files.map((file) => (
+              <FileItem
+                key={file.id}
+                file={file}
+                onDelete={handleDelete}
+                isDeleting={isDeleting}
+              />
+            ))}
+          </div>
+        </div>
+      ) : uploadingFiles.length === 0 && (
+        <div className="text-center py-6">
+          <p className="text-gray-500">No files uploaded yet</p>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Delete File"
+        message={`Are you sure you want to delete "${deleteModal.fileName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

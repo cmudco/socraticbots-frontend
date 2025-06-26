@@ -1,6 +1,6 @@
 // src/components/chapters/tabs/FileListItem.tsx
 import React from 'react';
-import { ChapterFile } from '../../../services/files.service';
+import { ChapterFile } from '../../../types/file';
 
 interface FileListItemProps {
   file: ChapterFile;
@@ -42,33 +42,33 @@ const FileListItem: React.FC<FileListItemProps> = ({
     }
   };
 
-// Get status color
-const getStatusColor = () => {
-  if (error) {
-    // Check if it's the large file processing message
-    if (error.includes('Large file is still processing')) {
-      return 'text-yellow-500';  // Keep it yellow like processing
+  // Get status color
+  const getStatusColor = () => {
+    if (error) {
+      // Check if it's the large file processing message
+      if (error.includes('Large file is still processing')) {
+        return 'text-yellow-500';  // Keep it yellow like processing
+      }
+      return 'text-red-500';
     }
-    return 'text-red-500';
-  }
-  if (isProcessing) return 'text-yellow-500';
-  if (file.processing_status === 'completed') return 'text-green-500';
-  return 'text-gray-500';
-};
+    if (isProcessing) return 'text-yellow-500';
+    if (file.processing_status === 'completed') return 'text-green-500';
+    return 'text-gray-500';
+  };
 
-// Get status text
-const getStatusText = () => {
-  if (error) {
-    // Check if it's the large file processing message
-    if (error.includes('Large file is still processing')) {
-      return 'Processing';  // Still show as "Processing"
+  // Get status text
+  const getStatusText = () => {
+    if (error) {
+      // Check if it's the large file processing message
+      if (error.includes('Large file is still processing')) {
+        return 'Processing';  // Still show as "Processing"
+      }
+      return 'Error';
     }
-    return 'Error';
-  }
-  if (progress !== undefined) return 'Uploading';
-  if (isProcessing || file.processing_status === 'processing' || file.processing_status === 'pending') return 'Processing';
-  return file.processing_status === 'completed' ? 'Ready' : 'Failed';
-};
+    if (progress !== undefined) return 'Uploading';
+    if (isProcessing || file.processing_status === 'processing' || file.processing_status === 'pending') return 'Processing';
+    return file.processing_status === 'completed' ? 'Ready' : 'Failed';
+  };
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -95,7 +95,7 @@ const getStatusText = () => {
           {/* Progress Bar */}
           {progress !== undefined && (
             <div className="w-24 bg-gray-200 rounded-full h-2">
-              <div 
+              <div
                 className="bg-blue-500 rounded-full h-2 transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
@@ -120,11 +120,10 @@ const getStatusText = () => {
 
       {/* Error Message */}
       {error && (
-        <div className={`mt-2 text-sm ${
-          error.includes('Large file is still processing') 
-            ? 'text-yellow-500' 
-            : 'text-red-500'
-        }`}>
+        <div className={`mt-2 text-sm ${error.includes('Large file is still processing')
+          ? 'text-yellow-500'
+          : 'text-red-500'
+          }`}>
           {error}
         </div>
       )}

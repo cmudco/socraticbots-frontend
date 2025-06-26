@@ -1,7 +1,7 @@
 // src/components/books/DeleteBookModal.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { bookService } from '../../services/books.service';
 import { Book } from '../../types/book';
+import { useDeleteBook } from '../../hooks/queries/useBooks';
 
 interface DeleteBookModalProps {
   isOpen: boolean;
@@ -11,23 +11,28 @@ interface DeleteBookModalProps {
 }
 
 const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSuccess, book }) => {
-  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
+  // TanStack Query mutation
+  const deleteBookMutation = useDeleteBook();
+
   // Create ref for modal content
   const modalContentRef = useRef<HTMLDivElement>(null);
-  
+
+  // Loading state from mutation
+  const isDeleting = deleteBookMutation.isPending;
+
   // Handle clicks outside the modal
   const handleOutsideClick = (e: MouseEvent) => {
     if (
-      modalContentRef.current && 
-      !modalContentRef.current.contains(e.target as Node) && 
+      modalContentRef.current &&
+      !modalContentRef.current.contains(e.target as Node) &&
       !isDeleting
     ) {
       onClose();
     }
   };
-  
+
   // Add event listener when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -35,51 +40,46 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
     } else {
       document.removeEventListener('mousedown', handleOutsideClick);
     }
-    
+
     // Clean up event listener on unmount
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
     };
-  }, [isOpen, isDeleting]);
-  
-  const handleDelete = async () => {
+  }, [isOpen, isDeleting]); const handleDelete = async () => {
     try {
-      setIsDeleting(true);
       setError(null);
-      
-      await bookService.deleteBook(book.id);
-      
+
+      await deleteBookMutation.mutateAsync(book.id);
+
       onClose();
       onSuccess();
     } catch (err) {
       setError('Failed to delete book. Please try again.');
       console.error('Error deleting book:', err);
-    } finally {
-      setIsDeleting(false);
     }
   };
-  
+
   if (!isOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div 
+      <div
         ref={modalContentRef}
         className="bg-white p-6 rounded-lg w-full max-w-md"
       >
         <h2 className="text-xl font-bold mb-4">Delete Book</h2>
-        
+
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
             {error}
           </div>
         )}
-        
+
         <p className="mb-4">
-          Are you sure you want to delete "<span className="font-semibold">{book.title}</span>"? 
+          Are you sure you want to delete "<span className="font-semibold">{book.title}</span>"?
           This action cannot be undone.
         </p>
-        
+
         <div className="flex justify-end gap-2">
           <button
             type="button"

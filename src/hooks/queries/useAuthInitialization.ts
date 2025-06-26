@@ -22,16 +22,19 @@ export const useAuthInitialization = () => {
     const initializeAuth = async () => {
       try {
         setLoading(true);
+        console.log('Auth initialization starting...');
 
         const storedTokens = localStorage.getItem('auth_tokens');
 
         if (!storedTokens) {
           // No tokens stored, user is not authenticated
+          console.log('No stored tokens found');
           clearAuth();
           return;
         }
 
         const tokens: AuthTokens = JSON.parse(storedTokens);
+        console.log('Found stored tokens, validating...');
 
         // First, validate the access token
         const isValid = await validateTokenSync(tokens.access);
@@ -39,6 +42,7 @@ export const useAuthInitialization = () => {
         if (isValid) {
           // Token is valid, fetch user profile
           try {
+            console.log('Token is valid, fetching user profile...');
             const userData = await fetchUserProfileSync(tokens.access);
 
             setAuth({
@@ -47,6 +51,7 @@ export const useAuthInitialization = () => {
               isAuthenticated: true,
               isLoading: false,
             });
+            console.log('Auth initialization completed successfully');
           } catch (error) {
             console.error('Failed to fetch user profile:', error);
             clearAuth();
@@ -70,6 +75,7 @@ export const useAuthInitialization = () => {
                 isAuthenticated: true,
                 isLoading: false,
               });
+              console.log('Token refresh and auth initialization completed successfully');
             } catch (error) {
               console.error('Token refresh failed during initialization:', error);
               clearAuth();

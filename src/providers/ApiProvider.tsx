@@ -24,6 +24,9 @@ export const ApiProvider: React.FC<ApiProviderProps> = ({ children }) => {
 
                 if (currentTokens?.access && config.headers) {
                     config.headers.Authorization = `Bearer ${currentTokens.access}`;
+                    console.log('Adding auth header to request:', config.url);
+                } else {
+                    console.log('No auth token available for request:', config.url);
                 }
                 return config;
             },

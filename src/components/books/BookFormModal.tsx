@@ -1,27 +1,33 @@
 // src/components/books/BookFormModal.tsx
-import React, { useState, useEffect, useRef } from 'react';
-import { bookService } from '../../services/books.service';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Book } from '../../types/book';
+import { useCreateBook, useUpdateBook } from '../../hooks/queries/useBooks';
 
 interface BookFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onBookCreated: () => void;  
-  book?: Book; 
+  onBookCreated: () => void;
+  book?: Book;
 }
 
 const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCreated, book }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
+  // TanStack Query mutations
+  const createBookMutation = useCreateBook();
+  const updateBookMutation = useUpdateBook();
+
   // Create a ref for the modal content
   const modalContentRef = useRef<HTMLDivElement>(null);
-  
+
   // Determine if we're in edit mode
   const isEditMode = !!book;
-  
+
+  // Loading state from mutations
+  const isSubmitting = createBookMutation.isPending || updateBookMutation.isPending;
+
   // Set form values when book changes (for edit mode)
   useEffect(() => {
     if (book) {
@@ -33,18 +39,18 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
       setDescription('');
     }
   }, [book]);
-  
+
   // Handle clicks outside of the modal content
-  const handleOutsideClick = (e: MouseEvent) => {
+  const handleOutsideClick = useCallback((e: MouseEvent) => {
     if (
-      modalContentRef.current && 
-      !modalContentRef.current.contains(e.target as Node) && 
+      modalContentRef.current &&
+      !modalContentRef.current.contains(e.target as Node) &&
       !isSubmitting
     ) {
       onClose();
     }
-  };
-  
+  }, [isSubmitting, onClose]);
+
   // Add event listener when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -52,53 +58,53 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
     } else {
       document.removeEventListener('mousedown', handleOutsideClick);
     }
-    
+
     // Clean up event listener
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
     };
-  }, [isOpen, isSubmitting]);
-  
-  const handleSubmit = async (e: React.FormEvent) => {
+  }, [isOpen, handleOutsideClick]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim()) {
       setError('Title is required');
       return;
     }
-    
+
     try {
-      setIsSubmitting(true);
       setError(null);
-      
+
       if (isEditMode && book) {
         // Update existing book
-        await bookService.updateBook(book.id, {
-          title,
-          description: description || undefined,
+        await updateBookMutation.mutateAsync({
+          id: book.id,
+          bookData: {
+            title,
+            description: description || undefined,
+          }
         });
       } else {
         // Create new book
-        await bookService.createBook({
+        await createBookMutation.mutateAsync({
           title,
           description: description || undefined,
         });
       }
-      
+
       // Reset form
       setTitle('');
       setDescription('');
-      
+
       // Close modal and notify parent
       onClose();
-      onBookCreated(); 
+      onBookCreated();
     } catch (err) {
       setError(`Failed to ${isEditMode ? 'update' : 'create'} book. Please try again.`);
       console.error(`Error ${isEditMode ? 'updating' : 'creating'} book:`, err);
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+  }, [title, description, isEditMode, book, updateBookMutation, createBookMutation, onClose, onBookCreated]);
 
   useEffect(() => {
     const keyHandler = (e: KeyboardEvent) => {
@@ -107,43 +113,43 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
           setError('Title is required');
           return;
         }
-        
+
         const syntheticEvent = {
-          preventDefault: () => {}
+          preventDefault: () => { }
         } as unknown as React.FormEvent;
-        
+
         handleSubmit(syntheticEvent);
       }
     };
-  
+
     if (isOpen) {
       document.addEventListener('keydown', keyHandler);
     }
-  
+
     return () => {
       document.removeEventListener('keydown', keyHandler);
     };
-  }, [isOpen, title, description]);
-  
-  
+  }, [isOpen, title, description, handleSubmit]);
+
+
   if (!isOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div 
+      <div
         ref={modalContentRef}
         className="bg-white p-6 rounded-lg w-full max-w-md"
       >
         <h2 className="text-xl font-bold mb-4">
           {isEditMode ? 'Edit Book' : 'Create New Book'}
         </h2>
-        
+
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 mb-2" htmlFor="title">
@@ -158,7 +164,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
               disabled={isSubmitting}
             />
           </div>
-          
+
           <div className="mb-4">
             <label className="block text-gray-700 mb-2" htmlFor="description">
               Description
@@ -172,7 +178,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
               disabled={isSubmitting}
             />
           </div>
-          
+
           <div className="flex justify-end gap-2">
             <button
               type="button"

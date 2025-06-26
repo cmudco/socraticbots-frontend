@@ -15,8 +15,7 @@ export interface UpdateBookRequest {
 }
 
 class BookService {
-  private readonly baseUrl = '/books';
-  
+  private readonly baseUrl = '/books/';
   // Get all books for the current user
   async getBooks(): Promise<Book[]> {
     try {
@@ -27,65 +26,65 @@ class BookService {
       throw error;
     }
   }
-  
+
   // Get a single book by ID
   async getBook(id: string): Promise<Book> {
     try {
-      const response = await api.get<Book>(`${this.baseUrl}/${id}/`);
+      const response = await api.get<Book>(`${this.baseUrl}${id}/`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching book ${id}:`, error);
       throw error;
     }
   }
-  
+
   // Create a new book
   async createBook(bookData: CreateBookRequest): Promise<Book> {
     try {
-      const response = await api.post<Book>(this.baseUrl + '/', bookData);
+      const response = await api.post<Book>(this.baseUrl, bookData);
       return response.data;
     } catch (error) {
       console.error('Error creating book:', error);
       throw error;
     }
   }
-  
+
   // Update a book
   async updateBook(id: string, bookData: UpdateBookRequest): Promise<Book> {
     try {
-      const response = await api.patch<Book>(`${this.baseUrl}/${id}/`, bookData);
+      const response = await api.patch<Book>(`${this.baseUrl}${id}/`, bookData);
       return response.data;
     } catch (error) {
       console.error(`Error updating book ${id}:`, error);
       throw error;
     }
   }
-  
+
   // Delete a book
   async deleteBook(id: string): Promise<void> {
     try {
-      await api.delete(`${this.baseUrl}/${id}/`);
+      await api.delete(`${this.baseUrl}${id}/`);
     } catch (error) {
       console.error(`Error deleting book ${id}:`, error);
       throw error;
     }
   }
-  
+
   // Search books (if you implement search in your backend)
   async searchBooks(query: string): Promise<Book[]> {
     try {
-      const response = await api.get<Book[]>(`${this.baseUrl}/?search=${encodeURIComponent(query)}`);
+      const response = await api.get<Book[]>(`${this.baseUrl}?search=${encodeURIComponent(query)}`);
       return response.data;
     } catch (error) {
       console.error(`Error searching books with query "${query}":`, error);
       throw error;
     }
   }
-  
+
   // Filter books by published status
   async getPublishedBooks(isPublished: boolean = true): Promise<Book[]> {
     try {
-      const response = await api.get<Book[]>(`${this.baseUrl}/?is_published=${isPublished}`);
+      const response = await api.get<Book[]>(`${this.baseUrl}?is_published=${isPublished}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching ${isPublished ? 'published' : 'unpublished'} books:`, error);

@@ -1,69 +1,51 @@
 // src/components/chapters/tabs/BasicInfoTab.tsx
-import React, { useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import { setField } from '../../../store/slices/chapterFormSlice';
-import { fetchModels } from '../../../store/thunks/chapterFormThunks';
-import { FormikProps } from 'formik';
+import React from 'react';
+import { useChapterFormStore } from '../../../stores/chapterFormStore';
+import { useModels, type Model } from '../../../hooks/queries/useModels';
 
-interface BasicInfoTabProps {
-  formik: FormikProps<any>;
-}
-
-const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ formik }) => {
-  const dispatch = useAppDispatch();
-
-  // Get form data from Redux store
+const BasicInfoTab: React.FC = () => {
+  // Get form data from Zustand store
   const {
     title,
     subject,
     topic,
     chat_model_id,
     tracking_model_id,
-    availableModels,
-    modelsLoading,
-    isEdit
-  } = useAppSelector(state => state.chapterForm);
+    touched,
+    errors,
+    updateField,
+    setFieldTouched,
+    validateField
+  } = useChapterFormStore();
 
-  // Not used.
-  if (false) {console.log(isEdit);}
-
-
-  // Fetch models when component mounts
-  useEffect(() => {
-    dispatch(fetchModels());
-  }, [dispatch]);
+  // Use the models query hook
+  const { data: availableModels = [], isLoading: modelsLoading } = useModels();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    // Update Redux state
-    dispatch(setField({ field: name, value }));
-    // Update Formik value without touching
-    formik.setFieldValue(name, value, false); // false prevents validation
+    // Update Zustand state with validation
+    updateField(name, value);
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name } = e.target;
-    // Set field as touched when user leaves the field
-    formik.setFieldTouched(name, true);
+    const { name, value } = e.target;
+    // Mark field as touched and validate it
+    setFieldTouched(name, true);
+    validateField(name, value);
   };
 
-  // Helper function to get field error
+  // Get field error if field is touched
   const getFieldError = (fieldName: string): string | null => {
-    const error = formik.errors[fieldName];
-    const touched = formik.touched[fieldName];
-    if (error && touched && typeof error === 'string') {
-      return error;
-    }
-    return null;
+    return touched[fieldName] && errors[fieldName] ? errors[fieldName] : null;
   };
 
-  // Helper function to get field styles
+  // Helper function to get field styles with error state
   const getFieldStyles = (fieldName: string) => {
-    const hasError = formik.errors[fieldName] && formik.touched[fieldName];
-    return `w-full p-2 border rounded transition-colors ${
+    const hasError = getFieldError(fieldName);
+    return `w-full p-2 border rounded focus:ring-2 transition-colors ${
       hasError
-        ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-        : 'border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
     }`;
   };
 
@@ -143,9 +125,9 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ formik }) => {
             className={getFieldStyles('chat_model_id')}
           >
             <option value="">Select Chat Model</option>
-            {availableModels.map(model => (
+            {availableModels.map((model: Model) => (
               <option key={model.id} value={model.id}>
-                {model.name} ({model.provider})
+                {model.name}
               </option>
             ))}
           </select>
@@ -171,9 +153,9 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ formik }) => {
             className={getFieldStyles('tracking_model_id')}
           >
             <option value="">Select Progress Tracking Model</option>
-            {availableModels.map(model => (
+            {availableModels.map((model: Model) => (
               <option key={model.id} value={model.id}>
-                {model.name} ({model.provider})
+                {model.name}
               </option>
             ))}
           </select>
