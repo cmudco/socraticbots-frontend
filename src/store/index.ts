@@ -1,17 +1,11 @@
 // src/store/index.ts
 import { configureStore } from '@reduxjs/toolkit';
-import sidebarReducer from './slices/sidebarSlice';
-import apiReducer from './slices/apiSlice';
-import chapterFormReducer from './slices/chapterFormSlice';
-import chaptersReducer from './slices/chaptersSlice';
 import chatReducer from './slices/chatSlice';
 
 export const store = configureStore({
   reducer: {
-    sidebar: sidebarReducer,
-    api: apiReducer,
-    chapterForm: chapterFormReducer,
-    chapters: chaptersReducer,
+    // Only keep chat reducer since chat module hasn't been migrated yet
+    // Sidebar, API, chapters, and chapter form have been migrated to Zustand + TanStack Query
     chat: chatReducer,
   },
 });

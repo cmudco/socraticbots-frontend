@@ -3,8 +3,7 @@ import React from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import { setField } from '../../../store/slices/chapterFormSlice';
+import { useChapterFormStore } from '../../../stores/chapterFormStore';
 
 // Simplified menu bar with only bold and italic
 const MenuBar = ({ editor }: { editor: any }) => {
@@ -19,8 +18,8 @@ const MenuBar = ({ editor }: { editor: any }) => {
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={`p-1.5 rounded transition-colors ${
-          editor.isActive('bold') 
-            ? 'bg-blue-100 text-blue-700' 
+          editor.isActive('bold')
+            ? 'bg-blue-100 text-blue-700'
             : 'text-gray-700 hover:bg-gray-100'
         }`}
         title="Bold"
@@ -37,7 +36,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
         onClick={() => editor.chain().focus().toggleItalic().run()}
         className={`p-1.5 rounded transition-colors ${
           editor.isActive('italic')
-            ? 'bg-blue-100 text-blue-700' 
+            ? 'bg-blue-100 text-blue-700'
             : 'text-gray-700 hover:bg-gray-100'
         }`}
         title="Italic"
@@ -60,7 +59,7 @@ const TiptapEditor = ({ value, onChange, placeholder }: { value: string, onChang
     bulletList: false,
     orderedList: false,
     listItem: false,
-    
+
     // You can disable other unused extensions as well
     heading: false,
     blockquote: false,
@@ -95,28 +94,31 @@ const TiptapEditor = ({ value, onChange, placeholder }: { value: string, onChang
 };
 
 const PromptsTab: React.FC = () => {
-  const dispatch = useAppDispatch();
-  
-  // Get all prompts from Redux store
-  const { greeting, chat_prompt, tracking_prompt, learning_goals } = useAppSelector(state => state.chapterForm);
-  
-  // Handler to update greeting in Redux
+  const {
+    greeting,
+    chat_prompt,
+    tracking_prompt,
+    learning_goals,
+    updateField
+  } = useChapterFormStore();
+
+  // Handler to update greeting in Zustand
   const handleGreetingChange = (html: string) => {
-    dispatch(setField({ field: 'greeting', value: html }));
+    updateField('greeting', html);
   };
 
-  // Handler to update chat prompt in Redux
+  // Handler to update chat prompt in Zustand
   const handleChatPromptChange = (html: string) => {
-    dispatch(setField({ field: 'chat_prompt', value: html }));
+    updateField('chat_prompt', html);
   };
 
-  // Handler to update tracking prompt in Redux
+  // Handler to update tracking prompt in Zustand
   const handleTrackingPromptChange = (html: string) => {
-    dispatch(setField({ field: 'tracking_prompt', value: html }));
+    updateField('tracking_prompt', html);
   };
 
   const handleLearningGoalsChange = (html: string) => {
-    dispatch(setField({ field: 'learning_goals', value: html }));
+    updateField('learning_goals', html);
   };
 
 
@@ -128,9 +130,9 @@ const PromptsTab: React.FC = () => {
         <p className="text-sm text-gray-600 mb-2">
           This is the initial greeting message shown to the student when they start the chapter.
         </p>
-        <TiptapEditor 
-          value={greeting} 
-          onChange={handleGreetingChange} 
+        <TiptapEditor
+          value={greeting}
+          onChange={handleGreetingChange}
           placeholder="Enter the greeting message for students..."
         />
       </div>
@@ -140,9 +142,9 @@ const PromptsTab: React.FC = () => {
         <p className="text-sm text-gray-600 mb-2">
           This prompt guides the AI in how to respond to student messages during the chapter.
         </p>
-        <TiptapEditor 
-          value={chat_prompt} 
-          onChange={handleChatPromptChange} 
+        <TiptapEditor
+          value={chat_prompt}
+          onChange={handleChatPromptChange}
           placeholder="Enter instructions for the AI on how to respond to student messages..."
         />
       </div>
@@ -152,9 +154,9 @@ const PromptsTab: React.FC = () => {
         <p className="text-sm text-gray-600 mb-2">
           This prompt guides the AI in tracking student progress and understanding.
         </p>
-        <TiptapEditor 
-          value={tracking_prompt} 
-          onChange={handleTrackingPromptChange} 
+        <TiptapEditor
+          value={tracking_prompt}
+          onChange={handleTrackingPromptChange}
           placeholder="Enter instructions for the AI on how to track student progress..."
         />
       </div>
@@ -164,9 +166,9 @@ const PromptsTab: React.FC = () => {
         <p className="text-sm text-gray-600 mb-2">
           Define the learning goals for this chapter.  The more structure you are able to provide the better the AI will be able to help students achieve their goals.
         </p>
-        <TiptapEditor 
-          value={learning_goals} 
-          onChange={handleLearningGoalsChange} 
+        <TiptapEditor
+          value={learning_goals}
+          onChange={handleLearningGoalsChange}
           placeholder="Enter the learning goals for this chapter, e.g., 'Understand photosynthesis, Describe the carbon cycle...'"
         />
       </div>
