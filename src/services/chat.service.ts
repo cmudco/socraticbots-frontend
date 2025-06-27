@@ -3,6 +3,7 @@ import { api } from './api/instance';
 import { authService } from './auth.service';
 import { AuthTokens } from '../types/auth';
 import config from '../lib/config';
+import type { Conversation, ChatMessage } from '@/types/chat';
 
 export interface Chapter {
   id: string;
@@ -14,30 +15,11 @@ export interface Chapter {
   updated_at?: string;
 }
 
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  created_at: string;
-}
-
-
 interface StreamCallbacks {
   onStart?: () => void;
   onToken?: (token: string) => void;
   onComplete?: () => void;
-  onError?: (error: any) => void;
-}
-
-
-export interface Conversation {
-  id: string;
-  user: string;
-  chapter: string;
-  chapter_details: Chapter;
-  created_at: string;
-  updated_at: string;
-  messages: ChatMessage[];
+  onError?: (error: unknown) => void;
 }
 
 class ChatService {
@@ -62,14 +44,12 @@ class ChatService {
     }
   }
 
-  async sendMessage(conversationId: string, message: string): Promise<any> {
+  async sendMessage(conversationId: string, message: string): Promise<ChatMessage> {
     try {
-      const response = await api.post('/chat/send-message/', {
+      const response = await api.post<ChatMessage>('/chat/send-message/', {
         conversation_id: conversationId,
         message: message
       });
-      
-      console.log('Message sent successfully:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error sending message:', error);
@@ -82,16 +62,16 @@ class ChatService {
       // Get stored tokens
       const storedTokens = localStorage.getItem('auth_tokens');
       if (!storedTokens) throw new Error('No auth tokens found');
-      
+
       // Parse tokens
       const tokens: AuthTokens = JSON.parse(storedTokens);
-      
+
       // Force a token refresh
       const newTokens = await authService.refreshToken(tokens.refresh);
-      
+
       // Save new tokens
       localStorage.setItem('auth_tokens', JSON.stringify(newTokens));
-      
+
       return newTokens.access;
     } catch (error) {
       console.error('Error getting fresh token:', error);
@@ -100,7 +80,7 @@ class ChatService {
   }
 
   async streamMessage(
-    conversationId: string, 
+    conversationId: string,
     message: string,
     callbacks: StreamCallbacks
   ): Promise<string> {
@@ -120,7 +100,6 @@ class ChatService {
         })
       });
 
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -129,9 +108,10 @@ class ChatService {
       if (!reader) throw new Error('No reader available');
 
       callbacks.onStart?.();
+      console.log('[streamMessage] onStart');
 
       let fullResponse = '';
-      
+
       // Read the stream
       while (true) {
         const { done, value } = await reader.read();
@@ -141,7 +121,6 @@ class ChatService {
 
         // Convert the chunk to text
         const chunk = new TextDecoder().decode(value);
-        
         const lines = chunk.split('\n');
 
         // Process each line
@@ -151,12 +130,14 @@ class ChatService {
               const data = JSON.parse(line.slice(5));
               if (data.content) {
                 fullResponse += data.content;
+                console.log('[streamMessage] onToken', data.content);
                 callbacks.onToken?.(data.content);
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);
             }
           } else if (line.startsWith('event: end')) {
+            console.log('[streamMessage] onComplete');
             callbacks.onComplete?.();
           }
         }
@@ -167,6 +148,7 @@ class ChatService {
     } catch (error) {
       console.error('Error in streamMessage:', error);
       callbacks.onError?.(error);
+      console.log('[streamMessage] onError', error);
       throw error;
     }
   }
@@ -177,7 +159,7 @@ class ChatService {
   ): Promise<string> {
     try {
       const token = await this.getFreshToken();
-      
+
       const response = await fetch(`${api.defaults.baseURL}/chat/track-progress/`, {
         method: 'POST',
         headers: {
