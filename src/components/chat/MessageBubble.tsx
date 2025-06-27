@@ -4,15 +4,18 @@ import ReactMarkdown from 'react-markdown';
 import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
 import DOMPurify from 'dompurify';
 import type { ChatMessage } from '@/types/chat';
+import AnimatedDots from './AnimatedDots';
 
 interface MessageBubbleProps {
   message: ChatMessage;
   isGreeting?: boolean;
+  isStreaming?: boolean;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
-  isGreeting = false
+  isGreeting = false,
+  isStreaming = false,
 }) => {
   const isAssistant = message.sender === 'assistant';
 
@@ -58,6 +61,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           >
             {message.content}
           </ReactMarkdown>
+          {isStreaming && <AnimatedDots className="ml-2 mt-2 align-middle" />}
         </div>
       );
     }

@@ -1,5 +1,5 @@
 // src/components/chat/MessageList.tsx
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { ChatMessage } from '@/types/chat';
 import MessageBubble from './MessageBubble';
 import { ChatRole, ChatSender } from '@/types/chat';
@@ -7,6 +7,7 @@ import { ChatRole, ChatSender } from '@/types/chat';
 interface MessageListProps {
   messages: ChatMessage[];
   greeting?: string;
+  isStreaming?: boolean;
 }
 
 function normalizeMessage(msg: ChatMessage): ChatMessage {
@@ -20,12 +21,10 @@ function normalizeMessage(msg: ChatMessage): ChatMessage {
 
 const MessageList: React.FC<MessageListProps> = ({
   messages,
-  greeting
+  greeting,
+  isStreaming = false,
 }) => {
-  // Create a copy of messages to avoid mutating props
   const allMessages = [...messages];
-
-  // If there are no messages but there is a greeting, create a greeting message
   if (messages.length === 0 && greeting) {
     const now = new Date().toISOString();
     const greetingMessage: ChatMessage = {
@@ -38,9 +37,15 @@ const MessageList: React.FC<MessageListProps> = ({
     };
     allMessages.unshift(greetingMessage);
   }
-
-  // Normalize all messages to ensure sender is set
   const normalizedMessages = allMessages.map(normalizeMessage);
+
+  // Auto-scroll to bottom
+  const listRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [normalizedMessages.length, isStreaming]);
 
   if (normalizedMessages.length === 0) {
     return (
@@ -50,13 +55,18 @@ const MessageList: React.FC<MessageListProps> = ({
     );
   }
 
+  // Find the last AI message index
+  const lastAssistantIdx = [...normalizedMessages].reverse().findIndex(m => m.sender === ChatSender.ASSISTANT);
+  const lastAssistantAbsIdx = lastAssistantIdx === -1 ? -1 : normalizedMessages.length - 1 - lastAssistantIdx;
+
   return (
-    <div className="space-y-6 py-4">
-      {normalizedMessages.map((message) => (
+    <div ref={listRef} className="space-y-0 py-6 px-4 overflow-y-auto h-full max-w-4xl mx-auto">
+      {normalizedMessages.map((message, idx) => (
         <div key={message.id} className={message.id.startsWith('pending-') ? 'opacity-70' : ''}>
           <MessageBubble
             message={message}
             isGreeting={message.id === 'greeting'}
+            isStreaming={isStreaming && idx === lastAssistantAbsIdx}
           />
         </div>
       ))}

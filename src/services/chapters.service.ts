@@ -2,7 +2,7 @@
 import { api } from './api/instance';
 import { AIModel } from './models.service';
 import axios, { AxiosError } from 'axios';
-import { ChapterFile } from './files.service';
+import { ChapterFile } from '../types/file';
 
 export interface ModelPreference {
   id: string;
@@ -20,7 +20,7 @@ export interface Chapter {
   model_preference?: ModelPreference;
   prompts?: ChapterPrompt;
   learning_goals ?: LearningGoal[];
-  files?: ChapterFile[]; 
+  files?: ChapterFile[];
   created_at: string;
   updated_at: string;
 }
@@ -114,7 +114,7 @@ class ChapterService {
       throw error;
     }
   }
-  
+
   // Get a single chapter by ID for a specific book
   async getChapter(bookId: string, chapterId: string): Promise<Chapter> {
     try {
@@ -125,11 +125,11 @@ class ChapterService {
       throw error;
     }
   }
-  
+
   // Create a new chapter for a book
   async createChapter(
-      bookId: string, 
-      chapterData: CreateChapterRequest, 
+      bookId: string,
+      chapterData: CreateChapterRequest,
       modelPreferences?: ChapterModelPreferenceRequest,
       promptData?: ChapterPromptRequest  // Add this parameter
     ): Promise<Chapter> {
@@ -137,38 +137,38 @@ class ChapterService {
         // First create the chapter
         const response = await api.post<Chapter>(`/books/${bookId}/chapters/`, chapterData);
         const newChapter = response.data;
-        
+
         // Track if we need to fetch the updated chapter
         let needsRefetch = false;
-        
+
         // If model preferences are provided, set them
         if (modelPreferences && (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)) {
           await this.setChapterModelPreferences(bookId, newChapter.id, modelPreferences);
           needsRefetch = true;
         }
-        
+
         // Add this block for prompts
         if (promptData && (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)) {
           await this.setChapterPrompts(bookId, newChapter.id, promptData);
           needsRefetch = true;
         }
-        
+
         // Fetch the updated chapter if needed
         if (needsRefetch) {
           return await this.getChapter(bookId, newChapter.id);
         }
-        
+
         return newChapter;
       } catch (error) {
         console.error('Error creating chapter:', error);
         throw error;
       }
     }
-  
+
   // Update a chapter
   async updateChapter(
-    bookId: string, 
-    chapterId: string, 
+    bookId: string,
+    chapterId: string,
     chapterData: UpdateChapterRequest,
     modelPreferences?: ChapterModelPreferenceRequest,
     promptData?: ChapterPromptRequest  // Add this parameter
@@ -176,37 +176,37 @@ class ChapterService {
     try {
       // Update the chapter basic info
       const response = await api.patch<Chapter>(
-        `/books/${bookId}/chapters/${chapterId}/`, 
+        `/books/${bookId}/chapters/${chapterId}/`,
         chapterData
       );
-      
+
       // Track if we need to fetch the updated chapter
       let needsRefetch = false;
-      
+
       // If model preferences are provided, update them
       if (modelPreferences && (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)) {
         await this.setChapterModelPreferences(bookId, chapterId, modelPreferences);
         needsRefetch = true;
       }
-      
+
       // Add this block for prompts
       if (promptData && (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)) {
         await this.setChapterPrompts(bookId, chapterId, promptData);
         needsRefetch = true;
       }
-      
+
       // Fetch the updated chapter if needed
       if (needsRefetch) {
         return await this.getChapter(bookId, chapterId);
       }
-      
+
       return response.data;
     } catch (error) {
       console.error(`Error updating chapter ${chapterId}:`, error);
       throw error;
     }
   }
-  
+
   // Set model preferences for a chapter
   async setChapterModelPreferences(
     bookId: string,
@@ -223,7 +223,7 @@ class ChapterService {
       // Fix the error handling with proper type checking
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError;
-        
+
         if (axiosError.response && axiosError.response.status === 404) {
           // If 404, try PUT instead (for updating existing preferences)
           try {
@@ -242,7 +242,7 @@ class ChapterService {
       throw error;
     }
   }
-  
+
   // Get model preferences for a chapter
   async getChapterModelPreferences(
     bookId: string,
@@ -258,7 +258,7 @@ class ChapterService {
       throw error;
     }
   }
-  
+
   // Delete a chapter
   async deleteChapter(bookId: string, chapterId: string): Promise<void> {
     try {
@@ -301,7 +301,7 @@ class ChapterService {
       // Similar to model preferences, try PUT if POST fails with 404
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError;
-        
+
         if (axiosError.response && axiosError.response.status === 404) {
           try {
             const response = await api.put<ChapterPrompt>(
@@ -335,8 +335,8 @@ class ChapterService {
 
   // Get a specific learning goal
   async getLearningGoal(
-    bookId: string, 
-    chapterId: string, 
+    bookId: string,
+    chapterId: string,
     goalId: string
   ): Promise<LearningGoal> {
     try {
@@ -477,8 +477,8 @@ class ChapterService {
     }
   }
 
-  
-  
+
+
 }
 
 // Export a singleton instance

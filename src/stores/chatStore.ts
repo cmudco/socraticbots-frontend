@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import type { ChatMessage } from '@/types/chat';
 
 interface ChatStoreState {
+  selectedBookId: string | null;
+  setSelectedBookId: (id: string | null) => void;
   selectedChapterId: string | null;
   setSelectedChapterId: (id: string | null) => void;
   selectedConversationId: string | null;
@@ -13,10 +15,16 @@ interface ChatStoreState {
   pendingMessages: ChatMessage[];
   addPendingMessage: (msg: ChatMessage) => void;
   removePendingMessage: (id: string) => void;
+  // Helper method to set chapter and clear related state
+  setChapterContext: (bookId: string, chapterId: string, conversationId: string) => void;
+  // Clear all chat state
+  clearChatState: () => void;
   // Add more UI state as needed (drafts, typing, etc.)
 }
 
 export const useChatStore = create<ChatStoreState>((set) => ({
+  selectedBookId: null,
+  setSelectedBookId: (id) => set({ selectedBookId: id }),
   selectedChapterId: null,
   setSelectedChapterId: (id) => set({ selectedChapterId: id }),
   selectedConversationId: null,
@@ -28,4 +36,22 @@ export const useChatStore = create<ChatStoreState>((set) => ({
   pendingMessages: [],
   addPendingMessage: (msg) => set((state) => ({ pendingMessages: [...state.pendingMessages, msg] })),
   removePendingMessage: (id) => set((state) => ({ pendingMessages: state.pendingMessages.filter((m) => m.id !== id) })),
+
+  // Helper method to set all chapter context at once
+  setChapterContext: (bookId, chapterId, conversationId) => set({
+    selectedBookId: bookId,
+    selectedChapterId: chapterId,
+    selectedConversationId: conversationId,
+    inputValue: '', // Clear input when switching chapters
+    pendingMessages: [], // Clear pending messages when switching chapters
+  }),
+
+  // Clear all chat state
+  clearChatState: () => set({
+    selectedBookId: null,
+    selectedChapterId: null,
+    selectedConversationId: null,
+    inputValue: '',
+    pendingMessages: [],
+  }),
 }));

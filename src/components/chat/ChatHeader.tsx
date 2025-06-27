@@ -1,64 +1,42 @@
 // src/components/chat/ChatHeader.tsx
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { chatService } from '@/services/chat.service';
+import { Button } from '@/components/ui/button';
+import ChapterSelector from './ChapterSelector';
 import { useChatStore } from '@/stores/chatStore';
 
 const ChatHeader: React.FC = () => {
-  const { selectedChapterId, setSelectedChapterId } = useChatStore();
-  const { data: availableChapters = [], isLoading, error } = useQuery({
-    queryKey: ['chat', 'availableChapters'],
-    queryFn: chatService.getAvailableChapters,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const handleChapterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const chapterId = e.target.value;
-    setSelectedChapterId(chapterId || null);
-  };
+  const { selectedChapterId } = useChatStore();
 
   return (
-    <div className="flex items-center p-3 border-b border-gray-200 bg-white">
-      {/* Mode Toggle */}
-      <div className="flex space-x-2 mr-4">
-        <button
-          className="px-3 py-1 bg-blue-600 text-white rounded-md font-medium text-sm"
-          disabled
-        >
-          Classic
-        </button>
-        <button
-          className="px-3 py-1 text-gray-400 bg-gray-100 rounded-md font-medium text-sm"
-          disabled
-        >
-          New
-        </button>
+    <header className="w-full flex items-center justify-between px-6 py-4 border-b border-slate-200/60 bg-white/90 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+      <div className="flex items-center space-x-4">
+        {/* Chapter Selection */}
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium text-slate-600">Chapter:</span>
+          <ChapterSelector />
+        </div>
       </div>
 
-      {/* Chapter Dropdown */}
-      <div className="flex-grow">
-        {isLoading ? (
-          <div className="text-sm text-gray-500">Loading chapters...</div>
-        ) : error ? (
-          <div className="text-sm text-red-500">Error: {error instanceof Error ? error.message : 'Unknown error'}</div>
-        ) : availableChapters.length === 0 ? (
-          <div className="text-sm text-gray-500">No chapters available</div>
-        ) : (
-          <select
-            className="w-64 pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            value={selectedChapterId || ''}
-            onChange={handleChapterChange}
-          >
-            <option value="" disabled>Select a chapter</option>
-            {availableChapters.map((chapter) => (
-              <option key={chapter.id} value={chapter.id}>
-                {chapter.title}
-              </option>
-            ))}
-          </select>
-        )}
+      <div className="flex items-center space-x-2">
+        {/* Classic/New Buttons */}
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!selectedChapterId}
+          className="bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0 hover:from-violet-600 hover:to-purple-600 disabled:from-gray-300 disabled:to-gray-400 shadow-sm"
+        >
+          Classic
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={true}
+          className="bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed shadow-sm"
+        >
+          New
+        </Button>
       </div>
-    </div>
+    </header>
   );
 };
 

@@ -1,20 +1,24 @@
 // src/pages/Chat.tsx
 import React from 'react';
-import ChatHeader from '../components/chat/ChatHeader';
-import TrackingSidebar from '../components/chat/TrackingSidebar';
 import ChatInterface from '../components/chat/ChatInterface';
+import TrackingSidebar from '../components/chat/TrackingSidebar';
 import NotesSidebar from '../components/chat/NotesSidebar';
 
 const Chat: React.FC = () => {
-  // Apply negative margins to counteract the Layout padding
   return (
-    <div className="flex flex-col -m-6 h-[calc(100vh-3.5rem)] overflow-hidden">
-      <ChatHeader />
-      <div className="flex flex-1 overflow-hidden">
+    <div className="h-full flex bg-gradient-to-br from-violet-50/50 via-white to-purple-50/50 pr-4">
+      {/* Learning Progress Sidebar */}
+      <div className="w-64 flex-shrink-0 border-r border-slate-200/60 bg-white/90 backdrop-blur-sm overflow-y-auto">
         <TrackingSidebar />
-        <ChatInterface />
-        <NotesSidebar />
       </div>
+
+      {/* Center Chat Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <ChatInterface />
+      </div>
+
+      {/* Right Notes Sidebar - now self-managing width */}
+      <NotesSidebar />
     </div>
   );
 };
