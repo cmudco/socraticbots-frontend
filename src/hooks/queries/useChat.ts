@@ -1,7 +1,49 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { chatService } from '@/services/chat.service';
-import type { Conversation, ChatMessage, SendMessagePayload } from '@/types/chat';
+import { chatService, Chapter } from '@/services/chat.service';
+import { chapterService, LearningGoal } from '@/services/chapters.service';
+import { useBooks } from './useBooks';
+import { api } from '@/services/api/instance';
+import type { Conversation, SendMessagePayload } from '@/types/chat';
 import { useState } from 'react';
+
+// Create a mapping of chapter ID to book ID
+export const useChapterToBookMapping = () => {
+  const { data: books } = useBooks();
+
+  return useQuery<Record<string, string>>({
+    queryKey: ['chat', 'chapterToBookMapping'],
+    queryFn: async () => {
+      if (!books) return {};
+
+      const mapping: Record<string, string> = {};
+
+      // Get chapters for each book and build the mapping
+      for (const book of books) {
+        try {
+          const response = await api.get(`/books/${book.id}/chapters/`);
+          const chapters = response.data;
+          chapters.forEach((chapter: any) => {
+            mapping[chapter.id] = book.id;
+          });
+        } catch (error) {
+          console.warn(`Error fetching chapters for book ${book.id}:`, error);
+        }
+      }
+
+      return mapping;
+    },
+    enabled: !!books && books.length > 0,
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+  });
+};
+
+// Fetch available chapters
+export const useAvailableChapters = () =>
+  useQuery<Chapter[]>({
+    queryKey: ['chat', 'availableChapters'],
+    queryFn: () => chatService.getAvailableChapters(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
 
 // Fetch conversation for a chapter (single active conversation per chapter)
 export const useConversationForChapter = (chapterId: string | null) =>
@@ -21,6 +63,20 @@ export const useChatMessages = (chapterId: string | null) => {
   };
 };
 
+// Fetch structured learning goals for a chapter (requires book ID)
+export const useChapterLearningGoals = (bookId: string | null, chapterId: string | null) =>
+  useQuery<LearningGoal[]>({
+    queryKey: ['chat', 'learningGoals', bookId, chapterId],
+    queryFn: () => {
+      if (!bookId || !chapterId) return [];
+      return chapterService.getLearningGoals(bookId, chapterId);
+    },
+    enabled: !!bookId && !!chapterId,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+
+
 // Send a message in a conversation
 export const useSendMessage = () => {
   const queryClient = useQueryClient();
@@ -30,7 +86,9 @@ export const useSendMessage = () => {
     },
     onSuccess: (_data, variables) => {
       // Invalidate the conversation query to refetch messages
-      queryClient.invalidateQueries(['chat', 'conversation', variables.conversationId]);
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversation', variables.conversationId] });
+      // Also invalidate tracking progress since new messages affect progress
+      queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress', variables.conversationId] });
     },
   });
 };
@@ -41,7 +99,8 @@ export const useClearConversation = () => {
   return useMutation({
     mutationFn: (conversationId: string) => chatService.clearConversation(conversationId),
     onSuccess: (_data, conversationId) => {
-      queryClient.invalidateQueries(['chat', 'conversation', conversationId]);
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversation', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress', conversationId] });
     },
   });
 };
@@ -87,7 +146,9 @@ export const useStreamMessage = () => {
         onComplete: () => {
           setIsStreaming(false);
           // Invalidate the conversation query to refetch messages
-          queryClient.invalidateQueries(['chat', 'conversation', conversationId]);
+          queryClient.invalidateQueries({ queryKey: ['chat', 'conversation', conversationId] });
+          // Also invalidate tracking progress since new messages affect progress
+          queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress', conversationId] });
         },
         onError: (err) => {
           setError(err instanceof Error ? err : new Error(String(err)));

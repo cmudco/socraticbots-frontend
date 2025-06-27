@@ -1,11 +1,14 @@
 // src/components/chat/ChatControls.tsx
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 
 // Define a type for our action buttons (excluding special ones like "Clear Conversation")
 interface ActionButton {
   id: string;
   label: string;
   message: string; // Text to insert into the chat input
+  icon?: React.ReactNode;
 }
 
 interface ChatControlsProps {
@@ -14,20 +17,18 @@ interface ChatControlsProps {
   disabled: boolean;
 }
 
-const ChatControls: React.FC<ChatControlsProps> = ({ 
-  onActionClick, 
+const ChatControls: React.FC<ChatControlsProps> = ({
+  onActionClick,
   onClearConversation,
   disabled
 }) => {
   // Define our preset action buttons - easy to add more or modify
   const actionButtons: ActionButton[] = [
-    /** 
     {
       id: 'learning-goals',
       label: 'Learning Goals',
       message: 'What are the learning goals for this chapter?'
     },
-    // Easy to add more action buttons here
     {
       id: 'explain-topic',
       label: 'Explain Topic',
@@ -37,33 +38,46 @@ const ChatControls: React.FC<ChatControlsProps> = ({
       id: 'give-example',
       label: 'Give Example',
       message: 'Can you give me an example related to this topic?'
+    },
+    {
+      id: 'quiz-me',
+      label: 'Quiz Me',
+      message: 'Can you quiz me on this material?'
     }
-    */
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-3">
-      {/* Map through the action buttons */}
-      {actionButtons.map(button => (
-        <button
-          key={button.id}
-          className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-md text-sm font-medium hover:bg-purple-200 transition-colors"
-          onClick={() => onActionClick(button.message)}
-          disabled={disabled}
-          title={button.message}
-        >
-          {button.label}
-        </button>
-      ))}
-      
-      {/* Clear conversation button - styled differently */}
-      <button
-        className="px-3 py-1.5 bg-red-100 text-red-700 rounded-md text-sm font-medium hover:bg-red-200 transition-colors ml-auto"
+    <div className="flex items-center justify-between">
+      {/* Action buttons */}
+      <div className="flex flex-wrap items-center gap-2">
+        {actionButtons.map(button => (
+          <Button
+            key={button.id}
+            variant="outline"
+            size="sm"
+            onClick={() => onActionClick(button.message)}
+            disabled={disabled}
+            className="text-sm bg-white border-violet-200 text-violet-700 hover:bg-violet-50 hover:border-violet-300 disabled:opacity-50"
+            title={button.message}
+          >
+            {button.icon}
+            {button.label}
+          </Button>
+        ))}
+      </div>
+
+      {/* Clear conversation button */}
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={onClearConversation}
         disabled={disabled}
+        className="text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
+        title="Clear conversation"
       >
-        Clear Conversation
-      </button>
+        <Trash2 className="w-4 h-4 mr-2" />
+        Clear
+      </Button>
     </div>
   );
 };

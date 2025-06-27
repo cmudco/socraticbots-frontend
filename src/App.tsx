@@ -25,57 +25,27 @@ const App: React.FC = () => {
       <ApiProvider>
         <AuthInitializer>
           <BrowserRouter>
-            <Layout>
-              <Routes>
-                {/* Public route */}
-                <Route path="/login" element={<Login />} />
+            <Routes>
+              {/* Public route - no layout */}
+              <Route path="/login" element={<Login />} />
 
-                {/* Protected routes */}
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute>
-                      <Home />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/about"
-                  element={
-                    <ProtectedRoute>
-                      <About />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/books"
-                  element={
-                    <ProtectedRoute>
-                      <Books />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/chat"
-                  element={
-                    <ProtectedRoute>
-                      <Chat />
-                    </ProtectedRoute>
-                  }
-                />
+              {/* Protected routes with shared layout */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }>
+                {/* Nested routes - these render in the Layout's Outlet */}
+                <Route index element={<Home />} />
+                <Route path="about" element={<About />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="books" element={<Books />} />
+                <Route path="chat" element={<Chat />} />
+              </Route>
 
-                {/* Catch all - redirect to login */}
-                <Route path="*" element={<Navigate to="/login" replace />} />
-              </Routes>
-            </Layout>
+              {/* Catch all - redirect to login */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
           </BrowserRouter>
         </AuthInitializer>
       </ApiProvider>

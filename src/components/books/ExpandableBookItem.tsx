@@ -19,7 +19,7 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, o
   const toggleExpand = async () => {
     const newExpandedState = !expanded;
     setExpanded(newExpandedState);
-    
+
     if (newExpandedState && chapters.length === 0) {
       // Fetch chapters when expanding
       setLoading(true);
@@ -34,13 +34,7 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, o
     }
   };
 
-  const handleChapterAdded = (newChapter: Chapter) => {
-    setChapters([...chapters, newChapter]);
-  };
 
-  const handleChapterUpdated = (updatedChapter: Chapter) => {
-    setChapters(chapters.map(ch => ch.id === updatedChapter.id ? updatedChapter : ch));
-  };
 
   const handleChapterDeleted = (chapterId: string) => {
     setChapters(chapters.filter(ch => ch.id !== chapterId));
@@ -48,7 +42,7 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, o
 
   return (
     <div className="border rounded-lg mb-4 overflow-hidden">
-      <div 
+      <div
         className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50"
         onClick={toggleExpand}
       >
@@ -57,7 +51,7 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, o
           {book.description && <p className="text-gray-600 text-sm">{book.description}</p>}
         </div>
         <div className="flex space-x-2">
-          <button 
+          <button
             onClick={(e) => {
               e.stopPropagation(); // Prevent toggling expand
               onEdit(book);
@@ -66,7 +60,7 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, o
           >
             Edit
           </button>
-          <button 
+          <button
             onClick={(e) => {
               e.stopPropagation(); // Prevent toggling expand
               onDelete(book);
@@ -80,17 +74,15 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, o
           </span>
         </div>
       </div>
-      
+
       {expanded && (
         <div className="border-t p-4 bg-gray-50">
           {loading ? (
             <div className="text-center py-4">Loading chapters...</div>
           ) : (
-            <ChapterList 
+            <ChapterList
               bookId={book.id}
               initialChapters={chapters}
-              onChapterAdded={handleChapterAdded}
-              onChapterUpdated={handleChapterUpdated}
               onChapterDeleted={handleChapterDeleted}
             />
           )}

@@ -1,11 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 import { useConversationForChapter, useStreamMessage, useClearConversation } from '@/hooks/queries/useChat';
+import ChatHeader from './ChatHeader';
 import ChatControls from './ChatControls';
 import MessageList from './MessageList';
+import ChatInput from './ChatInput';
 import { ChatMessage, ChatRole, ChatSender } from '@/types/chat';
+import { Card } from '@/components/ui/card';
+import { MessageSquare } from 'lucide-react';
 
 const ChatInterface: React.FC = () => {
+  const messageAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null!);
+
   const {
     selectedChapterId,
     selectedConversationId,
@@ -17,210 +24,214 @@ const ChatInterface: React.FC = () => {
     removePendingMessage,
   } = useChatStore();
 
-  const {
-    data: conversation,
-    isLoading: conversationLoading,
-    error: conversationError,
-  } = useConversationForChapter(selectedChapterId);
-
-  const { streamMessage, isStreaming, error: streamError, tokens: streamedTokens } = useStreamMessage();
+  const { data: conversation, isLoading: conversationLoading } = useConversationForChapter(selectedChapterId);
+  const { streamMessage, isStreaming, error: streamError, tokens } = useStreamMessage();
   const clearConversationMutation = useClearConversation();
 
-  const messageInputRef = useRef<HTMLInputElement>(null);
-  const messageAreaRef = useRef<HTMLDivElement>(null);
+  const actualConversationId = conversation?.id;
 
-  // Focus the input field when a chapter is selected
   useEffect(() => {
-    if (selectedConversationId && messageInputRef.current) {
-      messageInputRef.current.focus();
+    if (actualConversationId && actualConversationId !== selectedConversationId) {
+      setSelectedConversationId(actualConversationId);
     }
-  }, [selectedConversationId]);
+  }, [actualConversationId, selectedConversationId, setSelectedConversationId]);
 
-  // When conversation is fetched, update selectedConversationId
-  React.useEffect(() => {
-    if (conversation && selectedConversationId !== conversation.id) {
-      setSelectedConversationId(conversation.id);
+  const messages = conversation?.messages || [];
+
+  useEffect(() => {
+    if (messageAreaRef.current) {
+      messageAreaRef.current.scrollTop = messageAreaRef.current.scrollHeight;
     }
-  }, [conversation, selectedConversationId, setSelectedConversationId]);
+  }, [messages, pendingMessages, isStreaming, tokens]);
 
-  // Handle sending a message (streaming)
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !selectedConversationId || !conversation) return;
+    if (!inputValue.trim() || !actualConversationId || conversationLoading || isStreaming) return;
+
     const messageToSend = inputValue.trim();
     setInputValue('');
-
-    // Restore focus to input immediately after clearing
-    setTimeout(() => {
-      if (messageInputRef.current) {
-        messageInputRef.current.focus();
-      }
-    }, 0);
 
     // Create a pending message
     const pendingId = `pending-${Date.now()}`;
     const pendingMessage: ChatMessage = {
       id: pendingId,
-      conversation: conversation.id,
-      role: ChatRole.USER,
+      conversation: actualConversationId,
+      role: 'user' as ChatRole,
       content: messageToSend,
       created_at: new Date().toISOString(),
-      sender: ChatSender.USER,
+      sender: 'user' as ChatSender,
       timestamp: new Date().toISOString(),
     };
     addPendingMessage(pendingMessage);
-    await streamMessage(
-      { conversationId: conversation.id, content: messageToSend }
-    );
-    removePendingMessage(pendingId);
 
-    // Restore focus after streaming completes
-    setTimeout(() => {
-      if (messageInputRef.current) {
-        messageInputRef.current.focus();
-      }
-    }, 100);
-  };
-
-  // Handle action button click - sets the message but doesn't send
-  const handleActionClick = (actionMessage: string) => {
-    setInputValue(actionMessage);
-    if (messageInputRef.current) {
-      messageInputRef.current.focus();
+    try {
+      await streamMessage({ conversationId: actualConversationId, content: messageToSend });
+      removePendingMessage(pendingId);
+    } catch {
+      removePendingMessage(pendingId);
     }
   };
 
-  // Handle clear conversation
+  const handleStopStreaming = () => {
+    // Note: Current implementation doesn't support stopping
+    console.log('Stop streaming requested');
+  };
+
+  const handleActionClick = (message: string) => {
+    if (!actualConversationId || conversationLoading || isStreaming) return;
+    setInputValue(message);
+  };
+
   const handleClearConversation = () => {
-    if (!conversation) return;
+    if (!actualConversationId) return;
     if (window.confirm('Are you sure you want to clear this conversation? This action cannot be undone.')) {
-      clearConversationMutation.mutate(conversation.id);
+      clearConversationMutation.mutate(actualConversationId);
     }
   };
 
-  // Handle keypress for sending message
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
+  // Merge messages with pending and streaming tokens
+  const allMessages = [...messages, ...pendingMessages];
 
-  // Merge confirmed, pending, and streamed messages
-  const mergedMessages: ChatMessage[] = [
-    ...(conversation?.messages || []),
-    ...pendingMessages,
-  ];
-  // If streaming, add a temporary assistant message with streamedTokens
-  if (isStreaming && streamedTokens.length > 0) {
-    mergedMessages.push({
+  // Add streaming message if streaming
+  if (isStreaming && tokens.length > 0) {
+    allMessages.push({
       id: `streaming-${Date.now()}`,
-      conversation: conversation?.id,
-      role: ChatRole.ASSISTANT,
-      content: streamedTokens.join(''),
+      conversation: actualConversationId || '',
+      role: 'assistant' as ChatRole,
+      content: tokens.join(''),
       created_at: new Date().toISOString(),
-      sender: ChatSender.ASSISTANT,
+      sender: 'assistant' as ChatSender,
       timestamp: new Date().toISOString(),
     });
   }
 
-  // Render the appropriate content based on state
-  const renderContent = () => {
-    if (!selectedConversationId) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64 text-gray-400 mt-8">
-          <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          <p className="text-xl font-medium mb-2">Please Select a Chapter</p>
-          <p className="text-center max-w-md">Use the dropdown box along the top of the screen to select a chapter. Once you select a chapter, you can begin chatting.</p>
-        </div>
-      );
-    }
-    if (conversationLoading) {
-      return (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-gray-500">Loading conversation...</p>
-        </div>
-      );
-    }
-    if (conversationError) {
-      return (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-red-500">{conversationError instanceof Error ? conversationError.message : String(conversationError)}</p>
-        </div>
-      );
-    }
-    if (conversation) {
-      return (
-        <MessageList
-          messages={mergedMessages}
-          greeting={conversation.chapter_details && 'greeting' in conversation.chapter_details ? conversation.chapter_details.greeting : undefined}
-        />
-      );
-    }
-    return null;
-  };
+  // Empty state when no chapter is selected
+  if (!selectedChapterId) {
+    return (
+      <div className="flex-1 flex flex-col h-full bg-white">
+        <ChatHeader />
 
-  const scrollToBottom = () => {
-    if (messageAreaRef.current) {
-      messageAreaRef.current.scrollTop = messageAreaRef.current.scrollHeight;
-    }
-  };
+        <div className="flex-1 flex items-center justify-center p-8">
+          <Card className="max-w-md w-full p-8 text-center bg-white/90 backdrop-blur-sm border-violet-200/50 shadow-lg">
+            <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-violet-400 to-purple-400 rounded-2xl flex items-center justify-center shadow-sm">
+              <MessageSquare className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-xl font-semibold mb-3 text-slate-800">Please Select a Chapter</h2>
+            <p className="text-slate-600 leading-relaxed">
+              Use the dropdown box along the top of the screen to select a chapter. Once you select a chapter, you can
+              begin chatting.
+            </p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
-  // Scroll to bottom when conversation changes
-  useEffect(() => {
-    scrollToBottom();
-  }, [conversation, pendingMessages]);
+  const hasMessages = allMessages.length > 0;
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col h-full bg-white">
+      {/* Chat Header */}
+      <ChatHeader />
+
       {/* Message Area */}
-      <div ref={messageAreaRef} className="flex-1 overflow-y-auto px-4 pb-4 scroll-smooth">
-        {renderContent()}
-        {/* Show message error if there is one */}
-        {(streamError || clearConversationMutation.isError) && (
-          <div className="p-3 bg-red-100 text-red-800 rounded-md mt-2 mx-auto max-w-md">
-            <p>Error: {streamError?.message || (clearConversationMutation.error instanceof Error ? clearConversationMutation.error.message : 'Unknown error')}</p>
-          </div>
-        )}
+      <div ref={messageAreaRef} className="flex-1 overflow-y-auto bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          {!hasMessages ? (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+              <div className="w-20 h-20 mb-8 bg-gradient-to-br from-violet-400 to-purple-400 rounded-3xl flex items-center justify-center shadow-lg">
+                <MessageSquare className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-2xl font-semibold text-slate-800 mb-4">Start a Conversation</h3>
+              <p className="text-slate-600 max-w-md leading-relaxed mb-8">
+                Ask me anything about this chapter. I'm here to help you understand the concepts and answer your questions.
+              </p>
+
+              {/* Quick Action Buttons */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-md">
+                <button
+                  onClick={() => handleActionClick("Can you explain the main concepts in this chapter?")}
+                  className="p-4 bg-white border border-slate-200 rounded-xl hover:border-violet-200 hover:bg-violet-50/50 transition-all duration-200 text-left group"
+                >
+                  <div className="text-sm font-medium text-slate-800 mb-1">Main Concepts</div>
+                  <div className="text-xs text-slate-500">Explain key ideas</div>
+                </button>
+                <button
+                  onClick={() => handleActionClick("Can you give me some examples?")}
+                  className="p-4 bg-white border border-slate-200 rounded-xl hover:border-violet-200 hover:bg-violet-50/50 transition-all duration-200 text-left group"
+                >
+                  <div className="text-sm font-medium text-slate-800 mb-1">Examples</div>
+                  <div className="text-xs text-slate-500">Show practical examples</div>
+                </button>
+                <button
+                  onClick={() => handleActionClick("Can you quiz me on this material?")}
+                  className="p-4 bg-white border border-slate-200 rounded-xl hover:border-violet-200 hover:bg-violet-50/50 transition-all duration-200 text-left group"
+                >
+                  <div className="text-sm font-medium text-slate-800 mb-1">Quiz Me</div>
+                  <div className="text-xs text-slate-500">Test understanding</div>
+                </button>
+                <button
+                  onClick={() => handleActionClick("Can you provide a summary?")}
+                  className="p-4 bg-white border border-slate-200 rounded-xl hover:border-violet-200 hover:bg-violet-50/50 transition-all duration-200 text-left group"
+                >
+                  <div className="text-sm font-medium text-slate-800 mb-1">Summary</div>
+                  <div className="text-xs text-slate-500">Quick overview</div>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <MessageList
+              messages={allMessages}
+              greeting={conversation?.chapter_details && 'greeting' in conversation.chapter_details ? conversation.chapter_details.greeting : undefined}
+              isStreaming={isStreaming}
+            />
+          )}
+        </div>
       </div>
-      {/* Input Area with new buttons */}
-      <div className="border-t border-gray-200 py-3 px-4 bg-white">
-        <div className="max-w-3xl mx-auto">
-          <ChatControls
-            onActionClick={handleActionClick}
-            onClearConversation={handleClearConversation}
-            disabled={!selectedConversationId || conversationLoading || isStreaming}
-          />
-          <form onSubmit={(e) => { e.preventDefault(); }} className="flex items-center border rounded-md">
-            <input
-              ref={messageInputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isStreaming
-                  ? "AI is responding..."
-                  : selectedConversationId
-                    ? "Type your message..."
-                    : "Please select a chapter first"
-              }
-              className="flex-grow px-4 py-2 focus:outline-none"
+
+      {/* Show errors */}
+      {(streamError || clearConversationMutation.isError) && (
+        <div className="mx-4 mb-4">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start">
+              <svg className="w-5 h-5 text-red-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <h4 className="text-red-800 font-medium">Error</h4>
+                <p className="text-red-700 text-sm mt-1">
+                  {streamError?.message || (clearConversationMutation.error instanceof Error ? clearConversationMutation.error.message : 'An unexpected error occurred')}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Controls - Only show when there are messages */}
+      {hasMessages && (
+        <div className="border-t border-slate-200/60 bg-white/90 backdrop-blur-sm px-4 py-3">
+          <div className="max-w-4xl mx-auto">
+            <ChatControls
+              onActionClick={handleActionClick}
+              onClearConversation={handleClearConversation}
               disabled={!selectedConversationId || conversationLoading || isStreaming}
             />
-            <button
-              type="button"
-              onClick={handleSendMessage}
-              className={`px-4 py-2 ${inputValue.trim() && selectedConversationId && !isStreaming
-                ? 'text-purple-600 hover:text-purple-700'
-                : 'text-gray-400'
-                }`}
-              disabled={!inputValue.trim() || !selectedConversationId || conversationLoading || isStreaming}
-            >
-              Send
-            </button>
-          </form>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Input */}
+      <div className="bg-white border-t border-slate-200/60">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <ChatInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={handleSendMessage}
+            onStop={handleStopStreaming}
+            disabled={!selectedConversationId || conversationLoading}
+            isStreaming={isStreaming}
+            inputRef={inputRef}
+          />
         </div>
       </div>
     </div>
