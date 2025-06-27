@@ -1,29 +1,33 @@
 // src/components/chat/ChatHeader.tsx
 import React from 'react';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { setSelectedChapter } from '../../store/slices/chatSlice';
+import { useQuery } from '@tanstack/react-query';
+import { chatService } from '@/services/chat.service';
+import { useChatStore } from '@/stores/chatStore';
 
 const ChatHeader: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const { availableChapters, selectedChapterId, loading, error } = useAppSelector(state => state.chat);
-  const apiIsReady = useAppSelector(state => state.api?.isReady);
+  const { selectedChapterId, setSelectedChapterId } = useChatStore();
+  const { data: availableChapters = [], isLoading, error } = useQuery({
+    queryKey: ['chat', 'availableChapters'],
+    queryFn: chatService.getAvailableChapters,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const handleChapterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const chapterId = e.target.value;
-    dispatch(setSelectedChapter(chapterId || null));
+    setSelectedChapterId(chapterId || null);
   };
 
   return (
     <div className="flex items-center p-3 border-b border-gray-200 bg-white">
       {/* Mode Toggle */}
       <div className="flex space-x-2 mr-4">
-        <button 
+        <button
           className="px-3 py-1 bg-blue-600 text-white rounded-md font-medium text-sm"
           disabled
         >
           Classic
         </button>
-        <button 
+        <button
           className="px-3 py-1 text-gray-400 bg-gray-100 rounded-md font-medium text-sm"
           disabled
         >
@@ -33,12 +37,10 @@ const ChatHeader: React.FC = () => {
 
       {/* Chapter Dropdown */}
       <div className="flex-grow">
-        {!apiIsReady ? (
-          <div className="text-sm text-gray-500">Connecting to API...</div>
-        ) : loading ? (
+        {isLoading ? (
           <div className="text-sm text-gray-500">Loading chapters...</div>
         ) : error ? (
-          <div className="text-sm text-red-500">Error: {error}</div>
+          <div className="text-sm text-red-500">Error: {error instanceof Error ? error.message : 'Unknown error'}</div>
         ) : availableChapters.length === 0 ? (
           <div className="text-sm text-gray-500">No chapters available</div>
         ) : (

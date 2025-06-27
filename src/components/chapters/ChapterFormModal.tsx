@@ -240,7 +240,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         </div>
 
         {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto p-6 min-h-[500px]">
+        <div className="flex-1 overflow-y-auto p-6">
           {activeTab === 'basic' && (
             <BasicInfoTab />
           )}
