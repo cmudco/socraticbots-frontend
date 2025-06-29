@@ -1,6 +1,13 @@
 // src/hooks/queries/useChapters.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { chapterService, Chapter, CreateChapterRequest, UpdateChapterRequest } from '../../services/chapters.service';
+import { 
+  chapterService, 
+  Chapter, 
+  CreateChapterRequest, 
+  UpdateChapterRequest,
+  ChapterModelPreferenceRequest,
+  ChapterPromptRequest
+} from '../../services/chapters.service';
 import { useAuthStore } from '../../stores/authStore';
 
 // Query Keys
@@ -53,8 +60,18 @@ export const useCreateChapter = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ bookId, chapterData }: { bookId: string; chapterData: CreateChapterRequest }) =>
-      chapterService.createChapter(bookId, chapterData),
+    mutationFn: ({ 
+      bookId, 
+      chapterData, 
+      modelPreferences, 
+      promptData 
+    }: { 
+      bookId: string; 
+      chapterData: CreateChapterRequest;
+      modelPreferences?: ChapterModelPreferenceRequest;
+      promptData?: ChapterPromptRequest;
+    }) =>
+      chapterService.createChapter(bookId, chapterData, modelPreferences, promptData),
     onSuccess: (newChapter: Chapter, { bookId }) => {
       // Add to cache optimistically
       queryClient.setQueryData<Chapter[]>(chapterKeys.list(bookId), (oldChapters) => {
@@ -77,11 +94,19 @@ export const useUpdateChapter = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ bookId, chapterId, chapterData }: {
+    mutationFn: ({ 
+      bookId, 
+      chapterId, 
+      chapterData, 
+      modelPreferences, 
+      promptData 
+    }: {
       bookId: string;
       chapterId: string;
       chapterData: UpdateChapterRequest;
-    }) => chapterService.updateChapter(bookId, chapterId, chapterData),
+      modelPreferences?: ChapterModelPreferenceRequest;
+      promptData?: ChapterPromptRequest;
+    }) => chapterService.updateChapter(bookId, chapterId, chapterData, modelPreferences, promptData),
     onSuccess: (updatedChapter: Chapter, { bookId, chapterId }) => {
       // Update the specific chapter in cache
       queryClient.setQueryData<Chapter>(

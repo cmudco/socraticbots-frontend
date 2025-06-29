@@ -115,7 +115,7 @@ export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
     greeting: chapter.prompts?.greeting || '',
     chat_prompt: chapter.prompts?.chat_prompt || '',
     tracking_prompt: chapter.prompts?.tracking_prompt || '',
-    learning_goals: chapter.learning_goals?.map((lg: LearningGoal) => lg.title).join('\n') || '',
+    learning_goals: chapter.prompts?.learning_goals || '',
     chat_model_id: chapter.model_preference?.chat_model?.id || '',
     tracking_model_id: chapter.model_preference?.tracking_model?.id || '',
     ...initialValidationState
