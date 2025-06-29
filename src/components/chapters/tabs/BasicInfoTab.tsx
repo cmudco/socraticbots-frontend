@@ -1,6 +1,6 @@
 // src/components/chapters/tabs/BasicInfoTab.tsx
 import React, { forwardRef } from 'react';
-import { Formik, Form, Field, ErrorMessage, FormikProps } from 'formik';
+import { Formik, Form, Field, FormikProps } from 'formik';
 import * as Yup from 'yup';
 import { useChapterFormStore } from '../../../stores/chapterFormStore';
 import { useModels, type Model } from '../../../hooks/queries/useModels';
@@ -34,7 +34,7 @@ interface FormValues {
   tracking_model_id: string;
 }
 
-const BasicInfoTab = forwardRef<FormikProps<FormValues>>((props, ref) => {
+const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
   // Get form data from Zustand store
   const {
     title,
@@ -76,7 +76,7 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((props, ref) => {
       validateOnChange={true}
       validateOnBlur={true}
     >
-      {({ values, errors, touched, handleChange, handleBlur, setFieldValue, isValid, validateForm }) => {
+      {({ values, errors, touched, handleChange, handleBlur, setFieldValue, isValid }) => {
         // Update Zustand store when values change
         React.useEffect(() => {
           Object.entries(values).forEach(([field, value]) => {

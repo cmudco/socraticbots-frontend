@@ -1,5 +1,5 @@
 // src/components/chapters/ChapterFormModal.tsx
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { BookOpen } from 'lucide-react';
@@ -47,10 +47,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     learning_goals,
     chat_model_id,
     tracking_model_id,
-    originalChapter,
     setActiveTab,
-    updateField,
-    resetForm,
     closeForm,
     setSubmitting,
     initEditChapter,

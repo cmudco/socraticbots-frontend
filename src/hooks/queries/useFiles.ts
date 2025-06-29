@@ -86,8 +86,8 @@ export const useUploadFile = (chapterId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ uploadData, onProgress }: { uploadData: UploadFileRequest; onProgress?: (progress: number) => void }) =>
-      fileService.uploadChapterFile(chapterId, uploadData, onProgress),
+    mutationFn: ({ uploadData, }: { uploadData: UploadFileRequest; onProgress?: (progress: number) => void }) =>
+      fileService.uploadChapterFile(chapterId, uploadData,),
     onSuccess: (newFile: ChapterFile) => {
       // Add to cache optimistically
       queryClient.setQueryData<ChapterFile[]>(fileKeys.chapterFiles(chapterId), (oldFiles) => {

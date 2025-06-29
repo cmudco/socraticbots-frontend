@@ -57,7 +57,7 @@ const setStoredUser = (user: User | null) => {
   }
 };
 
-export const useAuthStore = create<AuthStore>((set, get) => ({
+export const useAuthStore = create<AuthStore>((set) => ({
   // Initial state
   user: null,
   tokens: null,
@@ -68,12 +68,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   setAuth: (authData) => {
     setStoredTokens(authData.tokens);
     setStoredUser(authData.user);
-    set({
+    set((state) => ({
+      ...state,
       user: authData.user,
       tokens: authData.tokens,
       isAuthenticated: authData.isAuthenticated,
       isLoading: authData.isLoading,
-    });
+    }));
   },
 
   clearAuth: () => {

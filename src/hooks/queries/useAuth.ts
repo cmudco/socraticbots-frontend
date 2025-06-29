@@ -30,7 +30,7 @@ export const useValidateToken = (token?: string) => {
 export const useUserProfile = (token?: string) => {
   return useQuery({
     queryKey: authKeys.profile(token || ''),
-    queryFn: () => authService.fetchUserProfile(token!),
+    queryFn: () => authService.fetchUserProfile(),
     enabled: !!token,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,

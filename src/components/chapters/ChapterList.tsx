@@ -1,7 +1,7 @@
 // src/components/chapters/ChapterList.tsx - Migrated to TanStack Query
 import React, { useState } from 'react';
 import { Chapter } from '../../services/chapters.service';
-import { useChapters, useDeleteChapter } from '../../hooks/queries/useChapters';
+import { useChapters, } from '../../hooks/queries/useChapters';
 import ChapterItem from './ChapterItem';
 import ChapterFormModal from './ChapterFormModal';
 import DeleteChapterModal from './DeleteChapterModal';
@@ -23,8 +23,6 @@ const ChapterList: React.FC<ChapterListProps> = ({
     isLoading: loading,
     error
   } = useChapters(bookId);
-
-  const deleteChapterMutation = useDeleteChapter();
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);

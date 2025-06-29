@@ -26,7 +26,7 @@ const TrackingSidebar: React.FC = () => {
   const { streamProgressTracking } = useStreamProgressTracking();
   
   // Get progress streaming state from Zustand store
-  const { isProgressStreaming, progressTokens, setProgressStreaming, addProgressToken, clearProgressTokens } = useChatStore();
+  const { isProgressStreaming, progressTokens, setProgressStreaming, clearProgressTokens } = useChatStore();
 
   if (!selectedConversationId) {
     return (
