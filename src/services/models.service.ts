@@ -1,6 +1,6 @@
 // src/services/models.service.ts
-import { baseRequest } from '../utils/baseRequest';
 import { METHOD } from '../constants/requests';
+import { baseRequest } from '../utils/baseRequest';
 
 export interface AIModel {
   id: string;
@@ -25,7 +25,7 @@ class ModelsService {
       method: METHOD.GET,
     });
   }
-  
+
   // Get a single AI model by ID
   async getModel(modelId: string): Promise<AIModel> {
     return baseRequest<AIModel>({
@@ -38,8 +38,8 @@ class ModelsService {
   async getModelsByProvider(provider: string): Promise<AIModel[]> {
     try {
       const allModels = await this.getModels();
-      return allModels.filter(model => 
-        model.provider.toLowerCase() === provider.toLowerCase() && model.is_active
+      return allModels.filter(
+        model => model.provider.toLowerCase() === provider.toLowerCase() && model.is_active
       );
     } catch (error) {
       console.error(`Error fetching models for provider ${provider}:`, error);

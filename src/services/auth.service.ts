@@ -1,7 +1,7 @@
 // src/services/auth.service.ts
-import { User, AuthTokens } from '../types/auth';
-import { baseRequest } from '../utils/baseRequest';
 import { METHOD } from '../constants/requests';
+import { AuthTokens, User } from '../types/auth';
+import { baseRequest } from '../utils/baseRequest';
 
 class AuthService {
   // Check if a token is valid
@@ -19,7 +19,7 @@ class AuthService {
       return false;
     }
   }
-  
+
   // Login and get tokens
   async login(username: string, password: string): Promise<AuthTokens> {
     return baseRequest<AuthTokens>({
@@ -29,7 +29,7 @@ class AuthService {
       includeAuthToken: false,
     });
   }
-  
+
   // Refresh tokens
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
     try {
@@ -39,10 +39,10 @@ class AuthService {
         data: { refresh: refreshToken },
         includeAuthToken: false,
       });
-      
+
       // Check if we got a new refresh token
       const newRefreshToken = data.refresh || refreshToken;
-      
+
       return {
         access: data.access,
         refresh: newRefreshToken,
@@ -52,7 +52,7 @@ class AuthService {
       throw error;
     }
   }
-  
+
   // Fetch user profile
   async fetchUserProfile(): Promise<User> {
     return baseRequest<User>({
@@ -60,7 +60,7 @@ class AuthService {
       method: METHOD.GET,
     });
   }
-  
+
   // Change password
   async changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
     await baseRequest({
@@ -68,7 +68,7 @@ class AuthService {
       method: METHOD.POST,
       data: {
         old_password: oldPassword,
-        new_password: newPassword
+        new_password: newPassword,
       },
     });
     return true;

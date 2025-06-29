@@ -1,16 +1,17 @@
 // src/App.tsx
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ReactQueryProvider } from './providers/ReactQueryProvider';
-import { useAuthInitialization } from './hooks/queries/useAuthInitialization';
-import Layout from './components/layout/Layout';
-import Home from './pages/Home';
-import About from './pages/About';
-import Settings from './pages/Settings';
-import Login from './pages/Login';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import Layout from './components/layout/Layout';
+import { useAuthInitialization } from './hooks/queries/useAuthInitialization';
+import About from './pages/About';
 import Books from './pages/Books';
 import Chat from './pages/Chat';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Settings from './pages/Settings';
+import { ReactQueryProvider } from './providers/ReactQueryProvider';
 
 // Auth initialization component
 const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -28,11 +29,14 @@ const App: React.FC = () => {
             <Route path="/login" element={<Login />} />
 
             {/* Protected routes with shared layout */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }>
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
               {/* Nested routes - these render in the Layout's Outlet */}
               <Route index element={<Home />} />
               <Route path="about" element={<About />} />

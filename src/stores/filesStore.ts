@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+
 import { FileUploadStatus } from '../types/file';
 
 interface UploadingFile {
@@ -37,30 +38,30 @@ const initialState = {
   deleteModal: {
     isOpen: false,
     fileId: '',
-    fileName: ''
-  }
+    fileName: '',
+  },
 };
 
-export const useFilesStore = create<FilesState>((set) => ({
+export const useFilesStore = create<FilesState>(set => ({
   ...initialState,
 
   setDragActive: (active: boolean) => set({ dragActive: active }),
 
   addUploadingFile: (file: UploadingFile) =>
-    set((state) => ({
-      uploadingFiles: [...state.uploadingFiles, file]
+    set(state => ({
+      uploadingFiles: [...state.uploadingFiles, file],
     })),
 
   updateUploadingFile: (id: string, updates: Partial<UploadingFile>) =>
-    set((state) => ({
+    set(state => ({
       uploadingFiles: state.uploadingFiles.map(file =>
         file.id === id ? { ...file, ...updates } : file
-      )
+      ),
     })),
 
   removeUploadingFile: (id: string) =>
-    set((state) => ({
-      uploadingFiles: state.uploadingFiles.filter(file => file.id !== id)
+    set(state => ({
+      uploadingFiles: state.uploadingFiles.filter(file => file.id !== id),
     })),
 
   clearUploadingFiles: () => set({ uploadingFiles: [] }),
@@ -70,8 +71,8 @@ export const useFilesStore = create<FilesState>((set) => ({
       deleteModal: {
         isOpen: true,
         fileId,
-        fileName
-      }
+        fileName,
+      },
     }),
 
   closeDeleteModal: () =>
@@ -79,7 +80,7 @@ export const useFilesStore = create<FilesState>((set) => ({
       deleteModal: {
         isOpen: false,
         fileId: '',
-        fileName: ''
-      }
-    })
+        fileName: '',
+      },
+    }),
 }));

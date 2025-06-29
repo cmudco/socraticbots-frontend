@@ -1,13 +1,14 @@
 // src/components/common/AuthTest.tsx
 import React, { useState } from 'react';
-import { baseRequest } from '../../utils/baseRequest';
+
 import { METHOD } from '../../constants/requests';
+import { baseRequest } from '../../utils/baseRequest';
 
 const AuthTest: React.FC = () => {
   const [response, setResponse] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const testAuth = async () => {
     setLoading(true);
     setError(null);
@@ -25,31 +26,25 @@ const AuthTest: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   return (
-    <div className="p-4 border rounded">
-      <h2 className="text-lg font-bold mb-4">API Auth Test</h2>
-      
-      <button 
+    <div className="rounded border p-4">
+      <h2 className="mb-4 text-lg font-bold">API Auth Test</h2>
+
+      <button
         onClick={testAuth}
         disabled={loading}
-        className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-blue-300"
+        className="rounded bg-blue-500 px-4 py-2 text-white disabled:bg-blue-300"
       >
         {loading ? 'Testing...' : 'Test Auth'}
       </button>
-      
-      {error && (
-        <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
-          Error: {error}
-        </div>
-      )}
-      
+
+      {error && <div className="mt-4 rounded bg-red-100 p-3 text-red-700">Error: {error}</div>}
+
       {response && (
         <div className="mt-4">
           <h3 className="font-semibold">Response:</h3>
-          <pre className="p-3 bg-gray-100 rounded overflow-auto max-h-60">
-            {response}
-          </pre>
+          <pre className="max-h-60 overflow-auto rounded bg-gray-100 p-3">{response}</pre>
         </div>
       )}
     </div>

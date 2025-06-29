@@ -1,5 +1,6 @@
 // src/components/chapters/ChapterItem.tsx
 import React from 'react';
+
 import { Chapter } from '../../services/chapters.service';
 
 interface ChapterItemProps {
@@ -10,7 +11,7 @@ interface ChapterItemProps {
 
 const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete }) => {
   return (
-    <div className="flex justify-between items-center p-3 border rounded bg-white">
+    <div className="flex items-center justify-between rounded border bg-white p-3">
       <div>
         <h4 className="font-medium">{chapter.title}</h4>
         <div className="text-sm text-gray-600">
@@ -21,13 +22,13 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete }) 
       <div className="flex space-x-2">
         <button
           onClick={onEdit}
-          className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="rounded bg-blue-500 px-2 py-1 text-xs text-white hover:bg-blue-600"
         >
           Edit
         </button>
         <button
           onClick={onDelete}
-          className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+          className="rounded bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600"
         >
           Delete
         </button>

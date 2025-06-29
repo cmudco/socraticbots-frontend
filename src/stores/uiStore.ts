@@ -8,17 +8,17 @@ interface UiStore {
   setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
-export const useUiStore = create<UiStore>((set) => ({
+export const useUiStore = create<UiStore>(set => ({
   // Initial state
   sidebarCollapsed: false,
 
   // Actions
   toggleSidebar: () =>
-    set((state) => ({
+    set(state => ({
       sidebarCollapsed: !state.sidebarCollapsed,
     })),
 
-  setSidebarCollapsed: (collapsed) =>
+  setSidebarCollapsed: collapsed =>
     set({
       sidebarCollapsed: collapsed,
     }),

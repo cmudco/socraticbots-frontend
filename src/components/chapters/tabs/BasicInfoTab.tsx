@@ -1,12 +1,21 @@
 // src/components/chapters/tabs/BasicInfoTab.tsx
-import React, { forwardRef } from 'react';
-import { Formik, Form, Field, FormikProps } from 'formik';
+import { forwardRef } from 'react';
+
+import { Field, Form, Formik, FormikProps } from 'formik';
 import * as Yup from 'yup';
-import { useChapterFormStore } from '../../../stores/chapterFormStore';
-import { useModels, type Model } from '../../../hooks/queries/useModels';
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+import { type Model, useModels } from '../../../hooks/queries/useModels';
+import { useChapterFormStore } from '../../../stores/chapterFormStore';
 
 // Validation schema for the basic info form
 const BasicInfoSchema = Yup.object().shape({
@@ -36,14 +45,8 @@ interface FormValues {
 
 const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
   // Get form data from Zustand store
-  const {
-    title,
-    subject,
-    topic,
-    chat_model_id,
-    tracking_model_id,
-    updateField,
-  } = useChapterFormStore();
+  const { title, subject, topic, chat_model_id, tracking_model_id, updateField } =
+    useChapterFormStore();
 
   // Use the models query hook
   const { data: availableModels = [], isLoading: modelsLoading } = useModels();
@@ -76,19 +79,7 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
       validateOnChange={true}
       validateOnBlur={true}
     >
-      {({ values, errors, touched, handleChange, handleBlur, setFieldValue, isValid }) => {
-        // Update Zustand store when values change
-        React.useEffect(() => {
-          Object.entries(values).forEach(([field, value]) => {
-            updateField(field, value);
-          });
-        }, [values, updateField]);
-
-        // Debug logging
-        React.useEffect(() => {
-          console.log('Formik state:', { values, errors, touched, isValid });
-        }, [values, errors, touched, isValid]);
-
+      {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => {
         return (
           <Form className="space-y-6">
             {/* Title Field */}
@@ -103,13 +94,15 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
                 type="text"
                 placeholder="Enter chapter title"
                 className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
-                  errors.title && touched.title ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
+                  errors.title && touched.title
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                    : ''
                 }`}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />
               {errors.title && touched.title && (
-                <div className="text-sm text-red-600 mt-1">{errors.title}</div>
+                <div className="mt-1 text-sm text-red-600">{errors.title}</div>
               )}
             </div>
 
@@ -125,13 +118,15 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
                 type="text"
                 placeholder="Enter subject area"
                 className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
-                  errors.subject && touched.subject ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
+                  errors.subject && touched.subject
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                    : ''
                 }`}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />
               {errors.subject && touched.subject && (
-                <div className="text-sm text-red-600 mt-1">{errors.subject}</div>
+                <div className="mt-1 text-sm text-red-600">{errors.subject}</div>
               )}
             </div>
 
@@ -147,13 +142,15 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
                 type="text"
                 placeholder="Enter specific topic"
                 className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
-                  errors.topic && touched.topic ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
+                  errors.topic && touched.topic
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                    : ''
                 }`}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />
               {errors.topic && touched.topic && (
-                <div className="text-sm text-red-600 mt-1">{errors.topic}</div>
+                <div className="mt-1 text-sm text-red-600">{errors.topic}</div>
               )}
             </div>
 
@@ -163,11 +160,11 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
                 Chat Model
               </Label>
               {modelsLoading ? (
-                <div className="text-slate-500 text-sm">Loading models...</div>
+                <div className="text-sm text-slate-500">Loading models...</div>
               ) : (
                 <Select
                   value={values.chat_model_id}
-                  onValueChange={(value) => setFieldValue('chat_model_id', value)}
+                  onValueChange={value => setFieldValue('chat_model_id', value)}
                 >
                   <SelectTrigger className="border-slate-200 focus:border-violet-300 focus:ring-violet-200">
                     <SelectValue placeholder="Select Chat Model" />
@@ -182,7 +179,7 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
                 </Select>
               )}
               {errors.chat_model_id && touched.chat_model_id && (
-                <div className="text-sm text-red-600 mt-1">{errors.chat_model_id}</div>
+                <div className="mt-1 text-sm text-red-600">{errors.chat_model_id}</div>
               )}
             </div>
 
@@ -192,11 +189,11 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
                 Progress Tracking Model
               </Label>
               {modelsLoading ? (
-                <div className="text-slate-500 text-sm">Loading models...</div>
+                <div className="text-sm text-slate-500">Loading models...</div>
               ) : (
                 <Select
                   value={values.tracking_model_id}
-                  onValueChange={(value) => setFieldValue('tracking_model_id', value)}
+                  onValueChange={value => setFieldValue('tracking_model_id', value)}
                 >
                   <SelectTrigger className="border-slate-200 focus:border-violet-300 focus:ring-violet-200">
                     <SelectValue placeholder="Select Progress Tracking Model" />
@@ -211,7 +208,7 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
                 </Select>
               )}
               {errors.tracking_model_id && touched.tracking_model_id && (
-                <div className="text-sm text-red-600 mt-1">{errors.tracking_model_id}</div>
+                <div className="mt-1 text-sm text-red-600">{errors.tracking_model_id}</div>
               )}
             </div>
 

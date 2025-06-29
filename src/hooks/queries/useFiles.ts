@@ -1,18 +1,27 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { fileService } from '../../services/files.service';
-import { ChapterFile, UploadFileRequest, FileFilters, FileProcessingStatus } from '../../types/file';
 import { useAuthStore } from '../../stores/authStore';
+import {
+  ChapterFile,
+  FileFilters,
+  FileProcessingStatus,
+  UploadFileRequest,
+} from '../../types/file';
 
 // Query Keys
 export const fileKeys = {
   all: ['files'] as const,
   chapters: () => [...fileKeys.all, 'chapter'] as const,
   chapter: (chapterId: string) => [...fileKeys.chapters(), chapterId] as const,
-  chapterFiles: (chapterId: string, filters?: FileFilters) => [...fileKeys.chapter(chapterId), 'list', { filters }] as const,
+  chapterFiles: (chapterId: string, filters?: FileFilters) =>
+    [...fileKeys.chapter(chapterId), 'list', { filters }] as const,
   details: () => [...fileKeys.all, 'detail'] as const,
-  detail: (chapterId: string, fileId: string) => [...fileKeys.details(), chapterId, fileId] as const,
+  detail: (chapterId: string, fileId: string) =>
+    [...fileKeys.details(), chapterId, fileId] as const,
   search: (query: string) => [...fileKeys.all, 'search', query] as const,
-  status: (chapterId: string, status: ChapterFile['processing_status']) => [...fileKeys.chapter(chapterId), 'status', status] as const,
+  status: (chapterId: string, status: ChapterFile['processing_status']) =>
+    [...fileKeys.chapter(chapterId), 'status', status] as const,
 };
 
 // Query Hooks
@@ -20,7 +29,11 @@ export const fileKeys = {
 /**
  * Get all files for a specific chapter
  */
-export const useChapterFiles = (chapterId: string, filters?: FileFilters, enabled: boolean = true) => {
+export const useChapterFiles = (
+  chapterId: string,
+  filters?: FileFilters,
+  enabled: boolean = true
+) => {
   const { isAuthenticated, tokens } = useAuthStore();
 
   return useQuery({
@@ -86,11 +99,15 @@ export const useUploadFile = (chapterId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ uploadData, }: { uploadData: UploadFileRequest; onProgress?: (progress: number) => void }) =>
-      fileService.uploadChapterFile(chapterId, uploadData,),
+    mutationFn: ({
+      uploadData,
+    }: {
+      uploadData: UploadFileRequest;
+      onProgress?: (progress: number) => void;
+    }) => fileService.uploadChapterFile(chapterId, uploadData),
     onSuccess: (newFile: ChapterFile) => {
       // Add to cache optimistically
-      queryClient.setQueryData<ChapterFile[]>(fileKeys.chapterFiles(chapterId), (oldFiles) => {
+      queryClient.setQueryData<ChapterFile[]>(fileKeys.chapterFiles(chapterId), oldFiles => {
         return oldFiles ? [...oldFiles, newFile] : [newFile];
       });
 
@@ -98,7 +115,7 @@ export const useUploadFile = (chapterId: string) => {
       queryClient.invalidateQueries({ queryKey: fileKeys.chapter(chapterId) });
       queryClient.invalidateQueries({ queryKey: fileKeys.search('') });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to upload file:', error);
     },
   });
@@ -111,23 +128,31 @@ export const useUpdateFile = (chapterId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ fileId, updateData }: { fileId: string; updateData: Partial<Pick<ChapterFile, 'name'>> }) =>
-      fileService.updateFile(chapterId, fileId, updateData),
+    mutationFn: ({
+      fileId,
+      updateData,
+    }: {
+      fileId: string;
+      updateData: Partial<Pick<ChapterFile, 'name'>>;
+    }) => fileService.updateFile(chapterId, fileId, updateData),
     onSuccess: (updatedFile: ChapterFile) => {
       // Update the specific file in cache
-      queryClient.setQueryData<ChapterFile>(fileKeys.detail(chapterId, updatedFile.id), updatedFile);
+      queryClient.setQueryData<ChapterFile>(
+        fileKeys.detail(chapterId, updatedFile.id),
+        updatedFile
+      );
 
       // Update file in the list cache
-      queryClient.setQueryData<ChapterFile[]>(fileKeys.chapterFiles(chapterId), (oldFiles) => {
+      queryClient.setQueryData<ChapterFile[]>(fileKeys.chapterFiles(chapterId), oldFiles => {
         return oldFiles
-          ? oldFiles.map((file) => (file.id === updatedFile.id ? updatedFile : file))
+          ? oldFiles.map(file => (file.id === updatedFile.id ? updatedFile : file))
           : [updatedFile];
       });
 
       // Invalidate search results
       queryClient.invalidateQueries({ queryKey: fileKeys.search('') });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to update file:', error);
     },
   });
@@ -143,8 +168,8 @@ export const useDeleteFile = (chapterId: string) => {
     mutationFn: (fileId: string) => fileService.deleteFile(chapterId, fileId),
     onSuccess: (_, deletedFileId: string) => {
       // Remove from list cache
-      queryClient.setQueryData<ChapterFile[]>(fileKeys.chapterFiles(chapterId), (oldFiles) => {
-        return oldFiles ? oldFiles.filter((file) => file.id !== deletedFileId) : [];
+      queryClient.setQueryData<ChapterFile[]>(fileKeys.chapterFiles(chapterId), oldFiles => {
+        return oldFiles ? oldFiles.filter(file => file.id !== deletedFileId) : [];
       });
 
       // Remove from detail cache
@@ -152,12 +177,20 @@ export const useDeleteFile = (chapterId: string) => {
 
       // Invalidate other related queries
       queryClient.invalidateQueries({ queryKey: fileKeys.search('') });
-      queryClient.invalidateQueries({ queryKey: fileKeys.status(chapterId, FileProcessingStatus.COMPLETED) });
-      queryClient.invalidateQueries({ queryKey: fileKeys.status(chapterId, FileProcessingStatus.FAILED) });
-      queryClient.invalidateQueries({ queryKey: fileKeys.status(chapterId, FileProcessingStatus.PROCESSING) });
-      queryClient.invalidateQueries({ queryKey: fileKeys.status(chapterId, FileProcessingStatus.PENDING) });
+      queryClient.invalidateQueries({
+        queryKey: fileKeys.status(chapterId, FileProcessingStatus.COMPLETED),
+      });
+      queryClient.invalidateQueries({
+        queryKey: fileKeys.status(chapterId, FileProcessingStatus.FAILED),
+      });
+      queryClient.invalidateQueries({
+        queryKey: fileKeys.status(chapterId, FileProcessingStatus.PROCESSING),
+      });
+      queryClient.invalidateQueries({
+        queryKey: fileKeys.status(chapterId, FileProcessingStatus.PENDING),
+      });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to delete file:', error);
     },
   });
@@ -173,20 +206,27 @@ export const useReprocessFile = (chapterId: string) => {
     mutationFn: (fileId: string) => fileService.reprocessFile(chapterId, fileId),
     onSuccess: (reprocessedFile: ChapterFile) => {
       // Update the specific file in cache
-      queryClient.setQueryData<ChapterFile>(fileKeys.detail(chapterId, reprocessedFile.id), reprocessedFile);
+      queryClient.setQueryData<ChapterFile>(
+        fileKeys.detail(chapterId, reprocessedFile.id),
+        reprocessedFile
+      );
 
       // Update file in the list cache
-      queryClient.setQueryData<ChapterFile[]>(fileKeys.chapterFiles(chapterId), (oldFiles) => {
+      queryClient.setQueryData<ChapterFile[]>(fileKeys.chapterFiles(chapterId), oldFiles => {
         return oldFiles
-          ? oldFiles.map((file) => (file.id === reprocessedFile.id ? reprocessedFile : file))
+          ? oldFiles.map(file => (file.id === reprocessedFile.id ? reprocessedFile : file))
           : [reprocessedFile];
       });
 
       // Invalidate status-based queries
-      queryClient.invalidateQueries({ queryKey: fileKeys.status(chapterId, FileProcessingStatus.PROCESSING) });
-      queryClient.invalidateQueries({ queryKey: fileKeys.status(chapterId, FileProcessingStatus.FAILED) });
+      queryClient.invalidateQueries({
+        queryKey: fileKeys.status(chapterId, FileProcessingStatus.PROCESSING),
+      });
+      queryClient.invalidateQueries({
+        queryKey: fileKeys.status(chapterId, FileProcessingStatus.FAILED),
+      });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to reprocess file:', error);
     },
   });

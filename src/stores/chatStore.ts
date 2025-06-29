@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+
 import type { ChatMessage } from '@/types/chat';
 
 interface ChatStoreState {
@@ -15,14 +16,14 @@ interface ChatStoreState {
   pendingMessages: ChatMessage[];
   addPendingMessage: (msg: ChatMessage) => void;
   removePendingMessage: (id: string) => void;
-  
+
   // Progress streaming state
   isProgressStreaming: boolean;
   progressTokens: string[];
   setProgressStreaming: (streaming: boolean) => void;
   addProgressToken: (token: string) => void;
   clearProgressTokens: () => void;
-  
+
   // Helper method to set chapter and clear related state
   setChapterContext: (bookId: string, chapterId: string, conversationId: string) => void;
   // Clear all chat state
@@ -30,45 +31,48 @@ interface ChatStoreState {
   // Add more UI state as needed (drafts, typing, etc.)
 }
 
-export const useChatStore = create<ChatStoreState>((set) => ({
+export const useChatStore = create<ChatStoreState>(set => ({
   selectedBookId: null,
-  setSelectedBookId: (id) => set({ selectedBookId: id }),
+  setSelectedBookId: id => set({ selectedBookId: id }),
   selectedChapterId: null,
-  setSelectedChapterId: (id) => set({ selectedChapterId: id }),
+  setSelectedChapterId: id => set({ selectedChapterId: id }),
   selectedConversationId: null,
-  setSelectedConversationId: (id) => set({ selectedConversationId: id }),
+  setSelectedConversationId: id => set({ selectedConversationId: id }),
   inputValue: '',
-  setInputValue: (value) => set({ inputValue: value }),
+  setInputValue: value => set({ inputValue: value }),
   isSidebarOpen: false,
-  setSidebarOpen: (open) => set({ isSidebarOpen: open }),
+  setSidebarOpen: open => set({ isSidebarOpen: open }),
   pendingMessages: [],
-  addPendingMessage: (msg) => set((state) => ({ pendingMessages: [...state.pendingMessages, msg] })),
-  removePendingMessage: (id) => set((state) => ({ pendingMessages: state.pendingMessages.filter((m) => m.id !== id) })),
+  addPendingMessage: msg => set(state => ({ pendingMessages: [...state.pendingMessages, msg] })),
+  removePendingMessage: id =>
+    set(state => ({ pendingMessages: state.pendingMessages.filter(m => m.id !== id) })),
 
   // Progress streaming state
   isProgressStreaming: false,
   progressTokens: [],
-  setProgressStreaming: (streaming) => set({ isProgressStreaming: streaming }),
-  addProgressToken: (token) => set((state) => ({ progressTokens: [...state.progressTokens, token] })),
+  setProgressStreaming: streaming => set({ isProgressStreaming: streaming }),
+  addProgressToken: token => set(state => ({ progressTokens: [...state.progressTokens, token] })),
   clearProgressTokens: () => set({ progressTokens: [] }),
 
   // Helper method to set all chapter context at once
-  setChapterContext: (bookId, chapterId, conversationId) => set({
-    selectedBookId: bookId,
-    selectedChapterId: chapterId,
-    selectedConversationId: conversationId,
-    inputValue: '', // Clear input when switching chapters
-    pendingMessages: [], // Clear pending messages when switching chapters
-    progressTokens: [], // Clear progress tokens when switching chapters
-  }),
+  setChapterContext: (bookId, chapterId, conversationId) =>
+    set({
+      selectedBookId: bookId,
+      selectedChapterId: chapterId,
+      selectedConversationId: conversationId,
+      inputValue: '', // Clear input when switching chapters
+      pendingMessages: [], // Clear pending messages when switching chapters
+      progressTokens: [], // Clear progress tokens when switching chapters
+    }),
 
   // Clear all chat state
-  clearChatState: () => set({
-    selectedBookId: null,
-    selectedChapterId: null,
-    selectedConversationId: null,
-    inputValue: '',
-    pendingMessages: [],
-    progressTokens: [],
-  }),
+  clearChatState: () =>
+    set({
+      selectedBookId: null,
+      selectedChapterId: null,
+      selectedConversationId: null,
+      inputValue: '',
+      pendingMessages: [],
+      progressTokens: [],
+    }),
 }));

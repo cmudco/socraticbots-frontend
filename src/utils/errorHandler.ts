@@ -1,9 +1,18 @@
 import axios, { AxiosError } from 'axios';
 
+// Django REST Framework error response interface
+interface DjangoErrorResponse {
+  message?: string;
+  error?: string;
+  detail?: string;
+  non_field_errors?: string[];
+  [key: string]: unknown; // For field-specific errors
+}
+
 export const getErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError;
-    
+    const axiosError = error as AxiosError<DjangoErrorResponse>;
+
     // Handle network errors
     if (!axiosError.response) {
       return 'Network error. Please check your internet connection.';
@@ -11,19 +20,36 @@ export const getErrorMessage = (error: unknown): string => {
 
     // Handle HTTP errors
     const status = axiosError.response.status;
-    const data = axiosError.response.data as any;
+    const data = axiosError.response.data;
 
     // Try to get error message from response data
-    if (data?.message) {
-      return data.message;
-    }
+    if (data) {
+      if (typeof data.message === 'string') {
+        return data.message;
+      }
 
-    if (data?.error) {
-      return data.error;
-    }
+      if (typeof data.error === 'string') {
+        return data.error;
+      }
 
-    if (data?.detail) {
-      return data.detail;
+      if (typeof data.detail === 'string') {
+        return data.detail;
+      }
+
+      // Handle Django REST Framework non_field_errors
+      if (Array.isArray(data.non_field_errors) && data.non_field_errors.length > 0) {
+        return data.non_field_errors[0];
+      }
+
+      // Handle field-specific errors
+      const fieldErrors = Object.keys(data).find(
+        key =>
+          key !== 'message' && key !== 'error' && key !== 'detail' && key !== 'non_field_errors'
+      );
+      if (fieldErrors && Array.isArray(data[fieldErrors])) {
+        const fieldErrorArray = data[fieldErrors] as string[];
+        return `${fieldErrors}: ${fieldErrorArray[0]}`;
+      }
     }
 
     // Handle specific status codes
@@ -53,4 +79,4 @@ export const getErrorMessage = (error: unknown): string => {
   }
 
   return 'An unexpected error occurred.';
-}; 
+};

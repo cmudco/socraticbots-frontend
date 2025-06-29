@@ -1,6 +1,7 @@
 // src/stores/chapterFormStore.ts
 import { create } from 'zustand';
-import type { Chapter, } from '../services/chapters.service';
+
+import type { Chapter } from '../services/chapters.service';
 
 interface ChapterFormState {
   // Modal state
@@ -87,39 +88,42 @@ export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
 
   openForm: () => set({ isOpen: true }),
 
-  closeForm: () => set({
-    isOpen: false,
-    isEdit: false,
-    isSubmitting: false,
-    activeTab: 'basic',
-    ...initialFormState,
-    ...initialValidationState
-  }),
+  closeForm: () =>
+    set({
+      isOpen: false,
+      isEdit: false,
+      isSubmitting: false,
+      activeTab: 'basic',
+      ...initialFormState,
+      ...initialValidationState,
+    }),
 
-  initNewChapter: () => set({
-    isEdit: false,
-    isOpen: true,
-    activeTab: 'basic',
-    ...initialFormState,
-    ...initialValidationState
-  }),
+  initNewChapter: () =>
+    set({
+      isEdit: false,
+      isOpen: true,
+      activeTab: 'basic',
+      ...initialFormState,
+      ...initialValidationState,
+    }),
 
-  initEditChapter: (chapter: Chapter) => set({
-    isEdit: true,
-    isOpen: true,
-    activeTab: 'basic',
-    originalChapter: chapter,
-    title: chapter.title || '',
-    subject: chapter.subject || '',
-    topic: chapter.topic || '',
-    greeting: chapter.prompts?.greeting || '',
-    chat_prompt: chapter.prompts?.chat_prompt || '',
-    tracking_prompt: chapter.prompts?.tracking_prompt || '',
-    learning_goals: chapter.prompts?.learning_goals || '',
-    chat_model_id: chapter.model_preference?.chat_model?.id || '',
-    tracking_model_id: chapter.model_preference?.tracking_model?.id || '',
-    ...initialValidationState
-  }),
+  initEditChapter: (chapter: Chapter) =>
+    set({
+      isEdit: true,
+      isOpen: true,
+      activeTab: 'basic',
+      originalChapter: chapter,
+      title: chapter.title || '',
+      subject: chapter.subject || '',
+      topic: chapter.topic || '',
+      greeting: chapter.prompts?.greeting || '',
+      chat_prompt: chapter.prompts?.chat_prompt || '',
+      tracking_prompt: chapter.prompts?.tracking_prompt || '',
+      learning_goals: chapter.prompts?.learning_goals || '',
+      chat_model_id: chapter.model_preference?.chat_model?.id || '',
+      tracking_model_id: chapter.model_preference?.tracking_model?.id || '',
+      ...initialValidationState,
+    }),
 
   setSubmitting: (submitting: boolean) => set({ isSubmitting: submitting }),
 
@@ -129,8 +133,8 @@ export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
       [field]: value,
       errors: {
         ...state.errors,
-        [field]: error
-      }
+        [field]: error,
+      },
     }));
   },
 
@@ -138,8 +142,8 @@ export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
     set(state => ({
       touched: {
         ...state.touched,
-        [field]: touched
-      }
+        [field]: touched,
+      },
     }));
   },
 
@@ -148,8 +152,8 @@ export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
     set(state => ({
       errors: {
         ...state.errors,
-        [field]: error
-      }
+        [field]: error,
+      },
     }));
   },
 
@@ -168,8 +172,9 @@ export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
     return !Object.values(newErrors).some(error => error !== '');
   },
 
-  resetForm: () => set({
-    ...initialFormState,
-    ...initialValidationState
-  }),
+  resetForm: () =>
+    set({
+      ...initialFormState,
+      ...initialValidationState,
+    }),
 }));

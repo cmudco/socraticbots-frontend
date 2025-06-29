@@ -1,7 +1,9 @@
 // src/components/chat/ChatControls.tsx
 import React from 'react';
-import { Button } from '@/components/ui/button';
+
 import { Trash2 } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 
 // Define a type for our action buttons (excluding special ones like "Clear Conversation")
 interface ActionButton {
@@ -20,30 +22,30 @@ interface ChatControlsProps {
 const ChatControls: React.FC<ChatControlsProps> = ({
   onActionClick,
   onClearConversation,
-  disabled
+  disabled,
 }) => {
   // Define our preset action buttons - easy to add more or modify
   const actionButtons: ActionButton[] = [
     {
       id: 'learning-goals',
       label: 'Learning Goals',
-      message: 'What are the learning goals for this chapter?'
+      message: 'What are the learning goals for this chapter?',
     },
     {
       id: 'explain-topic',
       label: 'Explain Topic',
-      message: 'Can you explain the main topic of this chapter?'
+      message: 'Can you explain the main topic of this chapter?',
     },
     {
       id: 'give-example',
       label: 'Give Example',
-      message: 'Can you give me an example related to this topic?'
+      message: 'Can you give me an example related to this topic?',
     },
     {
       id: 'quiz-me',
       label: 'Quiz Me',
-      message: 'Can you quiz me on this material?'
-    }
+      message: 'Can you quiz me on this material?',
+    },
   ];
 
   return (
@@ -57,7 +59,7 @@ const ChatControls: React.FC<ChatControlsProps> = ({
             size="sm"
             onClick={() => onActionClick(button.message)}
             disabled={disabled}
-            className="text-sm bg-white border-violet-200 text-violet-700 hover:bg-violet-50 hover:border-violet-300 disabled:opacity-50"
+            className="border-violet-200 bg-white text-sm text-violet-700 hover:border-violet-300 hover:bg-violet-50 disabled:opacity-50"
             title={button.message}
           >
             {button.icon}
@@ -72,10 +74,10 @@ const ChatControls: React.FC<ChatControlsProps> = ({
         size="sm"
         onClick={onClearConversation}
         disabled={disabled}
-        className="text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
+        className="text-sm text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
         title="Clear conversation"
       >
-        <Trash2 className="w-4 h-4 mr-2" />
+        <Trash2 className="mr-2 h-4 w-4" />
         Clear
       </Button>
     </div>

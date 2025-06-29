@@ -1,10 +1,11 @@
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { ReactQueryProvider } from './providers/ReactQueryProvider'
+import { createRoot } from 'react-dom/client';
+
+import App from './App.tsx';
+import './index.css';
+import { ReactQueryProvider } from './providers/ReactQueryProvider';
 
 createRoot(document.getElementById('root')!).render(
   <ReactQueryProvider>
     <App />
   </ReactQueryProvider>
-)
+);

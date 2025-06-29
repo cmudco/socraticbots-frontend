@@ -1,8 +1,10 @@
 // src/components/chat/MessageList.tsx
 import React, { useEffect, useRef } from 'react';
+
 import type { ChatMessage } from '@/types/chat';
-import MessageBubble from './MessageBubble';
 import { ChatRole, ChatSender } from '@/types/chat';
+
+import MessageBubble from './MessageBubble';
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -19,11 +21,7 @@ function normalizeMessage(msg: ChatMessage): ChatMessage {
   return { ...msg, sender };
 }
 
-const MessageList: React.FC<MessageListProps> = ({
-  messages,
-  greeting,
-  isStreaming = false,
-}) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, greeting, isStreaming = false }) => {
   const allMessages = [...messages];
   if (messages.length === 0 && greeting) {
     const now = new Date().toISOString();
@@ -49,18 +47,21 @@ const MessageList: React.FC<MessageListProps> = ({
 
   if (normalizedMessages.length === 0) {
     return (
-      <div className="flex justify-center items-center h-64 text-gray-400">
+      <div className="flex h-64 items-center justify-center text-gray-400">
         <p>Start a new conversation</p>
       </div>
     );
   }
 
   // Find the last AI message index
-  const lastAssistantIdx = [...normalizedMessages].reverse().findIndex(m => m.sender === ChatSender.ASSISTANT);
-  const lastAssistantAbsIdx = lastAssistantIdx === -1 ? -1 : normalizedMessages.length - 1 - lastAssistantIdx;
+  const lastAssistantIdx = [...normalizedMessages]
+    .reverse()
+    .findIndex(m => m.sender === ChatSender.ASSISTANT);
+  const lastAssistantAbsIdx =
+    lastAssistantIdx === -1 ? -1 : normalizedMessages.length - 1 - lastAssistantIdx;
 
   return (
-    <div ref={listRef} className="space-y-0 py-6 px-4 overflow-y-auto h-full max-w-4xl mx-auto">
+    <div ref={listRef} className="mx-auto h-full max-w-4xl space-y-0 overflow-y-auto px-4 py-6">
       {normalizedMessages.map((message, idx) => (
         <div key={message.id} className={message.id.startsWith('pending-') ? 'opacity-70' : ''}>
           <MessageBubble

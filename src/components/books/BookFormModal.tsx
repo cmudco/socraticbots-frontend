@@ -1,7 +1,9 @@
 // src/components/books/BookFormModal.tsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { Book } from '../../types/book';
-import { useCreateBook, useUpdateBook } from '../../hooks/queries/useBooks';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { BookOpen } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,11 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { BookOpen } from 'lucide-react';
+
+import { useCreateBook, useUpdateBook } from '../../hooks/queries/useBooks';
+import { Book } from '../../types/book';
 
 interface BookFormModalProps {
   isOpen: boolean;
@@ -50,46 +53,58 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
     }
   }, [book]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    if (!title.trim()) {
-      setError('Title is required');
-      return;
-    }
-
-    try {
-      setError(null);
-
-      if (isEditMode && book) {
-        // Update existing book
-        await updateBookMutation.mutateAsync({
-          id: book.id,
-          bookData: {
-            title,
-            description: description || undefined,
-          }
-        });
-      } else {
-        // Create new book
-        await createBookMutation.mutateAsync({
-          title,
-          description: description || undefined,
-        });
+      if (!title.trim()) {
+        setError('Title is required');
+        return;
       }
 
-      // Reset form
-      setTitle('');
-      setDescription('');
+      try {
+        setError(null);
 
-      // Close modal and notify parent
-      onClose();
-      onBookCreated();
-    } catch (err) {
-      setError(`Failed to ${isEditMode ? 'update' : 'create'} book. Please try again.`);
-      console.error(`Error ${isEditMode ? 'updating' : 'creating'} book:`, err);
-    }
-  }, [title, description, isEditMode, book, updateBookMutation, createBookMutation, onClose, onBookCreated]);
+        if (isEditMode && book) {
+          // Update existing book
+          await updateBookMutation.mutateAsync({
+            id: book.id,
+            bookData: {
+              title,
+              description: description || undefined,
+            },
+          });
+        } else {
+          // Create new book
+          await createBookMutation.mutateAsync({
+            title,
+            description: description || undefined,
+          });
+        }
+
+        // Reset form
+        setTitle('');
+        setDescription('');
+
+        // Close modal and notify parent
+        onClose();
+        onBookCreated();
+      } catch (err) {
+        setError(`Failed to ${isEditMode ? 'update' : 'create'} book. Please try again.`);
+        console.error(`Error ${isEditMode ? 'updating' : 'creating'} book:`, err);
+      }
+    },
+    [
+      title,
+      description,
+      isEditMode,
+      book,
+      updateBookMutation,
+      createBookMutation,
+      onClose,
+      onBookCreated,
+    ]
+  );
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -101,7 +116,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
         }
 
         const syntheticEvent = {
-          preventDefault: () => { }
+          preventDefault: () => {},
         } as unknown as React.FormEvent;
 
         handleSubmit(syntheticEvent);
@@ -122,27 +137,39 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-violet-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100">
+              <BookOpen className="h-5 w-5 text-violet-600" />
             </div>
             <DialogTitle className="text-lg font-semibold">
               {isEditMode ? 'Edit Book' : 'Create New Book'}
             </DialogTitle>
           </div>
-          <DialogDescription className="text-slate-600 pt-2">
-            {isEditMode ? 'Update the book details below.' : 'Fill in the details to create a new book.'}
+          <DialogDescription className="pt-2 text-slate-600">
+            {isEditMode
+              ? 'Update the book details below.'
+              : 'Fill in the details to create a new book.'}
           </DialogDescription>
         </DialogHeader>
 
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex items-start">
-              <svg className="w-5 h-5 text-red-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                className="mt-0.5 mr-3 h-5 w-5 text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
               <div>
-                <h4 className="text-red-800 font-medium">Error</h4>
-                <p className="text-red-700 text-sm mt-1">{error}</p>
+                <h4 className="font-medium text-red-800">Error</h4>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
               </div>
             </div>
           </div>
@@ -157,7 +184,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
               id="title"
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Enter book title"
               disabled={isSubmitting}
               className="border-slate-200 focus:border-violet-300 focus:ring-violet-200"
@@ -171,15 +198,15 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
             <Textarea
               id="description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Enter book description (optional)"
               rows={4}
               disabled={isSubmitting}
-              className="border-slate-200 focus:border-violet-300 focus:ring-violet-200 resize-none"
+              className="resize-none border-slate-200 focus:border-violet-300 focus:ring-violet-200"
             />
           </div>
 
-          <DialogFooter className="flex gap-2 sm:justify-end pt-4">
+          <DialogFooter className="flex gap-2 pt-4 sm:justify-end">
             <Button
               type="button"
               variant="outline"
@@ -192,15 +219,17 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-violet-600 hover:bg-violet-700 text-white"
+              className="bg-violet-600 text-white hover:bg-violet-700"
             >
               {isSubmitting ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   {isEditMode ? 'Saving...' : 'Creating...'}
                 </div>
+              ) : isEditMode ? (
+                'Save Changes'
               ) : (
-                isEditMode ? 'Save Changes' : 'Create Book'
+                'Create Book'
               )}
             </Button>
           </DialogFooter>
