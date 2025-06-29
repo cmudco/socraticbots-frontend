@@ -1,7 +1,8 @@
 import axios, { AxiosRequestConfig } from 'axios';
-import { getErrorMessage } from './errorHandler';
+
 import { METHOD } from '../constants/requests';
 import config from '../lib/config';
+import { getErrorMessage } from './errorHandler';
 
 const BASE_URL = config.apiUrl;
 
@@ -37,7 +38,7 @@ export const baseRequest = async <T>({
     try {
       // Get token from localStorage (simpler than Zustand for this use case)
       const authToken = localStorage.getItem('access_token');
-      
+
       if (authToken) {
         axiosOptions.headers = {
           ...axiosOptions.headers,
@@ -57,4 +58,4 @@ export const baseRequest = async <T>({
     const errorMessage = getErrorMessage(error);
     throw new Error(errorMessage);
   }
-}; 
+};

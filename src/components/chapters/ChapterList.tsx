@@ -1,9 +1,10 @@
 // src/components/chapters/ChapterList.tsx - Migrated to TanStack Query
 import React, { useState } from 'react';
+
+import { useChapters } from '../../hooks/queries/useChapters';
 import { Chapter } from '../../services/chapters.service';
-import { useChapters, } from '../../hooks/queries/useChapters';
-import ChapterItem from './ChapterItem';
 import ChapterFormModal from './ChapterFormModal';
+import ChapterItem from './ChapterItem';
 import DeleteChapterModal from './DeleteChapterModal';
 
 interface ChapterListProps {
@@ -12,17 +13,9 @@ interface ChapterListProps {
   onChapterDeleted?: (chapterId: string) => void;
 }
 
-const ChapterList: React.FC<ChapterListProps> = ({
-  bookId,
-  initialChapters,
-  onChapterDeleted
-}) => {
+const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onChapterDeleted }) => {
   // Use TanStack Query for chapters data
-  const {
-    data: chapters = initialChapters || [],
-    isLoading: loading,
-    error
-  } = useChapters(bookId);
+  const { data: chapters = initialChapters || [], isLoading: loading, error } = useChapters(bookId);
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
@@ -65,28 +58,26 @@ const ChapterList: React.FC<ChapterListProps> = ({
   };
 
   // Filter out deleted chapters from the display
-  const visibleChapters = chapters.filter(chapter =>
-    !deletedChapterIds.includes(chapter.id)
-  );
+  const visibleChapters = chapters.filter(chapter => !deletedChapterIds.includes(chapter.id));
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold text-md">Chapters</h3>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-md font-semibold">Chapters</h3>
         <button
           onClick={handleOpenCreateModal}
-          className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+          className="rounded bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600"
         >
           Add Chapter
         </button>
       </div>
 
       {loading ? (
-        <p className="text-gray-500 text-center py-4">Loading chapters...</p>
+        <p className="py-4 text-center text-gray-500">Loading chapters...</p>
       ) : error ? (
-        <p className="text-red-500 text-center py-4">Error loading chapters: {error.message}</p>
+        <p className="py-4 text-center text-red-500">Error loading chapters: {error.message}</p>
       ) : visibleChapters.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">No chapters yet. Add your first chapter!</p>
+        <p className="py-4 text-center text-gray-500">No chapters yet. Add your first chapter!</p>
       ) : (
         <div className="space-y-2">
           {visibleChapters.map((chapter: Chapter) => (

@@ -1,10 +1,12 @@
 // src/hooks/queries/useAuthInitialization.ts
 import { useEffect, useRef } from 'react';
-import { useAuthStore } from '../../stores/authStore';
-import { authService } from '../../services/auth.service';
-import { baseRequest } from '../../utils/baseRequest';
-import type { User } from '../../types/auth';
+
 import { METHOD } from '@/constants/requests';
+
+import { authService } from '../../services/auth.service';
+import { useAuthStore } from '../../stores/authStore';
+import type { User } from '../../types/auth';
+import { baseRequest } from '../../utils/baseRequest';
 
 /**
  * Hook to initialize authentication state on app startup

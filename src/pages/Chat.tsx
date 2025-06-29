@@ -1,19 +1,20 @@
 // src/pages/Chat.tsx
 import React from 'react';
+
 import ChatInterface from '../components/chat/ChatInterface';
-import TrackingSidebar from '../components/chat/TrackingSidebar';
 import NotesSidebar from '../components/chat/NotesSidebar';
+import TrackingSidebar from '../components/chat/TrackingSidebar';
 
 const Chat: React.FC = () => {
   return (
-    <div className="h-full flex bg-gradient-to-br from-violet-50/50 via-white to-purple-50/50 pr-4">
+    <div className="flex h-full bg-gradient-to-br from-violet-50/50 via-white to-purple-50/50 pr-4">
       {/* Learning Progress Sidebar */}
-      <div className="min-w-[320px] max-w-[320px] flex-shrink-0 border-r border-slate-200/60 bg-white/90 backdrop-blur-sm overflow-y-auto">
+      <div className="max-w-[320px] min-w-[320px] flex-shrink-0 overflow-y-auto border-r border-slate-200/60 bg-white/90 backdrop-blur-sm">
         <TrackingSidebar />
       </div>
 
       {/* Center Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <ChatInterface />
       </div>
 

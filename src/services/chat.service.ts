@@ -1,8 +1,9 @@
 // src/services/chat.service.ts
-import { baseRequest } from '../utils/baseRequest';
+import type { ChatMessage, Conversation } from '@/types/chat';
+
 import { METHOD } from '../constants/requests';
 import config from '../lib/config';
-import type { Conversation, ChatMessage } from '@/types/chat';
+import { baseRequest } from '../utils/baseRequest';
 
 export interface Chapter {
   id: string;
@@ -17,8 +18,8 @@ export interface Chapter {
 interface StreamCallbacks {
   onStart?: () => void;
   onToken?: (token: string) => void;
-  onComplete?: (completeMessage?: any) => void;
-  onError?: (error: unknown) => void;
+  onComplete?: (completeMessage?: ChatMessage) => void;
+  onError?: (error: Error) => void;
 }
 
 class ChatService {
@@ -43,7 +44,7 @@ class ChatService {
       method: METHOD.POST,
       data: {
         conversation_id: conversationId,
-        message: message
+        message: message,
       },
     });
   }
@@ -65,12 +66,12 @@ class ChatService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           conversation_id: conversationId,
-          message: message
-        })
+          message: message,
+        }),
       });
 
       if (!response.ok) {
@@ -120,8 +121,10 @@ class ChatService {
               } else {
                 callbacks.onComplete?.();
               }
-            } catch (e) {
-              console.log('[streamMessage] No complete message data, calling onComplete without data');
+            } catch {
+              console.log(
+                '[streamMessage] No complete message data, calling onComplete without data'
+              );
               callbacks.onComplete?.();
             }
           } else if (line.startsWith('event: end')) {
@@ -132,11 +135,9 @@ class ChatService {
       }
 
       return fullResponse;
-
     } catch (error) {
       console.error('Error in streamMessage:', error);
-      callbacks.onError?.(error);
-      console.log('[streamMessage] onError', error);
+      callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -153,11 +154,11 @@ class ChatService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          conversation_id: conversationId
-        })
+          conversation_id: conversationId,
+        }),
       });
 
       if (!response.ok) {
@@ -197,16 +198,18 @@ class ChatService {
       }
 
       return fullResponse;
-
     } catch (error) {
       console.error('Error in streamTrackingProgress:', error);
-      callbacks.onError?.(error);
+      callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
 
   // Trigger progress tracking after message completion
-  async triggerProgressTracking(conversationId: string, callbacks?: StreamCallbacks): Promise<void> {
+  async triggerProgressTracking(
+    conversationId: string,
+    callbacks?: StreamCallbacks
+  ): Promise<void> {
     try {
       // This will trigger the progress tracking stream with real-time updates
       await this.streamTrackingProgress(conversationId, {
@@ -214,7 +217,7 @@ class ChatService {
           callbacks?.onStart?.();
           console.log('[ProgressTracking] Started');
         },
-        onToken: (token) => {
+        onToken: token => {
           callbacks?.onToken?.(token);
           console.log('[ProgressTracking] Token:', token);
         },
@@ -222,19 +225,21 @@ class ChatService {
           callbacks?.onComplete?.();
           console.log('[ProgressTracking] Completed');
         },
-        onError: (error) => {
+        onError: error => {
           callbacks?.onError?.(error);
           console.error('[ProgressTracking] Error:', error);
         },
       });
     } catch (error) {
       console.error('Error triggering progress tracking:', error);
-      callbacks?.onError?.(error);
+      callbacks?.onError?.(error instanceof Error ? error : new Error(String(error)));
     }
   }
 
-  async getLatestProgress(conversationId: string): Promise<{content: string | null, created_at: string | null}> {
-    return baseRequest<{content: string | null, created_at: string | null}>({
+  async getLatestProgress(
+    conversationId: string
+  ): Promise<{ content: string | null; created_at: string | null }> {
+    return baseRequest<{ content: string | null; created_at: string | null }>({
       url: `chat/latest-progress/${conversationId}/`,
       method: METHOD.GET,
     });
@@ -246,7 +251,6 @@ class ChatService {
       method: METHOD.POST,
     });
   }
-
 }
 
 // Export a singleton instance

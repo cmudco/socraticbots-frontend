@@ -4,14 +4,14 @@ export enum FileProcessingStatus {
   PENDING = 'pending',
   PROCESSING = 'processing',
   COMPLETED = 'completed',
-  FAILED = 'failed'
+  FAILED = 'failed',
 }
 
 export enum FileUploadStatus {
   UPLOADING = 'uploading',
   PROCESSING = 'processing',
   COMPLETED = 'completed',
-  ERROR = 'error'
+  ERROR = 'error',
 }
 
 export interface ChapterFile {

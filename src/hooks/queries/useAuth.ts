@@ -1,5 +1,6 @@
 // src/hooks/queries/useAuth.ts
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { authService } from '../../services/auth.service';
 import { useAuthStore } from '../../stores/authStore';
 import type { AuthTokens } from '../../types/auth';
@@ -70,7 +71,6 @@ export const useLogin = () => {
 
         // Cache user profile in React Query
         queryClient.setQueryData(authKeys.profile(tokens.access), userData);
-
       } catch (error) {
         console.error('Failed to fetch user profile after login:', error);
         // Clear auth on profile fetch failure
@@ -78,7 +78,7 @@ export const useLogin = () => {
         throw error;
       }
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Login failed:', error);
       clearAuth();
     },
@@ -131,13 +131,12 @@ export const useRefreshToken = () => {
 
         // Update cached user profile
         queryClient.setQueryData(authKeys.profile(newTokens.access), userData);
-
       } catch (error) {
         console.error('Failed to fetch user profile after token refresh:', error);
         throw error;
       }
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Token refresh failed:', error);
       // Clear auth on refresh failure
       clearAuth();
@@ -157,7 +156,7 @@ export const useChangePassword = () => {
     onSuccess: () => {
       console.log('Password changed successfully');
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Password change failed:', error);
       throw error;
     },

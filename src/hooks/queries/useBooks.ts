@@ -1,8 +1,9 @@
 // src/hooks/queries/useBooks.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { bookService, CreateBookRequest, UpdateBookRequest } from '../../services/books.service';
-import { Book } from '../../types/book';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { CreateBookRequest, UpdateBookRequest, bookService } from '../../services/books.service';
 import { useAuthStore } from '../../stores/authStore';
+import { Book } from '../../types/book';
 
 // Query Keys
 export const bookKeys = {
@@ -89,14 +90,14 @@ export const useCreateBook = () => {
     mutationFn: (bookData: CreateBookRequest) => bookService.createBook(bookData),
     onSuccess: (newBook: Book) => {
       // Add to cache optimistically
-      queryClient.setQueryData<Book[]>(bookKeys.lists(), (oldBooks) => {
+      queryClient.setQueryData<Book[]>(bookKeys.lists(), oldBooks => {
         return oldBooks ? [...oldBooks, newBook] : [newBook];
       });
 
       // Invalidate and refetch all book-related queries
       queryClient.invalidateQueries({ queryKey: bookKeys.all });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to create book:', error);
     },
   });
@@ -116,9 +117,9 @@ export const useUpdateBook = () => {
       queryClient.setQueryData<Book>(bookKeys.detail(updatedBook.id), updatedBook);
 
       // Update book in the list cache
-      queryClient.setQueryData<Book[]>(bookKeys.lists(), (oldBooks) => {
+      queryClient.setQueryData<Book[]>(bookKeys.lists(), oldBooks => {
         return oldBooks
-          ? oldBooks.map((book) => (book.id === updatedBook.id ? updatedBook : book))
+          ? oldBooks.map(book => (book.id === updatedBook.id ? updatedBook : book))
           : [updatedBook];
       });
 
@@ -127,7 +128,7 @@ export const useUpdateBook = () => {
       queryClient.invalidateQueries({ queryKey: bookKeys.published(true) });
       queryClient.invalidateQueries({ queryKey: bookKeys.published(false) });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to update book:', error);
     },
   });
@@ -143,8 +144,8 @@ export const useDeleteBook = () => {
     mutationFn: (id: string) => bookService.deleteBook(id),
     onSuccess: (_, deletedId: string) => {
       // Remove from list cache
-      queryClient.setQueryData<Book[]>(bookKeys.lists(), (oldBooks) => {
-        return oldBooks ? oldBooks.filter((book) => book.id !== deletedId) : [];
+      queryClient.setQueryData<Book[]>(bookKeys.lists(), oldBooks => {
+        return oldBooks ? oldBooks.filter(book => book.id !== deletedId) : [];
       });
 
       // Remove from detail cache
@@ -155,7 +156,7 @@ export const useDeleteBook = () => {
       queryClient.invalidateQueries({ queryKey: bookKeys.published(true) });
       queryClient.invalidateQueries({ queryKey: bookKeys.published(false) });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to delete book:', error);
     },
   });

@@ -1,12 +1,13 @@
 // src/hooks/queries/useChapters.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  chapterService, 
-  Chapter, 
-  CreateChapterRequest, 
-  UpdateChapterRequest,
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import {
+  Chapter,
   ChapterModelPreferenceRequest,
-  ChapterPromptRequest
+  ChapterPromptRequest,
+  CreateChapterRequest,
+  UpdateChapterRequest,
+  chapterService,
 } from '../../services/chapters.service';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -16,7 +17,8 @@ export const chapterKeys = {
   lists: () => [...chapterKeys.all, 'list'] as const,
   list: (bookId: string) => [...chapterKeys.lists(), bookId] as const,
   details: () => [...chapterKeys.all, 'detail'] as const,
-  detail: (bookId: string, chapterId: string) => [...chapterKeys.details(), bookId, chapterId] as const,
+  detail: (bookId: string, chapterId: string) =>
+    [...chapterKeys.details(), bookId, chapterId] as const,
 };
 
 // Query Hooks
@@ -60,28 +62,27 @@ export const useCreateChapter = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ 
-      bookId, 
-      chapterData, 
-      modelPreferences, 
-      promptData 
-    }: { 
-      bookId: string; 
+    mutationFn: ({
+      bookId,
+      chapterData,
+      modelPreferences,
+      promptData,
+    }: {
+      bookId: string;
       chapterData: CreateChapterRequest;
       modelPreferences?: ChapterModelPreferenceRequest;
       promptData?: ChapterPromptRequest;
-    }) =>
-      chapterService.createChapter(bookId, chapterData, modelPreferences, promptData),
+    }) => chapterService.createChapter(bookId, chapterData, modelPreferences, promptData),
     onSuccess: (newChapter: Chapter, { bookId }) => {
       // Add to cache optimistically
-      queryClient.setQueryData<Chapter[]>(chapterKeys.list(bookId), (oldChapters) => {
+      queryClient.setQueryData<Chapter[]>(chapterKeys.list(bookId), oldChapters => {
         return oldChapters ? [...oldChapters, newChapter] : [newChapter];
       });
 
       // Invalidate and refetch chapter-related queries
       queryClient.invalidateQueries({ queryKey: chapterKeys.list(bookId) });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to create chapter:', error);
     },
   });
@@ -94,36 +95,32 @@ export const useUpdateChapter = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ 
-      bookId, 
-      chapterId, 
-      chapterData, 
-      modelPreferences, 
-      promptData 
+    mutationFn: ({
+      bookId,
+      chapterId,
+      chapterData,
+      modelPreferences,
+      promptData,
     }: {
       bookId: string;
       chapterId: string;
       chapterData: UpdateChapterRequest;
       modelPreferences?: ChapterModelPreferenceRequest;
       promptData?: ChapterPromptRequest;
-    }) => chapterService.updateChapter(bookId, chapterId, chapterData, modelPreferences, promptData),
+    }) =>
+      chapterService.updateChapter(bookId, chapterId, chapterData, modelPreferences, promptData),
     onSuccess: (updatedChapter: Chapter, { bookId, chapterId }) => {
       // Update the specific chapter in cache
-      queryClient.setQueryData<Chapter>(
-        chapterKeys.detail(bookId, chapterId),
-        updatedChapter
-      );
+      queryClient.setQueryData<Chapter>(chapterKeys.detail(bookId, chapterId), updatedChapter);
 
       // Update chapter in the list cache
-      queryClient.setQueryData<Chapter[]>(chapterKeys.list(bookId), (oldChapters) => {
+      queryClient.setQueryData<Chapter[]>(chapterKeys.list(bookId), oldChapters => {
         return oldChapters
-          ? oldChapters.map((chapter) =>
-              chapter.id === chapterId ? updatedChapter : chapter
-            )
+          ? oldChapters.map(chapter => (chapter.id === chapterId ? updatedChapter : chapter))
           : [updatedChapter];
       });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to update chapter:', error);
     },
   });
@@ -140,14 +137,14 @@ export const useDeleteChapter = () => {
       chapterService.deleteChapter(bookId, chapterId),
     onSuccess: (_, { bookId, chapterId }) => {
       // Remove from list cache
-      queryClient.setQueryData<Chapter[]>(chapterKeys.list(bookId), (oldChapters) => {
-        return oldChapters ? oldChapters.filter((chapter) => chapter.id !== chapterId) : [];
+      queryClient.setQueryData<Chapter[]>(chapterKeys.list(bookId), oldChapters => {
+        return oldChapters ? oldChapters.filter(chapter => chapter.id !== chapterId) : [];
       });
 
       // Remove from detail cache
       queryClient.removeQueries({ queryKey: chapterKeys.detail(bookId, chapterId) });
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to delete chapter:', error);
     },
   });

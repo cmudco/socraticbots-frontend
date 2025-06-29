@@ -1,5 +1,6 @@
 // src/components/books/ExpandableBookItem.tsx
 import React, { useState } from 'react';
+
 import { Book } from '../../types/book';
 import ChapterList from '../chapters/ChapterList';
 
@@ -17,47 +18,41 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, o
   };
 
   return (
-    <div className="border rounded-lg mb-4 overflow-hidden">
+    <div className="mb-4 overflow-hidden rounded-lg border">
       <div
-        className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50"
+        className="flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50"
         onClick={toggleExpand}
       >
         <div>
-          <h3 className="font-bold text-lg">{book.title}</h3>
-          {book.description && <p className="text-gray-600 text-sm">{book.description}</p>}
+          <h3 className="text-lg font-bold">{book.title}</h3>
+          {book.description && <p className="text-sm text-gray-600">{book.description}</p>}
         </div>
         <div className="flex space-x-2">
           <button
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation(); // Prevent toggling expand
               onEdit(book);
             }}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"
           >
             Edit
           </button>
           <button
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation(); // Prevent toggling expand
               onDelete(book);
             }}
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+            className="rounded bg-red-500 px-3 py-1 text-white hover:bg-red-600"
           >
             Delete
           </button>
-          <span className="text-gray-400">
-            {expanded ? '▲' : '▼'}
-          </span>
+          <span className="text-gray-400">{expanded ? '▲' : '▼'}</span>
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t p-4 bg-gray-50">
-          <ChapterList
-            bookId={book.id}
-            initialChapters={[]}
-            onChapterDeleted={() => {}}
-          />
+        <div className="border-t bg-gray-50 p-4">
+          <ChapterList bookId={book.id} initialChapters={[]} onChapterDeleted={() => {}} />
         </div>
       )}
     </div>

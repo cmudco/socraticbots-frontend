@@ -1,8 +1,8 @@
 // src/services/chapters.service.ts
-import { baseRequest } from '../utils/baseRequest';
 import { METHOD } from '../constants/requests';
-import { AIModel } from './models.service';
 import { ChapterFile } from '../types/file';
+import { baseRequest } from '../utils/baseRequest';
+import { AIModel } from './models.service';
 
 export interface ModelPreference {
   id: string;
@@ -19,7 +19,7 @@ export interface Chapter {
   topic: string;
   model_preference?: ModelPreference;
   prompts?: ChapterPrompt;
-  learning_goals ?: LearningGoal[];
+  learning_goals?: LearningGoal[];
   files?: ChapterFile[];
   created_at: string;
   updated_at: string;
@@ -122,45 +122,51 @@ class ChapterService {
 
   // Create a new chapter for a book
   async createChapter(
-      bookId: string,
-      chapterData: CreateChapterRequest,
-      modelPreferences?: ChapterModelPreferenceRequest,
-      promptData?: ChapterPromptRequest
-    ): Promise<Chapter> {
-      try {
-        // First create the chapter
-        const newChapter = await baseRequest<Chapter>({
-          url: `books/${bookId}/chapters/`,
-          method: METHOD.POST,
-          data: chapterData,
-        });
+    bookId: string,
+    chapterData: CreateChapterRequest,
+    modelPreferences?: ChapterModelPreferenceRequest,
+    promptData?: ChapterPromptRequest
+  ): Promise<Chapter> {
+    try {
+      // First create the chapter
+      const newChapter = await baseRequest<Chapter>({
+        url: `books/${bookId}/chapters/`,
+        method: METHOD.POST,
+        data: chapterData,
+      });
 
-        // Track if we need to fetch the updated chapter
-        let needsRefetch = false;
+      // Track if we need to fetch the updated chapter
+      let needsRefetch = false;
 
-        // If model preferences are provided, set them
-        if (modelPreferences && (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)) {
-          await this.setChapterModelPreferences(bookId, newChapter.id, modelPreferences);
-          needsRefetch = true;
-        }
-
-        // Add this block for prompts
-        if (promptData && (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)) {
-          await this.setChapterPrompts(bookId, newChapter.id, promptData);
-          needsRefetch = true;
-        }
-
-        // Fetch the updated chapter if needed
-        if (needsRefetch) {
-          return await this.getChapter(bookId, newChapter.id);
-        }
-
-        return newChapter;
-      } catch (error) {
-        console.error('Error creating chapter:', error);
-        throw error;
+      // If model preferences are provided, set them
+      if (
+        modelPreferences &&
+        (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)
+      ) {
+        await this.setChapterModelPreferences(bookId, newChapter.id, modelPreferences);
+        needsRefetch = true;
       }
+
+      // Add this block for prompts
+      if (
+        promptData &&
+        (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)
+      ) {
+        await this.setChapterPrompts(bookId, newChapter.id, promptData);
+        needsRefetch = true;
+      }
+
+      // Fetch the updated chapter if needed
+      if (needsRefetch) {
+        return await this.getChapter(bookId, newChapter.id);
+      }
+
+      return newChapter;
+    } catch (error) {
+      console.error('Error creating chapter:', error);
+      throw error;
     }
+  }
 
   // Update a chapter
   async updateChapter(
@@ -182,13 +188,19 @@ class ChapterService {
       let needsRefetch = false;
 
       // If model preferences are provided, update them
-      if (modelPreferences && (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)) {
+      if (
+        modelPreferences &&
+        (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)
+      ) {
         await this.setChapterModelPreferences(bookId, chapterId, modelPreferences);
         needsRefetch = true;
       }
 
       // Add this block for prompts
-      if (promptData && (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)) {
+      if (
+        promptData &&
+        (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)
+      ) {
         await this.setChapterPrompts(bookId, chapterId, promptData);
         needsRefetch = true;
       }
@@ -219,10 +231,7 @@ class ChapterService {
   }
 
   // Get model preferences for a chapter
-  async getChapterModelPreferences(
-    bookId: string,
-    chapterId: string
-  ): Promise<ModelPreference> {
+  async getChapterModelPreferences(bookId: string, chapterId: string): Promise<ModelPreference> {
     return baseRequest<ModelPreference>({
       url: `books/${bookId}/chapters/${chapterId}/model-preferences/`,
       method: METHOD.GET,
@@ -238,10 +247,7 @@ class ChapterService {
   }
 
   // Get prompts for a chapter
-  async getChapterPrompts(
-    bookId: string,
-    chapterId: string
-  ): Promise<ChapterPrompt> {
+  async getChapterPrompts(bookId: string, chapterId: string): Promise<ChapterPrompt> {
     return baseRequest<ChapterPrompt>({
       url: `books/${bookId}/chapters/${chapterId}/prompts/`,
       method: METHOD.GET,
@@ -270,11 +276,7 @@ class ChapterService {
   }
 
   // Get a specific learning goal
-  async getLearningGoal(
-    bookId: string,
-    chapterId: string,
-    goalId: string
-  ): Promise<LearningGoal> {
+  async getLearningGoal(bookId: string, chapterId: string, goalId: string): Promise<LearningGoal> {
     return baseRequest<LearningGoal>({
       url: `books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`,
       method: METHOD.GET,
@@ -309,11 +311,7 @@ class ChapterService {
   }
 
   // Delete a learning goal
-  async deleteLearningGoal(
-    bookId: string,
-    chapterId: string,
-    goalId: string
-  ): Promise<void> {
+  async deleteLearningGoal(bookId: string, chapterId: string, goalId: string): Promise<void> {
     await baseRequest<void>({
       url: `books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`,
       method: METHOD.DELETE,

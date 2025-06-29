@@ -1,7 +1,7 @@
 // src/services/files.service.ts
-import { baseRequest } from '../utils/baseRequest';
 import { METHOD } from '../constants/requests';
-import { ChapterFile, UploadFileRequest, FileFilters } from '../types/file';
+import { ChapterFile, FileFilters, UploadFileRequest } from '../types/file';
+import { baseRequest } from '../utils/baseRequest';
 
 class FileService {
   private readonly baseUrl = 'files/';
@@ -56,7 +56,11 @@ class FileService {
   }
 
   // Update file metadata
-  async updateFile(chapterPublicId: string, fileId: string, updateData: Partial<Pick<ChapterFile, 'name'>>): Promise<ChapterFile> {
+  async updateFile(
+    chapterPublicId: string,
+    fileId: string,
+    updateData: Partial<Pick<ChapterFile, 'name'>>
+  ): Promise<ChapterFile> {
     return baseRequest<ChapterFile>({
       url: `${this.baseUrl}chapters/${chapterPublicId}/${fileId}/`,
       method: METHOD.PATCH,
@@ -99,7 +103,10 @@ class FileService {
   }
 
   // Get files by processing status
-  async getFilesByStatus(chapterPublicId: string, status: ChapterFile['processing_status']): Promise<ChapterFile[]> {
+  async getFilesByStatus(
+    chapterPublicId: string,
+    status: ChapterFile['processing_status']
+  ): Promise<ChapterFile[]> {
     return baseRequest<ChapterFile[]>({
       url: `${this.baseUrl}chapters/${chapterPublicId}/?processing_status=${status}`,
       method: METHOD.GET,

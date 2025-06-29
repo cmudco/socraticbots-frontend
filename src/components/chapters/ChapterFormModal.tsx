@@ -1,16 +1,26 @@
 // src/components/chapters/ChapterFormModal.tsx
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { BookOpen } from 'lucide-react';
-import { useChapterFormStore } from '../../stores/chapterFormStore';
-import { useCreateChapter, useUpdateChapter } from '../../hooks/queries/useChapters';
-import BasicInfoTab from './tabs/BasicInfoTab';
-import PromptsTab from './tabs/PromptsTab';
-import FilesTab from './tabs/FilesTab';
-import DeploymentTab from './tabs/DeploymentTab';
+
 import { FormikProps } from 'formik';
+import { BookOpen } from 'lucide-react';
+
 import { Chapter } from '@/services/chapters.service';
+
+import { useCreateChapter, useUpdateChapter } from '../../hooks/queries/useChapters';
+import { useChapterFormStore } from '../../stores/chapterFormStore';
+import { Button } from '../ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
+import BasicInfoTab from './tabs/BasicInfoTab';
+import DeploymentTab from './tabs/DeploymentTab';
+import FilesTab from './tabs/FilesTab';
+import PromptsTab from './tabs/PromptsTab';
 
 interface ChapterFormModalProps {
   isOpen: boolean;
@@ -31,7 +41,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   isOpen,
   onClose,
   chapter,
-  bookId
+  bookId,
 }) => {
   const formRef = useRef<FormikProps<FormValues>>(null);
 
@@ -51,7 +61,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     closeForm,
     setSubmitting,
     initEditChapter,
-    initNewChapter
+    initNewChapter,
   } = useChapterFormStore();
 
   const createChapterMutation = useCreateChapter();
@@ -123,7 +133,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
       console.log('Submitting chapter data:', {
         chapterData,
         modelPreferences,
-        promptData
+        promptData,
       });
 
       if (isEdit && chapter) {
@@ -133,7 +143,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           chapterId: chapter.id,
           chapterData,
           modelPreferences,
-          promptData
+          promptData,
         });
       } else {
         // If creating, use create mutation with separate calls
@@ -141,7 +151,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           bookId,
           chapterData,
           modelPreferences,
-          promptData
+          promptData,
         });
       }
 
@@ -171,7 +181,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     bookId,
     closeForm,
     onClose,
-    setSubmitting
+    setSubmitting,
   ]);
 
   // Handle Ctrl+Enter for form submission
@@ -196,7 +206,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     { id: 'basic', label: 'Basic Info' },
     { id: 'prompts', label: 'Prompts' },
     { id: 'files', label: 'Files' },
-    { id: 'deployment', label: 'Deployment' }
+    { id: 'deployment', label: 'Deployment' },
   ];
 
   const renderTabContent = () => {
@@ -216,32 +226,34 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="px-6 py-4 border-b">
+      <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden p-0 sm:max-w-4xl">
+        <DialogHeader className="border-b px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-violet-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100">
+              <BookOpen className="h-5 w-5 text-violet-600" />
             </div>
             <div>
               <DialogTitle className="text-lg font-semibold">
                 {isEdit ? 'Edit Chapter' : 'Create New Chapter'}
               </DialogTitle>
               <DialogDescription className="text-slate-600">
-                {isEdit ? 'Update the chapter details below.' : 'Fill in the details to create a new chapter.'}
+                {isEdit
+                  ? 'Update the chapter details below.'
+                  : 'Fill in the details to create a new chapter.'}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex flex-1 flex-col overflow-hidden">
           {/* Custom Tab Navigation */}
-          <div className="px-6 border-b flex-shrink-0">
-            <div className="flex bg-slate-100 rounded-md p-1">
-              {tabs.map((tab) => (
+          <div className="flex-shrink-0 border-b px-6">
+            <div className="flex rounded-md bg-slate-100 p-1">
+              {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-sm transition-all ${
+                  className={`flex-1 rounded-sm px-3 py-2 text-sm font-medium transition-all ${
                     activeTab === tab.id
                       ? 'bg-white text-violet-600 shadow-sm'
                       : 'text-slate-500 hover:text-slate-700'
@@ -254,13 +266,11 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           </div>
 
           {/* Tab Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {renderTabContent()}
-          </div>
+          <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
         </div>
 
         {/* Modal Footer */}
-        <DialogFooter className="flex items-center justify-end space-x-3 p-6 border-t">
+        <DialogFooter className="flex items-center justify-end space-x-3 border-t p-6">
           <Button
             variant="outline"
             onClick={handleClose}
@@ -272,15 +282,17 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-violet-600 hover:bg-violet-700 text-white"
+            className="bg-violet-600 text-white hover:bg-violet-700"
           >
             {isSubmitting ? (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 Saving...
               </div>
+            ) : isEdit ? (
+              'Update Chapter'
             ) : (
-              isEdit ? 'Update Chapter' : 'Create Chapter'
+              'Create Chapter'
             )}
           </Button>
         </DialogFooter>

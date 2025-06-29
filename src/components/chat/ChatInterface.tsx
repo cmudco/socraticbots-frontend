@@ -1,14 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useChatStore } from '@/stores/chatStore';
-import { useConversationForChapter, useStreamMessage, useClearConversation } from '@/hooks/queries/useChat';
-import ChatHeader from './ChatHeader';
-import ChatControls from './ChatControls';
-import MessageList from './MessageList';
-import ChatInput from './ChatInput';
-import { ChatMessage, ChatRole, ChatSender } from '@/types/chat';
-import { Card } from '@/components/ui/card';
+
 import { MessageSquare } from 'lucide-react';
+
+import {
+  useClearConversation,
+  useConversationForChapter,
+  useStreamMessage,
+} from '@/hooks/queries/useChat';
+
+import { useChatStore } from '@/stores/chatStore';
+
+import { Card } from '@/components/ui/card';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
+
+import { ChatMessage, ChatRole, ChatSender } from '@/types/chat';
+
+import ChatControls from './ChatControls';
+import ChatHeader from './ChatHeader';
+import ChatInput from './ChatInput';
+import MessageList from './MessageList';
 
 const ChatInterface: React.FC = () => {
   const messageAreaRef = useRef<HTMLDivElement>(null);
@@ -26,7 +36,8 @@ const ChatInterface: React.FC = () => {
     removePendingMessage,
   } = useChatStore();
 
-  const { data: conversation, isLoading: conversationLoading } = useConversationForChapter(selectedChapterId);
+  const { data: conversation, isLoading: conversationLoading } =
+    useConversationForChapter(selectedChapterId);
   const { streamMessage, isStreaming, error: streamError, tokens } = useStreamMessage();
   const clearConversationMutation = useClearConversation();
 
@@ -122,18 +133,18 @@ const ChatInterface: React.FC = () => {
   // Empty state when no chapter is selected
   if (!selectedChapterId) {
     return (
-      <div className="flex-1 flex flex-col h-full bg-white">
+      <div className="flex h-full flex-1 flex-col bg-white">
         <ChatHeader />
 
-        <div className="flex-1 flex items-center justify-center p-8">
-          <Card className="max-w-md w-full p-8 text-center bg-white/90 backdrop-blur-sm border-violet-200/50 shadow-lg">
-            <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-violet-400 to-purple-400 rounded-2xl flex items-center justify-center shadow-sm">
-              <MessageSquare className="w-8 h-8 text-white" />
+        <div className="flex flex-1 items-center justify-center p-8">
+          <Card className="w-full max-w-md border-violet-200/50 bg-white/90 p-8 text-center shadow-lg backdrop-blur-sm">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-purple-400 shadow-sm">
+              <MessageSquare className="h-8 w-8 text-white" />
             </div>
-            <h2 className="text-xl font-semibold mb-3 text-slate-800">Please Select a Chapter</h2>
-            <p className="text-slate-600 leading-relaxed">
-              Use the dropdown box along the top of the screen to select a chapter. Once you select a chapter, you can
-              begin chatting.
+            <h2 className="mb-3 text-xl font-semibold text-slate-800">Please Select a Chapter</h2>
+            <p className="leading-relaxed text-slate-600">
+              Use the dropdown box along the top of the screen to select a chapter. Once you select
+              a chapter, you can begin chatting.
             </p>
           </Card>
         </div>
@@ -144,51 +155,57 @@ const ChatInterface: React.FC = () => {
   const hasMessages = allMessages.length > 0;
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-white">
+    <div className="flex h-full flex-1 flex-col bg-white">
       {/* Chat Header */}
       <ChatHeader />
 
       {/* Message Area */}
-      <div ref={messageAreaRef} className="flex-1 overflow-y-auto bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30">
-        <div className="max-w-4xl mx-auto px-4 py-8">
+      <div
+        ref={messageAreaRef}
+        className="flex-1 overflow-y-auto bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30"
+      >
+        <div className="mx-auto max-w-4xl px-4 py-8">
           {!hasMessages ? (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-              <div className="w-20 h-20 mb-8 bg-gradient-to-br from-violet-400 to-purple-400 rounded-3xl flex items-center justify-center shadow-lg">
-                <MessageSquare className="w-10 h-10 text-white" />
+            <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+              <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-400 to-purple-400 shadow-lg">
+                <MessageSquare className="h-10 w-10 text-white" />
               </div>
-              <h3 className="text-2xl font-semibold text-slate-800 mb-4">Start a Conversation</h3>
-              <p className="text-slate-600 max-w-md leading-relaxed mb-8">
-                Ask me anything about this chapter. I'm here to help you understand the concepts and answer your questions.
+              <h3 className="mb-4 text-2xl font-semibold text-slate-800">Start a Conversation</h3>
+              <p className="mb-8 max-w-md leading-relaxed text-slate-600">
+                Ask me anything about this chapter. I'm here to help you understand the concepts and
+                answer your questions.
               </p>
 
               {/* Quick Action Buttons */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-md">
+              <div className="grid w-full max-w-md grid-cols-1 gap-3 md:grid-cols-2">
                 <button
-                  onClick={() => handleActionClick("Can you explain the main concepts in this chapter?")}
-                  className="p-4 bg-white border border-slate-200 rounded-xl hover:border-violet-200 hover:bg-violet-50/50 transition-all duration-200 text-left group"
+                  onClick={() =>
+                    handleActionClick('Can you explain the main concepts in this chapter?')
+                  }
+                  className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
                 >
-                  <div className="text-sm font-medium text-slate-800 mb-1">Main Concepts</div>
+                  <div className="mb-1 text-sm font-medium text-slate-800">Main Concepts</div>
                   <div className="text-xs text-slate-500">Explain key ideas</div>
                 </button>
                 <button
-                  onClick={() => handleActionClick("Can you give me some examples?")}
-                  className="p-4 bg-white border border-slate-200 rounded-xl hover:border-violet-200 hover:bg-violet-50/50 transition-all duration-200 text-left group"
+                  onClick={() => handleActionClick('Can you give me some examples?')}
+                  className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
                 >
-                  <div className="text-sm font-medium text-slate-800 mb-1">Examples</div>
+                  <div className="mb-1 text-sm font-medium text-slate-800">Examples</div>
                   <div className="text-xs text-slate-500">Show practical examples</div>
                 </button>
                 <button
-                  onClick={() => handleActionClick("Can you quiz me on this material?")}
-                  className="p-4 bg-white border border-slate-200 rounded-xl hover:border-violet-200 hover:bg-violet-50/50 transition-all duration-200 text-left group"
+                  onClick={() => handleActionClick('Can you quiz me on this material?')}
+                  className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
                 >
-                  <div className="text-sm font-medium text-slate-800 mb-1">Quiz Me</div>
+                  <div className="mb-1 text-sm font-medium text-slate-800">Quiz Me</div>
                   <div className="text-xs text-slate-500">Test understanding</div>
                 </button>
                 <button
-                  onClick={() => handleActionClick("Can you provide a summary?")}
-                  className="p-4 bg-white border border-slate-200 rounded-xl hover:border-violet-200 hover:bg-violet-50/50 transition-all duration-200 text-left group"
+                  onClick={() => handleActionClick('Can you provide a summary?')}
+                  className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
                 >
-                  <div className="text-sm font-medium text-slate-800 mb-1">Summary</div>
+                  <div className="mb-1 text-sm font-medium text-slate-800">Summary</div>
                   <div className="text-xs text-slate-500">Quick overview</div>
                 </button>
               </div>
@@ -196,7 +213,11 @@ const ChatInterface: React.FC = () => {
           ) : (
             <MessageList
               messages={allMessages}
-              greeting={conversation?.chapter_details && 'greeting' in conversation.chapter_details ? conversation.chapter_details.greeting : undefined}
+              greeting={
+                conversation?.chapter_details && 'greeting' in conversation.chapter_details
+                  ? conversation.chapter_details.greeting
+                  : undefined
+              }
               isStreaming={isStreaming}
             />
           )}
@@ -206,15 +227,28 @@ const ChatInterface: React.FC = () => {
       {/* Show errors */}
       {(streamError || clearConversationMutation.isError) && (
         <div className="mx-4 mb-4">
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex items-start">
-              <svg className="w-5 h-5 text-red-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                className="mt-0.5 mr-3 h-5 w-5 text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
               <div>
-                <h4 className="text-red-800 font-medium">Error</h4>
-                <p className="text-red-700 text-sm mt-1">
-                  {streamError?.message || (clearConversationMutation.error instanceof Error ? clearConversationMutation.error.message : 'An unexpected error occurred')}
+                <h4 className="font-medium text-red-800">Error</h4>
+                <p className="mt-1 text-sm text-red-700">
+                  {streamError?.message ||
+                    (clearConversationMutation.error instanceof Error
+                      ? clearConversationMutation.error.message
+                      : 'An unexpected error occurred')}
                 </p>
               </div>
             </div>
@@ -224,8 +258,8 @@ const ChatInterface: React.FC = () => {
 
       {/* Chat Controls - Only show when there are messages */}
       {hasMessages && (
-        <div className="border-t border-slate-200/60 bg-white/90 backdrop-blur-sm px-4 py-3">
-          <div className="max-w-4xl mx-auto">
+        <div className="border-t border-slate-200/60 bg-white/90 px-4 py-3 backdrop-blur-sm">
+          <div className="mx-auto max-w-4xl">
             <ChatControls
               onActionClick={handleActionClick}
               onClearConversation={handleClearConversation}
@@ -236,8 +270,8 @@ const ChatInterface: React.FC = () => {
       )}
 
       {/* Chat Input */}
-      <div className="bg-white border-t border-slate-200/60">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="border-t border-slate-200/60 bg-white">
+        <div className="mx-auto max-w-4xl px-4 py-4">
           <ChatInput
             value={inputValue}
             onChange={setInputValue}

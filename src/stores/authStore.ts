@@ -1,6 +1,7 @@
 // src/stores/authStore.ts
 import { create } from 'zustand';
-import type { AuthState, User, AuthTokens } from '../types/auth';
+
+import type { AuthState, AuthTokens, User } from '../types/auth';
 
 interface AuthStore extends AuthState {
   setAuth: (authData: {
@@ -57,7 +58,7 @@ const setStoredUser = (user: User | null) => {
   }
 };
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthStore>(set => ({
   // Initial state
   user: null,
   tokens: null,
@@ -65,10 +66,10 @@ export const useAuthStore = create<AuthStore>((set) => ({
   isLoading: true,
 
   // Actions
-  setAuth: (authData) => {
+  setAuth: authData => {
     setStoredTokens(authData.tokens);
     setStoredUser(authData.user);
-    set((state) => ({
+    set(state => ({
       ...state,
       user: authData.user,
       tokens: authData.tokens,
@@ -88,23 +89,23 @@ export const useAuthStore = create<AuthStore>((set) => ({
     });
   },
 
-  setLoading: (loading) =>
-    set((state) => ({
+  setLoading: loading =>
+    set(state => ({
       ...state,
       isLoading: loading,
     })),
 
-  setUser: (user) => {
+  setUser: user => {
     setStoredUser(user);
-    set((state) => ({
+    set(state => ({
       ...state,
       user,
     }));
   },
 
-  setTokens: (tokens) => {
+  setTokens: tokens => {
     setStoredTokens(tokens);
-    set((state) => ({
+    set(state => ({
       ...state,
       tokens,
       isAuthenticated: !!tokens,
@@ -114,7 +115,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   initializeAuth: () => {
     const storedTokens = getStoredTokens();
     const storedUser = getStoredUser();
-    
+
     set({
       user: storedUser,
       tokens: storedTokens,
