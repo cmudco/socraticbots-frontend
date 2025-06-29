@@ -46,6 +46,16 @@ const ChatInterface: React.FC = () => {
     }
   }, [messages, pendingMessages, isStreaming, tokens]);
 
+  // Refocus input when streaming stops
+  useEffect(() => {
+    if (!isStreaming && inputRef.current) {
+      // Small delay to ensure the UI has updated
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [isStreaming]);
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !actualConversationId || conversationLoading || isStreaming) return;
 
