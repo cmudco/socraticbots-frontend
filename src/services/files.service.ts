@@ -39,8 +39,7 @@ class FileService {
   // Upload a file to a chapter
   async uploadChapterFile(
     chapterPublicId: string,
-    uploadData: UploadFileRequest,
-    onProgress?: (progress: number) => void
+    uploadData: UploadFileRequest
   ): Promise<ChapterFile> {
     const formData = new FormData();
     formData.append('file', uploadData.file);

@@ -143,10 +143,10 @@ const FilesTab: React.FC = () => {
         onClose={cancelDelete}
         onConfirm={confirmDelete}
         title="Delete File"
-        message={`Are you sure you want to delete "${deleteModal.fileName}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${deleteModal.fileName}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
-        type="danger"
+        variant="destructive"
         isLoading={isDeleting}
       />
     </div>

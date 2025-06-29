@@ -80,7 +80,7 @@ export const useSendMessage = () => {
     mutationFn: async ({ conversationId, content }: SendMessagePayload) => {
       return chatService.sendMessage(conversationId, content);
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: () => {
       // Invalidate all conversation queries to refetch messages
       queryClient.invalidateQueries({ queryKey: ['chat', 'conversation'] });
       // Also invalidate tracking progress since new messages affect progress
@@ -94,7 +94,7 @@ export const useClearConversation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (conversationId: string) => chatService.clearConversation(conversationId),
-    onSuccess: (_data, conversationId) => {
+    onSuccess: () => {
       // Invalidate all conversation queries to refetch messages
       queryClient.invalidateQueries({ queryKey: ['chat', 'conversation'] });
       // Also invalidate tracking progress since new messages affect progress
