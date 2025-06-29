@@ -48,14 +48,19 @@ export const useLogin = () => {
     mutationFn: ({ username, password }: { username: string; password: string }) =>
       authService.login(username, password),
     onSuccess: async (tokens: AuthTokens) => {
-      // Store tokens in localStorage
-      localStorage.setItem('auth_tokens', JSON.stringify(tokens));
-
       try {
-        // Fetch user profile
-        const userData = await authService.fetchUserProfile(tokens.access);
+        // First, store the tokens in the auth store (this will also store in localStorage)
+        setAuth({
+          user: null, // We'll update this after fetching the profile
+          tokens,
+          isAuthenticated: true,
+          isLoading: false,
+        });
 
-        // Update Zustand store
+        // Now fetch user profile (tokens are now available)
+        const userData = await authService.fetchUserProfile();
+
+        // Update the user in the store
         setAuth({
           user: userData,
           tokens,
@@ -69,7 +74,6 @@ export const useLogin = () => {
       } catch (error) {
         console.error('Failed to fetch user profile after login:', error);
         // Clear auth on profile fetch failure
-        localStorage.removeItem('auth_tokens');
         clearAuth();
         throw error;
       }
@@ -94,10 +98,7 @@ export const useLogout = () => {
       return Promise.resolve();
     },
     onSuccess: () => {
-      // Clear localStorage
-      localStorage.removeItem('auth_tokens');
-
-      // Clear Zustand store
+      // Clear Zustand store (this will also clear localStorage)
       clearAuth();
 
       // Clear all queries from cache
@@ -116,14 +117,11 @@ export const useRefreshToken = () => {
   return useMutation({
     mutationFn: (refreshToken: string) => authService.refreshToken(refreshToken),
     onSuccess: async (newTokens: AuthTokens) => {
-      // Update tokens in localStorage immediately
-      localStorage.setItem('auth_tokens', JSON.stringify(newTokens));
-
       try {
         // Fetch updated user profile
-        const userData = await authService.fetchUserProfile(newTokens.access);
+        const userData = await authService.fetchUserProfile();
 
-        // Update Zustand store
+        // Update Zustand store (this will also store tokens in localStorage)
         setAuth({
           user: userData,
           tokens: newTokens,
@@ -142,7 +140,6 @@ export const useRefreshToken = () => {
     onError: (error) => {
       console.error('Token refresh failed:', error);
       // Clear auth on refresh failure
-      localStorage.removeItem('auth_tokens');
       clearAuth();
       // Clear all queries on auth failure
       queryClient.clear();

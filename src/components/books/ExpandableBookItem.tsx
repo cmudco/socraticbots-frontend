@@ -1,9 +1,7 @@
 // src/components/books/ExpandableBookItem.tsx
 import React, { useState } from 'react';
 import { Book } from '../../types/book';
-import { Chapter } from '../../services/chapters.service';
 import ChapterList from '../chapters/ChapterList';
-import { chapterService } from '../../services/chapters.service';
 
 interface ExpandableBookItemProps {
   book: Book;
@@ -13,31 +11,9 @@ interface ExpandableBookItemProps {
 
 const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, onDelete }) => {
   const [expanded, setExpanded] = useState(false);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  const toggleExpand = async () => {
-    const newExpandedState = !expanded;
-    setExpanded(newExpandedState);
-
-    if (newExpandedState && chapters.length === 0) {
-      // Fetch chapters when expanding
-      setLoading(true);
-      try {
-        const fetchedChapters = await chapterService.getChapters(book.id);
-        setChapters(fetchedChapters);
-      } catch (error) {
-        console.error('Error fetching chapters:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
-
-
-  const handleChapterDeleted = (chapterId: string) => {
-    setChapters(chapters.filter(ch => ch.id !== chapterId));
+  const toggleExpand = () => {
+    setExpanded(!expanded);
   };
 
   return (
@@ -77,15 +53,11 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, o
 
       {expanded && (
         <div className="border-t p-4 bg-gray-50">
-          {loading ? (
-            <div className="text-center py-4">Loading chapters...</div>
-          ) : (
-            <ChapterList
-              bookId={book.id}
-              initialChapters={chapters}
-              onChapterDeleted={handleChapterDeleted}
-            />
-          )}
+          <ChapterList
+            bookId={book.id}
+            initialChapters={[]}
+            onChapterDeleted={() => {}}
+          />
         </div>
       )}
     </div>

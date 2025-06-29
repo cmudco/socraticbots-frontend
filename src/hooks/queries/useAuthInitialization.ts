@@ -2,14 +2,16 @@
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { authService } from '../../services/auth.service';
-import type { AuthTokens } from '../../types/auth';
+import { baseRequest } from '../../utils/baseRequest';
+import type { User } from '../../types/auth';
+import { METHOD } from '@/constants/requests';
 
 /**
  * Hook to initialize authentication state on app startup
  * This replaces the AuthContext initialization logic
  */
 export const useAuthInitialization = () => {
-  const { setAuth, clearAuth, setLoading } = useAuthStore();
+  const { setAuth, clearAuth, setLoading, initializeAuth } = useAuthStore();
   const initializationRef = useRef(false);
 
   useEffect(() => {
@@ -19,34 +21,38 @@ export const useAuthInitialization = () => {
     }
     initializationRef.current = true;
 
-    const initializeAuth = async () => {
+    const initializeAuthState = async () => {
       try {
         setLoading(true);
         console.log('Auth initialization starting...');
 
-        const storedTokens = localStorage.getItem('auth_tokens');
+        // Initialize from localStorage first
+        initializeAuth();
 
-        if (!storedTokens) {
+        // Check if we have tokens
+        const accessToken = localStorage.getItem('access_token');
+        const refreshToken = localStorage.getItem('refresh_token');
+
+        if (!accessToken || !refreshToken) {
           // No tokens stored, user is not authenticated
           console.log('No stored tokens found');
           clearAuth();
           return;
         }
 
-        const tokens: AuthTokens = JSON.parse(storedTokens);
         console.log('Found stored tokens, validating...');
 
-        // First, validate the access token
-        const isValid = await validateTokenSync(tokens.access);
+        // Validate the access token
+        const isValid = await validateToken(accessToken);
 
         if (isValid) {
           // Token is valid, fetch user profile
           try {
             console.log('Token is valid, fetching user profile...');
-            const userData = await fetchUserProfileSync(tokens.access);
+            const userData = await fetchUserProfile();
 
             setAuth({
-              tokens,
+              tokens: { access: accessToken, refresh: refreshToken },
               user: userData,
               isAuthenticated: true,
               isLoading: false,
@@ -58,30 +64,22 @@ export const useAuthInitialization = () => {
           }
         } else {
           // Access token is invalid, try to refresh
-          if (tokens.refresh) {
-            try {
-              console.log('Access token invalid, attempting refresh');
-              const newTokens = await authService.refreshToken(tokens.refresh);
+          try {
+            console.log('Access token invalid, attempting refresh');
+            const newTokens = await authService.refreshToken(refreshToken);
 
-              // Save new tokens
-              localStorage.setItem('auth_tokens', JSON.stringify(newTokens));
+            // Fetch user profile with new token
+            const userData = await fetchUserProfile();
 
-              // Fetch user profile with new token
-              const userData = await fetchUserProfileSync(newTokens.access);
-
-              setAuth({
-                tokens: newTokens,
-                user: userData,
-                isAuthenticated: true,
-                isLoading: false,
-              });
-              console.log('Token refresh and auth initialization completed successfully');
-            } catch (error) {
-              console.error('Token refresh failed during initialization:', error);
-              clearAuth();
-            }
-          } else {
-            console.log('No refresh token available');
+            setAuth({
+              tokens: newTokens,
+              user: userData,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+            console.log('Token refresh and auth initialization completed successfully');
+          } catch (error) {
+            console.error('Token refresh failed during initialization:', error);
             clearAuth();
           }
         }
@@ -91,41 +89,31 @@ export const useAuthInitialization = () => {
       }
     };
 
-    initializeAuth();
+    initializeAuthState();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array to run only once - Zustand store methods are stable
 };
 
-// Helper function to validate token synchronously
-const validateTokenSync = async (token: string): Promise<boolean> => {
+// Helper function to validate token
+const validateToken = async (token: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/users/token/verify/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token }),
+    await baseRequest({
+      url: 'users/token/verify/',
+      method: METHOD.POST,
+      data: { token },
+      includeAuthToken: false,
     });
-
-    return response.ok;
+    return true;
   } catch (error) {
     console.error('Token validation failed:', error);
     return false;
   }
 };
 
-// Helper function to fetch user profile synchronously
-const fetchUserProfileSync = async (accessToken: string) => {
-  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/users/me/`, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
+// Helper function to fetch user profile
+const fetchUserProfile = async (): Promise<User> => {
+  return baseRequest<User>({
+    url: 'users/me/',
+    method: METHOD.GET,
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch user profile');
-  }
-
-  return response.json();
 };
