@@ -1,7 +1,6 @@
 // src/services/chat.service.ts
-import { api } from './api/instance';
-import { authService } from './auth.service';
-import { AuthTokens } from '../types/auth';
+import { baseRequest } from '../utils/baseRequest';
+import { METHOD } from '../constants/requests';
 import config from '../lib/config';
 import type { Conversation, ChatMessage } from '@/types/chat';
 
@@ -25,58 +24,32 @@ interface StreamCallbacks {
 class ChatService {
   // Fetch available chapters
   async getAvailableChapters(): Promise<Chapter[]> {
-    try {
-      const response = await api.get<Chapter[]>('/chat/available-chapters/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching available chapters:', error);
-      throw error;
-    }
+    return baseRequest<Chapter[]>({
+      url: 'chat/available-chapters/',
+      method: METHOD.GET,
+    });
   }
 
   async getConversationForChapter(chapterId: string): Promise<Conversation> {
-    try {
-      const response = await api.get<Conversation>(`/chat/conversations/for_chapter/${chapterId}/`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching conversation for chapter ${chapterId}:`, error);
-      throw error;
-    }
+    return baseRequest<Conversation>({
+      url: `chat/conversations/for_chapter/${chapterId}/`,
+      method: METHOD.GET,
+    });
   }
 
   async sendMessage(conversationId: string, message: string): Promise<ChatMessage> {
-    try {
-      const response = await api.post<ChatMessage>('/chat/send-message/', {
+    return baseRequest<ChatMessage>({
+      url: 'chat/send-message/',
+      method: METHOD.POST,
+      data: {
         conversation_id: conversationId,
         message: message
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error sending message:', error);
-      throw error;
-    }
+      },
+    });
   }
 
-  private async getFreshToken(): Promise<string> {
-    try {
-      // Get stored tokens
-      const storedTokens = localStorage.getItem('auth_tokens');
-      if (!storedTokens) throw new Error('No auth tokens found');
-
-      // Parse tokens
-      const tokens: AuthTokens = JSON.parse(storedTokens);
-
-      // Force a token refresh
-      const newTokens = await authService.refreshToken(tokens.refresh);
-
-      // Save new tokens
-      localStorage.setItem('auth_tokens', JSON.stringify(newTokens));
-
-      return newTokens.access;
-    } catch (error) {
-      console.error('Error getting fresh token:', error);
-      throw error;
-    }
+  private getCurrentToken(): string | null {
+    return localStorage.getItem('access_token');
   }
 
   async streamMessage(
@@ -85,7 +58,7 @@ class ChatService {
     callbacks: StreamCallbacks
   ): Promise<string> {
     try {
-      const token = await this.getFreshToken();
+      const token = this.getCurrentToken();
       if (!token) throw new Error('No auth token available');
 
       const response = await fetch(`${config.apiUrl}/chat/send-message/`, {
@@ -173,7 +146,8 @@ class ChatService {
     callbacks: StreamCallbacks
   ): Promise<string> {
     try {
-      const token = await this.getFreshToken();
+      const token = this.getCurrentToken();
+      if (!token) throw new Error('No auth token available');
 
       const response = await fetch(`${config.apiUrl}/chat/track-progress/`, {
         method: 'POST',
@@ -260,23 +234,17 @@ class ChatService {
   }
 
   async getLatestProgress(conversationId: string): Promise<{content: string | null, created_at: string | null}> {
-    try {
-      const response = await api.get(`/chat/latest-progress/${conversationId}/`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching latest progress:', error);
-      throw error;
-    }
+    return baseRequest<{content: string | null, created_at: string | null}>({
+      url: `chat/latest-progress/${conversationId}/`,
+      method: METHOD.GET,
+    });
   }
 
   async clearConversation(conversationId: string): Promise<Conversation> {
-    try {
-      const response = await api.post<Conversation>(`/chat/clear-conversation/${conversationId}/`);
-      return response.data;
-    } catch (error) {
-      console.error('Error clearing conversation:', error);
-      throw error;
-    }
+    return baseRequest<Conversation>({
+      url: `chat/clear-conversation/${conversationId}/`,
+      method: METHOD.POST,
+    });
   }
 
 }

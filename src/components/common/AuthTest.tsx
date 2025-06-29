@@ -1,6 +1,7 @@
 // src/components/common/AuthTest.tsx
 import React, { useState } from 'react';
-import { api } from '../../services/api/instance';
+import { baseRequest } from '../../utils/baseRequest';
+import { METHOD } from '../../constants/requests';
 
 const AuthTest: React.FC = () => {
   const [response, setResponse] = useState<string>('');
@@ -11,9 +12,12 @@ const AuthTest: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // This will use the configured API with auth interceptors
-      const result = await api.get('/users/me/');
-      setResponse(JSON.stringify(result.data, null, 2));
+      // This will use baseRequest with auth token handling
+      const result = await baseRequest({
+        url: 'users/me/',
+        method: METHOD.GET,
+      });
+      setResponse(JSON.stringify(result, null, 2));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       console.error('Auth test failed:', err);

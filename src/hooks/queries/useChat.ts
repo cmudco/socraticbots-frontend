@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatService, Chapter } from '@/services/chat.service';
 import { chapterService, LearningGoal } from '@/services/chapters.service';
 import { useBooks } from './useBooks';
-import { api } from '@/services/api/instance';
 import type { Conversation, SendMessagePayload } from '@/types/chat';
 import { useState } from 'react';
 
@@ -20,8 +19,7 @@ export const useChapterToBookMapping = () => {
       // Get chapters for each book and build the mapping
       for (const book of books) {
         try {
-          const response = await api.get(`/books/${book.id}/chapters/`);
-          const chapters = response.data;
+          const chapters = await chapterService.getChapters(book.id);
           chapters.forEach((chapter: any) => {
             mapping[chapter.id] = book.id;
           });

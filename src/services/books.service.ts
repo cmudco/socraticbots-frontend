@@ -1,5 +1,6 @@
 // src/services/book.service.ts
-import { api } from './api/instance';
+import { baseRequest } from '../utils/baseRequest';
+import { METHOD } from '../constants/requests';
 import { Book } from '../types/book';
 
 export interface CreateBookRequest {
@@ -15,81 +16,64 @@ export interface UpdateBookRequest {
 }
 
 class BookService {
-  private readonly baseUrl = '/books/';
   // Get all books for the current user
   async getBooks(): Promise<Book[]> {
-    try {
-      const response = await api.get<Book[]>(this.baseUrl);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching books:', error);
-      throw error;
-    }
+    return baseRequest<Book[]>({
+      url: 'books/',
+      method: METHOD.GET,
+    });
   }
 
   // Get a single book by ID
   async getBook(id: string): Promise<Book> {
-    try {
-      const response = await api.get<Book>(`${this.baseUrl}${id}/`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching book ${id}:`, error);
-      throw error;
-    }
+    return baseRequest<Book>({
+      url: `books/${id}/`,
+      method: METHOD.GET,
+    });
   }
 
   // Create a new book
   async createBook(bookData: CreateBookRequest): Promise<Book> {
-    try {
-      const response = await api.post<Book>(this.baseUrl, bookData);
-      return response.data;
-    } catch (error) {
-      console.error('Error creating book:', error);
-      throw error;
-    }
+    return baseRequest<Book>({
+      url: 'books/',
+      method: METHOD.POST,
+      data: bookData,
+    });
   }
 
   // Update a book
   async updateBook(id: string, bookData: UpdateBookRequest): Promise<Book> {
-    try {
-      const response = await api.patch<Book>(`${this.baseUrl}${id}/`, bookData);
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating book ${id}:`, error);
-      throw error;
-    }
+    return baseRequest<Book>({
+      url: `books/${id}/`,
+      method: METHOD.PATCH,
+      data: bookData,
+    });
   }
 
   // Delete a book
   async deleteBook(id: string): Promise<void> {
-    try {
-      await api.delete(`${this.baseUrl}${id}/`);
-    } catch (error) {
-      console.error(`Error deleting book ${id}:`, error);
-      throw error;
-    }
+    return baseRequest<void>({
+      url: `books/${id}/`,
+      method: METHOD.DELETE,
+    });
   }
 
   // Search books (if you implement search in your backend)
   async searchBooks(query: string): Promise<Book[]> {
-    try {
-      const response = await api.get<Book[]>(`${this.baseUrl}?search=${encodeURIComponent(query)}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error searching books with query "${query}":`, error);
-      throw error;
-    }
+    return baseRequest<Book[]>({
+      url: 'books/',
+      method: METHOD.GET,
+      params: { search: query },
+    });
   }
 
   // Filter books by published status
   async getPublishedBooks(isPublished: boolean = true): Promise<Book[]> {
-    try {
-      const response = await api.get<Book[]>(`${this.baseUrl}?is_published=${isPublished}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching ${isPublished ? 'published' : 'unpublished'} books:`, error);
-      throw error;
-    }
+    return baseRequest<Book[]>({
+      url: 'books/',
+      method: METHOD.GET,
+      params: { is_published: isPublished },
+    });
   }
 }
 

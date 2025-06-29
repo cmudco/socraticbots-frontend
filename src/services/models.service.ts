@@ -1,5 +1,6 @@
 // src/services/models.service.ts
-import { api } from './api/instance';
+import { baseRequest } from '../utils/baseRequest';
+import { METHOD } from '../constants/requests';
 
 export interface AIModel {
   id: string;
@@ -19,24 +20,18 @@ export interface AIModel {
 class ModelsService {
   // Get all available AI models
   async getModels(): Promise<AIModel[]> {
-    try {
-      const response = await api.get<AIModel[]>('/models/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching AI models:', error);
-      throw error;
-    }
+    return baseRequest<AIModel[]>({
+      url: 'models/',
+      method: METHOD.GET,
+    });
   }
   
   // Get a single AI model by ID
   async getModel(modelId: string): Promise<AIModel> {
-    try {
-      const response = await api.get<AIModel>(`/models/${modelId}/`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching AI model ${modelId}:`, error);
-      throw error;
-    }
+    return baseRequest<AIModel>({
+      url: `models/${modelId}/`,
+      method: METHOD.GET,
+    });
   }
 
   // Get all models for a specific provider

@@ -2,7 +2,7 @@ import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAvailableChapters, useChapterToBookMapping } from '@/hooks/queries/useChat';
 import { useChatStore } from '@/stores/chatStore';
-import { api } from '@/services/api/instance';
+import { chatService } from '@/services/chat.service';
 
 const ChapterSelector: React.FC = () => {
     const { data: chapters, isLoading } = useAvailableChapters();
@@ -20,8 +20,7 @@ const ChapterSelector: React.FC = () => {
             if (bookId) {
                 // Get the conversation for this chapter
                 try {
-                    const conversationResponse = await api.get(`/chat/conversations/for_chapter/${chapterId}/`);
-                    const conversation = conversationResponse.data;
+                    const conversation = await chatService.getConversationForChapter(chapterId);
                     setChapterContext(bookId, chapterId, conversation.id);
                     return;
                 } catch (error) {
