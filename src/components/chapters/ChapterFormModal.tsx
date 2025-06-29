@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { FormikProps } from 'formik';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Info } from 'lucide-react';
 
 import { Chapter } from '@/services/chapters.service';
 
@@ -205,9 +205,16 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   const tabs = [
     { id: 'basic', label: 'Basic Info' },
     { id: 'prompts', label: 'Prompts' },
-    { id: 'files', label: 'Files' },
+    ...(isEdit ? [{ id: 'files', label: 'Files' }] : []),
     { id: 'deployment', label: 'Deployment' },
   ];
+
+  // Reset to basic tab if we're on files tab but switched to create mode
+  useEffect(() => {
+    if (!isEdit && activeTab === 'files') {
+      setActiveTab('basic');
+    }
+  }, [isEdit, activeTab, setActiveTab]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -244,6 +251,22 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
             </div>
           </div>
         </DialogHeader>
+
+        {/* Information banner for chapter creation */}
+        {!isEdit && (
+          <div className="mx-6 mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex items-start gap-3">
+              <Info size={20} className="mt-0.5 flex-shrink-0 text-blue-600" />
+              <div className="text-sm">
+                <p className="font-medium text-blue-900">File Upload Available After Creation</p>
+                <p className="mt-1 text-blue-700">
+                  Once your chapter is created, you'll be able to upload files and documents in the
+                  Files tab when editing the chapter.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Custom Tab Navigation */}

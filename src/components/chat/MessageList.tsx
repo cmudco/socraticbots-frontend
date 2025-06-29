@@ -61,7 +61,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, greeting, isStreami
     lastAssistantIdx === -1 ? -1 : normalizedMessages.length - 1 - lastAssistantIdx;
 
   return (
-    <div ref={listRef} className="mx-auto h-full max-w-4xl space-y-0 overflow-y-auto px-4 py-6">
+    <div ref={listRef} className="mx-auto h-full max-w-5xl space-y-0 overflow-y-auto px-4 py-4">
       {normalizedMessages.map((message, idx) => (
         <div key={message.id} className={message.id.startsWith('pending-') ? 'opacity-70' : ''}>
           <MessageBubble

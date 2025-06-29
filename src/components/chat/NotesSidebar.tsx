@@ -1,8 +1,34 @@
 import React, { useState } from 'react';
 
-import { ChevronLeft, ChevronRight, NotebookPen } from 'lucide-react';
+import {
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Edit3,
+  HelpCircle,
+  Lightbulb,
+  NotebookPen,
+  Pin,
+  Plus,
+  RotateCcw,
+  Save,
+  Search,
+  Star,
+  X,
+} from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+
+interface Note {
+  id: number;
+  title: string;
+  content: string;
+  type: 'insight' | 'question' | 'concept';
+  timestamp: string;
+  isPinned: boolean;
+}
 
 interface NotesSidebarProps {
   onCollapseChange?: (collapsed: boolean) => void;
@@ -10,25 +36,177 @@ interface NotesSidebarProps {
 
 const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createNoteType, setCreateNoteType] = useState<'insight' | 'question' | 'concept'>(
+    'insight'
+  );
+  const [newNoteTitle, setNewNoteTitle] = useState('');
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+
+  const [notes, setNotes] = useState<Note[]>([
+    {
+      id: 1,
+      title: 'Reasoning Evolution',
+      content:
+        'Reasoning became an evolutionary advantage because it helped early humans solve complex problems, make better decisions, and cooperate in groups.',
+      type: 'insight',
+      timestamp: '2 min ago',
+      isPinned: true,
+    },
+    {
+      id: 2,
+      title: "Piaget's Stages Question",
+      content:
+        'How exactly do children transition between the concrete operational and formal operational stages?',
+      type: 'question',
+      timestamp: '5 min ago',
+      isPinned: false,
+    },
+    {
+      id: 3,
+      title: 'Deductive vs Inductive',
+      content:
+        'Deductive: General to specific (all birds have wings → sparrows have wings). Inductive: Specific to general (observed sparrows have wings → all birds have wings).',
+      type: 'concept',
+      timestamp: '10 min ago',
+      isPinned: false,
+    },
+  ]);
 
   const toggleCollapse = () => {
     const newCollapsed = !isCollapsed;
     setIsCollapsed(newCollapsed);
+    setIsSearching(false);
+    setSearchTerm('');
+    setEditingId(null);
+    setShowCreateModal(false);
     onCollapseChange?.(newCollapsed);
+  };
+
+  const openCreateModal = (type: 'insight' | 'question' | 'concept') => {
+    setCreateNoteType(type);
+    setNewNoteTitle('');
+    setNewNoteContent('');
+    setShowCreateModal(true);
+  };
+
+  const createNote = () => {
+    if (!newNoteTitle.trim() && !newNoteContent.trim()) return;
+
+    const titles = {
+      insight: newNoteTitle || 'New Insight',
+      question: newNoteTitle || 'New Question',
+      concept: newNoteTitle || 'New Concept',
+    };
+
+    const newNote: Note = {
+      id: Date.now(),
+      title: titles[createNoteType],
+      content: newNoteContent || 'Note content...',
+      type: createNoteType,
+      timestamp: 'Just now',
+      isPinned: false,
+    };
+
+    setNotes(prev => [newNote, ...prev]);
+    setShowCreateModal(false);
+    setNewNoteTitle('');
+    setNewNoteContent('');
+  };
+
+  const startEditing = (note: Note) => {
+    setEditingId(note.id);
+    setEditTitle(note.title);
+    setEditContent(note.content);
+  };
+
+  const saveEdit = () => {
+    if (!editingId) return;
+
+    setNotes(prev =>
+      prev.map(note =>
+        note.id === editingId
+          ? {
+              ...note,
+              title: editTitle.trim() || note.title,
+              content: editContent.trim() || note.content,
+            }
+          : note
+      )
+    );
+    setEditingId(null);
+    setEditTitle('');
+    setEditContent('');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditTitle('');
+    setEditContent('');
+  };
+
+  const togglePin = (id: number) => {
+    setNotes(prev =>
+      prev.map(note => (note.id === id ? { ...note, isPinned: !note.isPinned } : note))
+    );
+  };
+
+  const deleteNote = (id: number) => {
+    setNotes(prev => prev.filter(note => note.id !== id));
+    if (editingId === id) {
+      setEditingId(null);
+    }
+  };
+
+  const filteredNotes = notes.filter(
+    note =>
+      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'insight':
+        return <Lightbulb className="h-3 w-3" />;
+      case 'question':
+        return <HelpCircle className="h-3 w-3" />;
+      case 'concept':
+        return <BookOpen className="h-3 w-3" />;
+      default:
+        return <NotebookPen className="h-3 w-3" />;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'insight':
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'question':
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'concept':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      default:
+        return 'bg-slate-50 text-slate-700 border-slate-200';
+    }
   };
 
   return (
     <div
       className={`${
-        isCollapsed ? 'w-12' : 'w-72'
-      } relative flex h-full flex-shrink-0 flex-col border-l border-slate-200/60 bg-white/95 backdrop-blur-sm transition-all duration-300 ease-in-out`}
+        isCollapsed ? 'w-12' : 'w-80'
+      } relative flex h-full flex-shrink-0 flex-col border-l border-slate-200/60 bg-gradient-to-br from-slate-50 via-white to-violet-50/30 backdrop-blur-sm transition-all duration-300 ease-in-out`}
     >
-      {/* Toggle Button */}
+      {/* Toggle Button - Fixed z-index issue */}
       <Button
         onClick={toggleCollapse}
         variant="ghost"
         size="sm"
-        className="absolute top-6 -left-4 z-50 h-8 w-8 rounded-full border border-slate-200/60 bg-white p-0 shadow-lg transition-all hover:border-violet-300 hover:bg-violet-50 hover:shadow-xl"
+        className="absolute top-6 -left-4 z-[100] h-8 w-8 rounded-full border border-slate-200/60 bg-white p-0 shadow-lg transition-all hover:border-violet-300 hover:bg-violet-50 hover:shadow-xl"
         title={isCollapsed ? 'Expand notes' : 'Collapse notes'}
       >
         {isCollapsed ? (
@@ -38,69 +216,387 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
         )}
       </Button>
 
-      {/* Header */}
-      <div className="border-b border-slate-200/60 p-6">
-        <div className="flex items-center space-x-3">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-400 to-purple-500">
-            <NotebookPen className="h-4 w-4 text-white" />
+      {/* Enhanced Header */}
+      <div className="border-b border-slate-200/60 px-4 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md">
+              <NotebookPen className="h-4 w-4 text-white" />
+            </div>
+            {!isCollapsed && (
+              <div>
+                <h2 className="text-base font-semibold text-slate-800">Smart Notes</h2>
+                <p className="text-sm text-slate-600">AI-enhanced learning</p>
+              </div>
+            )}
           </div>
           {!isCollapsed && (
-            <h3 className="font-semibold text-slate-800 transition-opacity duration-200">Notes</h3>
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-slate-100 hover:text-slate-600"
+                title="Search notes"
+                onClick={() => setIsSearching(!isSearching)}
+              >
+                <Search className="h-4 w-4 text-slate-500" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-violet-50 hover:text-violet-600"
+                title="Add new note"
+                onClick={() => openCreateModal('insight')}
+              >
+                <Plus className="h-4 w-4 text-slate-500" />
+              </Button>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Content */}
+      {/* Search Bar */}
+      {!isCollapsed && isSearching && (
+        <div className="border-b border-slate-200/60 px-4 py-3">
+          <div className="relative">
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search notes..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white/50 py-2 pr-4 pl-10 text-sm text-slate-700 placeholder-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-100 focus:outline-none"
+              autoFocus
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2 p-0"
+                onClick={() => setSearchTerm('')}
+              >
+                <X className="h-3 w-3 text-slate-400" />
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Create Note Modal */}
+      {!isCollapsed && showCreateModal && (
+        <div className="border-b border-slate-200/60 bg-white/95 px-4 py-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Badge
+                  variant="secondary"
+                  className={`h-6 px-2 text-xs ${getTypeColor(createNoteType)}`}
+                >
+                  {getTypeIcon(createNoteType)}
+                  <span className="ml-1 capitalize">{createNoteType}</span>
+                </Badge>
+                <span className="text-sm font-medium text-slate-700">New Note</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => setShowCreateModal(false)}
+              >
+                <X className="h-3 w-3 text-slate-400" />
+              </Button>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Note title..."
+              value={newNoteTitle}
+              onChange={e => setNewNoteTitle(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white/50 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-100 focus:outline-none"
+            />
+
+            <textarea
+              placeholder="Write your note here..."
+              value={newNoteContent}
+              onChange={e => setNewNoteContent(e.target.value)}
+              rows={4}
+              className="w-full resize-none rounded-lg border border-slate-200 bg-white/50 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-violet-300 focus:ring-2 focus:ring-violet-100 focus:outline-none"
+            />
+
+            <div className="flex items-center justify-end space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCreateModal(false)}
+                className="h-8 px-3 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={createNote}
+                className="h-8 bg-violet-600 px-3 text-xs hover:bg-violet-700"
+                disabled={!newNoteTitle.trim() && !newNoteContent.trim()}
+              >
+                <Save className="mr-1 h-3 w-3" />
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rich Content */}
       <div
         className={`flex-1 overflow-hidden transition-all duration-300 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}
       >
         {!isCollapsed && (
           <div className="h-full overflow-y-auto">
-            <div className="p-6">
+            <div className="px-4 py-4">
               <div className="space-y-4">
-                {/* Empty state */}
-                <div className="py-12 text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
-                    <NotebookPen className="h-8 w-8 text-slate-400" />
+                {/* Quick Actions */}
+                <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm">
+                  <h3 className="mb-3 text-sm font-semibold text-slate-800">Quick Actions</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-auto flex-col space-y-1 border-dashed border-amber-300 bg-amber-50/50 p-3 hover:bg-amber-100/50"
+                      onClick={() => openCreateModal('insight')}
+                    >
+                      <Lightbulb className="h-4 w-4 text-amber-600" />
+                      <span className="text-xs text-amber-700">Insight</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-auto flex-col space-y-1 border-dashed border-blue-300 bg-blue-50/50 p-3 hover:bg-blue-100/50"
+                      onClick={() => openCreateModal('question')}
+                    >
+                      <HelpCircle className="h-4 w-4 text-blue-600" />
+                      <span className="text-xs text-blue-700">Question</span>
+                    </Button>
                   </div>
-                  <h4 className="mb-2 text-sm font-medium text-slate-700">No notes yet</h4>
-                  <p className="mx-auto max-w-xs text-xs leading-relaxed text-slate-500">
-                    Take notes while chatting to keep track of important insights and key learnings.
-                  </p>
                 </div>
 
-                {/* Add note button */}
-                <Button
-                  variant="outline"
-                  className="w-full border-dashed border-slate-300 text-sm text-slate-600 hover:border-violet-300 hover:bg-violet-50/50 hover:text-violet-600"
-                >
-                  <NotebookPen className="mr-2 h-4 w-4" />
-                  Add Note
-                </Button>
+                {/* Recent Notes Section */}
+                <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur-sm">
+                  <div className="border-b border-slate-200/60 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-slate-800">
+                        {searchTerm ? 'Search Results' : 'Recent Notes'}
+                      </h3>
+                      <Badge variant="secondary" className="bg-slate-100 text-slate-600">
+                        {filteredNotes.length}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 p-4">
+                    {filteredNotes.length > 0 ? (
+                      filteredNotes.map(note => (
+                        <div
+                          key={note.id}
+                          className="group relative rounded-xl border border-slate-200 bg-slate-50/50 p-3 transition-all hover:border-violet-200 hover:bg-violet-50/30 hover:shadow-sm"
+                        >
+                          {editingId === note.id ? (
+                            // Edit Mode
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Badge
+                                  variant="secondary"
+                                  className={`h-6 px-2 text-xs ${getTypeColor(note.type)}`}
+                                >
+                                  {getTypeIcon(note.type)}
+                                  <span className="ml-1 capitalize">{note.type}</span>
+                                </Badge>
+                                <span className="text-xs text-slate-500">Editing...</span>
+                              </div>
+
+                              <input
+                                type="text"
+                                value={editTitle}
+                                onChange={e => setEditTitle(e.target.value)}
+                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 focus:border-violet-300 focus:ring-2 focus:ring-violet-100 focus:outline-none"
+                                placeholder="Note title..."
+                              />
+
+                              <textarea
+                                value={editContent}
+                                onChange={e => setEditContent(e.target.value)}
+                                rows={4}
+                                className="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:border-violet-300 focus:ring-2 focus:ring-violet-100 focus:outline-none"
+                                placeholder="Note content..."
+                              />
+
+                              <div className="flex items-center justify-end space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={cancelEdit}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  <RotateCcw className="mr-1 h-3 w-3" />
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={saveEdit}
+                                  className="h-6 bg-violet-600 px-2 text-xs hover:bg-violet-700"
+                                >
+                                  <Save className="mr-1 h-3 w-3" />
+                                  Save
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            // View Mode
+                            <>
+                              <div className="mb-2 flex items-start justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <Badge
+                                    variant="secondary"
+                                    className={`h-6 px-2 text-xs ${getTypeColor(note.type)}`}
+                                  >
+                                    {getTypeIcon(note.type)}
+                                    <span className="ml-1 capitalize">{note.type}</span>
+                                  </Badge>
+                                  {note.isPinned && <Pin className="h-3 w-3 text-violet-500" />}
+                                </div>
+                                <div className="flex items-center space-x-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => togglePin(note.id)}
+                                    title={note.isPinned ? 'Unpin note' : 'Pin note'}
+                                  >
+                                    <Pin
+                                      className={`h-3 w-3 ${note.isPinned ? 'text-violet-500' : 'text-slate-400'}`}
+                                    />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => startEditing(note)}
+                                    title="Edit note"
+                                  >
+                                    <Edit3 className="h-3 w-3 text-slate-400" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => deleteNote(note.id)}
+                                    title="Delete note"
+                                  >
+                                    <X className="h-3 w-3 text-slate-400" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              <h4
+                                className="mb-2 line-clamp-2 cursor-pointer text-sm font-medium text-slate-800"
+                                onClick={() => startEditing(note)}
+                              >
+                                {note.title}
+                              </h4>
+                              <p
+                                className="mb-3 line-clamp-4 cursor-pointer text-xs leading-relaxed text-slate-600"
+                                onClick={() => startEditing(note)}
+                              >
+                                {note.content}
+                              </p>
+
+                              <div className="flex items-center justify-end">
+                                <div className="flex items-center space-x-1 text-xs text-slate-500">
+                                  <Clock className="h-3 w-3" />
+                                  <span>{note.timestamp}</span>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-8 text-center">
+                        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
+                          <Search className="h-6 w-6 text-slate-400" />
+                        </div>
+                        <h4 className="mb-2 text-sm font-medium text-slate-700">
+                          {searchTerm ? 'No matching notes' : 'No notes yet'}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          {searchTerm
+                            ? 'Try different search terms'
+                            : 'Create your first note using the buttons above'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Study Tips */}
+                <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-4 shadow-sm">
+                  <div className="mb-3 flex items-center space-x-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500">
+                      <Star className="h-3 w-3 text-white" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-emerald-800">Study Tip</h3>
+                  </div>
+                  <p className="text-sm leading-relaxed text-emerald-700">
+                    Try the Cornell Note-taking method: divide your notes into cues, notes, and
+                    summary sections for better retention.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Collapsed state content */}
+      {/* Improved Collapsed state content */}
       {isCollapsed && (
-        <div className="flex flex-1 flex-col items-center justify-center p-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-slate-400 hover:bg-violet-50 hover:text-violet-500"
-            title="Add note"
-          >
-            <NotebookPen className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+        <div className="flex flex-1 flex-col items-center justify-start space-y-4 px-2 pt-8">
+          {/* Quick add buttons */}
+          <div className="space-y-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-amber-500 hover:bg-amber-50"
+              title="Add insight"
+              onClick={() => openCreateModal('insight')}
+            >
+              <Lightbulb className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-blue-500 hover:bg-blue-50"
+              title="Add question"
+              onClick={() => openCreateModal('question')}
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-emerald-500 hover:bg-emerald-50"
+              title="Add concept"
+              onClick={() => openCreateModal('concept')}
+            >
+              <BookOpen className="h-4 w-4" />
+            </Button>
+          </div>
 
-      {/* Footer */}
-      {!isCollapsed && (
-        <div className="border-t border-slate-200/60 bg-slate-50/50 p-4 transition-opacity duration-200">
-          <div className="text-center text-xs text-slate-500">Notes are saved automatically</div>
+          {/* Notes count */}
+          <div className="flex flex-col items-center space-y-1">
+            <div className="h-px w-6 bg-slate-300"></div>
+            <Badge variant="secondary" className="bg-slate-100 text-xs text-slate-600">
+              {notes.length}
+            </Badge>
+          </div>
         </div>
       )}
     </div>

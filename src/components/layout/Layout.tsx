@@ -27,7 +27,7 @@ const Layout: React.FC = () => {
         {isAuthenticated && <Sidebar />}
         {/* Main content area with outlet */}
         <main
-          className={`flex-1 transition-all duration-300 ${isChatPage ? 'h-[calc(100vh-3.5rem)]' : 'p-6'} ${isAuthenticated ? (sidebarCollapsed ? 'ml-16' : 'ml-64') : 'ml-0'} `}
+          className={`flex-1 transition-all duration-300 ${isChatPage ? 'h-[calc(100vh-3.5rem)] overflow-hidden' : 'p-6'} ${isAuthenticated ? (sidebarCollapsed ? 'ml-16' : 'ml-64') : 'ml-0'} `}
         >
           <Outlet />
         </main>

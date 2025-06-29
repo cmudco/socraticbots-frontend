@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { MessageSquare } from 'lucide-react';
 
@@ -49,7 +49,7 @@ const ChatInterface: React.FC = () => {
     }
   }, [actualConversationId, selectedConversationId, setSelectedConversationId]);
 
-  const messages = conversation?.messages || [];
+  const messages = useMemo(() => conversation?.messages || [], [conversation?.messages]);
 
   useEffect(() => {
     if (messageAreaRef.current) {
@@ -164,50 +164,52 @@ const ChatInterface: React.FC = () => {
         ref={messageAreaRef}
         className="flex-1 overflow-y-auto bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30"
       >
-        <div className="mx-auto max-w-4xl px-4 py-8">
+        <div className="mx-auto max-w-5xl">
           {!hasMessages ? (
-            <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-              <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-400 to-purple-400 shadow-lg">
-                <MessageSquare className="h-10 w-10 text-white" />
-              </div>
-              <h3 className="mb-4 text-2xl font-semibold text-slate-800">Start a Conversation</h3>
-              <p className="mb-8 max-w-md leading-relaxed text-slate-600">
-                Ask me anything about this chapter. I'm here to help you understand the concepts and
-                answer your questions.
-              </p>
+            <div className="px-6 py-8">
+              <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+                <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-400 to-purple-400 shadow-lg">
+                  <MessageSquare className="h-10 w-10 text-white" />
+                </div>
+                <h3 className="mb-4 text-2xl font-semibold text-slate-800">Start a Conversation</h3>
+                <p className="mb-8 max-w-md leading-relaxed text-slate-600">
+                  Ask me anything about this chapter. I'm here to help you understand the concepts
+                  and answer your questions.
+                </p>
 
-              {/* Quick Action Buttons */}
-              <div className="grid w-full max-w-md grid-cols-1 gap-3 md:grid-cols-2">
-                <button
-                  onClick={() =>
-                    handleActionClick('Can you explain the main concepts in this chapter?')
-                  }
-                  className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
-                >
-                  <div className="mb-1 text-sm font-medium text-slate-800">Main Concepts</div>
-                  <div className="text-xs text-slate-500">Explain key ideas</div>
-                </button>
-                <button
-                  onClick={() => handleActionClick('Can you give me some examples?')}
-                  className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
-                >
-                  <div className="mb-1 text-sm font-medium text-slate-800">Examples</div>
-                  <div className="text-xs text-slate-500">Show practical examples</div>
-                </button>
-                <button
-                  onClick={() => handleActionClick('Can you quiz me on this material?')}
-                  className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
-                >
-                  <div className="mb-1 text-sm font-medium text-slate-800">Quiz Me</div>
-                  <div className="text-xs text-slate-500">Test understanding</div>
-                </button>
-                <button
-                  onClick={() => handleActionClick('Can you provide a summary?')}
-                  className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
-                >
-                  <div className="mb-1 text-sm font-medium text-slate-800">Summary</div>
-                  <div className="text-xs text-slate-500">Quick overview</div>
-                </button>
+                {/* Quick Action Buttons */}
+                <div className="grid w-full max-w-md grid-cols-1 gap-3 md:grid-cols-2">
+                  <button
+                    onClick={() =>
+                      handleActionClick('Can you explain the main concepts in this chapter?')
+                    }
+                    className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
+                  >
+                    <div className="mb-1 text-sm font-medium text-slate-800">Main Concepts</div>
+                    <div className="text-xs text-slate-500">Explain key ideas</div>
+                  </button>
+                  <button
+                    onClick={() => handleActionClick('Can you give me some examples?')}
+                    className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
+                  >
+                    <div className="mb-1 text-sm font-medium text-slate-800">Examples</div>
+                    <div className="text-xs text-slate-500">Show practical examples</div>
+                  </button>
+                  <button
+                    onClick={() => handleActionClick('Can you quiz me on this material?')}
+                    className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
+                  >
+                    <div className="mb-1 text-sm font-medium text-slate-800">Quiz Me</div>
+                    <div className="text-xs text-slate-500">Test understanding</div>
+                  </button>
+                  <button
+                    onClick={() => handleActionClick('Can you provide a summary?')}
+                    className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
+                  >
+                    <div className="mb-1 text-sm font-medium text-slate-800">Summary</div>
+                    <div className="text-xs text-slate-500">Quick overview</div>
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -259,7 +261,7 @@ const ChatInterface: React.FC = () => {
       {/* Chat Controls - Only show when there are messages */}
       {hasMessages && (
         <div className="border-t border-slate-200/60 bg-white/90 px-4 py-3 backdrop-blur-sm">
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-5xl">
             <ChatControls
               onActionClick={handleActionClick}
               onClearConversation={handleClearConversation}
@@ -271,7 +273,7 @@ const ChatInterface: React.FC = () => {
 
       {/* Chat Input */}
       <div className="border-t border-slate-200/60 bg-white">
-        <div className="mx-auto max-w-4xl px-4 py-4">
+        <div className="mx-auto max-w-5xl px-4 py-4">
           <ChatInput
             value={inputValue}
             onChange={setInputValue}
