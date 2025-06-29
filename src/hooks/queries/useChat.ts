@@ -75,8 +75,6 @@ export const useChapterLearningGoals = (bookId: string | null, chapterId: string
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
-
-
 // Send a message in a conversation
 export const useSendMessage = () => {
   const queryClient = useQueryClient();
@@ -85,10 +83,10 @@ export const useSendMessage = () => {
       return chatService.sendMessage(conversationId, content);
     },
     onSuccess: (_data, variables) => {
-      // Invalidate the conversation query to refetch messages
-      queryClient.invalidateQueries({ queryKey: ['chat', 'conversation', variables.conversationId] });
+      // Invalidate all conversation queries to refetch messages
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversation'] });
       // Also invalidate tracking progress since new messages affect progress
-      queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress', variables.conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress'] });
     },
   });
 };
@@ -99,8 +97,10 @@ export const useClearConversation = () => {
   return useMutation({
     mutationFn: (conversationId: string) => chatService.clearConversation(conversationId),
     onSuccess: (_data, conversationId) => {
-      queryClient.invalidateQueries({ queryKey: ['chat', 'conversation', conversationId] });
-      queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress', conversationId] });
+      // Invalidate all conversation queries to refetch messages
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversation'] });
+      // Also invalidate tracking progress since new messages affect progress
+      queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress'] });
     },
   });
 };
@@ -143,12 +143,51 @@ export const useStreamMessage = () => {
           setTokens((prev) => [...prev, token]);
           fullResponse += token;
         },
-        onComplete: () => {
+        onComplete: async (completeMessage) => {
           setIsStreaming(false);
-          // Invalidate the conversation query to refetch messages
-          queryClient.invalidateQueries({ queryKey: ['chat', 'conversation', conversationId] });
-          // Also invalidate tracking progress since new messages affect progress
-          queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress', conversationId] });
+          
+          // If we have the complete message from backend, update the cache directly
+          if (completeMessage && completeMessage.message) {
+            // Update the conversation cache with the new message
+            queryClient.setQueryData(['chat', 'conversation'], (oldData: any) => {
+              if (!oldData) return oldData;
+              return {
+                ...oldData,
+                messages: [...oldData.messages, completeMessage.message]
+              };
+            });
+          } else {
+            // Fallback: invalidate queries if no complete message data
+            queryClient.invalidateQueries({ queryKey: ['chat', 'conversation'] });
+          }
+          
+          // Trigger progress tracking after message completion with Zustand store callbacks
+          try {
+            // Import the store dynamically to avoid circular dependencies
+            const { useChatStore } = await import('@/stores/chatStore');
+            const store = useChatStore.getState();
+            
+            await chatService.triggerProgressTracking(conversationId, {
+              onStart: () => {
+                store.setProgressStreaming(true);
+                store.clearProgressTokens();
+              },
+              onToken: (token) => {
+                store.addProgressToken(token);
+              },
+              onComplete: () => {
+                store.setProgressStreaming(false);
+                // Invalidate progress after tracking completes
+                queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress'] });
+              },
+              onError: (error) => {
+                store.setProgressStreaming(false);
+                console.error('Progress tracking error:', error);
+              },
+            });
+          } catch (progressError) {
+            console.error('Error triggering progress tracking:', progressError);
+          }
         },
         onError: (err) => {
           setError(err instanceof Error ? err : new Error(String(err)));
@@ -164,4 +203,47 @@ export const useStreamMessage = () => {
   };
 
   return { streamMessage, isStreaming, error, tokens };
+};
+
+// Stream progress tracking for real-time assessment
+export const useStreamProgressTracking = () => {
+  const queryClient = useQueryClient();
+
+  const streamProgressTracking = async (conversationId: string) => {
+    try {
+      // Import the store dynamically to avoid circular dependencies
+      const { useChatStore } = await import('@/stores/chatStore');
+      const store = useChatStore.getState();
+      
+      await chatService.streamTrackingProgress(conversationId, {
+        onStart: () => {
+          store.setProgressStreaming(true);
+          store.clearProgressTokens();
+          console.log('[ProgressStream] Started');
+        },
+        onToken: (token) => {
+          store.addProgressToken(token);
+          console.log('[ProgressStream] Token:', token);
+        },
+        onComplete: () => {
+          store.setProgressStreaming(false);
+          // Invalidate the progress query to refetch the final result
+          queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress'] });
+          console.log('[ProgressStream] Completed');
+        },
+        onError: (err) => {
+          store.setProgressStreaming(false);
+          console.error('[ProgressStream] Error:', err);
+        },
+      });
+    } catch (err) {
+      console.error('Error in streamProgressTracking:', err);
+      // Ensure streaming state is reset on error
+      const { useChatStore } = await import('@/stores/chatStore');
+      const store = useChatStore.getState();
+      store.setProgressStreaming(false);
+    }
+  };
+
+  return { streamProgressTracking };
 };

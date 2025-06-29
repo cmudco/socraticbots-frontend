@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 import { useConversationForChapter, useStreamMessage, useClearConversation } from '@/hooks/queries/useChat';
 import ChatHeader from './ChatHeader';
@@ -8,10 +8,12 @@ import ChatInput from './ChatInput';
 import { ChatMessage, ChatRole, ChatSender } from '@/types/chat';
 import { Card } from '@/components/ui/card';
 import { MessageSquare } from 'lucide-react';
+import ConfirmationModal from '@/components/ui/confirmation-modal';
 
 const ChatInterface: React.FC = () => {
   const messageAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null!);
+  const [showClearConfirmation, setShowClearConfirmation] = useState(false);
 
   const {
     selectedChapterId,
@@ -83,9 +85,12 @@ const ChatInterface: React.FC = () => {
 
   const handleClearConversation = () => {
     if (!actualConversationId) return;
-    if (window.confirm('Are you sure you want to clear this conversation? This action cannot be undone.')) {
-      clearConversationMutation.mutate(actualConversationId);
-    }
+    setShowClearConfirmation(true);
+  };
+
+  const handleConfirmClearConversation = () => {
+    if (!actualConversationId) return;
+    clearConversationMutation.mutate(actualConversationId);
   };
 
   // Merge messages with pending and streaming tokens
@@ -228,12 +233,25 @@ const ChatInterface: React.FC = () => {
             onChange={setInputValue}
             onSend={handleSendMessage}
             onStop={handleStopStreaming}
-            disabled={!selectedConversationId || conversationLoading}
+            disabled={!selectedConversationId || conversationLoading || isStreaming}
             isStreaming={isStreaming}
             inputRef={inputRef}
           />
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showClearConfirmation}
+        onClose={() => setShowClearConfirmation(false)}
+        onConfirm={handleConfirmClearConversation}
+        title="Clear Conversation"
+        description="Are you sure you want to clear this conversation? This action cannot be undone and all messages will be permanently deleted."
+        confirmText="Clear Conversation"
+        cancelText="Cancel"
+        variant="destructive"
+        isLoading={clearConversationMutation.isPending}
+      />
     </div>
   );
 };

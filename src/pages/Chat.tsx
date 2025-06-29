@@ -8,7 +8,7 @@ const Chat: React.FC = () => {
   return (
     <div className="h-full flex bg-gradient-to-br from-violet-50/50 via-white to-purple-50/50 pr-4">
       {/* Learning Progress Sidebar */}
-      <div className="w-64 flex-shrink-0 border-r border-slate-200/60 bg-white/90 backdrop-blur-sm overflow-y-auto">
+      <div className="min-w-[320px] max-w-[320px] flex-shrink-0 border-r border-slate-200/60 bg-white/90 backdrop-blur-sm overflow-y-auto">
         <TrackingSidebar />
       </div>
 
