@@ -18,7 +18,7 @@ export interface Chapter {
 interface StreamCallbacks {
   onStart?: () => void;
   onToken?: (token: string) => void;
-  onComplete?: () => void;
+  onComplete?: (completeMessage?: any) => void;
   onError?: (error: unknown) => void;
 }
 
@@ -136,9 +136,24 @@ class ChatService {
             } catch (e) {
               console.error('Error parsing SSE data:', e);
             }
-          } else if (line.startsWith('event: end')) {
+          } else if (line.startsWith('event: complete')) {
             console.log('[streamMessage] onComplete');
-            callbacks.onComplete?.();
+            // Try to parse the complete message data if available
+            try {
+              const completeData = line.replace('event: complete', '').trim();
+              if (completeData) {
+                const completeMessage = JSON.parse(completeData);
+                callbacks.onComplete?.(completeMessage);
+              } else {
+                callbacks.onComplete?.();
+              }
+            } catch (e) {
+              console.log('[streamMessage] No complete message data, calling onComplete without data');
+              callbacks.onComplete?.();
+            }
+          } else if (line.startsWith('event: end')) {
+            console.log('[streamMessage] stream ended');
+            // Stream has ended, but we don't need to do anything special here
           }
         }
       }
@@ -160,7 +175,7 @@ class ChatService {
     try {
       const token = await this.getFreshToken();
 
-      const response = await fetch(`${api.defaults.baseURL}/chat/track-progress/`, {
+      const response = await fetch(`${config.apiUrl}/chat/track-progress/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -199,8 +214,10 @@ class ChatService {
             } catch (e) {
               console.error('Error parsing SSE data:', e);
             }
-          } else if (line.startsWith('event: end')) {
+          } else if (line.startsWith('event: complete')) {
             callbacks.onComplete?.();
+          } else if (line.startsWith('event: end')) {
+            // Stream has ended
           }
         }
       }
@@ -211,6 +228,34 @@ class ChatService {
       console.error('Error in streamTrackingProgress:', error);
       callbacks.onError?.(error);
       throw error;
+    }
+  }
+
+  // Trigger progress tracking after message completion
+  async triggerProgressTracking(conversationId: string, callbacks?: StreamCallbacks): Promise<void> {
+    try {
+      // This will trigger the progress tracking stream with real-time updates
+      await this.streamTrackingProgress(conversationId, {
+        onStart: () => {
+          callbacks?.onStart?.();
+          console.log('[ProgressTracking] Started');
+        },
+        onToken: (token) => {
+          callbacks?.onToken?.(token);
+          console.log('[ProgressTracking] Token:', token);
+        },
+        onComplete: () => {
+          callbacks?.onComplete?.();
+          console.log('[ProgressTracking] Completed');
+        },
+        onError: (error) => {
+          callbacks?.onError?.(error);
+          console.error('[ProgressTracking] Error:', error);
+        },
+      });
+    } catch (error) {
+      console.error('Error triggering progress tracking:', error);
+      callbacks?.onError?.(error);
     }
   }
 
