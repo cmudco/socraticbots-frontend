@@ -1,5 +1,5 @@
 // src/components/chapters/ChapterFormModal.tsx
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useChapterFormStore } from '../../stores/chapterFormStore';
 import { useCreateChapter, useUpdateChapter } from '../../hooks/queries/useChapters';
 import { Chapter } from '../../services/chapters.service';
@@ -7,6 +7,17 @@ import BasicInfoTab from './tabs/BasicInfoTab';
 import PromptsTab from './tabs/PromptsTab';
 import FilesTab from './tabs/FilesTab';
 import DeploymentTab from './tabs/DeploymentTab';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BookOpen, X } from 'lucide-react';
 
 interface ChapterFormModalProps {
   isOpen: boolean;
@@ -46,9 +57,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     validateForm
   } = chapterFormStore;
 
-  // Create a ref for the modal content
-  const modalContentRef = useRef<HTMLDivElement>(null);
-
   // Initialize form when modal opens/closes or chapter changes
   useEffect(() => {
     if (isOpen) {
@@ -64,30 +72,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     closeForm();
     onClose();
   }, [closeForm, onClose]);
-
-  const handleOutsideClick = React.useCallback((e: MouseEvent) => {
-    if (
-      modalContentRef.current &&
-      !modalContentRef.current.contains(e.target as Node) &&
-      !isSubmitting
-    ) {
-      handleClose();
-    }
-  }, [isSubmitting, handleClose]);
-
-  // Add event listener when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('mousedown', handleOutsideClick);
-    } else {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    }
-
-    // Clean up event listener
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    };
-  }, [isOpen, handleOutsideClick]);
 
   const handleSubmit = React.useCallback(async () => {
     // Validate the form first
@@ -176,106 +160,102 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     };
   }, [isOpen, handleSubmit]);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex items-center justify-center z-50">
-      <div
-        ref={modalContentRef}
-        className="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden flex flex-col"
-      >
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {isEdit ? 'Edit Chapter' : 'Create New Chapter'}
-          </h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 py-4 border-b">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-violet-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-semibold">
+                {isEdit ? 'Edit Chapter' : 'Create New Chapter'}
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                {isEdit ? 'Update the chapter details below.' : 'Fill in the details to create a new chapter.'}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
 
-        {/* Tab Navigation */}
-        <div className="flex border-b">
-          <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${activeTab === 'basic'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            onClick={() => setActiveTab('basic')}
-          >
-            Basic Info
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${activeTab === 'prompts'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            onClick={() => setActiveTab('prompts')}
-          >
-            Prompts & Models
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${activeTab === 'files'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            onClick={() => setActiveTab('files')}
-          >
-            Files
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${activeTab === 'deployment'
-              ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            onClick={() => setActiveTab('deployment')}
-          >
-            Deployment
-          </button>
-        </div>
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {/* Tab Navigation */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+            <div className="px-6 border-b">
+              <TabsList className="grid w-full grid-cols-4 bg-slate-100">
+                <TabsTrigger 
+                  value="basic" 
+                  className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm"
+                >
+                  Basic Info
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="prompts"
+                  className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm"
+                >
+                  Prompts & Models
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="files"
+                  className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm"
+                >
+                  Files
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="deployment"
+                  className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm"
+                >
+                  Deployment
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-        {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === 'basic' && (
-            <BasicInfoTab />
-          )}
-          {activeTab === 'prompts' && (
-            <PromptsTab />
-          )}
-          {activeTab === 'files' && (
-            <FilesTab />
-          )}
-          {activeTab === 'deployment' && (
-            <DeploymentTab />
-          )}
+            {/* Tab Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <TabsContent value="basic" className="mt-0">
+                <BasicInfoTab />
+              </TabsContent>
+              <TabsContent value="prompts" className="mt-0">
+                <PromptsTab />
+              </TabsContent>
+              <TabsContent value="files" className="mt-0">
+                <FilesTab />
+              </TabsContent>
+              <TabsContent value="deployment" className="mt-0">
+                <DeploymentTab />
+              </TabsContent>
+            </div>
+          </Tabs>
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t">
-          <button
-            type="button"
+        <DialogFooter className="flex items-center justify-end space-x-3 p-6 border-t">
+          <Button
+            variant="outline"
             onClick={handleClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
             disabled={isSubmitting}
+            className="border-slate-200 text-slate-700 hover:bg-slate-50"
           >
             Cancel
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-md transition-colors"
+            className="bg-violet-600 hover:bg-violet-700 text-white"
           >
-            {isSubmitting ? 'Saving...' : isEdit ? 'Update Chapter' : 'Create Chapter'}
-          </button>
-        </div>
-      </div>
-    </div>
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Saving...
+              </div>
+            ) : (
+              isEdit ? 'Update Chapter' : 'Create Chapter'
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
