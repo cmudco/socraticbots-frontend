@@ -8,7 +8,7 @@ const ChatHeader: React.FC = () => {
   const { selectedChapterId } = useChatStore();
 
   return (
-    <header className="w-full flex items-center justify-between px-6 py-4 border-b border-slate-200/60 bg-white/90 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+    <header className="w-full flex items-center justify-between px-6 py-4 border-b border-slate-200/60 bg-white/90 backdrop-blur-sm sticky top-0 z-0 shadow-sm">
       <div className="flex items-center space-x-4">
         {/* Chapter Selection */}
         <div className="flex items-center space-x-2">
