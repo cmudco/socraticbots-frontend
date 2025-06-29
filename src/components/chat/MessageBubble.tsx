@@ -1,13 +1,16 @@
 // src/components/chat/MessageBubble.tsx
-import React from 'react';
-import ReactMarkdown from 'react-markdown';
+import React, { useState } from 'react';
 
 import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
-import DOMPurify from 'dompurify';
+import { Check, Copy } from 'lucide-react';
+
+import { copyToClipboard } from '@/utils/clipboard';
+
+import { renderMessageContent } from '@/components/chat/messageRenderer';
+import { Button } from '@/components/ui/button';
 
 import type { ChatMessage } from '@/types/chat';
-
-import AnimatedDots from './AnimatedDots';
+import { ChatSender } from '@/types/chat';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -21,161 +24,135 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   isStreaming = false,
 }) => {
   const isAssistant = message.sender === 'assistant';
+  const [isCopied, setIsCopied] = useState(false);
 
-  // Function to render content based on type (HTML for greeting, Markdown for messages)
-  const renderContent = () => {
-    // For greeting messages, sanitize and render HTML
-    if (isGreeting) {
-      const sanitizedHTML = DOMPurify.sanitize(message.content, {
-        USE_PROFILES: { html: true },
-        ALLOWED_TAGS: [
-          'p',
-          'b',
-          'i',
-          'em',
-          'strong',
-          'a',
-          'ul',
-          'ol',
-          'li',
-          'code',
-          'pre',
-          'h1',
-          'h2',
-          'h3',
-          'h4',
-          'h5',
-          'h6',
-          'blockquote',
-          'hr',
-          'br',
-        ],
-        ALLOWED_ATTR: ['href', 'target', 'rel'],
-      });
-
-      return (
-        <div
-          className="message-content leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: sanitizedHTML }}
-        />
-      );
+  // Function to handle copy with visual feedback
+  const handleCopy = async () => {
+    const success = await copyToClipboard(message.content);
+    if (success) {
+      setIsCopied(true);
+      // Reset the copied state after 2 seconds
+      setTimeout(() => setIsCopied(false), 2000);
     }
-
-    // Assistant messages
-    if (isAssistant) {
-      return (
-        <div className="prose prose-sm max-w-none leading-relaxed">
-          <ReactMarkdown
-            components={{
-              h1: ({ children }) => (
-                <h1 className="mt-4 mb-3 border-b pb-2 text-xl font-bold text-gray-900">
-                  {children}
-                </h1>
-              ),
-              h2: ({ children }) => (
-                <h2 className="mt-4 mb-3 border-b pb-2 text-lg font-semibold text-gray-800">
-                  {children}
-                </h2>
-              ),
-              h3: ({ children }) => (
-                <h3 className="mt-3 mb-2 text-base font-semibold text-gray-800">{children}</h3>
-              ),
-              ul: ({ children }) => (
-                <ul className="mt-3 mb-3 list-disc space-y-2 pl-6">{children}</ul>
-              ),
-              ol: ({ children }) => (
-                <ol className="mt-3 mb-3 list-decimal space-y-2 pl-6">{children}</ol>
-              ),
-              li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-              p: ({ children }) => (
-                <p className="mb-3 leading-relaxed text-gray-800 last:mb-0">{children}</p>
-              ),
-              strong: ({ children }) => (
-                <strong className="font-semibold text-gray-900">{children}</strong>
-              ),
-              code: ({ children }) => (
-                <code className="rounded bg-gray-100 px-2 py-1 font-mono text-sm">{children}</code>
-              ),
-              pre: ({ children }) => (
-                <pre className="my-3 overflow-x-auto rounded-lg bg-gray-100 p-4">{children}</pre>
-              ),
-            }}
-          >
-            {message.content}
-          </ReactMarkdown>
-          {isStreaming && <AnimatedDots className="mt-2 ml-2 align-middle" />}
-        </div>
-      );
-    }
-
-    // Regular user messages get basic markdown
-    return (
-      <div className="markdown-content leading-relaxed">
-        <ReactMarkdown
-          components={{
-            p: ({ children }) => <p className="last:mb-0">{children}</p>,
-          }}
-        >
-          {message.content}
-        </ReactMarkdown>
-      </div>
-    );
   };
 
-  return (
-    <div
-      className={`flex items-start ${isAssistant ? 'mb-4' : 'mb-8'} ${isAssistant ? 'justify-start' : 'justify-end'}`}
-    >
-      {/* Avatar for assistant */}
-      {isAssistant && (
-        <div className="mt-1 mr-4 flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-purple-700 font-medium text-white shadow-lg">
-            AI
+  if (isAssistant) {
+    // AI messages: Avatar + message content aligned to the left, but starting where user messages would start
+    return (
+      <div className="group mb-3">
+        <div className="flex items-start">
+          {/* AI Avatar */}
+          <div className="mr-3 flex-shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-purple-700 text-sm font-medium text-white shadow-md">
+              AI
+            </div>
+          </div>
+
+          {/* AI Message Content - constrained to create symmetry with user messages */}
+          <div className="flex max-w-2xl flex-col items-start">
+            <div className="relative w-full rounded-2xl rounded-tl-md border border-gray-200 bg-white px-4 py-3 text-gray-800 shadow-sm">
+              {/* Render content using our helper function */}
+              {renderMessageContent({
+                content: message.content,
+                sender: message.sender || ChatSender.USER,
+                isGreeting,
+                isStreaming,
+              })}
+
+              {/* Timestamp */}
+              <div className="mt-2 flex justify-start text-xs">
+                <span className="font-medium text-gray-500">
+                  {isGreeting
+                    ? 'Greeting'
+                    : (() => {
+                        if (message.timestamp) {
+                          const date =
+                            typeof message.timestamp === 'string'
+                              ? parseISO(message.timestamp)
+                              : new Date(message.timestamp);
+                          if (isValid(date)) {
+                            return formatDistanceToNow(date, { addSuffix: true });
+                          }
+                        }
+                        return '';
+                      })()}
+                </span>
+              </div>
+            </div>
+
+            {/* Copy button for assistant messages - appears underneath on hover */}
+            {!isStreaming && (
+              <div className="mt-1 flex justify-start opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopy}
+                  className="h-6 px-2 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                >
+                  {isCopied ? (
+                    <>
+                      <Check size={12} className="mr-1" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={12} className="mr-1" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
-      )}
-
-      <div
-        className={`relative border shadow-sm ${
-          isAssistant
-            ? 'max-w-[90%] rounded-2xl rounded-tl-md border-gray-200 bg-white text-gray-800'
-            : 'max-w-[70%] rounded-2xl rounded-tr-md border-purple-600 bg-gradient-to-r from-purple-600 to-purple-700 text-white'
-        } ${isAssistant ? 'px-6 py-5' : 'px-5 py-3'} `}
-      >
-        {/* Render content using our helper function */}
-        {renderContent()}
-
-        {/* Timestamp */}
-        <div
-          className={`text-xs ${isAssistant ? 'mt-3' : 'mt-1'} flex ${isAssistant ? 'justify-start' : 'justify-end'}`}
-        >
-          <span className={`${isAssistant ? 'text-gray-500' : 'text-purple-200'} font-medium`}>
-            {isGreeting
-              ? 'Greeting'
-              : (() => {
-                  if (message.timestamp) {
-                    const date =
-                      typeof message.timestamp === 'string'
-                        ? parseISO(message.timestamp)
-                        : new Date(message.timestamp);
-                    if (isValid(date)) {
-                      return formatDistanceToNow(date, { addSuffix: true });
-                    }
-                  }
-                  return '';
-                })()}
-          </span>
-        </div>
       </div>
+    );
+  }
 
-      {/* Avatar for user */}
-      {!isAssistant && (
-        <div className="mt-1 ml-4 flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gray-400 to-gray-600 font-medium text-white shadow-lg">
+  // User messages: Positioned to create symmetrical conversation column
+  return (
+    <div className="mb-3">
+      <div className="flex items-start justify-end">
+        {/* User Message Content - right-aligned with consistent max-width */}
+        <div className="flex flex-col items-end">
+          <div className="relative max-w-sm rounded-2xl rounded-tr-md border border-purple-600 bg-gradient-to-r from-purple-600 to-purple-700 px-4 py-3 text-white shadow-sm">
+            {/* Render content using our helper function */}
+            {renderMessageContent({
+              content: message.content,
+              sender: message.sender || ChatSender.USER,
+              isGreeting,
+              isStreaming,
+            })}
+
+            {/* Timestamp */}
+            <div className="mt-1 flex justify-end text-xs">
+              <span className="font-medium text-purple-200">
+                {isGreeting
+                  ? 'Greeting'
+                  : (() => {
+                      if (message.timestamp) {
+                        const date =
+                          typeof message.timestamp === 'string'
+                            ? parseISO(message.timestamp)
+                            : new Date(message.timestamp);
+                        if (isValid(date)) {
+                          return formatDistanceToNow(date, { addSuffix: true });
+                        }
+                      }
+                      return '';
+                    })()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* User Avatar */}
+        <div className="ml-3 flex-shrink-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-gray-400 to-gray-600 text-sm font-medium text-white shadow-md">
             You
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

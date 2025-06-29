@@ -21,7 +21,6 @@ import { useChatStore } from '@/stores/chatStore';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
 const TrackingSidebar: React.FC = () => {
@@ -40,37 +39,30 @@ const TrackingSidebar: React.FC = () => {
   if (!selectedConversationId) {
     return (
       <div className="flex h-full flex-col bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
-        <Card className="border-0 bg-transparent shadow-none">
-          <CardHeader className="pb-4">
-            <div className="flex items-center space-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg">
-                <TrendingUp className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-bold text-slate-800">
-                  Learning Progress
-                </CardTitle>
-                <CardDescription className="text-slate-600">
-                  Track your progress and insights
-                </CardDescription>
-              </div>
+        {/* Header - consistent with chat styling */}
+        <div className="border-b border-slate-200/60 px-4 py-4">
+          <div className="flex items-center space-x-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md">
+              <TrendingUp className="h-4 w-4 text-white" />
             </div>
-          </CardHeader>
-        </Card>
+            <div>
+              <h2 className="text-base font-semibold text-slate-800">Learning Progress</h2>
+              <p className="text-sm text-slate-600">Track your progress and insights</p>
+            </div>
+          </div>
+        </div>
 
-        <div className="flex flex-1 items-center justify-center p-8">
-          <Card className="w-full max-w-sm border-0 bg-white/80 shadow-lg backdrop-blur-sm">
-            <CardContent className="p-8 text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200">
-                <BookOpen className="h-8 w-8 text-slate-400" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-slate-800">Select a Chapter</h3>
-              <p className="text-sm leading-relaxed text-slate-600">
-                Choose a chapter from the dropdown to start tracking your learning progress and get
-                personalized insights.
-              </p>
-            </CardContent>
-          </Card>
+        {/* Empty state - consistent spacing */}
+        <div className="flex flex-1 items-center justify-center px-4 py-4">
+          <div className="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-6 text-center shadow-sm backdrop-blur-sm">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200">
+              <BookOpen className="h-6 w-6 text-slate-400" />
+            </div>
+            <h3 className="mb-2 text-sm font-semibold text-slate-800">Select a Chapter</h3>
+            <p className="text-sm leading-relaxed text-slate-600">
+              Choose a chapter to start tracking your learning progress.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -78,17 +70,17 @@ const TrackingSidebar: React.FC = () => {
 
   return (
     <div className="flex h-full flex-col bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 pb-4">
-        <Card className="gap-0 border-0 bg-white/80 shadow-sm backdrop-blur-sm">
-          <CardHeader className="pb-3">
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+        {/* Progress Assessment Card - matching message bubble styling */}
+        <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur-sm">
+          {/* Card Header */}
+          <div className="border-b border-slate-200/60 px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
-                  <BarChart3 className="h-4 w-4 text-white" />
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
+                  <BarChart3 className="h-3 w-3 text-white" />
                 </div>
-                <CardTitle className="text-base font-semibold text-slate-800">
-                  Progress Assessment
-                </CardTitle>
+                <h3 className="text-sm font-semibold text-slate-800">Progress Assessment</h3>
               </div>
               <div className="flex items-center space-x-2">
                 {isProgressStreaming && (
@@ -105,12 +97,11 @@ const TrackingSidebar: React.FC = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      // Use the Zustand store for manual refresh
                       setProgressStreaming(true);
                       clearProgressTokens();
                       streamProgressTracking(selectedConversationId);
                     }}
-                    className="h-7 w-7 p-0 hover:bg-emerald-50"
+                    className="h-6 w-6 p-0 hover:bg-emerald-50"
                     disabled={isProgressStreaming}
                   >
                     <RefreshCw className="h-3 w-3 text-slate-500" />
@@ -124,8 +115,10 @@ const TrackingSidebar: React.FC = () => {
                 )}
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="pt-0">
+          </div>
+
+          {/* Card Content */}
+          <div className="px-4 py-3">
             {progressLoading ? (
               <div className="space-y-4 py-6">
                 <div className="flex items-center justify-center">
@@ -306,13 +299,13 @@ const TrackingSidebar: React.FC = () => {
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Quick Stats */}
         {progressData?.content && !isProgressStreaming && (
-          <Card className="border-0 bg-gradient-to-r from-violet-50 to-purple-50 shadow-sm">
-            <CardContent className="p-4">
+          <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-violet-50 to-purple-50 shadow-sm">
+            <div className="px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -322,13 +315,13 @@ const TrackingSidebar: React.FC = () => {
                   Updated
                 </Badge>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="border-t border-slate-200/60 bg-white/80 p-4 backdrop-blur-sm">
+      {/* Footer - consistent with chat styling */}
+      <div className="border-t border-slate-200/60 bg-white/90 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center justify-center space-x-2 text-xs text-slate-500">
           <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></div>
           <span>Progress updates automatically as you chat</span>
