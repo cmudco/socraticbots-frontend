@@ -4,6 +4,7 @@ import { Chapter } from '../../services/chapters.service';
 import { useChapters, useDeleteChapter } from '../../hooks/queries/useChapters';
 import ChapterItem from './ChapterItem';
 import ChapterFormModal from './ChapterFormModal';
+import DeleteChapterModal from './DeleteChapterModal';
 
 interface ChapterListProps {
   bookId: string;
@@ -27,6 +28,8 @@ const ChapterList: React.FC<ChapterListProps> = ({
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [chapterToDelete, setChapterToDelete] = useState<Chapter | null>(null);
 
   // Local state for tracking deleted chapter IDs to immediately hide them
   const [deletedChapterIds, setDeletedChapterIds] = useState<string[]>([]);
@@ -45,24 +48,22 @@ const ChapterList: React.FC<ChapterListProps> = ({
     setIsFormModalOpen(false);
   };
 
-  const handleDeleteChapter = async (chapterId: string) => {
-    if (window.confirm('Are you sure you want to delete this chapter?')) {
-      try {
-        // Immediately update local state to hide the chapter
-        setDeletedChapterIds(prev => [...prev, chapterId]);
+  const handleDeleteChapter = (chapter: Chapter) => {
+    setChapterToDelete(chapter);
+    setIsDeleteModalOpen(true);
+  };
 
-        // Delete using TanStack Query
-        await deleteChapterMutation.mutateAsync({ bookId, chapterId });
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setChapterToDelete(null);
+  };
 
-        // Notify parent component
-        onChapterDeleted?.(chapterId);
-      } catch (error) {
-        console.error('Error deleting chapter:', error);
+  const handleConfirmDelete = (chapterId: string) => {
+    // Immediately update local state to hide the chapter
+    setDeletedChapterIds(prev => [...prev, chapterId]);
 
-        // If there was an error, revert the UI change
-        setDeletedChapterIds(prev => prev.filter(id => id !== chapterId));
-      }
-    }
+    // Notify parent component
+    onChapterDeleted?.(chapterId);
   };
 
   // Filter out deleted chapters from the display
@@ -95,7 +96,7 @@ const ChapterList: React.FC<ChapterListProps> = ({
               key={chapter.id}
               chapter={chapter}
               onEdit={() => handleOpenEditModal(chapter)}
-              onDelete={() => handleDeleteChapter(chapter.id)}
+              onDelete={() => handleDeleteChapter(chapter)}
             />
           ))}
         </div>
@@ -107,6 +108,16 @@ const ChapterList: React.FC<ChapterListProps> = ({
         chapter={selectedChapter}
         bookId={bookId}
       />
+
+      {chapterToDelete && (
+        <DeleteChapterModal
+          isOpen={isDeleteModalOpen}
+          onClose={handleCloseDeleteModal}
+          onSuccess={() => handleConfirmDelete(chapterToDelete.id)}
+          chapter={chapterToDelete}
+          bookId={bookId}
+        />
+      )}
     </div>
   );
 };
