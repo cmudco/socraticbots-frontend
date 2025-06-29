@@ -1,8 +1,12 @@
 // src/components/books/ExpandableBookItem.tsx
 import React, { useState } from 'react';
 
+import { ChevronDown, ChevronUp, Edit, Trash } from 'lucide-react';
+
+import { useUiStore } from '../../stores/uiStore';
 import { Book } from '../../types/book';
 import ChapterList from '../chapters/ChapterList';
+import { Button } from '../ui/button';
 
 interface ExpandableBookItemProps {
   book: Book;
@@ -11,42 +15,71 @@ interface ExpandableBookItemProps {
 }
 
 const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, onDelete }) => {
-  const [expanded, setExpanded] = useState(false);
+  // Zustand for UI state (book expansion)
+  const { expandedBooks, toggleBookExpansion } = useUiStore();
+  const expanded = expandedBooks.has(book.id);
+
+  // React state only for temporary hover interactions
+  const [showActions, setShowActions] = useState(false);
 
   const toggleExpand = () => {
-    setExpanded(!expanded);
+    toggleBookExpansion(book.id);
   };
 
   return (
     <div className="mb-4 overflow-hidden rounded-lg border">
       <div
-        className="flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50"
+        className="group flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50"
         onClick={toggleExpand}
+        onMouseEnter={() => setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
       >
-        <div>
+        <div className="flex-1">
           <h3 className="text-lg font-bold">{book.title}</h3>
           {book.description && <p className="text-sm text-gray-600">{book.description}</p>}
         </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={e => {
-              e.stopPropagation(); // Prevent toggling expand
-              onEdit(book);
-            }}
-            className="rounded bg-blue-500 px-3 py-1 text-white hover:bg-blue-600"
+
+        <div className="flex items-center space-x-3">
+          {/* Book actions - only visible on hover */}
+          <div
+            className={`flex space-x-1 transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}
           >
-            Edit
-          </button>
-          <button
-            onClick={e => {
-              e.stopPropagation(); // Prevent toggling expand
-              onDelete(book);
-            }}
-            className="rounded bg-red-500 px-3 py-1 text-white hover:bg-red-600"
-          >
-            Delete
-          </button>
-          <span className="text-gray-400">{expanded ? '▲' : '▼'}</span>
+            <Button
+              onClick={e => {
+                e.stopPropagation();
+                onEdit(book);
+              }}
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
+              title="Edit book"
+            >
+              <Edit size={14} className="mr-1" />
+              Edit Book
+            </Button>
+            <Button
+              onClick={e => {
+                e.stopPropagation();
+                onDelete(book);
+              }}
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-red-100 hover:text-red-700"
+              title="Delete book"
+            >
+              <Trash size={14} className="mr-1" />
+              Delete
+            </Button>
+          </div>
+
+          {/* Expand/collapse indicator - always visible */}
+          <div className="flex items-center">
+            {expanded ? (
+              <ChevronUp size={20} className="text-gray-400" />
+            ) : (
+              <ChevronDown size={20} className="text-gray-400" />
+            )}
+          </div>
         </div>
       </div>
 
