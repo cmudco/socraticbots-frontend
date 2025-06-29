@@ -87,7 +87,7 @@ const FilesTab: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {/* Header */}
       <div>
         <h3 className="text-lg font-medium text-gray-900">Files</h3>
@@ -104,7 +104,7 @@ const FilesTab: React.FC = () => {
       {uploadingFiles.length > 0 && (
         <div>
           <h4 className="font-medium text-gray-900 mb-2">Uploading Files</h4>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             {uploadingFiles.map((file) => (
               <UploadingFileItem key={file.id} file={file} />
             ))}
@@ -120,7 +120,7 @@ const FilesTab: React.FC = () => {
       ) : files.length > 0 ? (
         <div>
           <h4 className="font-medium text-gray-900 mb-2">Uploaded Files</h4>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             {files.map((file) => (
               <FileItem
                 key={file.id}

@@ -1,23 +1,16 @@
 // src/components/chapters/ChapterFormModal.tsx
-import React, { useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { BookOpen } from 'lucide-react';
 import { useChapterFormStore } from '../../stores/chapterFormStore';
 import { useCreateChapter, useUpdateChapter } from '../../hooks/queries/useChapters';
-import { Chapter } from '../../services/chapters.service';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import PromptsTab from './tabs/PromptsTab';
 import FilesTab from './tabs/FilesTab';
 import DeploymentTab from './tabs/DeploymentTab';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, X } from 'lucide-react';
+import { FormikProps } from 'formik';
+import { Chapter } from '@/services/chapters.service';
 
 interface ChapterFormModalProps {
   isOpen: boolean;
@@ -26,19 +19,24 @@ interface ChapterFormModalProps {
   bookId: string;
 }
 
+interface FormValues {
+  title: string;
+  subject: string;
+  topic: string;
+  chat_model_id: string;
+  tracking_model_id: string;
+}
+
 const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   isOpen,
   onClose,
   chapter,
   bookId
 }) => {
-  const chapterFormStore = useChapterFormStore();
-  const createChapterMutation = useCreateChapter();
-  const updateChapterMutation = useUpdateChapter();
+  const formRef = useRef<FormikProps<FormValues>>(null);
 
   const {
     activeTab,
-    isEdit,
     isSubmitting,
     title,
     subject,
@@ -49,66 +47,104 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     learning_goals,
     chat_model_id,
     tracking_model_id,
+    originalChapter,
     setActiveTab,
-    initEditChapter,
-    initNewChapter,
+    updateField,
+    resetForm,
     closeForm,
     setSubmitting,
-    validateForm
-  } = chapterFormStore;
+    initEditChapter,
+    initNewChapter
+  } = useChapterFormStore();
 
-  // Initialize form when modal opens/closes or chapter changes
+  const createChapterMutation = useCreateChapter();
+  const updateChapterMutation = useUpdateChapter();
+
+  const isEdit = !!chapter;
+
+  // Reset form when modal opens/closes or chapter changes
   useEffect(() => {
     if (isOpen) {
       if (chapter) {
+        // Populate form with existing chapter data
         initEditChapter(chapter);
       } else {
+        // Reset form for new chapter
         initNewChapter();
       }
     }
-  }, [chapter, isOpen, initEditChapter, initNewChapter]);
+  }, [isOpen, chapter, initEditChapter, initNewChapter]);
 
-  const handleClose = React.useCallback(() => {
-    closeForm();
-    onClose();
-  }, [closeForm, onClose]);
-
-  const handleSubmit = React.useCallback(async () => {
-    // Validate the form first
-    const isValid = validateForm();
-    if (!isValid) {
-      console.log('Form validation failed');
-      return;
+  const handleClose = useCallback(() => {
+    if (!isSubmitting) {
+      closeForm();
+      onClose();
     }
+  }, [isSubmitting, closeForm, onClose]);
+
+  const handleSubmit = useCallback(async () => {
+    // Trigger Formik validation first
+    if (formRef.current) {
+      const errors = await formRef.current.validateForm();
+      if (Object.keys(errors).length > 0) {
+        console.log('Validation errors:', errors);
+        // Mark all fields as touched to show errors
+        formRef.current.setTouched(
+          Object.keys(errors).reduce((acc, key) => ({ ...acc, [key]: true }), {})
+        );
+        return; // Don't submit if there are validation errors
+      }
+    }
+
+    console.log('Basic validation passed, proceeding with submission...');
 
     // Set submitting state to true
     setSubmitting(true);
 
     try {
+      // Basic chapter data
       const chapterData = {
         title,
         subject,
         topic,
-        greeting,
-        chat_prompt,
-        tracking_prompt,
-        learning_goals,
-        chat_model_id,
-        tracking_model_id,
       };
 
+      // Model preferences data
+      const modelPreferences = {
+        chat_model_id: chat_model_id || undefined,
+        tracking_model_id: tracking_model_id || undefined,
+      };
+
+      // Prompts data
+      const promptData = {
+        greeting: greeting || undefined,
+        chat_prompt: chat_prompt || undefined,
+        tracking_prompt: tracking_prompt || undefined,
+        learning_goals: learning_goals || undefined,
+      };
+
+      console.log('Submitting chapter data:', {
+        chapterData,
+        modelPreferences,
+        promptData
+      });
+
       if (isEdit && chapter) {
-        // If editing, use update mutation
+        // If editing, use update mutation with separate calls
         await updateChapterMutation.mutateAsync({
           bookId,
           chapterId: chapter.id,
-          chapterData: chapterData
+          chapterData,
+          modelPreferences,
+          promptData
         });
       } else {
-        // If creating, use create mutation
+        // If creating, use create mutation with separate calls
         await createChapterMutation.mutateAsync({
           bookId,
-          chapterData: chapterData
+          chapterData,
+          modelPreferences,
+          promptData
         });
       }
 
@@ -122,8 +158,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
       setSubmitting(false);
     }
   }, [
-    validateForm,
-    setSubmitting,
     title,
     subject,
     topic,
@@ -139,7 +173,8 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     createChapterMutation,
     bookId,
     closeForm,
-    onClose
+    onClose,
+    setSubmitting
   ]);
 
   // Handle Ctrl+Enter for form submission
@@ -159,6 +194,28 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, handleSubmit]);
+
+  const tabs = [
+    { id: 'basic', label: 'Basic Info' },
+    { id: 'prompts', label: 'Prompts' },
+    { id: 'files', label: 'Files' },
+    { id: 'deployment', label: 'Deployment' }
+  ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'basic':
+        return <BasicInfoTab ref={formRef} />;
+      case 'prompts':
+        return <PromptsTab />;
+      case 'files':
+        return <FilesTab />;
+      case 'deployment':
+        return <DeploymentTab />;
+      default:
+        return <BasicInfoTab ref={formRef} />;
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -180,53 +237,29 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden flex flex-col">
-          {/* Tab Navigation */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <div className="px-6 border-b">
-              <TabsList className="grid w-full grid-cols-4 bg-slate-100">
-                <TabsTrigger 
-                  value="basic" 
-                  className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm"
+          {/* Custom Tab Navigation */}
+          <div className="px-6 border-b flex-shrink-0">
+            <div className="flex bg-slate-100 rounded-md p-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-sm transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-white text-violet-600 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
                 >
-                  Basic Info
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="prompts"
-                  className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm"
-                >
-                  Prompts & Models
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="files"
-                  className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm"
-                >
-                  Files
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="deployment"
-                  className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm"
-                >
-                  Deployment
-                </TabsTrigger>
-              </TabsList>
+                  {tab.label}
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <TabsContent value="basic" className="mt-0">
-                <BasicInfoTab />
-              </TabsContent>
-              <TabsContent value="prompts" className="mt-0">
-                <PromptsTab />
-              </TabsContent>
-              <TabsContent value="files" className="mt-0">
-                <FilesTab />
-              </TabsContent>
-              <TabsContent value="deployment" className="mt-0">
-                <DeploymentTab />
-              </TabsContent>
-            </div>
-          </Tabs>
+          {/* Tab Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {renderTabContent()}
+          </div>
         </div>
 
         {/* Modal Footer */}
