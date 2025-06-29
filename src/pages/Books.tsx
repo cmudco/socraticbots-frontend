@@ -1,10 +1,13 @@
 // src/pages/Books.tsx
 import React, { useState } from 'react';
 
+import { Plus } from 'lucide-react';
+
 import BookFormModal from '../components/books/BookFormModal';
 import BookListEmpty from '../components/books/BookListEmpty';
 import BookTable from '../components/books/BookTable';
 import DeleteBookModal from '../components/books/DeleteBookModal';
+import { Button } from '../components/ui/button';
 import { useBooks } from '../hooks/queries/useBooks';
 import { Book } from '../types/book';
 
@@ -74,12 +77,13 @@ const Books: React.FC = () => {
     <div className="p-4">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Books</h1>
-        <button
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+        <Button
           onClick={handleOpenCreateModal}
+          className="bg-violet-600 text-white hover:bg-violet-700"
         >
+          <Plus size={16} />
           Create New Book
-        </button>
+        </Button>
       </div>
 
       {renderContent()}

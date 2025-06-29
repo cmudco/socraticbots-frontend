@@ -1,8 +1,11 @@
 // src/components/chapters/ChapterList.tsx - Migrated to TanStack Query
 import React, { useState } from 'react';
 
+import { Plus } from 'lucide-react';
+
 import { useChapters } from '../../hooks/queries/useChapters';
 import { Chapter } from '../../services/chapters.service';
+import { Button } from '../ui/button';
 import ChapterFormModal from './ChapterFormModal';
 import ChapterItem from './ChapterItem';
 import DeleteChapterModal from './DeleteChapterModal';
@@ -64,12 +67,10 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-md font-semibold">Chapters</h3>
-        <button
-          onClick={handleOpenCreateModal}
-          className="rounded bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600"
-        >
+        <Button onClick={handleOpenCreateModal} size="sm" variant="outline">
+          <Plus size={14} />
           Add Chapter
-        </button>
+        </Button>
       </div>
 
       {loading ? (
