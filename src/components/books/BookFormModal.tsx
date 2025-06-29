@@ -1,7 +1,20 @@
 // src/components/books/BookFormModal.tsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Book } from '../../types/book';
 import { useCreateBook, useUpdateBook } from '../../hooks/queries/useBooks';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { BookOpen } from 'lucide-react';
 
 interface BookFormModalProps {
   isOpen: boolean;
@@ -18,9 +31,6 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
   // TanStack Query mutations
   const createBookMutation = useCreateBook();
   const updateBookMutation = useUpdateBook();
-
-  // Create a ref for the modal content
-  const modalContentRef = useRef<HTMLDivElement>(null);
 
   // Determine if we're in edit mode
   const isEditMode = !!book;
@@ -39,31 +49,6 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
       setDescription('');
     }
   }, [book]);
-
-  // Handle clicks outside of the modal content
-  const handleOutsideClick = useCallback((e: MouseEvent) => {
-    if (
-      modalContentRef.current &&
-      !modalContentRef.current.contains(e.target as Node) &&
-      !isSubmitting
-    ) {
-      onClose();
-    }
-  }, [isSubmitting, onClose]);
-
-  // Add event listener when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('mousedown', handleOutsideClick);
-    } else {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    }
-
-    // Clean up event listener
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    };
-  }, [isOpen, handleOutsideClick]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +91,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
     }
   }, [title, description, isEditMode, book, updateBookMutation, createBookMutation, onClose, onBookCreated]);
 
+  // Handle keyboard shortcuts
   useEffect(() => {
     const keyHandler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -131,74 +117,96 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
     };
   }, [isOpen, title, description, handleSubmit]);
 
-
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div
-        ref={modalContentRef}
-        className="bg-white p-6 rounded-lg w-full max-w-md"
-      >
-        <h2 className="text-xl font-bold mb-4">
-          {isEditMode ? 'Edit Book' : 'Create New Book'}
-        </h2>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-violet-600" />
+            </div>
+            <DialogTitle className="text-lg font-semibold">
+              {isEditMode ? 'Edit Book' : 'Create New Book'}
+            </DialogTitle>
+          </div>
+          <DialogDescription className="text-slate-600 pt-2">
+            {isEditMode ? 'Update the book details below.' : 'Fill in the details to create a new book.'}
+          </DialogDescription>
+        </DialogHeader>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-            {error}
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start">
+              <svg className="w-5 h-5 text-red-400 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <h4 className="text-red-800 font-medium">Error</h4>
+                <p className="text-red-700 text-sm mt-1">{error}</p>
+              </div>
+            </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2" htmlFor="title">
-              Title*
-            </label>
-            <input
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-sm font-medium text-slate-700">
+              Title *
+            </Label>
+            <Input
               id="title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-2 border rounded"
+              placeholder="Enter book title"
               disabled={isSubmitting}
+              className="border-slate-200 focus:border-violet-300 focus:ring-violet-200"
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2" htmlFor="description">
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-sm font-medium text-slate-700">
               Description
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-2 border rounded"
+              placeholder="Enter book description (optional)"
               rows={4}
               disabled={isSubmitting}
+              className="border-slate-200 focus:border-violet-300 focus:ring-violet-200 resize-none"
             />
           </div>
 
-          <div className="flex justify-end gap-2">
-            <button
+          <DialogFooter className="flex gap-2 sm:justify-end pt-4">
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="px-4 py-2 border rounded"
               disabled={isSubmitting}
+              className="border-slate-200 text-slate-700 hover:bg-slate-50"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300"
               disabled={isSubmitting}
+              className="bg-violet-600 hover:bg-violet-700 text-white"
             >
-              {isSubmitting ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save Changes' : 'Create Book')}
-            </button>
-          </div>
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {isEditMode ? 'Saving...' : 'Creating...'}
+                </div>
+              ) : (
+                isEditMode ? 'Save Changes' : 'Create Book'
+              )}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
