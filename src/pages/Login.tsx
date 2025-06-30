@@ -32,7 +32,6 @@ const Login: React.FC = () => {
 
   // Redirect if already authenticated
   if (isAuthenticated && !isLoading) {
-    console.log('User is authenticated, redirecting to:', redirectPath);
     return <Navigate to={redirectPath} replace />;
   }
 

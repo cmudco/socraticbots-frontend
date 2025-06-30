@@ -100,7 +100,6 @@ const ChatInterface: React.FC = () => {
 
   const handleStopStreaming = () => {
     // Note: Current implementation doesn't support stopping
-    console.log('Stop streaming requested');
   };
 
   const handleActionClick = (message: string) => {

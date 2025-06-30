@@ -84,7 +84,6 @@ class ChatService {
       if (!reader) throw new Error('No reader available');
 
       callbacks.onStart?.();
-      console.log('[streamMessage] onStart');
 
       let fullResponse = '';
 
@@ -106,14 +105,12 @@ class ChatService {
               const data = JSON.parse(line.slice(5));
               if (data.content) {
                 fullResponse += data.content;
-                console.log('[streamMessage] onToken', data.content);
                 callbacks.onToken?.(data.content);
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);
             }
           } else if (line.startsWith('event: complete')) {
-            console.log('[streamMessage] onComplete');
             // Try to parse the complete message data if available
             try {
               const completeData = line.replace('event: complete', '').trim();
@@ -124,13 +121,9 @@ class ChatService {
                 callbacks.onComplete?.();
               }
             } catch {
-              console.log(
-                '[streamMessage] No complete message data, calling onComplete without data'
-              );
               callbacks.onComplete?.();
             }
           } else if (line.startsWith('event: end')) {
-            console.log('[streamMessage] stream ended');
             // Stream has ended, but we don't need to do anything special here
           }
         }
@@ -217,15 +210,12 @@ class ChatService {
       await this.streamTrackingProgress(conversationId, {
         onStart: () => {
           callbacks?.onStart?.();
-          console.log('[ProgressTracking] Started');
         },
         onToken: token => {
           callbacks?.onToken?.(token);
-          console.log('[ProgressTracking] Token:', token);
         },
         onComplete: () => {
           callbacks?.onComplete?.();
-          console.log('[ProgressTracking] Completed');
         },
         onError: error => {
           callbacks?.onError?.(error);

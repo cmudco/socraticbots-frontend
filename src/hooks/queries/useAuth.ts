@@ -156,7 +156,7 @@ export const useChangePassword = () => {
     mutationFn: ({ oldPassword, newPassword }: { oldPassword: string; newPassword: string }) =>
       authService.changePassword(oldPassword, newPassword),
     onSuccess: () => {
-      console.log('Password changed successfully');
+      // Password changed successfully
     },
     onError: error => {
       console.error('Password change failed:', error);
