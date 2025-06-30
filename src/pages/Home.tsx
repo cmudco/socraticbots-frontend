@@ -1,5 +1,6 @@
 // src/pages/Home.tsx
 import React from 'react';
+
 import AuthTest from '../components/common/AuthTest';
 
 const Home: React.FC = () => {

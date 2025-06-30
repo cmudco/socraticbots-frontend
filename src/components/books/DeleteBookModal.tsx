@@ -1,6 +1,19 @@
 // src/components/books/DeleteBookModal.tsx
-import React, { useState, useEffect, useRef } from 'react';
-import { bookService } from '../../services/books.service';
+import React, { useState } from 'react';
+
+import { AlertTriangle } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+import { useDeleteBook } from '../../hooks/queries/useBooks';
 import { Book } from '../../types/book';
 
 interface DeleteBookModalProps {
@@ -11,95 +24,95 @@ interface DeleteBookModalProps {
 }
 
 const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSuccess, book }) => {
-  const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Create ref for modal content
-  const modalContentRef = useRef<HTMLDivElement>(null);
-  
-  // Handle clicks outside the modal
-  const handleOutsideClick = (e: MouseEvent) => {
-    if (
-      modalContentRef.current && 
-      !modalContentRef.current.contains(e.target as Node) && 
-      !isDeleting
-    ) {
-      onClose();
-    }
-  };
-  
-  // Add event listener when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('mousedown', handleOutsideClick);
-    } else {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    }
-    
-    // Clean up event listener on unmount
-    return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-    };
-  }, [isOpen, isDeleting]);
-  
+
+  // TanStack Query mutation
+  const deleteBookMutation = useDeleteBook();
+
+  // Loading state from mutation
+  const isDeleting = deleteBookMutation.isPending;
+
   const handleDelete = async () => {
     try {
-      setIsDeleting(true);
       setError(null);
-      
-      await bookService.deleteBook(book.id);
-      
+
+      await deleteBookMutation.mutateAsync(book.id);
+
       onClose();
       onSuccess();
     } catch (err) {
       setError('Failed to delete book. Please try again.');
       console.error('Error deleting book:', err);
-    } finally {
-      setIsDeleting(false);
     }
   };
-  
-  if (!isOpen) return null;
-  
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div 
-        ref={modalContentRef}
-        className="bg-white p-6 rounded-lg w-full max-w-md"
-      >
-        <h2 className="text-xl font-bold mb-4">Delete Book</h2>
-        
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+            </div>
+            <DialogTitle className="text-lg font-semibold">Delete Book</DialogTitle>
+          </div>
+          <DialogDescription className="pt-2 text-slate-600">
+            Are you sure you want to delete "<span className="font-semibold">{book.title}</span>"?
+            This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-            {error}
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+            <div className="flex items-start">
+              <svg
+                className="mt-0.5 mr-3 h-5 w-5 text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+              <div>
+                <h4 className="font-medium text-red-800">Error</h4>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
+              </div>
+            </div>
           </div>
         )}
-        
-        <p className="mb-4">
-          Are you sure you want to delete "<span className="font-semibold">{book.title}</span>"? 
-          This action cannot be undone.
-        </p>
-        
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
+
+        <DialogFooter className="flex gap-2 sm:justify-end">
+          <Button
+            variant="outline"
             onClick={onClose}
-            className="px-4 py-2 border rounded"
             disabled={isDeleting}
+            className="border-slate-200 text-slate-700 hover:bg-slate-50"
           >
             Cancel
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="destructive"
             onClick={handleDelete}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:bg-red-300"
             disabled={isDeleting}
+            className="bg-red-600 text-white hover:bg-red-700"
           >
-            {isDeleting ? 'Deleting...' : 'Delete Book'}
-          </button>
-        </div>
-      </div>
-    </div>
+            {isDeleting ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Deleting...
+              </div>
+            ) : (
+              'Delete Book'
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -1,62 +1,110 @@
 // src/components/chat/ChatHeader.tsx
 import React from 'react';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { setSelectedChapter } from '../../store/slices/chatSlice';
+
+import { BookOpen, Clock, Sparkles } from 'lucide-react';
+
+import { useChatStore } from '@/stores/chatStore';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+
+import ChapterSelector from './ChapterSelector';
 
 const ChatHeader: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const { availableChapters, selectedChapterId, loading, error } = useAppSelector(state => state.chat);
-  const apiIsReady = useAppSelector(state => state.api?.isReady);
-
-  const handleChapterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const chapterId = e.target.value;
-    dispatch(setSelectedChapter(chapterId || null));
-  };
+  const { selectedChapterId } = useChatStore();
 
   return (
-    <div className="flex items-center p-3 border-b border-gray-200 bg-white">
-      {/* Mode Toggle */}
-      <div className="flex space-x-2 mr-4">
-        <button 
-          className="px-3 py-1 bg-blue-600 text-white rounded-md font-medium text-sm"
-          disabled
-        >
-          Classic
-        </button>
-        <button 
-          className="px-3 py-1 text-gray-400 bg-gray-100 rounded-md font-medium text-sm"
-          disabled
-        >
-          New
-        </button>
-      </div>
+    <header className="sticky top-0 z-10 w-full border-b border-slate-200/60 bg-gradient-to-r from-white via-slate-50/90 to-white shadow-sm backdrop-blur-sm">
+      <div className="px-6 py-4">
+        {/* Main header content */}
+        <div className="flex items-center justify-between">
+          {/* Left section - Chapter info with enhanced visual hierarchy */}
+          <div className="flex items-center space-x-4">
+            {/* Chapter icon and info */}
+            <div className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md">
+                <BookOpen className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-slate-600">Chapter:</span>
+                  {selectedChapterId ? (
+                    <Badge
+                      variant="secondary"
+                      className="border-violet-200 bg-violet-50 text-violet-700"
+                    >
+                      <div className="mr-1.5 h-1.5 w-1.5 rounded-full bg-violet-400"></div>
+                      Active
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="border-slate-300 bg-slate-50 text-slate-600"
+                    >
+                      <Clock className="mr-1 h-3 w-3" />
+                      Select Chapter
+                    </Badge>
+                  )}
+                </div>
+                <div className="mt-1">
+                  <ChapterSelector />
+                </div>
+              </div>
+            </div>
+          </div>
 
-      {/* Chapter Dropdown */}
-      <div className="flex-grow">
-        {!apiIsReady ? (
-          <div className="text-sm text-gray-500">Connecting to API...</div>
-        ) : loading ? (
-          <div className="text-sm text-gray-500">Loading chapters...</div>
-        ) : error ? (
-          <div className="text-sm text-red-500">Error: {error}</div>
-        ) : availableChapters.length === 0 ? (
-          <div className="text-sm text-gray-500">No chapters available</div>
-        ) : (
-          <select
-            className="w-64 pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            value={selectedChapterId || ''}
-            onChange={handleChapterChange}
-          >
-            <option value="" disabled>Select a chapter</option>
-            {availableChapters.map((chapter) => (
-              <option key={chapter.id} value={chapter.id}>
-                {chapter.title}
-              </option>
-            ))}
-          </select>
+          {/* Right section - Mode selection with enhanced styling */}
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-slate-600">Mode:</span>
+              <div className="flex items-center space-x-1 rounded-lg bg-slate-100/80 p-1">
+                {/* Classic Mode Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={!selectedChapterId}
+                  className={`h-8 px-3 text-xs font-medium transition-all ${
+                    selectedChapterId
+                      ? 'bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-sm hover:from-violet-600 hover:to-purple-600'
+                      : 'cursor-not-allowed bg-slate-200 text-slate-400'
+                  }`}
+                >
+                  <Sparkles className="mr-1.5 h-3 w-3" />
+                  Classic
+                </Button>
+
+                {/* New Mode Button (disabled) */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={true}
+                  className="h-8 cursor-not-allowed bg-slate-200 px-3 text-xs font-medium text-slate-400"
+                >
+                  New
+                  <Badge
+                    variant="secondary"
+                    className="ml-1.5 h-4 border-amber-200 bg-amber-100 px-1.5 text-xs text-amber-700"
+                  >
+                    Soon
+                  </Badge>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Optional status bar for additional context */}
+        {selectedChapterId && (
+          <div className="mt-3 flex items-center justify-between rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2">
+            <div className="flex items-center space-x-2 text-sm">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></div>
+              <span className="text-slate-600">Ready to chat</span>
+            </div>
+            <div className="text-xs text-slate-500">AI assistant ready • Learning mode active</div>
+          </div>
         )}
       </div>
-    </div>
+    </header>
   );
 };
 

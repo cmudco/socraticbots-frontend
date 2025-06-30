@@ -1,8 +1,9 @@
 // src/services/chat.service.ts
-import { api } from './api/instance';
-import { authService } from './auth.service';
-import { AuthTokens } from '../types/auth';
+import type { ChatMessage, Conversation } from '@/types/chat';
+
+import { METHOD } from '../constants/requests';
 import config from '../lib/config';
+import { baseRequest } from '../utils/baseRequest';
 
 export interface Chapter {
   id: string;
@@ -14,112 +15,64 @@ export interface Chapter {
   updated_at?: string;
 }
 
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  created_at: string;
-}
-
-
 interface StreamCallbacks {
   onStart?: () => void;
   onToken?: (token: string) => void;
-  onComplete?: () => void;
-  onError?: (error: any) => void;
-}
-
-
-export interface Conversation {
-  id: string;
-  user: string;
-  chapter: string;
-  chapter_details: Chapter;
-  created_at: string;
-  updated_at: string;
-  messages: ChatMessage[];
+  onComplete?: (completeMessage?: ChatMessage) => void;
+  onError?: (error: Error) => void;
 }
 
 class ChatService {
   // Fetch available chapters
   async getAvailableChapters(): Promise<Chapter[]> {
-    try {
-      const response = await api.get<Chapter[]>('/chat/available-chapters/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching available chapters:', error);
-      throw error;
-    }
+    return baseRequest<Chapter[]>({
+      url: 'chat/available-chapters/',
+      method: METHOD.GET,
+    });
   }
 
   async getConversationForChapter(chapterId: string): Promise<Conversation> {
-    try {
-      const response = await api.get<Conversation>(`/chat/conversations/for_chapter/${chapterId}/`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching conversation for chapter ${chapterId}:`, error);
-      throw error;
-    }
+    return baseRequest<Conversation>({
+      url: `chat/conversations/for_chapter/${chapterId}/`,
+      method: METHOD.GET,
+    });
   }
 
-  async sendMessage(conversationId: string, message: string): Promise<any> {
-    try {
-      const response = await api.post('/chat/send-message/', {
+  async sendMessage(conversationId: string, message: string): Promise<ChatMessage> {
+    return baseRequest<ChatMessage>({
+      url: 'chat/send-message/',
+      method: METHOD.POST,
+      data: {
         conversation_id: conversationId,
-        message: message
-      });
-      
-      console.log('Message sent successfully:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error sending message:', error);
-      throw error;
-    }
+        message: message,
+      },
+    });
   }
 
-  private async getFreshToken(): Promise<string> {
-    try {
-      // Get stored tokens
-      const storedTokens = localStorage.getItem('auth_tokens');
-      if (!storedTokens) throw new Error('No auth tokens found');
-      
-      // Parse tokens
-      const tokens: AuthTokens = JSON.parse(storedTokens);
-      
-      // Force a token refresh
-      const newTokens = await authService.refreshToken(tokens.refresh);
-      
-      // Save new tokens
-      localStorage.setItem('auth_tokens', JSON.stringify(newTokens));
-      
-      return newTokens.access;
-    } catch (error) {
-      console.error('Error getting fresh token:', error);
-      throw error;
-    }
+  private getCurrentToken(): string | null {
+    return localStorage.getItem('access_token');
   }
 
   async streamMessage(
-    conversationId: string, 
+    conversationId: string,
     message: string,
     callbacks: StreamCallbacks
   ): Promise<string> {
     try {
-      const token = await this.getFreshToken();
+      const token = this.getCurrentToken();
       if (!token) throw new Error('No auth token available');
 
       const response = await fetch(`${config.apiUrl}/chat/send-message/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           conversation_id: conversationId,
-          message: message
-        })
+          message: message,
+        }),
       });
-
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -129,9 +82,10 @@ class ChatService {
       if (!reader) throw new Error('No reader available');
 
       callbacks.onStart?.();
+      console.log('[streamMessage] onStart');
 
       let fullResponse = '';
-      
+
       // Read the stream
       while (true) {
         const { done, value } = await reader.read();
@@ -141,7 +95,6 @@ class ChatService {
 
         // Convert the chunk to text
         const chunk = new TextDecoder().decode(value);
-        
         const lines = chunk.split('\n');
 
         // Process each line
@@ -151,22 +104,40 @@ class ChatService {
               const data = JSON.parse(line.slice(5));
               if (data.content) {
                 fullResponse += data.content;
+                console.log('[streamMessage] onToken', data.content);
                 callbacks.onToken?.(data.content);
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);
             }
+          } else if (line.startsWith('event: complete')) {
+            console.log('[streamMessage] onComplete');
+            // Try to parse the complete message data if available
+            try {
+              const completeData = line.replace('event: complete', '').trim();
+              if (completeData) {
+                const completeMessage = JSON.parse(completeData);
+                callbacks.onComplete?.(completeMessage);
+              } else {
+                callbacks.onComplete?.();
+              }
+            } catch {
+              console.log(
+                '[streamMessage] No complete message data, calling onComplete without data'
+              );
+              callbacks.onComplete?.();
+            }
           } else if (line.startsWith('event: end')) {
-            callbacks.onComplete?.();
+            console.log('[streamMessage] stream ended');
+            // Stream has ended, but we don't need to do anything special here
           }
         }
       }
 
       return fullResponse;
-
     } catch (error) {
       console.error('Error in streamMessage:', error);
-      callbacks.onError?.(error);
+      callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -176,17 +147,18 @@ class ChatService {
     callbacks: StreamCallbacks
   ): Promise<string> {
     try {
-      const token = await this.getFreshToken();
-      
-      const response = await fetch(`${api.defaults.baseURL}/chat/track-progress/`, {
+      const token = this.getCurrentToken();
+      if (!token) throw new Error('No auth token available');
+
+      const response = await fetch(`${config.apiUrl}/chat/track-progress/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          conversation_id: conversationId
-        })
+          conversation_id: conversationId,
+        }),
       });
 
       if (!response.ok) {
@@ -217,41 +189,68 @@ class ChatService {
             } catch (e) {
               console.error('Error parsing SSE data:', e);
             }
-          } else if (line.startsWith('event: end')) {
+          } else if (line.startsWith('event: complete')) {
             callbacks.onComplete?.();
+          } else if (line.startsWith('event: end')) {
+            // Stream has ended
           }
         }
       }
 
       return fullResponse;
-
     } catch (error) {
       console.error('Error in streamTrackingProgress:', error);
-      callbacks.onError?.(error);
+      callbacks.onError?.(error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
 
-  async getLatestProgress(conversationId: string): Promise<{content: string | null, created_at: string | null}> {
+  // Trigger progress tracking after message completion
+  async triggerProgressTracking(
+    conversationId: string,
+    callbacks?: StreamCallbacks
+  ): Promise<void> {
     try {
-      const response = await api.get(`/chat/latest-progress/${conversationId}/`);
-      return response.data;
+      // This will trigger the progress tracking stream with real-time updates
+      await this.streamTrackingProgress(conversationId, {
+        onStart: () => {
+          callbacks?.onStart?.();
+          console.log('[ProgressTracking] Started');
+        },
+        onToken: token => {
+          callbacks?.onToken?.(token);
+          console.log('[ProgressTracking] Token:', token);
+        },
+        onComplete: () => {
+          callbacks?.onComplete?.();
+          console.log('[ProgressTracking] Completed');
+        },
+        onError: error => {
+          callbacks?.onError?.(error);
+          console.error('[ProgressTracking] Error:', error);
+        },
+      });
     } catch (error) {
-      console.error('Error fetching latest progress:', error);
-      throw error;
+      console.error('Error triggering progress tracking:', error);
+      callbacks?.onError?.(error instanceof Error ? error : new Error(String(error)));
     }
+  }
+
+  async getLatestProgress(
+    conversationId: string
+  ): Promise<{ content: string | null; created_at: string | null }> {
+    return baseRequest<{ content: string | null; created_at: string | null }>({
+      url: `chat/latest-progress/${conversationId}/`,
+      method: METHOD.GET,
+    });
   }
 
   async clearConversation(conversationId: string): Promise<Conversation> {
-    try {
-      const response = await api.post<Conversation>(`/chat/clear-conversation/${conversationId}/`);
-      return response.data;
-    } catch (error) {
-      console.error('Error clearing conversation:', error);
-      throw error;
-    }
+    return baseRequest<Conversation>({
+      url: `chat/clear-conversation/${conversationId}/`,
+      method: METHOD.POST,
+    });
   }
-
 }
 
 // Export a singleton instance
