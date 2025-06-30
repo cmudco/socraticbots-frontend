@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 
 import { useChapterFiles } from '../../../hooks/queries/useFiles';
 import { useFileUpload } from '../../../hooks/useFileUpload';
-import { useChapterFormStore } from '../../../stores/chapterFormStore';
+import { useChapterFormStore } from '../../../stores/forms/chapterFormStore';
 import { FileProcessingStatus } from '../../../types/file';
 import FileItem from '../../files/FileItem';
 import FileStatusSummary from '../../files/FileStatusSummary';

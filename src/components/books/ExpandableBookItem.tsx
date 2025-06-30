@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { ChevronDown, ChevronUp, Edit, Trash } from 'lucide-react';
 
-import { useUiStore } from '../../stores/uiStore';
+import { useUiStore } from '../../stores/ui/uiStore';
 import { Book } from '../../types/book';
 import ChapterList from '../chapters/ChapterList';
 import { Button } from '../ui/button';

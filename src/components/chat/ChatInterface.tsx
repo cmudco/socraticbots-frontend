@@ -8,8 +8,8 @@ import {
   useStreamMessage,
 } from '@/hooks/queries/useChat';
 
-import { useChatStore } from '@/stores/chatStore';
-import { useModalStore } from '@/stores/modalStore';
+import { useChatStore } from '@/stores/core/chatStore';
+import { useModalStore } from '@/stores/ui/modalStore';
 
 import { Card } from '@/components/ui/card';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
@@ -37,7 +37,8 @@ const ChatInterface: React.FC = () => {
   } = useChatStore();
 
   // Use Zustand for modal state management
-  const { clearConversationModal, openClearConversationModal, closeClearConversationModal } = useModalStore();
+  const { clearConversationModal, openClearConversationModal, closeClearConversationModal } =
+    useModalStore();
 
   const { data: conversation, isLoading: conversationLoading } =
     useConversationForChapter(selectedChapterId);

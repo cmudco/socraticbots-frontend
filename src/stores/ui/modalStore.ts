@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 
-import type { Book } from '@/types/book';
 import type { Chapter } from '@/services/chapters.service';
+
+import type { Book } from '@/types/book';
 
 interface ModalStoreState {
   // Book modals

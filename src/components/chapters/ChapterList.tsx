@@ -5,8 +5,8 @@ import { Plus } from 'lucide-react';
 
 import { useChapters } from '../../hooks/queries/useChapters';
 import { Chapter } from '../../services/chapters.service';
-import { useModalStore } from '../../stores/modalStore';
-import { useUiStore } from '../../stores/uiStore';
+import { useModalStore } from '../../stores/ui/modalStore';
+import { useUiStore } from '../../stores/ui/uiStore';
 import { Button } from '../ui/button';
 import ChapterFormModal from './ChapterFormModal';
 import ChapterItem from './ChapterItem';

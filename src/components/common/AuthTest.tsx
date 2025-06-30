@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 
 import { useAuth } from '../../hooks/useAuth';
-import { useErrorStore } from '../../stores/errorStore';
+import { useErrorStore } from '../../stores/ui/errorStore';
 
 const AuthTest: React.FC = () => {
   const { tokens } = useAuth();

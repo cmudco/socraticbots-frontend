@@ -18,10 +18,10 @@ import {
   X,
 } from 'lucide-react';
 
+import { useNotesStore } from '@/stores/core/notesStore';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-
-import { useNotesStore } from '@/stores/notesStore';
 
 interface NotesSidebarProps {
   onCollapseChange?: (collapsed: boolean) => void;
@@ -94,8 +94,9 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
 
   return (
     <div
-      className={`${isCollapsed ? 'w-12' : 'w-80'
-        } relative flex h-full flex-shrink-0 flex-col border-l border-slate-200/60 bg-gradient-to-br from-slate-50 via-white to-violet-50/30 backdrop-blur-sm transition-all duration-300 ease-in-out`}
+      className={`${
+        isCollapsed ? 'w-12' : 'w-80'
+      } relative flex h-full flex-shrink-0 flex-col border-l border-slate-200/60 bg-gradient-to-br from-slate-50 via-white to-violet-50/30 backdrop-blur-sm transition-all duration-300 ease-in-out`}
     >
       {/* Toggle Button - Fixed z-index issue */}
       <Button
@@ -193,12 +194,7 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
                 </Badge>
                 <span className="text-sm font-medium text-slate-700">New Note</span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={closeCreateModal}
-              >
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={closeCreateModal}>
                 <X className="h-3 w-3 text-slate-400" />
               </Button>
             </div>

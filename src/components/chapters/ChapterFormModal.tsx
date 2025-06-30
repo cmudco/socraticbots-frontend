@@ -7,7 +7,7 @@ import { BookOpen, Info } from 'lucide-react';
 import { Chapter } from '@/services/chapters.service';
 
 import { useCreateChapter, useUpdateChapter } from '../../hooks/queries/useChapters';
-import { useChapterFormStore } from '../../stores/chapterFormStore';
+import { useChapterFormStore } from '../../stores/forms/chapterFormStore';
 import { Button } from '../ui/button';
 import {
   Dialog,

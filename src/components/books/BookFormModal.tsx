@@ -17,8 +17,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
 import { useCreateBook, useUpdateBook } from '../../hooks/queries/useBooks';
-import { useErrorStore } from '../../stores/errorStore';
-import { useFormStore } from '../../stores/formStore';
+import { useFormStore } from '../../stores/forms/formStore';
+import { useErrorStore } from '../../stores/ui/errorStore';
 import { Book } from '../../types/book';
 
 interface BookFormModalProps {
@@ -139,7 +139,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
         }
 
         const syntheticEvent = {
-          preventDefault: () => { },
+          preventDefault: () => {},
         } as unknown as React.FormEvent;
 
         handleSubmit(syntheticEvent);
@@ -157,7 +157,9 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
 
   // Get errors for this context
   const formErrors = bookForm.errors;
-  const hasGlobalError = Object.keys(formErrors).length === 0 && (createBookMutation.isError || updateBookMutation.isError);
+  const hasGlobalError =
+    Object.keys(formErrors).length === 0 &&
+    (createBookMutation.isError || updateBookMutation.isError);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -197,7 +199,9 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
               <div>
                 <h4 className="font-medium text-red-800">Error</h4>
                 <p className="mt-1 text-sm text-red-700">
-                  {createBookMutation.error?.message || updateBookMutation.error?.message || 'An error occurred'}
+                  {createBookMutation.error?.message ||
+                    updateBookMutation.error?.message ||
+                    'An error occurred'}
                 </p>
               </div>
             </div>
@@ -218,9 +222,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
               disabled={isSubmitting}
               className="border-slate-200 focus:border-violet-300 focus:ring-violet-200"
             />
-            {formErrors.title && (
-              <p className="text-sm text-red-600">{formErrors.title}</p>
-            )}
+            {formErrors.title && <p className="text-sm text-red-600">{formErrors.title}</p>}
           </div>
 
           <div className="space-y-2">

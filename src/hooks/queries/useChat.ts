@@ -228,7 +228,7 @@ export const useStreamMessage = () => {
           // Trigger progress tracking after message completion with Zustand store callbacks
           try {
             // Import the store dynamically to avoid circular dependencies
-            const { useChatStore } = await import('@/stores/chatStore');
+            const { useChatStore } = await import('@/stores/core/chatStore');
             const store = useChatStore.getState();
 
             await chatService.triggerProgressTracking(conversationId, {
@@ -277,7 +277,7 @@ export const useStreamProgressTracking = () => {
   const streamProgressTracking = async (conversationId: string) => {
     try {
       // Import the store dynamically to avoid circular dependencies
-      const { useChatStore } = await import('@/stores/chatStore');
+      const { useChatStore } = await import('@/stores/core/chatStore');
       const store = useChatStore.getState();
 
       await chatService.streamTrackingProgress(conversationId, {
@@ -304,7 +304,7 @@ export const useStreamProgressTracking = () => {
     } catch (err) {
       console.error('Error in streamProgressTracking:', err);
       // Ensure streaming state is reset on error
-      const { useChatStore } = await import('@/stores/chatStore');
+      const { useChatStore } = await import('@/stores/core/chatStore');
       const store = useChatStore.getState();
       store.setProgressStreaming(false);
     }

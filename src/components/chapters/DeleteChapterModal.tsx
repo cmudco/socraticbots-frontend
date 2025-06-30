@@ -14,7 +14,7 @@ import {
 
 import { useDeleteChapter } from '../../hooks/queries/useChapters';
 import { Chapter } from '../../services/chapters.service';
-import { useErrorStore } from '../../stores/errorStore';
+import { useErrorStore } from '../../stores/ui/errorStore';
 
 interface DeleteChapterModalProps {
   isOpen: boolean;
@@ -100,7 +100,9 @@ const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
               <div>
                 <h4 className="font-medium text-red-800">Error</h4>
                 <p className="mt-1 text-sm text-red-700">
-                  {contextErrors[0]?.message || deleteChapterMutation.error?.message || 'An error occurred'}
+                  {contextErrors[0]?.message ||
+                    deleteChapterMutation.error?.message ||
+                    'An error occurred'}
                 </p>
               </div>
             </div>

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 
 import { type Model, useModels } from '../../../hooks/queries/useModels';
-import { useChapterFormStore } from '../../../stores/chapterFormStore';
+import { useChapterFormStore } from '../../../stores/forms/chapterFormStore';
 
 // Validation schema for the basic info form
 const BasicInfoSchema = Yup.object().shape({

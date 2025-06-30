@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { useDeleteBook } from '../../hooks/queries/useBooks';
-import { useErrorStore } from '../../stores/errorStore';
+import { useErrorStore } from '../../stores/ui/errorStore';
 import { Book } from '../../types/book';
 
 interface DeleteBookModalProps {
@@ -94,7 +94,9 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
               <div>
                 <h4 className="font-medium text-red-800">Error</h4>
                 <p className="mt-1 text-sm text-red-700">
-                  {contextErrors[0]?.message || deleteBookMutation.error?.message || 'An error occurred'}
+                  {contextErrors[0]?.message ||
+                    deleteBookMutation.error?.message ||
+                    'An error occurred'}
                 </p>
               </div>
             </div>
