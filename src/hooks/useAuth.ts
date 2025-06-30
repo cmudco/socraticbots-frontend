@@ -1,5 +1,6 @@
 // src/hooks/useAuth.ts
-import { useAuthStore } from '../stores/authStore';
+import { useAuthStore } from '@/stores/authStore';
+
 import { useLogin, useLogout } from './queries/useAuth';
 
 /**

@@ -3,6 +3,10 @@ import React, { useEffect } from 'react';
 
 import { AlertTriangle } from 'lucide-react';
 
+import { useDeleteBook } from '@/hooks/queries/useBooks';
+
+import { useErrorStore } from '@/stores/ui/errorStore';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,9 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-import { useDeleteBook } from '../../hooks/queries/useBooks';
-import { useErrorStore } from '../../stores/ui/errorStore';
-import { Book } from '../../types/book';
+import { Book } from '@/types/book';
 
 interface DeleteBookModalProps {
   isOpen: boolean;

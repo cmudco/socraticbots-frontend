@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FileUploadStatus } from '../../types/file';
+import { FileUploadStatus } from '@/types/file';
 
 interface UploadingFile {
   id: string;

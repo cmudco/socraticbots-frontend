@@ -1,7 +1,7 @@
 // src/stores/chapterFormStore.ts
 import { create } from 'zustand';
 
-import type { Chapter } from '../../services/chapters.service';
+import type { Chapter } from '@/services/chapters.service';
 
 interface ChapterFormState {
   // Modal state

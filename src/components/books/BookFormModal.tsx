@@ -3,6 +3,11 @@ import React, { useCallback, useEffect } from 'react';
 
 import { BookOpen } from 'lucide-react';
 
+import { useCreateBook, useUpdateBook } from '@/hooks/queries/useBooks';
+
+import { useFormStore } from '@/stores/forms/formStore';
+import { useErrorStore } from '@/stores/ui/errorStore';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,10 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-import { useCreateBook, useUpdateBook } from '../../hooks/queries/useBooks';
-import { useFormStore } from '../../stores/forms/formStore';
-import { useErrorStore } from '../../stores/ui/errorStore';
-import { Book } from '../../types/book';
+import { Book } from '@/types/book';
 
 interface BookFormModalProps {
   isOpen: boolean;

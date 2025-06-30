@@ -2,8 +2,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import logo from '../../assets/logo.png';
-import { useAuth } from '../../hooks/useAuth';
+import logo from '@/assets/logo.png';
+
+import { useAuth } from '@/hooks/useAuth';
 
 const Header: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();

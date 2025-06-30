@@ -3,9 +3,12 @@ import React from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useLocation } from 'react-router-dom';
 
-import { useAuth } from '../../hooks/useAuth';
-import { useUiStore } from '../../stores/ui/uiStore';
-import { NAVIGATION_ITEMS } from '../../types/navigation';
+import { useAuth } from '@/hooks/useAuth';
+
+import { useUiStore } from '@/stores/ui/uiStore';
+
+import { NAVIGATION_ITEMS } from '@/types/navigation';
+
 import SidebarButton from './SidebarButton';
 
 const Sidebar: React.FC = () => {

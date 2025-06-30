@@ -4,11 +4,13 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { FormikProps } from 'formik';
 import { BookOpen, Info } from 'lucide-react';
 
+import { useCreateChapter, useUpdateChapter } from '@/hooks/queries/useChapters';
+
+import { useChapterFormStore } from '@/stores/forms/chapterFormStore';
+
 import { Chapter } from '@/services/chapters.service';
 
-import { useCreateChapter, useUpdateChapter } from '../../hooks/queries/useChapters';
-import { useChapterFormStore } from '../../stores/forms/chapterFormStore';
-import { Button } from '../ui/button';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +18,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
+} from '@/components/ui/dialog';
+
 import BasicInfoTab from './tabs/BasicInfoTab';
 import DeploymentTab from './tabs/DeploymentTab';
 import FilesTab from './tabs/FilesTab';

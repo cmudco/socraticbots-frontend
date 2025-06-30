@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ChapterFile, FileProcessingStatus } from '../../types/file';
+import { ChapterFile, FileProcessingStatus } from '@/types/file';
 
 interface FileItemProps {
   file: ChapterFile;
