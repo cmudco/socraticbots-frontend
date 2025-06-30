@@ -1,9 +1,12 @@
 // src/components/books/ExpandableBookItem.tsx
 import React, { useState } from 'react';
+
+import { ChevronDown, ChevronUp, Edit, Trash } from 'lucide-react';
+
+import { useUiStore } from '../../stores/uiStore';
 import { Book } from '../../types/book';
-import { Chapter } from '../../services/chapters.service';
 import ChapterList from '../chapters/ChapterList';
-import { chapterService } from '../../services/chapters.service';
+import { Button } from '../ui/button';
 
 interface ExpandableBookItemProps {
   book: Book;
@@ -12,88 +15,77 @@ interface ExpandableBookItemProps {
 }
 
 const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({ book, onEdit, onDelete }) => {
-  const [expanded, setExpanded] = useState(false);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Zustand for UI state (book expansion)
+  const { expandedBooks, toggleBookExpansion } = useUiStore();
+  const expanded = expandedBooks.has(book.id);
 
-  const toggleExpand = async () => {
-    const newExpandedState = !expanded;
-    setExpanded(newExpandedState);
-    
-    if (newExpandedState && chapters.length === 0) {
-      // Fetch chapters when expanding
-      setLoading(true);
-      try {
-        const fetchedChapters = await chapterService.getChapters(book.id);
-        setChapters(fetchedChapters);
-      } catch (error) {
-        console.error('Error fetching chapters:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
+  // React state only for temporary hover interactions
+  const [showActions, setShowActions] = useState(false);
 
-  const handleChapterAdded = (newChapter: Chapter) => {
-    setChapters([...chapters, newChapter]);
-  };
-
-  const handleChapterUpdated = (updatedChapter: Chapter) => {
-    setChapters(chapters.map(ch => ch.id === updatedChapter.id ? updatedChapter : ch));
-  };
-
-  const handleChapterDeleted = (chapterId: string) => {
-    setChapters(chapters.filter(ch => ch.id !== chapterId));
+  const toggleExpand = () => {
+    toggleBookExpansion(book.id);
   };
 
   return (
-    <div className="border rounded-lg mb-4 overflow-hidden">
-      <div 
-        className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50"
+    <div className="mb-4 overflow-hidden rounded-lg border">
+      <div
+        className="group flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50"
         onClick={toggleExpand}
+        onMouseEnter={() => setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
       >
-        <div>
-          <h3 className="font-bold text-lg">{book.title}</h3>
-          {book.description && <p className="text-gray-600 text-sm">{book.description}</p>}
+        <div className="flex-1">
+          <h3 className="text-lg font-bold">{book.title}</h3>
+          {book.description && <p className="text-sm text-gray-600">{book.description}</p>}
         </div>
-        <div className="flex space-x-2">
-          <button 
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent toggling expand
-              onEdit(book);
-            }}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+
+        <div className="flex items-center space-x-3">
+          {/* Book actions - only visible on hover */}
+          <div
+            className={`flex space-x-1 transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}
           >
-            Edit
-          </button>
-          <button 
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent toggling expand
-              onDelete(book);
-            }}
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Delete
-          </button>
-          <span className="text-gray-400">
-            {expanded ? '▲' : '▼'}
-          </span>
+            <Button
+              onClick={e => {
+                e.stopPropagation();
+                onEdit(book);
+              }}
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
+              title="Edit book"
+            >
+              <Edit size={14} className="mr-1" />
+              Edit Book
+            </Button>
+            <Button
+              onClick={e => {
+                e.stopPropagation();
+                onDelete(book);
+              }}
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-red-100 hover:text-red-700"
+              title="Delete book"
+            >
+              <Trash size={14} className="mr-1" />
+              Delete
+            </Button>
+          </div>
+
+          {/* Expand/collapse indicator - always visible */}
+          <div className="flex items-center">
+            {expanded ? (
+              <ChevronUp size={20} className="text-gray-400" />
+            ) : (
+              <ChevronDown size={20} className="text-gray-400" />
+            )}
+          </div>
         </div>
       </div>
-      
+
       {expanded && (
-        <div className="border-t p-4 bg-gray-50">
-          {loading ? (
-            <div className="text-center py-4">Loading chapters...</div>
-          ) : (
-            <ChapterList 
-              bookId={book.id}
-              initialChapters={chapters}
-              onChapterAdded={handleChapterAdded}
-              onChapterUpdated={handleChapterUpdated}
-              onChapterDeleted={handleChapterDeleted}
-            />
-          )}
+        <div className="border-t bg-gray-50 p-4">
+          <ChapterList bookId={book.id} initialChapters={[]} onChapterDeleted={() => {}} />
         </div>
       )}
     </div>

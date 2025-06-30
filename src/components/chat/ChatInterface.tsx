@@ -1,237 +1,305 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { fetchConversationForChapter, sendStreamingMessage, clearConversation } from '../../store/thunks/chatThunks';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+
+import { MessageSquare } from 'lucide-react';
+
+import {
+  useClearConversation,
+  useConversationForChapter,
+  useStreamMessage,
+} from '@/hooks/queries/useChat';
+
+import { useChatStore } from '@/stores/chatStore';
+
+import { Card } from '@/components/ui/card';
+import ConfirmationModal from '@/components/ui/confirmation-modal';
+
+import { ChatMessage, ChatRole, ChatSender } from '@/types/chat';
+
 import ChatControls from './ChatControls';
+import ChatHeader from './ChatHeader';
+import ChatInput from './ChatInput';
 import MessageList from './MessageList';
 
-
 const ChatInterface: React.FC = () => {
-  const dispatch = useAppDispatch();
+  const messageAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null!);
+  const [showClearConfirmation, setShowClearConfirmation] = useState(false);
+
   const {
     selectedChapterId,
-    conversation,
-    conversationLoading,
-    conversationError,
-    messageSending,
-    messageError,
-    isStreaming,
-    streamingError,
-    pendingAssistantMessage,
-    trackingResult,
-  } = useAppSelector(state => state.chat);
+    selectedConversationId,
+    setSelectedConversationId,
+    inputValue,
+    setInputValue,
+    pendingMessages,
+    addPendingMessage,
+    removePendingMessage,
+  } = useChatStore();
 
-  const [message, setMessage] = useState('');
-  const messageInputRef = useRef<HTMLInputElement>(null);
-  const messageAreaRef = useRef<HTMLDivElement>(null);
+  const { data: conversation, isLoading: conversationLoading } =
+    useConversationForChapter(selectedChapterId);
+  const { streamMessage, isStreaming, error: streamError, tokens } = useStreamMessage();
+  const clearConversationMutation = useClearConversation();
 
-  // Fetch conversation when chapter is selected
+  const actualConversationId = conversation?.id;
+
   useEffect(() => {
-    if (selectedChapterId) {
-      dispatch(fetchConversationForChapter(selectedChapterId));
-      // Focus the input field when a chapter is selected
-      if (messageInputRef.current) {
-        messageInputRef.current.focus();
-      }
+    if (actualConversationId && actualConversationId !== selectedConversationId) {
+      setSelectedConversationId(actualConversationId);
     }
-  }, [selectedChapterId, dispatch]);
+  }, [actualConversationId, selectedConversationId, setSelectedConversationId]);
 
-  // Handle sending a message
-  const handleSendMessage = () => {
-    if (!message.trim() || !selectedChapterId || !conversation) return;
+  const messages = useMemo(() => conversation?.messages || [], [conversation?.messages]);
 
-    // Store the message text before clearing the input
-    const messageToSend = message.trim();
-
-    // Clear input immediately for better UX
-    setMessage('');
-
-    // Use the thunk instead of calling the service directly
-    dispatch(sendStreamingMessage({
-      conversationId: conversation.id,
-      message: messageToSend
-    }));
-  };
-
-  // Handle action button click - sets the message but doesn't send
-  const handleActionClick = (actionMessage: string) => {
-    setMessage(actionMessage);
-    if (messageInputRef.current) {
-      messageInputRef.current.focus();
-    }
-  };
-
-  // Handle clear conversation - placeholder for now
-  const handleClearConversation = () => {
-    if (!conversation) return;
-
-    if (window.confirm('Are you sure you want to clear this conversation? This action cannot be undone.')) {
-      dispatch(clearConversation(conversation.id)); // Dispatch the thunk
-    }
-  };
-
-  // Handle keypress for sending message
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Send on Enter
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  // Render the appropriate content based on state
-  const renderContent = () => {
-    if (!selectedChapterId) {
-      // No chapter selected
-      return (
-        <div className="flex flex-col items-center justify-center h-64 text-gray-400 mt-8">
-          <svg
-            className="w-16 h-16 mb-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-          <p className="text-xl font-medium mb-2">Please Select a Chapter</p>
-          <p className="text-center max-w-md">
-            Use the dropdown box along the top of the screen to select a chapter.
-            Once you select a chapter, you can begin chatting.
-          </p>
-        </div>
-      );
-    }
-
-    if (conversationLoading) {
-      // Loading conversation
-      return (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-gray-500">Loading conversation...</p>
-        </div>
-      );
-    }
-
-    if (conversationError) {
-      // Error loading conversation
-      return (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-red-500">{conversationError}</p>
-        </div>
-      );
-    }
-
-    if (conversation) {
-      return (
-        <MessageList
-          messages={conversation.messages || []}
-          greeting={conversation.chapter_details?.greeting}
-          isStreaming={isStreaming}                    // Add this
-          pendingAssistantMessage={pendingAssistantMessage}  // Add this
-        />
-      );
-    }
-
-    // Fallback
-    return null;
-  };
-
-  const scrollToBottom = () => {
+  useEffect(() => {
     if (messageAreaRef.current) {
       messageAreaRef.current.scrollTop = messageAreaRef.current.scrollHeight;
     }
+  }, [messages, pendingMessages, isStreaming, tokens]);
+
+  // Refocus input when streaming stops
+  useEffect(() => {
+    if (!isStreaming && inputRef.current) {
+      // Small delay to ensure the UI has updated
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [isStreaming]);
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || !actualConversationId || conversationLoading || isStreaming) return;
+
+    const messageToSend = inputValue.trim();
+    setInputValue('');
+
+    // Create a pending message
+    const pendingId = `pending-${Date.now()}`;
+    const pendingMessage: ChatMessage = {
+      id: pendingId,
+      conversation: actualConversationId,
+      role: 'user' as ChatRole,
+      content: messageToSend,
+      created_at: new Date().toISOString(),
+      sender: 'user' as ChatSender,
+      timestamp: new Date().toISOString(),
+    };
+    addPendingMessage(pendingMessage);
+
+    try {
+      await streamMessage({ conversationId: actualConversationId, content: messageToSend });
+      removePendingMessage(pendingId);
+    } catch {
+      removePendingMessage(pendingId);
+    }
   };
 
-  // Add useEffect to handle scrolling when streaming or messages change
-  useEffect(() => {
-    if (isStreaming || pendingAssistantMessage || conversation || trackingResult) {
-      scrollToBottom();
-    }
-  }, [isStreaming, pendingAssistantMessage?.content, conversation, trackingResult]);
+  const handleStopStreaming = () => {
+    // Note: Current implementation doesn't support stopping
+    console.log('Stop streaming requested');
+  };
 
-  // Add new effect for chapter selection
-  useEffect(() => {
-    if (selectedChapterId && conversation) {
-      scrollToBottom();
-    }
-  }, [selectedChapterId, conversation]);
+  const handleActionClick = (message: string) => {
+    if (!actualConversationId || conversationLoading || isStreaming) return;
+    setInputValue(message);
+  };
 
-  return (
-    <div className="flex-1 flex flex-col h-full">
-      {/* Message Area */}
-      <div ref={messageAreaRef} className="flex-1 overflow-y-auto px-4 pb-4 scroll-smooth">
-        {renderContent()}
-        {/* Show message error if there is one */}
-        {(messageError || streamingError) && (
-          <div className="p-3 bg-red-100 text-red-800 rounded-md mt-2 mx-auto max-w-md">
-            <p>Error: {messageError || streamingError}</p>
-          </div>
-        )}
-      </div>
+  const handleClearConversation = () => {
+    if (!actualConversationId) return;
+    setShowClearConfirmation(true);
+  };
 
-      {/* Input Area with new buttons */}
-      <div className="border-t border-gray-200 py-3 px-4 bg-white">
-        <div className="max-w-3xl mx-auto">
-          {/* New ChatControls component */}
-          <ChatControls
-            onActionClick={handleActionClick}
-            onClearConversation={handleClearConversation}
-            disabled={!selectedChapterId || conversationLoading || messageSending || isStreaming}
-          />
+  const handleConfirmClearConversation = () => {
+    if (!actualConversationId) return;
+    clearConversationMutation.mutate(actualConversationId);
+  };
 
-          {/* Existing chat input form */}
-          <form onSubmit={(e) => { e.preventDefault(); }} className="flex items-center border rounded-md">
-            <input
-              ref={messageInputRef}
-              type="text"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isStreaming
-                  ? "Assistant is responding..."
-                  : messageSending
-                    ? "Sending message..."
-                    : selectedChapterId
-                      ? "Type your message..."
-                      : "Please select a chapter first"
-              }
-              className="flex-grow px-4 py-2 focus:outline-none"
-              disabled={!selectedChapterId || conversationLoading || messageSending || isStreaming}
-            />
-            <button
-              type="button"
-              onClick={handleSendMessage}
-              className={`px-4 py-2 ${
-                message.trim() && selectedChapterId && !messageSending && !isStreaming
-                  ? 'text-purple-600 hover:text-purple-700'
-                  : 'text-gray-400'
-              }`}
-              disabled={!message.trim() || !selectedChapterId || conversationLoading || messageSending || isStreaming}
-            >
-              {isStreaming || messageSending ? (
-                // Show a spinner when sending or streaming
-                <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : (
-                // Show regular send icon otherwise
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              )}
-            </button>
-          </form>
+  // Merge messages with pending and streaming tokens
+  const allMessages = [...messages, ...pendingMessages];
+
+  // Add streaming message if streaming
+  if (isStreaming && tokens.length > 0) {
+    allMessages.push({
+      id: `streaming-${Date.now()}`,
+      conversation: actualConversationId || '',
+      role: 'assistant' as ChatRole,
+      content: tokens.join(''),
+      created_at: new Date().toISOString(),
+      sender: 'assistant' as ChatSender,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Empty state when no chapter is selected
+  if (!selectedChapterId) {
+    return (
+      <div className="flex h-full flex-1 flex-col bg-white">
+        <ChatHeader />
+
+        <div className="flex flex-1 items-center justify-center p-8">
+          <Card className="w-full max-w-md border-violet-200/50 bg-white/90 p-8 text-center shadow-lg backdrop-blur-sm">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-purple-400 shadow-sm">
+              <MessageSquare className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="mb-3 text-xl font-semibold text-slate-800">Please Select a Chapter</h2>
+            <p className="leading-relaxed text-slate-600">
+              Use the dropdown box along the top of the screen to select a chapter. Once you select
+              a chapter, you can begin chatting.
+            </p>
+          </Card>
         </div>
       </div>
+    );
+  }
+
+  const hasMessages = allMessages.length > 0;
+
+  return (
+    <div className="flex h-full flex-1 flex-col bg-white">
+      {/* Chat Header */}
+      <ChatHeader />
+
+      {/* Message Area */}
+      <div
+        ref={messageAreaRef}
+        className="flex-1 overflow-y-auto bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30"
+      >
+        <div className="mx-auto max-w-5xl">
+          {!hasMessages ? (
+            <div className="px-6 py-8">
+              <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+                <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-400 to-purple-400 shadow-lg">
+                  <MessageSquare className="h-10 w-10 text-white" />
+                </div>
+                <h3 className="mb-4 text-2xl font-semibold text-slate-800">Start a Conversation</h3>
+                <p className="mb-8 max-w-md leading-relaxed text-slate-600">
+                  Ask me anything about this chapter. I'm here to help you understand the concepts
+                  and answer your questions.
+                </p>
+
+                {/* Quick Action Buttons */}
+                <div className="grid w-full max-w-md grid-cols-1 gap-3 md:grid-cols-2">
+                  <button
+                    onClick={() =>
+                      handleActionClick('Can you explain the main concepts in this chapter?')
+                    }
+                    className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
+                  >
+                    <div className="mb-1 text-sm font-medium text-slate-800">Main Concepts</div>
+                    <div className="text-xs text-slate-500">Explain key ideas</div>
+                  </button>
+                  <button
+                    onClick={() => handleActionClick('Can you give me some examples?')}
+                    className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
+                  >
+                    <div className="mb-1 text-sm font-medium text-slate-800">Examples</div>
+                    <div className="text-xs text-slate-500">Show practical examples</div>
+                  </button>
+                  <button
+                    onClick={() => handleActionClick('Can you quiz me on this material?')}
+                    className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
+                  >
+                    <div className="mb-1 text-sm font-medium text-slate-800">Quiz Me</div>
+                    <div className="text-xs text-slate-500">Test understanding</div>
+                  </button>
+                  <button
+                    onClick={() => handleActionClick('Can you provide a summary?')}
+                    className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
+                  >
+                    <div className="mb-1 text-sm font-medium text-slate-800">Summary</div>
+                    <div className="text-xs text-slate-500">Quick overview</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <MessageList
+              messages={allMessages}
+              greeting={
+                conversation?.chapter_details && 'greeting' in conversation.chapter_details
+                  ? conversation.chapter_details.greeting
+                  : undefined
+              }
+              isStreaming={isStreaming}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Show errors */}
+      {(streamError || clearConversationMutation.isError) && (
+        <div className="mx-4 mb-4">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+            <div className="flex items-start">
+              <svg
+                className="mt-0.5 mr-3 h-5 w-5 text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+              <div>
+                <h4 className="font-medium text-red-800">Error</h4>
+                <p className="mt-1 text-sm text-red-700">
+                  {streamError?.message ||
+                    (clearConversationMutation.error instanceof Error
+                      ? clearConversationMutation.error.message
+                      : 'An unexpected error occurred')}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Controls - Only show when there are messages */}
+      {hasMessages && (
+        <div className="border-t border-slate-200/60 bg-white/90 px-4 py-3 backdrop-blur-sm">
+          <div className="mx-auto max-w-5xl">
+            <ChatControls
+              onActionClick={handleActionClick}
+              onClearConversation={handleClearConversation}
+              disabled={!selectedConversationId || conversationLoading || isStreaming}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Chat Input */}
+      <div className="border-t border-slate-200/60 bg-white">
+        <div className="mx-auto max-w-5xl px-4 py-4">
+          <ChatInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={handleSendMessage}
+            onStop={handleStopStreaming}
+            disabled={!selectedConversationId || conversationLoading || isStreaming}
+            isStreaming={isStreaming}
+            inputRef={inputRef}
+          />
+        </div>
+      </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showClearConfirmation}
+        onClose={() => setShowClearConfirmation(false)}
+        onConfirm={handleConfirmClearConversation}
+        title="Clear Conversation"
+        description="Are you sure you want to clear this conversation? This action cannot be undone and all messages will be permanently deleted."
+        confirmText="Clear Conversation"
+        cancelText="Cancel"
+        variant="destructive"
+        isLoading={clearConversationMutation.isPending}
+      />
     </div>
   );
-
 };
 
 export default ChatInterface;

@@ -1,189 +1,226 @@
 // src/components/chapters/tabs/BasicInfoTab.tsx
-import React, { useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import { setField } from '../../../store/slices/chapterFormSlice';
-import { fetchModels } from '../../../store/thunks/chapterFormThunks';
-import { FormikProps } from 'formik';
+import { forwardRef } from 'react';
 
-interface BasicInfoTabProps {
-  formik: FormikProps<any>;
+import { Field, Form, Formik, FormikProps } from 'formik';
+import * as Yup from 'yup';
+
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+import { type Model, useModels } from '../../../hooks/queries/useModels';
+import { useChapterFormStore } from '../../../stores/chapterFormStore';
+
+// Validation schema for the basic info form
+const BasicInfoSchema = Yup.object().shape({
+  title: Yup.string()
+    .min(1, 'Title is required')
+    .max(255, 'Title must be less than 255 characters')
+    .required('Title is required'),
+  subject: Yup.string()
+    .min(1, 'Subject is required')
+    .max(255, 'Subject must be less than 255 characters')
+    .required('Subject is required'),
+  topic: Yup.string()
+    .min(1, 'Topic is required')
+    .max(255, 'Topic must be less than 255 characters')
+    .required('Topic is required'),
+  chat_model_id: Yup.string().optional(),
+  tracking_model_id: Yup.string().optional(),
+});
+
+interface FormValues {
+  title: string;
+  subject: string;
+  topic: string;
+  chat_model_id: string;
+  tracking_model_id: string;
 }
 
-const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ formik }) => {
-  const dispatch = useAppDispatch();
+const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
+  // Get form data from Zustand store
+  const { title, subject, topic, chat_model_id, tracking_model_id, updateField } =
+    useChapterFormStore();
 
-  // Get form data from Redux store
-  const {
-    title,
-    subject,
-    topic,
-    chat_model_id,
-    tracking_model_id,
-    availableModels,
-    modelsLoading,
-    isEdit
-  } = useAppSelector(state => state.chapterForm);
+  // Use the models query hook
+  const { data: availableModels = [], isLoading: modelsLoading } = useModels();
 
-  // Not used.
-  if (false) {console.log(isEdit);}
-
-
-  // Fetch models when component mounts
-  useEffect(() => {
-    dispatch(fetchModels());
-  }, [dispatch]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    // Update Redux state
-    dispatch(setField({ field: name, value }));
-    // Update Formik value without touching
-    formik.setFieldValue(name, value, false); // false prevents validation
+  // Initial values for Formik
+  const initialValues: FormValues = {
+    title: title || '',
+    subject: subject || '',
+    topic: topic || '',
+    chat_model_id: chat_model_id || '',
+    tracking_model_id: tracking_model_id || '',
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name } = e.target;
-    // Set field as touched when user leaves the field
-    formik.setFieldTouched(name, true);
-  };
-
-  // Helper function to get field error
-  const getFieldError = (fieldName: string): string | null => {
-    const error = formik.errors[fieldName];
-    const touched = formik.touched[fieldName];
-    if (error && touched && typeof error === 'string') {
-      return error;
-    }
-    return null;
-  };
-
-  // Helper function to get field styles
-  const getFieldStyles = (fieldName: string) => {
-    const hasError = formik.errors[fieldName] && formik.touched[fieldName];
-    return `w-full p-2 border rounded transition-colors ${
-      hasError
-        ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-        : 'border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
-    }`;
+  const handleSubmit = (values: FormValues) => {
+    console.log('BasicInfoTab handleSubmit called with:', values);
+    // Update Zustand store with validated values
+    Object.entries(values).forEach(([field, value]) => {
+      updateField(field, value);
+    });
   };
 
   return (
-    <div>
-      <div className="mb-4">
-        <label className="block text-gray-700 mb-1" htmlFor="title">
-          Title
-        </label>
-        <input
-          type="text"
-          id="title"
-          name="title"
-          value={title}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className={getFieldStyles('title')}
-          required
-        />
-        {getFieldError('title') && (
-          <p className="mt-1 text-sm text-red-600">{getFieldError('title')}</p>
-        )}
-      </div>
+    <Formik
+      initialValues={initialValues}
+      validationSchema={BasicInfoSchema}
+      onSubmit={handleSubmit}
+      enableReinitialize
+      innerRef={ref}
+      validateOnMount={false}
+      validateOnChange={true}
+      validateOnBlur={true}
+    >
+      {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => {
+        return (
+          <Form className="space-y-6">
+            {/* Title Field */}
+            <div className="space-y-2">
+              <Label htmlFor="title" className="text-sm font-medium text-slate-700">
+                Title *
+              </Label>
+              <Field
+                as={Input}
+                id="title"
+                name="title"
+                type="text"
+                placeholder="Enter chapter title"
+                className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
+                  errors.title && touched.title
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                    : ''
+                }`}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+              {errors.title && touched.title && (
+                <div className="mt-1 text-sm text-red-600">{errors.title}</div>
+              )}
+            </div>
 
-      <div className="mb-4">
-        <label className="block text-gray-700 mb-1" htmlFor="subject">
-          Subject
-        </label>
-        <input
-          type="text"
-          id="subject"
-          name="subject"
-          value={subject}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className={getFieldStyles('subject')}
-          required
-        />
-        {getFieldError('subject') && (
-          <p className="mt-1 text-sm text-red-600">{getFieldError('subject')}</p>
-        )}
-      </div>
+            {/* Subject Field */}
+            <div className="space-y-2">
+              <Label htmlFor="subject" className="text-sm font-medium text-slate-700">
+                Subject *
+              </Label>
+              <Field
+                as={Input}
+                id="subject"
+                name="subject"
+                type="text"
+                placeholder="Enter subject area"
+                className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
+                  errors.subject && touched.subject
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                    : ''
+                }`}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+              {errors.subject && touched.subject && (
+                <div className="mt-1 text-sm text-red-600">{errors.subject}</div>
+              )}
+            </div>
 
-      <div className="mb-4">
-        <label className="block text-gray-700 mb-1" htmlFor="topic">
-          Topic
-        </label>
-        <input
-          type="text"
-          id="topic"
-          name="topic"
-          value={topic}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className={getFieldStyles('topic')}
-          required
-        />
-        {getFieldError('topic') && (
-          <p className="mt-1 text-sm text-red-600">{getFieldError('topic')}</p>
-        )}
-      </div>
+            {/* Topic Field */}
+            <div className="space-y-2">
+              <Label htmlFor="topic" className="text-sm font-medium text-slate-700">
+                Topic *
+              </Label>
+              <Field
+                as={Input}
+                id="topic"
+                name="topic"
+                type="text"
+                placeholder="Enter specific topic"
+                className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
+                  errors.topic && touched.topic
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                    : ''
+                }`}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+              {errors.topic && touched.topic && (
+                <div className="mt-1 text-sm text-red-600">{errors.topic}</div>
+              )}
+            </div>
 
-      {/* Model Dropdowns */}
-      <div className="mb-4">
-        <label className="block text-gray-700 mb-1" htmlFor="chat_model_id">
-          Chat Model
-        </label>
-        {modelsLoading ? (
-          <div className="text-gray-500">Loading models...</div>
-        ) : (
-          <select
-            id="chat_model_id"
-            name="chat_model_id"
-            value={chat_model_id || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={getFieldStyles('chat_model_id')}
-          >
-            <option value="">Select Chat Model</option>
-            {availableModels.map(model => (
-              <option key={model.id} value={model.id}>
-                {model.name} ({model.provider})
-              </option>
-            ))}
-          </select>
-        )}
-        {getFieldError('chat_model_id') && (
-          <p className="mt-1 text-sm text-red-600">{getFieldError('chat_model_id')}</p>
-        )}
-      </div>
+            {/* Chat Model Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="chat_model_id" className="text-sm font-medium text-slate-700">
+                Chat Model
+              </Label>
+              {modelsLoading ? (
+                <div className="text-sm text-slate-500">Loading models...</div>
+              ) : (
+                <Select
+                  value={values.chat_model_id}
+                  onValueChange={value => setFieldValue('chat_model_id', value)}
+                >
+                  <SelectTrigger className="border-slate-200 focus:border-violet-300 focus:ring-violet-200">
+                    <SelectValue placeholder="Select Chat Model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableModels.map((model: Model) => (
+                      <SelectItem key={model.id} value={model.id}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {errors.chat_model_id && touched.chat_model_id && (
+                <div className="mt-1 text-sm text-red-600">{errors.chat_model_id}</div>
+              )}
+            </div>
 
-      <div className="mb-4">
-        <label className="block text-gray-700 mb-1" htmlFor="tracking_model_id">
-          Progress Tracking Model
-        </label>
-        {modelsLoading ? (
-          <div className="text-gray-500">Loading models...</div>
-        ) : (
-          <select
-            id="tracking_model_id"
-            name="tracking_model_id"
-            value={tracking_model_id || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={getFieldStyles('tracking_model_id')}
-          >
-            <option value="">Select Progress Tracking Model</option>
-            {availableModels.map(model => (
-              <option key={model.id} value={model.id}>
-                {model.name} ({model.provider})
-              </option>
-            ))}
-          </select>
-        )}
-        {getFieldError('tracking_model_id') && (
-          <p className="mt-1 text-sm text-red-600">{getFieldError('tracking_model_id')}</p>
-        )}
-      </div>
-    </div>
+            {/* Tracking Model Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="tracking_model_id" className="text-sm font-medium text-slate-700">
+                Progress Tracking Model
+              </Label>
+              {modelsLoading ? (
+                <div className="text-sm text-slate-500">Loading models...</div>
+              ) : (
+                <Select
+                  value={values.tracking_model_id}
+                  onValueChange={value => setFieldValue('tracking_model_id', value)}
+                >
+                  <SelectTrigger className="border-slate-200 focus:border-violet-300 focus:ring-violet-200">
+                    <SelectValue placeholder="Select Progress Tracking Model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableModels.map((model: Model) => (
+                      <SelectItem key={model.id} value={model.id}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {errors.tracking_model_id && touched.tracking_model_id && (
+                <div className="mt-1 text-sm text-red-600">{errors.tracking_model_id}</div>
+              )}
+            </div>
+
+            {/* Hidden submit button for Formik validation */}
+            <button type="submit" style={{ display: 'none' }} />
+          </Form>
+        );
+      }}
+    </Formik>
   );
-};
+});
+
+BasicInfoTab.displayName = 'BasicInfoTab';
 
 export default BasicInfoTab;

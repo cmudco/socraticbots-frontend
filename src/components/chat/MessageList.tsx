@@ -1,81 +1,76 @@
 // src/components/chat/MessageList.tsx
-import React from 'react';
-import { ChatMessage } from '../../services/chat.service';
+import React, { useEffect, useRef } from 'react';
+
+import type { ChatMessage } from '@/types/chat';
+import { ChatRole, ChatSender } from '@/types/chat';
+
 import MessageBubble from './MessageBubble';
 
 interface MessageListProps {
   messages: ChatMessage[];
   greeting?: string;
-  pendingUserMessage?: ChatMessage | null;
   isStreaming?: boolean;
-  pendingAssistantMessage?: ChatMessage | null;  // Add this prop
 }
 
-const MessageList: React.FC<MessageListProps> = ({ 
-  messages, 
-  greeting, 
-  pendingUserMessage,
-  isStreaming,
-  pendingAssistantMessage
-}) => {
-  // Create a copy of messages to avoid mutating props
+function normalizeMessage(msg: ChatMessage): ChatMessage {
+  if (msg.sender) return msg;
+  let sender: ChatSender | undefined;
+  if (msg.role === ChatRole.ASSISTANT) sender = ChatSender.ASSISTANT;
+  else if (msg.role === ChatRole.USER) sender = ChatSender.USER;
+  else if (msg.role === ChatRole.SYSTEM) sender = ChatSender.SYSTEM;
+  return { ...msg, sender };
+}
+
+const MessageList: React.FC<MessageListProps> = ({ messages, greeting, isStreaming = false }) => {
   const allMessages = [...messages];
-  
-  // If there are no messages but there is a greeting, create a greeting message
   if (messages.length === 0 && greeting) {
+    const now = new Date().toISOString();
     const greetingMessage: ChatMessage = {
       id: 'greeting',
-      role: 'assistant',
+      role: ChatRole.ASSISTANT,
       content: greeting,
-      created_at: new Date().toISOString(),
+      created_at: now,
+      sender: ChatSender.ASSISTANT,
+      timestamp: now,
     };
     allMessages.unshift(greetingMessage);
   }
-  
-  // Add pending user message if it exists and isn't already in the message list
-  if (pendingUserMessage && !allMessages.some(msg => msg.content === pendingUserMessage.content)) {
-    allMessages.push(pendingUserMessage);
-  }
+  const normalizedMessages = allMessages.map(normalizeMessage);
 
-  // Add pending assistant message if streaming
-  if (pendingAssistantMessage) {
-    allMessages.push(pendingAssistantMessage);
-  }
-  
-  if (allMessages.length === 0) {
+  // Auto-scroll to bottom
+  const listRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [normalizedMessages.length, isStreaming]);
+
+  if (normalizedMessages.length === 0) {
     return (
-      <div className="flex justify-center items-center h-64 text-gray-400">
+      <div className="flex h-64 items-center justify-center text-gray-400">
         <p>Start a new conversation</p>
       </div>
     );
   }
-  
+
+  // Find the last AI message index
+  const lastAssistantIdx = [...normalizedMessages]
+    .reverse()
+    .findIndex(m => m.sender === ChatSender.ASSISTANT);
+  const lastAssistantAbsIdx =
+    lastAssistantIdx === -1 ? -1 : normalizedMessages.length - 1 - lastAssistantIdx;
+
   return (
-    <div className="space-y-6 py-4">
-      {allMessages.map((message) => (
-
-        
-
-        <MessageBubble 
-          key={message.id} 
-          message={message} 
-          isGreeting={message.id === 'greeting'}
-          isPending={message.id.startsWith('pending-')}
-          isStreaming={isStreaming && message.id.startsWith('streaming-')}  // Add this prop
-        />
-      ))}
-      
-      {/* Streaming indicator */}
-      {isStreaming && (
-        <div className="flex items-center text-gray-500 ml-2 mt-2">
-          <div className="typing-indicator">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          <span className="ml-2 text-sm">Assistant is responding...</span>
+    <div ref={listRef} className="mx-auto h-full max-w-5xl space-y-0 overflow-y-auto px-4 py-4">
+      {normalizedMessages.map((message, idx) => (
+        <div key={message.id} className={message.id.startsWith('pending-') ? 'opacity-70' : ''}>
+          <MessageBubble
+            message={message}
+            isGreeting={message.id === 'greeting'}
+            isStreaming={isStreaming && idx === lastAssistantAbsIdx}
+          />
         </div>
-      )}
+      ))}
     </div>
   );
 };

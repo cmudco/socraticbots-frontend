@@ -1,8 +1,8 @@
 // src/services/chapters.service.ts
-import { api } from './api/instance';
+import { METHOD } from '../constants/requests';
+import { ChapterFile } from '../types/file';
+import { baseRequest } from '../utils/baseRequest';
 import { AIModel } from './models.service';
-import axios, { AxiosError } from 'axios';
-import { ChapterFile } from './files.service';
 
 export interface ModelPreference {
   id: string;
@@ -19,8 +19,8 @@ export interface Chapter {
   topic: string;
   model_preference?: ModelPreference;
   prompts?: ChapterPrompt;
-  learning_goals ?: LearningGoal[];
-  files?: ChapterFile[]; 
+  learning_goals?: LearningGoal[];
+  files?: ChapterFile[];
   created_at: string;
   updated_at: string;
 }
@@ -106,183 +106,152 @@ export interface ReorderGoalsRequest {
 class ChapterService {
   // Get all chapters for a specific book
   async getChapters(bookId: string): Promise<Chapter[]> {
-    try {
-      const response = await api.get<Chapter[]>(`/books/${bookId}/chapters/`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching chapters:', error);
-      throw error;
-    }
+    return baseRequest<Chapter[]>({
+      url: `books/${bookId}/chapters/`,
+      method: METHOD.GET,
+    });
   }
-  
+
   // Get a single chapter by ID for a specific book
   async getChapter(bookId: string, chapterId: string): Promise<Chapter> {
+    return baseRequest<Chapter>({
+      url: `books/${bookId}/chapters/${chapterId}/`,
+      method: METHOD.GET,
+    });
+  }
+
+  // Create a new chapter for a book
+  async createChapter(
+    bookId: string,
+    chapterData: CreateChapterRequest,
+    modelPreferences?: ChapterModelPreferenceRequest,
+    promptData?: ChapterPromptRequest
+  ): Promise<Chapter> {
     try {
-      const response = await api.get<Chapter>(`/books/${bookId}/chapters/${chapterId}/`);
-      return response.data;
+      // First create the chapter
+      const newChapter = await baseRequest<Chapter>({
+        url: `books/${bookId}/chapters/`,
+        method: METHOD.POST,
+        data: chapterData,
+      });
+
+      // Track if we need to fetch the updated chapter
+      let needsRefetch = false;
+
+      // If model preferences are provided, set them
+      if (
+        modelPreferences &&
+        (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)
+      ) {
+        await this.setChapterModelPreferences(bookId, newChapter.id, modelPreferences);
+        needsRefetch = true;
+      }
+
+      // Add this block for prompts
+      if (
+        promptData &&
+        (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)
+      ) {
+        await this.setChapterPrompts(bookId, newChapter.id, promptData);
+        needsRefetch = true;
+      }
+
+      // Fetch the updated chapter if needed
+      if (needsRefetch) {
+        return await this.getChapter(bookId, newChapter.id);
+      }
+
+      return newChapter;
     } catch (error) {
-      console.error(`Error fetching chapter ${chapterId}:`, error);
+      console.error('Error creating chapter:', error);
       throw error;
     }
   }
-  
-  // Create a new chapter for a book
-  async createChapter(
-      bookId: string, 
-      chapterData: CreateChapterRequest, 
-      modelPreferences?: ChapterModelPreferenceRequest,
-      promptData?: ChapterPromptRequest  // Add this parameter
-    ): Promise<Chapter> {
-      try {
-        // First create the chapter
-        const response = await api.post<Chapter>(`/books/${bookId}/chapters/`, chapterData);
-        const newChapter = response.data;
-        
-        // Track if we need to fetch the updated chapter
-        let needsRefetch = false;
-        
-        // If model preferences are provided, set them
-        if (modelPreferences && (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)) {
-          await this.setChapterModelPreferences(bookId, newChapter.id, modelPreferences);
-          needsRefetch = true;
-        }
-        
-        // Add this block for prompts
-        if (promptData && (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)) {
-          await this.setChapterPrompts(bookId, newChapter.id, promptData);
-          needsRefetch = true;
-        }
-        
-        // Fetch the updated chapter if needed
-        if (needsRefetch) {
-          return await this.getChapter(bookId, newChapter.id);
-        }
-        
-        return newChapter;
-      } catch (error) {
-        console.error('Error creating chapter:', error);
-        throw error;
-      }
-    }
-  
+
   // Update a chapter
   async updateChapter(
-    bookId: string, 
-    chapterId: string, 
+    bookId: string,
+    chapterId: string,
     chapterData: UpdateChapterRequest,
     modelPreferences?: ChapterModelPreferenceRequest,
-    promptData?: ChapterPromptRequest  // Add this parameter
+    promptData?: ChapterPromptRequest
   ): Promise<Chapter> {
     try {
       // Update the chapter basic info
-      const response = await api.patch<Chapter>(
-        `/books/${bookId}/chapters/${chapterId}/`, 
-        chapterData
-      );
-      
+      const updatedChapter = await baseRequest<Chapter>({
+        url: `books/${bookId}/chapters/${chapterId}/`,
+        method: METHOD.PATCH,
+        data: chapterData,
+      });
+
       // Track if we need to fetch the updated chapter
       let needsRefetch = false;
-      
+
       // If model preferences are provided, update them
-      if (modelPreferences && (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)) {
+      if (
+        modelPreferences &&
+        (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)
+      ) {
         await this.setChapterModelPreferences(bookId, chapterId, modelPreferences);
         needsRefetch = true;
       }
-      
+
       // Add this block for prompts
-      if (promptData && (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)) {
+      if (
+        promptData &&
+        (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)
+      ) {
         await this.setChapterPrompts(bookId, chapterId, promptData);
         needsRefetch = true;
       }
-      
+
       // Fetch the updated chapter if needed
       if (needsRefetch) {
         return await this.getChapter(bookId, chapterId);
       }
-      
-      return response.data;
+
+      return updatedChapter;
     } catch (error) {
       console.error(`Error updating chapter ${chapterId}:`, error);
       throw error;
     }
   }
-  
+
   // Set model preferences for a chapter
   async setChapterModelPreferences(
     bookId: string,
     chapterId: string,
     preferences: ChapterModelPreferenceRequest
   ): Promise<ModelPreference> {
-    try {
-      const response = await api.post<ModelPreference>(
-        `/books/${bookId}/chapters/${chapterId}/model-preferences/`,
-        preferences
-      );
-      return response.data;
-    } catch (error) {
-      // Fix the error handling with proper type checking
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError;
-        
-        if (axiosError.response && axiosError.response.status === 404) {
-          // If 404, try PUT instead (for updating existing preferences)
-          try {
-            const response = await api.put<ModelPreference>(
-              `/books/${bookId}/chapters/${chapterId}/model-preferences/`,
-              preferences
-            );
-            return response.data;
-          } catch (putError) {
-            console.error(`Error updating model preferences for chapter ${chapterId}:`, putError);
-            throw putError;
-          }
-        }
-      }
-      console.error(`Error setting model preferences for chapter ${chapterId}:`, error);
-      throw error;
-    }
+    return baseRequest<ModelPreference>({
+      url: `books/${bookId}/chapters/${chapterId}/model-preferences/`,
+      method: METHOD.POST,
+      data: preferences,
+    });
   }
-  
+
   // Get model preferences for a chapter
-  async getChapterModelPreferences(
-    bookId: string,
-    chapterId: string
-  ): Promise<ModelPreference> {
-    try {
-      const response = await api.get<ModelPreference>(
-        `/books/${bookId}/chapters/${chapterId}/model-preferences/`
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error getting model preferences for chapter ${chapterId}:`, error);
-      throw error;
-    }
+  async getChapterModelPreferences(bookId: string, chapterId: string): Promise<ModelPreference> {
+    return baseRequest<ModelPreference>({
+      url: `books/${bookId}/chapters/${chapterId}/model-preferences/`,
+      method: METHOD.GET,
+    });
   }
-  
+
   // Delete a chapter
   async deleteChapter(bookId: string, chapterId: string): Promise<void> {
-    try {
-      await api.delete(`/books/${bookId}/chapters/${chapterId}/`);
-    } catch (error) {
-      console.error(`Error deleting chapter ${chapterId}:`, error);
-      throw error;
-    }
+    await baseRequest<void>({
+      url: `books/${bookId}/chapters/${chapterId}/`,
+      method: METHOD.DELETE,
+    });
   }
 
   // Get prompts for a chapter
-  async getChapterPrompts(
-    bookId: string,
-    chapterId: string
-  ): Promise<ChapterPrompt> {
-    try {
-      const response = await api.get<ChapterPrompt>(
-        `/books/${bookId}/chapters/${chapterId}/prompts/`
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error getting prompts for chapter ${chapterId}:`, error);
-      throw error;
-    }
+  async getChapterPrompts(bookId: string, chapterId: string): Promise<ChapterPrompt> {
+    return baseRequest<ChapterPrompt>({
+      url: `books/${bookId}/chapters/${chapterId}/prompts/`,
+      method: METHOD.GET,
+    });
   }
 
   // Set prompts for a chapter
@@ -291,63 +260,27 @@ class ChapterService {
     chapterId: string,
     promptData: ChapterPromptRequest
   ): Promise<ChapterPrompt> {
-    try {
-      const response = await api.post<ChapterPrompt>(
-        `/books/${bookId}/chapters/${chapterId}/prompts/`,
-        promptData
-      );
-      return response.data;
-    } catch (error) {
-      // Similar to model preferences, try PUT if POST fails with 404
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError;
-        
-        if (axiosError.response && axiosError.response.status === 404) {
-          try {
-            const response = await api.put<ChapterPrompt>(
-              `/books/${bookId}/chapters/${chapterId}/prompts/`,
-              promptData
-            );
-            return response.data;
-          } catch (putError) {
-            console.error(`Error updating prompts for chapter ${chapterId}:`, putError);
-            throw putError;
-          }
-        }
-      }
-      console.error(`Error setting prompts for chapter ${chapterId}:`, error);
-      throw error;
-    }
+    return baseRequest<ChapterPrompt>({
+      url: `books/${bookId}/chapters/${chapterId}/prompts/`,
+      method: METHOD.POST,
+      data: promptData,
+    });
   }
 
   // Get learning goals for a chapter
   async getLearningGoals(bookId: string, chapterId: string): Promise<LearningGoal[]> {
-    try {
-      const response = await api.get<LearningGoal[]>(
-        `/books/${bookId}/chapters/${chapterId}/learning-goals/`
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error getting learning goals for chapter ${chapterId}:`, error);
-      throw error;
-    }
+    return baseRequest<LearningGoal[]>({
+      url: `books/${bookId}/chapters/${chapterId}/learning-goals/`,
+      method: METHOD.GET,
+    });
   }
 
   // Get a specific learning goal
-  async getLearningGoal(
-    bookId: string, 
-    chapterId: string, 
-    goalId: string
-  ): Promise<LearningGoal> {
-    try {
-      const response = await api.get<LearningGoal>(
-        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error getting learning goal ${goalId}:`, error);
-      throw error;
-    }
+  async getLearningGoal(bookId: string, chapterId: string, goalId: string): Promise<LearningGoal> {
+    return baseRequest<LearningGoal>({
+      url: `books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`,
+      method: METHOD.GET,
+    });
   }
 
   // Create a learning goal
@@ -356,16 +289,11 @@ class ChapterService {
     chapterId: string,
     goalData: CreateLearningGoalRequest
   ): Promise<LearningGoal> {
-    try {
-      const response = await api.post<LearningGoal>(
-        `/books/${bookId}/chapters/${chapterId}/learning-goals/`,
-        goalData
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error creating learning goal for chapter ${chapterId}:`, error);
-      throw error;
-    }
+    return baseRequest<LearningGoal>({
+      url: `books/${bookId}/chapters/${chapterId}/learning-goals/`,
+      method: METHOD.POST,
+      data: goalData,
+    });
   }
 
   // Update a learning goal
@@ -375,32 +303,19 @@ class ChapterService {
     goalId: string,
     goalData: UpdateLearningGoalRequest
   ): Promise<LearningGoal> {
-    try {
-      const response = await api.put<LearningGoal>(
-        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`,
-        goalData
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating learning goal ${goalId}:`, error);
-      throw error;
-    }
+    return baseRequest<LearningGoal>({
+      url: `books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`,
+      method: METHOD.PUT,
+      data: goalData,
+    });
   }
 
   // Delete a learning goal
-  async deleteLearningGoal(
-    bookId: string,
-    chapterId: string,
-    goalId: string
-  ): Promise<void> {
-    try {
-      await api.delete(
-        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`
-      );
-    } catch (error) {
-      console.error(`Error deleting learning goal ${goalId}:`, error);
-      throw error;
-    }
+  async deleteLearningGoal(bookId: string, chapterId: string, goalId: string): Promise<void> {
+    await baseRequest<void>({
+      url: `books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`,
+      method: METHOD.DELETE,
+    });
   }
 
   // Reorder learning goals
@@ -409,16 +324,11 @@ class ChapterService {
     chapterId: string,
     reorderData: ReorderGoalsRequest[]
   ): Promise<LearningGoal[]> {
-    try {
-      const response = await api.post<LearningGoal[]>(
-        `/books/${bookId}/chapters/${chapterId}/learning-goals/reorder/`,
-        reorderData
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error reordering learning goals for chapter ${chapterId}:`, error);
-      throw error;
-    }
+    return baseRequest<LearningGoal[]>({
+      url: `books/${bookId}/chapters/${chapterId}/learning-goals/reorder/`,
+      method: METHOD.POST,
+      data: reorderData,
+    });
   }
 
   // Create a subgoal
@@ -428,16 +338,11 @@ class ChapterService {
     goalId: string,
     subgoalData: CreateSubGoalRequest
   ): Promise<SubGoal> {
-    try {
-      const response = await api.post<SubGoal>(
-        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/subgoals/`,
-        subgoalData
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error creating subgoal for goal ${goalId}:`, error);
-      throw error;
-    }
+    return baseRequest<SubGoal>({
+      url: `books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/subgoals/`,
+      method: METHOD.POST,
+      data: subgoalData,
+    });
   }
 
   // Update a subgoal
@@ -448,16 +353,11 @@ class ChapterService {
     subgoalId: string,
     subgoalData: UpdateSubGoalRequest
   ): Promise<SubGoal> {
-    try {
-      const response = await api.put<SubGoal>(
-        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/subgoals/${subgoalId}/`,
-        subgoalData
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating subgoal ${subgoalId}:`, error);
-      throw error;
-    }
+    return baseRequest<SubGoal>({
+      url: `books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/subgoals/${subgoalId}/`,
+      method: METHOD.PUT,
+      data: subgoalData,
+    });
   }
 
   // Delete a subgoal
@@ -467,18 +367,11 @@ class ChapterService {
     goalId: string,
     subgoalId: string
   ): Promise<void> {
-    try {
-      await api.delete(
-        `/books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/subgoals/${subgoalId}/`
-      );
-    } catch (error) {
-      console.error(`Error deleting subgoal ${subgoalId}:`, error);
-      throw error;
-    }
+    await baseRequest<void>({
+      url: `books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/subgoals/${subgoalId}/`,
+      method: METHOD.DELETE,
+    });
   }
-
-  
-  
 }
 
 // Export a singleton instance

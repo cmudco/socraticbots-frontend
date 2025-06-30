@@ -1,39 +1,52 @@
 // src/components/chapters/ChapterFormModal.tsx
-import React, { useRef, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import React, { useCallback, useEffect, useRef } from 'react';
+
+import { FormikProps } from 'formik';
+import { BookOpen, Info } from 'lucide-react';
+
+import { Chapter } from '@/services/chapters.service';
+
+import { useCreateChapter, useUpdateChapter } from '../../hooks/queries/useChapters';
+import { useChapterFormStore } from '../../stores/chapterFormStore';
+import { Button } from '../ui/button';
 import {
-  setActiveTab,
-  closeForm,
-  initNewChapter,
-  initEditChapter,
-  setSubmitting
-} from '../../store/slices/chapterFormSlice';
-import { createChapter, updateChapter } from '../../store/thunks/chapterThunks';
-import { Chapter } from '../../services/chapters.service';
-import { useCustomForm, bookSchemas } from '../../lib/forms';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
 import BasicInfoTab from './tabs/BasicInfoTab';
-import PromptsTab from './tabs/PromptsTab';
-//import LearningGoalsTab from './tabs/LearningGoalsTab';
-import FilesTab from './tabs/FilesTab';
 import DeploymentTab from './tabs/DeploymentTab';
+import FilesTab from './tabs/FilesTab';
+import PromptsTab from './tabs/PromptsTab';
 
 interface ChapterFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   chapter?: Chapter | null;
-  bookId: string; // Added bookId for API calls
+  bookId: string;
+}
+
+interface FormValues {
+  title: string;
+  subject: string;
+  topic: string;
+  chat_model_id: string;
+  tracking_model_id: string;
 }
 
 const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   isOpen,
   onClose,
   chapter,
-  bookId
+  bookId,
 }) => {
-  const dispatch = useAppDispatch();
+  const formRef = useRef<FormikProps<FormValues>>(null);
+
   const {
     activeTab,
-    isEdit,
     isSubmitting,
     title,
     subject,
@@ -43,286 +56,271 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     tracking_prompt,
     learning_goals,
     chat_model_id,
-    tracking_model_id
-  } = useAppSelector(state => state.chapterForm);
+    tracking_model_id,
+    setActiveTab,
+    closeForm,
+    setSubmitting,
+    initEditChapter,
+    initNewChapter,
+  } = useChapterFormStore();
 
-  // Create a ref for the modal content
-  const modalContentRef = useRef<HTMLDivElement>(null);
+  const createChapterMutation = useCreateChapter();
+  const updateChapterMutation = useUpdateChapter();
 
-  // Formik form for validation
-  const formik = useCustomForm(
-    {
-      title: title || '',
-      subject: subject || '',
-      topic: topic || '',
-      greeting: greeting || '',
-      chat_prompt: chat_prompt || '',
-      tracking_prompt: tracking_prompt || '',
-      learning_goals: learning_goals || '',
-      chat_model_id: chat_model_id || '',
-      tracking_model_id: tracking_model_id || '',
-    },
-    bookSchemas.createChapter,
-    async (_values) => {
-      // Handle form submission - values are managed by Redux
-      await handleSubmit();
-    }
-  );
+  const isEdit = !!chapter;
 
-  // Update formik values when Redux state changes (without triggering validation)
-  useEffect(() => {
-    formik.setValues({
-      title: title || '',
-      subject: subject || '',
-      topic: topic || '',
-      greeting: greeting || '',
-      chat_prompt: chat_prompt || '',
-      tracking_prompt: tracking_prompt || '',
-      learning_goals: learning_goals || '',
-      chat_model_id: chat_model_id || '',
-      tracking_model_id: tracking_model_id || '',
-    }, false); // false prevents validation from running
-  }, [title, subject, topic, greeting, chat_prompt, tracking_prompt, learning_goals, chat_model_id, tracking_model_id]);
-
-  // Initialize form when modal opens/closes or chapter changes
+  // Reset form when modal opens/closes or chapter changes
   useEffect(() => {
     if (isOpen) {
       if (chapter) {
-        dispatch(initEditChapter(chapter));
+        // Populate form with existing chapter data
+        initEditChapter(chapter);
       } else {
-        dispatch(initNewChapter());
+        // Reset form for new chapter
+        initNewChapter();
       }
-      // Reset formik touched state when modal opens
-      formik.resetForm({
-        values: formik.values,
-        touched: {},
-        errors: {}
-      });
     }
-  }, [chapter, isOpen, dispatch]);
+  }, [isOpen, chapter, initEditChapter, initNewChapter]);
 
-  const handleOutsideClick = (e: MouseEvent) => {
-  if (
-    modalContentRef.current &&
-    !modalContentRef.current.contains(e.target as Node) &&
-    !isSubmitting
-  ) {
-    onClose();
-    dispatch(closeForm());
-  }
-};
+  const handleClose = useCallback(() => {
+    if (!isSubmitting) {
+      closeForm();
+      onClose();
+    }
+  }, [isSubmitting, closeForm, onClose]);
 
-// Add event listener when modal is open
-useEffect(() => {
-  if (isOpen) {
-    document.addEventListener('mousedown', handleOutsideClick);
-  } else {
-    document.removeEventListener('mousedown', handleOutsideClick);
-  }
+  const handleSubmit = useCallback(async () => {
+    // Trigger Formik validation first
+    if (formRef.current) {
+      const errors = await formRef.current.validateForm();
+      if (Object.keys(errors).length > 0) {
+        console.log('Validation errors:', errors);
+        // Mark all fields as touched to show errors
+        formRef.current.setTouched(
+          Object.keys(errors).reduce((acc, key) => ({ ...acc, [key]: true }), {})
+        );
+        return; // Don't submit if there are validation errors
+      }
+    }
 
-  // Clean up event listener
-  return () => {
-    document.removeEventListener('mousedown', handleOutsideClick);
-  };
-}, [isOpen, isSubmitting]);
+    console.log('Basic validation passed, proceeding with submission...');
 
-
-  const handleSubmit = async () => {
     // Set submitting state to true
-    dispatch(setSubmitting(true));
+    setSubmitting(true);
 
     try {
+      // Basic chapter data
+      const chapterData = {
+        title,
+        subject,
+        topic,
+      };
+
+      // Model preferences data
+      const modelPreferences = {
+        chat_model_id: chat_model_id || undefined,
+        tracking_model_id: tracking_model_id || undefined,
+      };
+
+      // Prompts data
+      const promptData = {
+        greeting: greeting || undefined,
+        chat_prompt: chat_prompt || undefined,
+        tracking_prompt: tracking_prompt || undefined,
+        learning_goals: learning_goals || undefined,
+      };
+
+      console.log('Submitting chapter data:', {
+        chapterData,
+        modelPreferences,
+        promptData,
+      });
+
       if (isEdit && chapter) {
-        // If editing, dispatch update thunk
-        await dispatch(updateChapter({
+        // If editing, use update mutation with separate calls
+        await updateChapterMutation.mutateAsync({
           bookId,
-          chapterId: chapter.id
-        })).unwrap(); // unwrap to get the result or throw error
+          chapterId: chapter.id,
+          chapterData,
+          modelPreferences,
+          promptData,
+        });
       } else {
-        // If creating, dispatch create thunk
-        await dispatch(createChapter({ bookId })).unwrap();
+        // If creating, use create mutation with separate calls
+        await createChapterMutation.mutateAsync({
+          bookId,
+          chapterData,
+          modelPreferences,
+          promptData,
+        });
       }
 
       // Close the modal after successful submission
+      closeForm();
       onClose();
-      dispatch(closeForm());
     } catch (error) {
       console.error('Error saving chapter:', error);
-      // You could display an error message here
+      // Error handling is managed by TanStack Query
     } finally {
-      dispatch(setSubmitting(false));
+      setSubmitting(false);
     }
-  };
-
-  // Form validation using Formik
-  const isFormValid = () => {
-    return formik.isValid && formik.dirty;
-  };
+  }, [
+    title,
+    subject,
+    topic,
+    greeting,
+    chat_prompt,
+    tracking_prompt,
+    learning_goals,
+    chat_model_id,
+    tracking_model_id,
+    isEdit,
+    chapter,
+    updateChapterMutation,
+    createChapterMutation,
+    bookId,
+    closeForm,
+    onClose,
+    setSubmitting,
+  ]);
 
   // Handle Ctrl+Enter for form submission
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'Enter' && isFormValid() && !isSubmitting) {
-        formik.handleSubmit();
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleSubmit();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isFormValid, isSubmitting, formik]);
+  }, [isOpen, handleSubmit]);
 
-  if (!isOpen) return null;
+  const tabs = [
+    { id: 'basic', label: 'Basic Info' },
+    { id: 'prompts', label: 'Prompts' },
+    ...(isEdit ? [{ id: 'files', label: 'Files' }] : []),
+    { id: 'deployment', label: 'Deployment' },
+  ];
+
+  // Reset to basic tab if we're on files tab but switched to create mode
+  useEffect(() => {
+    if (!isEdit && activeTab === 'files') {
+      setActiveTab('basic');
+    }
+  }, [isEdit, activeTab, setActiveTab]);
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'basic':
+        return <BasicInfoTab ref={formRef} />;
+      case 'prompts':
+        return <PromptsTab />;
+      case 'files':
+        return <FilesTab />;
+      case 'deployment':
+        return <DeploymentTab />;
+      default:
+        return <BasicInfoTab ref={formRef} />;
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div
-        ref={modalContentRef}
-        className="bg-white rounded-lg p-6 w-full max-w-4xl h-[650px] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-xl font-bold mb-4">
-          {isEdit ? 'Edit Chapter' : 'Create New Chapter'}
-        </h2>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden p-0 sm:max-w-4xl">
+        <DialogHeader className="border-b px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100">
+              <BookOpen className="h-5 w-5 text-violet-600" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-semibold">
+                {isEdit ? 'Edit Chapter' : 'Create New Chapter'}
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                {isEdit
+                  ? 'Update the chapter details below.'
+                  : 'Fill in the details to create a new chapter.'}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
 
-        {/* Tab Navigation */}
-        <div className="border-b mb-6">
-          <nav className="flex -mb-px">
-            <button
-              type="button"
-              className={`mr-4 py-2 px-4 ${
-                activeTab === 'basic'
-                  ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => dispatch(setActiveTab('basic'))}
-            >
-              Basic Info
-            </button>
+        {/* Information banner for chapter creation */}
+        {!isEdit && (
+          <div className="mx-6 mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex items-start gap-3">
+              <Info size={20} className="mt-0.5 flex-shrink-0 text-blue-600" />
+              <div className="text-sm">
+                <p className="font-medium text-blue-900">File Upload Available After Creation</p>
+                <p className="mt-1 text-blue-700">
+                  Once your chapter is created, you'll be able to upload files and documents in the
+                  Files tab when editing the chapter.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
-            <button
-              type="button"
-              className={`mr-4 py-2 px-4 ${
-                activeTab === 'prompts'
-                  ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => dispatch(setActiveTab('prompts'))}
-            >
-              Prompts
-            </button>
-
-            {/*
-            <button
-              type="button"
-              className={`mr-4 py-2 px-4 relative ${
-                activeTab === 'goals'
-                  ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              } ${!isEdit ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
-              onClick={() => isEdit && dispatch(setActiveTab('goals'))}
-              disabled={!isEdit}
-              title={!isEdit ? "Save the chapter first to add learning goals" : ""}
-            >
-              Learning Goals
-              {!isEdit && (
-                <>
-                  <div className="absolute -top-1 -right-1 bg-gray-400 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-gray-200 bg-opacity-40">
-                    Save first
-                  </span>
-                </>
-              )}
-
-            </button>
-            */}
-
-            <button
-              type="button"
-              className={`mr-4 py-2 px-4 ${
-                activeTab === 'files'
-                  ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => dispatch(setActiveTab('files'))}
-            >
-              Files
-            </button>
-
-            <button
-              type="button"
-              className={`mr-4 py-2 px-4 ${
-                activeTab === 'deployment'
-                  ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => dispatch(setActiveTab('deployment'))}
-            >
-              Deployment
-            </button>
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-y-auto">
-            {activeTab === 'basic' && <BasicInfoTab formik={formik} />}
-
-            {activeTab === 'prompts' && <PromptsTab />}
-
-            {/*
-            {activeTab === 'goals' && <LearningGoalsTab />}
-            */}
-
-            {activeTab === 'files' && <FilesTab />}
-
-            {activeTab === 'deployment' && <DeploymentTab />}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Custom Tab Navigation */}
+          <div className="flex-shrink-0 border-b px-6">
+            <div className="flex rounded-md bg-slate-100 p-1">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 rounded-sm px-3 py-2 text-sm font-medium transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-white text-violet-600 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Fixed Footer with Save Button */}
-          <div className="border-t mt-6 pt-4 flex justify-end space-x-2">
-            <button
-              type="button"
-              className="px-3 py-1.5 text-sm bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-              onClick={() => {
-                onClose();
-                dispatch(closeForm());
-              }}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              className={`px-3 py-1.5 text-sm rounded ${
-                isFormValid()
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : 'bg-blue-300 text-white cursor-not-allowed'
-              }`}
-              onClick={() => formik.handleSubmit()}
-              disabled={isSubmitting || !isFormValid()}
-            >
-              {isSubmitting ?
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Saving...
-                </span> :
-                (isEdit ? 'Save Changes' : 'Create Chapter')
-              }
-            </button>
-          </div>
+          {/* Tab Content */}
+          <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
         </div>
-      </div>
-    </div>
+
+        {/* Modal Footer */}
+        <DialogFooter className="flex items-center justify-end space-x-3 border-t p-6">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSubmitting}
+            className="border-slate-200 text-slate-700 hover:bg-slate-50"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="bg-violet-600 text-white hover:bg-violet-700"
+          >
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Saving...
+              </div>
+            ) : isEdit ? (
+              'Update Chapter'
+            ) : (
+              'Create Chapter'
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

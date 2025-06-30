@@ -1,0 +1,46 @@
+# Dependencies
+node_modules
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Build outputs
+dist
+build
+.next
+.nuxt
+.output
+.vite
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs
+
+# Coverage reports
+coverage
+.nyc_output
+
+# Generated files
+*.min.js
+*.min.css
+
+# Config files that might have specific formatting
+vite.config.ts
+*.config.js
+*.config.mjs

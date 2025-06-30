@@ -1,76 +1,116 @@
 // src/services/files.service.ts
-import { api } from './api/instance';
-
-export interface ChapterFile {
-    id: string;
-    chapter: string;          // Add chapter reference
-    file: string;
-    name: string;
-    file_type: string;
-    uploaded_at: string;
-    uploaded_by: string;
-    text_snippet?: string;
-    word_count?: number;
-    processing_status: 'pending' | 'processing' | 'completed' | 'failed';
-    extracted_text_file?: string;
-    error_message?: string;   // Add error message field
-    vector_ids?: string[];    // Add vector IDs field
-  }
+import { METHOD } from '../constants/requests';
+import { ChapterFile, FileFilters, UploadFileRequest } from '../types/file';
+import { baseRequest } from '../utils/baseRequest';
 
 class FileService {
+  private readonly baseUrl = 'files/';
+
   // Get files for a chapter
-  async getChapterFiles(chapterPublicId: string): Promise<ChapterFile[]> {
-    try {
-      const response = await api.get<ChapterFile[]>(`/files/chapters/${chapterPublicId}/`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching chapter files:', error);
-      throw error;
+  async getChapterFiles(chapterPublicId: string, filters?: FileFilters): Promise<ChapterFile[]> {
+    const params = new URLSearchParams();
+    if (filters?.processing_status) {
+      params.append('processing_status', filters.processing_status);
     }
+    if (filters?.file_type) {
+      params.append('file_type', filters.file_type);
+    }
+    if (filters?.search) {
+      params.append('search', filters.search);
+    }
+
+    const queryString = params.toString();
+    const url = `${this.baseUrl}chapters/${chapterPublicId}/${queryString ? `?${queryString}` : ''}`;
+
+    return baseRequest<ChapterFile[]>({
+      url,
+      method: METHOD.GET,
+    });
+  }
+
+  // Get a single file by ID
+  async getFile(chapterPublicId: string, fileId: string): Promise<ChapterFile> {
+    return baseRequest<ChapterFile>({
+      url: `${this.baseUrl}chapters/${chapterPublicId}/${fileId}/`,
+      method: METHOD.GET,
+    });
   }
 
   // Upload a file to a chapter
-  async uploadChapterFile(chapterPublicId: string, file: File, onProgress?: (progress: number) => void): Promise<ChapterFile> {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('name', file.name);
-      
-      const response = await api.post<ChapterFile>(
-        `/files/chapters/${chapterPublicId}/`, 
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          onUploadProgress: (progressEvent) => {
-            if (onProgress && progressEvent.total) {
-              const progress = (progressEvent.loaded * 100) / progressEvent.total;
-              onProgress(progress);
-            }
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      throw error;
-    }
+  async uploadChapterFile(
+    chapterPublicId: string,
+    uploadData: UploadFileRequest
+  ): Promise<ChapterFile> {
+    const formData = new FormData();
+    formData.append('file', uploadData.file);
+    formData.append('name', uploadData.name || uploadData.file.name);
+
+    return baseRequest<ChapterFile>({
+      url: `${this.baseUrl}chapters/${chapterPublicId}/`,
+      method: METHOD.POST,
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
+
+  // Update file metadata
+  async updateFile(
+    chapterPublicId: string,
+    fileId: string,
+    updateData: Partial<Pick<ChapterFile, 'name'>>
+  ): Promise<ChapterFile> {
+    return baseRequest<ChapterFile>({
+      url: `${this.baseUrl}chapters/${chapterPublicId}/${fileId}/`,
+      method: METHOD.PATCH,
+      data: updateData,
+    });
   }
 
   // Delete a file
-  async deleteFile(fileId: string, chapterPublicId: string): Promise<void> {
-    try {
-      await api.delete(`/files/chapters/${chapterPublicId}/${fileId}/`);
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      throw error;
-    }
+  async deleteFile(chapterPublicId: string, fileId: string): Promise<void> {
+    return baseRequest<void>({
+      url: `${this.baseUrl}chapters/${chapterPublicId}/${fileId}/`,
+      method: METHOD.DELETE,
+    });
+  }
+
+  // Reprocess a file (if backend supports it)
+  async reprocessFile(chapterPublicId: string, fileId: string): Promise<ChapterFile> {
+    return baseRequest<ChapterFile>({
+      url: `${this.baseUrl}chapters/${chapterPublicId}/${fileId}/reprocess/`,
+      method: METHOD.POST,
+    });
   }
 
   // Get secure file URL for download/viewing
   getSecureFileUrl(fileId: string): string {
     return `/api/files/serve/${fileId}/`;
+  }
+
+  // Get file download URL
+  getDownloadUrl(chapterPublicId: string, fileId: string): string {
+    return `${this.baseUrl}chapters/${chapterPublicId}/${fileId}/download/`;
+  }
+
+  // Search files across all chapters (if backend supports it)
+  async searchFiles(query: string): Promise<ChapterFile[]> {
+    return baseRequest<ChapterFile[]>({
+      url: `${this.baseUrl}search/?q=${encodeURIComponent(query)}`,
+      method: METHOD.GET,
+    });
+  }
+
+  // Get files by processing status
+  async getFilesByStatus(
+    chapterPublicId: string,
+    status: ChapterFile['processing_status']
+  ): Promise<ChapterFile[]> {
+    return baseRequest<ChapterFile[]>({
+      url: `${this.baseUrl}chapters/${chapterPublicId}/?processing_status=${status}`,
+      method: METHOD.GET,
+    });
   }
 }
 
