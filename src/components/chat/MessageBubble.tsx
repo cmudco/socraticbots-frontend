@@ -65,17 +65,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   {isGreeting
                     ? 'Greeting'
                     : (() => {
-                        if (message.timestamp) {
-                          const date =
-                            typeof message.timestamp === 'string'
-                              ? parseISO(message.timestamp)
-                              : new Date(message.timestamp);
-                          if (isValid(date)) {
-                            return formatDistanceToNow(date, { addSuffix: true });
-                          }
+                      if (message.timestamp) {
+                        const date =
+                          typeof message.timestamp === 'string'
+                            ? parseISO(message.timestamp)
+                            : new Date(message.timestamp);
+                        if (isValid(date)) {
+                          return formatDistanceToNow(date, { addSuffix: true });
                         }
-                        return '';
-                      })()}
+                      }
+                      return '';
+                    })()}
                 </span>
               </div>
             </div>
@@ -130,17 +130,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 {isGreeting
                   ? 'Greeting'
                   : (() => {
-                      if (message.timestamp) {
-                        const date =
-                          typeof message.timestamp === 'string'
-                            ? parseISO(message.timestamp)
-                            : new Date(message.timestamp);
-                        if (isValid(date)) {
-                          return formatDistanceToNow(date, { addSuffix: true });
-                        }
+                    if (message.timestamp) {
+                      const date =
+                        typeof message.timestamp === 'string'
+                          ? parseISO(message.timestamp)
+                          : new Date(message.timestamp);
+                      if (isValid(date)) {
+                        return formatDistanceToNow(date, { addSuffix: true });
                       }
-                      return '';
-                    })()}
+                    }
+                    return '';
+                  })()}
               </span>
             </div>
           </div>

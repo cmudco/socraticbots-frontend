@@ -1,10 +1,12 @@
-// src/components/chapters/ChapterList.tsx - Migrated to TanStack Query
-import React, { useState } from 'react';
+// src/components/chapters/ChapterList.tsx - Migrated to TanStack Query + Zustand
+import React from 'react';
 
 import { Plus } from 'lucide-react';
 
 import { useChapters } from '../../hooks/queries/useChapters';
 import { Chapter } from '../../services/chapters.service';
+import { useModalStore } from '../../stores/modalStore';
+import { useUiStore } from '../../stores/uiStore';
 import { Button } from '../ui/button';
 import ChapterFormModal from './ChapterFormModal';
 import ChapterItem from './ChapterItem';
@@ -20,48 +22,41 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
   // Use TanStack Query for chapters data
   const { data: chapters = initialChapters || [], isLoading: loading, error } = useChapters(bookId);
 
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [chapterToDelete, setChapterToDelete] = useState<Chapter | null>(null);
+  // Use Zustand for modal and UI state management
+  const {
+    chapterFormModal,
+    deleteChapterModal,
+    openChapterFormModal,
+    closeChapterFormModal,
+    openDeleteChapterModal,
+    closeDeleteChapterModal,
+  } = useModalStore();
 
-  // Local state for tracking deleted chapter IDs to immediately hide them
-  const [deletedChapterIds, setDeletedChapterIds] = useState<string[]>([]);
+  // Use UI store for tracking deleted chapters (for immediate UI feedback)
+  const { deletedChapterIds, addDeletedChapter } = useUiStore();
 
   const handleOpenCreateModal = () => {
-    setSelectedChapter(null);
-    setIsFormModalOpen(true);
+    openChapterFormModal(bookId); // No chapter = create mode
   };
 
   const handleOpenEditModal = (chapter: Chapter) => {
-    setSelectedChapter(chapter);
-    setIsFormModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsFormModalOpen(false);
+    openChapterFormModal(bookId, chapter); // With chapter = edit mode
   };
 
   const handleDeleteChapter = (chapter: Chapter) => {
-    setChapterToDelete(chapter);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleCloseDeleteModal = () => {
-    setIsDeleteModalOpen(false);
-    setChapterToDelete(null);
+    openDeleteChapterModal(bookId, chapter);
   };
 
   const handleConfirmDelete = (chapterId: string) => {
     // Immediately update local state to hide the chapter
-    setDeletedChapterIds(prev => [...prev, chapterId]);
+    addDeletedChapter(chapterId);
 
     // Notify parent component
     onChapterDeleted?.(chapterId);
   };
 
   // Filter out deleted chapters from the display
-  const visibleChapters = chapters.filter(chapter => !deletedChapterIds.includes(chapter.id));
+  const visibleChapters = chapters.filter(chapter => !deletedChapterIds.has(chapter.id));
 
   return (
     <div>
@@ -93,19 +88,19 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
       )}
 
       <ChapterFormModal
-        isOpen={isFormModalOpen}
-        onClose={handleCloseModal}
-        chapter={selectedChapter}
-        bookId={bookId}
+        isOpen={chapterFormModal.isOpen}
+        onClose={closeChapterFormModal}
+        chapter={chapterFormModal.chapter}
+        bookId={chapterFormModal.bookId || bookId}
       />
 
-      {chapterToDelete && (
+      {deleteChapterModal.chapter && deleteChapterModal.bookId && (
         <DeleteChapterModal
-          isOpen={isDeleteModalOpen}
-          onClose={handleCloseDeleteModal}
-          onSuccess={() => handleConfirmDelete(chapterToDelete.id)}
-          chapter={chapterToDelete}
-          bookId={bookId}
+          isOpen={deleteChapterModal.isOpen}
+          onClose={closeDeleteChapterModal}
+          onSuccess={() => handleConfirmDelete(deleteChapterModal.chapter!.id)}
+          chapter={deleteChapterModal.chapter}
+          bookId={deleteChapterModal.bookId}
         />
       )}
     </div>

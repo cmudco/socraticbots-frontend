@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 
 import { AlertTriangle } from 'lucide-react';
 
@@ -14,6 +14,7 @@ import {
 
 import { useDeleteChapter } from '../../hooks/queries/useChapters';
 import { Chapter } from '../../services/chapters.service';
+import { useErrorStore } from '../../stores/errorStore';
 
 interface DeleteChapterModalProps {
   isOpen: boolean;
@@ -30,7 +31,8 @@ const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
   chapter,
   bookId,
 }) => {
-  const [error, setError] = useState<string | null>(null);
+  // Zustand stores
+  const { addError, clearErrorsByContext, getErrorsByContext } = useErrorStore();
 
   // TanStack Query mutation
   const deleteChapterMutation = useDeleteChapter();
@@ -38,19 +40,30 @@ const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
   // Loading state from mutation
   const isDeleting = deleteChapterMutation.isPending;
 
+  // Clear errors when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      clearErrorsByContext('deleteChapter');
+    }
+  }, [isOpen, clearErrorsByContext]);
+
   const handleDelete = async () => {
     try {
-      setError(null);
+      clearErrorsByContext('deleteChapter');
 
       await deleteChapterMutation.mutateAsync({ bookId, chapterId: chapter.id });
 
       onClose();
       onSuccess();
     } catch (err) {
-      setError('Failed to delete chapter. Please try again.');
+      addError('Failed to delete chapter. Please try again.', 'error', 'deleteChapter');
       console.error('Error deleting chapter:', err);
     }
   };
+
+  // Get errors for this context
+  const contextErrors = getErrorsByContext('deleteChapter');
+  const hasError = contextErrors.length > 0 || deleteChapterMutation.isError;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -68,7 +81,7 @@ const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        {error && (
+        {hasError && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex items-start">
               <svg
@@ -86,7 +99,9 @@ const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
               </svg>
               <div>
                 <h4 className="font-medium text-red-800">Error</h4>
-                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <p className="mt-1 text-sm text-red-700">
+                  {contextErrors[0]?.message || deleteChapterMutation.error?.message || 'An error occurred'}
+                </p>
               </div>
             </div>
           </div>

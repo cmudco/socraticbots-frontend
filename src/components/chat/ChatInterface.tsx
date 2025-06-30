@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { MessageSquare } from 'lucide-react';
 
@@ -9,6 +9,7 @@ import {
 } from '@/hooks/queries/useChat';
 
 import { useChatStore } from '@/stores/chatStore';
+import { useModalStore } from '@/stores/modalStore';
 
 import { Card } from '@/components/ui/card';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
@@ -23,7 +24,6 @@ import MessageList from './MessageList';
 const ChatInterface: React.FC = () => {
   const messageAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null!);
-  const [showClearConfirmation, setShowClearConfirmation] = useState(false);
 
   const {
     selectedChapterId,
@@ -35,6 +35,9 @@ const ChatInterface: React.FC = () => {
     addPendingMessage,
     removePendingMessage,
   } = useChatStore();
+
+  // Use Zustand for modal state management
+  const { clearConversationModal, openClearConversationModal, closeClearConversationModal } = useModalStore();
 
   const { data: conversation, isLoading: conversationLoading } =
     useConversationForChapter(selectedChapterId);
@@ -106,12 +109,13 @@ const ChatInterface: React.FC = () => {
 
   const handleClearConversation = () => {
     if (!actualConversationId) return;
-    setShowClearConfirmation(true);
+    openClearConversationModal();
   };
 
   const handleConfirmClearConversation = () => {
     if (!actualConversationId) return;
     clearConversationMutation.mutate(actualConversationId);
+    closeClearConversationModal();
   };
 
   // Merge messages with pending and streaming tokens
@@ -288,8 +292,8 @@ const ChatInterface: React.FC = () => {
 
       {/* Confirmation Modal */}
       <ConfirmationModal
-        isOpen={showClearConfirmation}
-        onClose={() => setShowClearConfirmation(false)}
+        isOpen={clearConversationModal.isOpen}
+        onClose={closeClearConversationModal}
         onConfirm={handleConfirmClearConversation}
         title="Clear Conversation"
         description="Are you sure you want to clear this conversation? This action cannot be undone and all messages will be permanently deleted."
