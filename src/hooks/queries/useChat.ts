@@ -244,13 +244,12 @@ export const useStreamMessage = () => {
                 // Invalidate progress after tracking completes
                 queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress'] });
               },
-              onError: (error: Error) => {
+              onError: () => {
                 store.setProgressStreaming(false);
-                console.error('Progress tracking error:', error);
               },
             });
-          } catch (progressError) {
-            console.error('Error triggering progress tracking:', progressError);
+          } catch {
+            // Ignore progress tracking errors
           }
         },
         onError: (err: Error) => {
@@ -284,25 +283,20 @@ export const useStreamProgressTracking = () => {
         onStart: () => {
           store.setProgressStreaming(true);
           store.clearProgressTokens();
-          console.log('[ProgressStream] Started');
         },
         onToken: token => {
           store.addProgressToken(token);
-          console.log('[ProgressStream] Token:', token);
         },
         onComplete: () => {
           store.setProgressStreaming(false);
           // Invalidate the progress query to refetch the final result
           queryClient.invalidateQueries({ queryKey: ['chat', 'trackingProgress'] });
-          console.log('[ProgressStream] Completed');
         },
-        onError: (err: Error) => {
+        onError: () => {
           store.setProgressStreaming(false);
-          console.error('[ProgressStream] Error:', err);
         },
       });
-    } catch (err) {
-      console.error('Error in streamProgressTracking:', err);
+    } catch {
       // Ensure streaming state is reset on error
       const { useChatStore } = await import('@/stores/core/chatStore');
       const store = useChatStore.getState();

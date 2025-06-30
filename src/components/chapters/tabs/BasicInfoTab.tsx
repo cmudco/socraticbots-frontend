@@ -62,7 +62,6 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
   };
 
   const handleSubmit = (values: FormValues) => {
-    console.log('BasicInfoTab handleSubmit called with:', values);
     // Update Zustand store with validated values
     Object.entries(values).forEach(([field, value]) => {
       updateField(field, value);

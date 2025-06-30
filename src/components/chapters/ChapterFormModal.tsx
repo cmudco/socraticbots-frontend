@@ -97,7 +97,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     if (formRef.current) {
       const errors = await formRef.current.validateForm();
       if (Object.keys(errors).length > 0) {
-        console.log('Validation errors:', errors);
         // Mark all fields as touched to show errors
         formRef.current.setTouched(
           Object.keys(errors).reduce((acc, key) => ({ ...acc, [key]: true }), {})
@@ -105,8 +104,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         return; // Don't submit if there are validation errors
       }
     }
-
-    console.log('Basic validation passed, proceeding with submission...');
 
     // Set submitting state to true
     setSubmitting(true);
@@ -132,12 +129,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         tracking_prompt: tracking_prompt || undefined,
         learning_goals: learning_goals || undefined,
       };
-
-      console.log('Submitting chapter data:', {
-        chapterData,
-        modelPreferences,
-        promptData,
-      });
 
       if (isEdit && chapter) {
         // If editing, use update mutation with separate calls
