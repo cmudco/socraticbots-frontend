@@ -1,13 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { fileService } from '../../services/files.service';
-import { useAuthStore } from '../../stores/authStore';
-import {
-  ChapterFile,
-  FileFilters,
-  FileProcessingStatus,
-  UploadFileRequest,
-} from '../../types/file';
+import { useAuthStore } from '@/stores/authStore';
+
+import { fileService } from '@/services/files.service';
+
+import { ChapterFile, FileFilters, FileProcessingStatus, UploadFileRequest } from '@/types/file';
 
 // Query Keys
 export const fileKeys = {

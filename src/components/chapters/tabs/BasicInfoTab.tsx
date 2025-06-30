@@ -4,6 +4,10 @@ import { forwardRef } from 'react';
 import { Field, Form, Formik, FormikProps } from 'formik';
 import * as Yup from 'yup';
 
+import { type Model, useModels } from '@/hooks/queries/useModels';
+
+import { useChapterFormStore } from '@/stores/forms/chapterFormStore';
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -13,9 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-import { type Model, useModels } from '../../../hooks/queries/useModels';
-import { useChapterFormStore } from '../../../stores/forms/chapterFormStore';
 
 // Validation schema for the basic info form
 const BasicInfoSchema = Yup.object().shape({

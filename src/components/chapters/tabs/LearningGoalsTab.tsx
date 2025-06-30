@@ -1,7 +1,7 @@
 // src/components/chapters/tabs/LearningGoalsTab.tsx
 import React from 'react';
 
-import { useChapterFormStore } from '../../../stores/forms/chapterFormStore';
+import { useChapterFormStore } from '@/stores/forms/chapterFormStore';
 
 const LearningGoalsTab: React.FC = () => {
   const { learning_goals, updateField } = useChapterFormStore();

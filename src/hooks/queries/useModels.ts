@@ -1,8 +1,9 @@
 // src/hooks/queries/useModels.ts
 import { useQuery } from '@tanstack/react-query';
 
-import { AIModel, modelsService } from '../../services/models.service';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '@/stores/authStore';
+
+import { AIModel, modelsService } from '@/services/models.service';
 
 // Define the Model type
 export interface Model {

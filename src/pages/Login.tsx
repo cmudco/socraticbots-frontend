@@ -2,8 +2,9 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
-import { useAuth } from '../hooks/useAuth';
-import { useFormStore } from '../stores/forms/formStore';
+import { useAuth } from '@/hooks/useAuth';
+
+import { useFormStore } from '@/stores/forms/formStore';
 
 interface LocationState {
   from?: {

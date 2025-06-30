@@ -3,11 +3,15 @@ import React from 'react';
 
 import { Plus } from 'lucide-react';
 
-import { useChapters } from '../../hooks/queries/useChapters';
-import { Chapter } from '../../services/chapters.service';
-import { useModalStore } from '../../stores/ui/modalStore';
-import { useUiStore } from '../../stores/ui/uiStore';
-import { Button } from '../ui/button';
+import { useChapters } from '@/hooks/queries/useChapters';
+
+import { useModalStore } from '@/stores/ui/modalStore';
+import { useUiStore } from '@/stores/ui/uiStore';
+
+import { Chapter } from '@/services/chapters.service';
+
+import { Button } from '@/components/ui/button';
+
 import ChapterFormModal from './ChapterFormModal';
 import ChapterItem from './ChapterItem';
 import DeleteChapterModal from './DeleteChapterModal';

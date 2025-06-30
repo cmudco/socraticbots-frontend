@@ -1,6 +1,8 @@
 // src/hooks/queries/useChapters.ts
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useAuthStore } from '@/stores/authStore';
+
 import {
   Chapter,
   ChapterModelPreferenceRequest,
@@ -8,8 +10,7 @@ import {
   CreateChapterRequest,
   UpdateChapterRequest,
   chapterService,
-} from '../../services/chapters.service';
-import { useAuthStore } from '../../stores/authStore';
+} from '@/services/chapters.service';
 
 // Query Keys
 export const chapterKeys = {

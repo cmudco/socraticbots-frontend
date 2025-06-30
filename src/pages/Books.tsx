@@ -3,14 +3,17 @@ import React from 'react';
 
 import { Plus } from 'lucide-react';
 
-import BookFormModal from '../components/books/BookFormModal';
-import BookListEmpty from '../components/books/BookListEmpty';
-import BookTable from '../components/books/BookTable';
-import DeleteBookModal from '../components/books/DeleteBookModal';
-import { Button } from '../components/ui/button';
-import { useBooks } from '../hooks/queries/useBooks';
-import { useModalStore } from '../stores/ui/modalStore';
-import { Book } from '../types/book';
+import { useBooks } from '@/hooks/queries/useBooks';
+
+import { useModalStore } from '@/stores/ui/modalStore';
+
+import BookFormModal from '@/components/books/BookFormModal';
+import BookListEmpty from '@/components/books/BookListEmpty';
+import BookTable from '@/components/books/BookTable';
+import DeleteBookModal from '@/components/books/DeleteBookModal';
+import { Button } from '@/components/ui/button';
+
+import { Book } from '@/types/book';
 
 const Books: React.FC = () => {
   // Use TanStack Query for books data

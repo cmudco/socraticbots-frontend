@@ -1,8 +1,9 @@
 // src/components/common/AuthTest.tsx
 import React, { useState } from 'react';
 
-import { useAuth } from '../../hooks/useAuth';
-import { useErrorStore } from '../../stores/ui/errorStore';
+import { useAuth } from '@/hooks/useAuth';
+
+import { useErrorStore } from '@/stores/ui/errorStore';
 
 const AuthTest: React.FC = () => {
   const { tokens } = useAuth();

@@ -1,9 +1,11 @@
 // src/hooks/queries/useAuth.ts
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { authService } from '../../services/auth.service';
-import { useAuthStore } from '../../stores/authStore';
-import type { AuthTokens } from '../../types/auth';
+import { useAuthStore } from '@/stores/authStore';
+
+import { authService } from '@/services/auth.service';
+
+import type { AuthTokens } from '@/types/auth';
 
 // Query keys
 export const authKeys = {

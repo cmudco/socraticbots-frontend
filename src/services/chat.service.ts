@@ -1,9 +1,11 @@
 // src/services/chat.service.ts
-import type { ChatMessage, Conversation } from '@/types/chat';
+import { METHOD } from '@/constants/requests';
 
-import { METHOD } from '../constants/requests';
-import config from '../lib/config';
-import { baseRequest } from '../utils/baseRequest';
+import config from '@/lib/config';
+
+import { baseRequest } from '@/utils/baseRequest';
+
+import type { ChatMessage, Conversation } from '@/types/chat';
 
 export interface Chapter {
   id: string;

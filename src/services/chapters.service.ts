@@ -1,7 +1,10 @@
 // src/services/chapters.service.ts
-import { METHOD } from '../constants/requests';
-import { ChapterFile } from '../types/file';
-import { baseRequest } from '../utils/baseRequest';
+import { METHOD } from '@/constants/requests';
+
+import { baseRequest } from '@/utils/baseRequest';
+
+import { ChapterFile } from '@/types/file';
+
 import { AIModel } from './models.service';
 
 export interface ModelPreference {

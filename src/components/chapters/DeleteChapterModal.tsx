@@ -2,6 +2,12 @@ import React, { useEffect } from 'react';
 
 import { AlertTriangle } from 'lucide-react';
 
+import { useDeleteChapter } from '@/hooks/queries/useChapters';
+
+import { useErrorStore } from '@/stores/ui/errorStore';
+
+import { Chapter } from '@/services/chapters.service';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,10 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-
-import { useDeleteChapter } from '../../hooks/queries/useChapters';
-import { Chapter } from '../../services/chapters.service';
-import { useErrorStore } from '../../stores/ui/errorStore';
 
 interface DeleteChapterModalProps {
   isOpen: boolean;
