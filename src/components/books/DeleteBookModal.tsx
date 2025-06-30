@@ -1,5 +1,5 @@
 // src/components/books/DeleteBookModal.tsx
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 
 import { AlertTriangle } from 'lucide-react';
 
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { useDeleteBook } from '../../hooks/queries/useBooks';
+import { useErrorStore } from '../../stores/errorStore';
 import { Book } from '../../types/book';
 
 interface DeleteBookModalProps {
@@ -24,7 +25,8 @@ interface DeleteBookModalProps {
 }
 
 const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSuccess, book }) => {
-  const [error, setError] = useState<string | null>(null);
+  // Zustand stores
+  const { addError, clearErrorsByContext, getErrorsByContext } = useErrorStore();
 
   // TanStack Query mutation
   const deleteBookMutation = useDeleteBook();
@@ -32,19 +34,30 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
   // Loading state from mutation
   const isDeleting = deleteBookMutation.isPending;
 
+  // Clear errors when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      clearErrorsByContext('deleteBook');
+    }
+  }, [isOpen, clearErrorsByContext]);
+
   const handleDelete = async () => {
     try {
-      setError(null);
+      clearErrorsByContext('deleteBook');
 
       await deleteBookMutation.mutateAsync(book.id);
 
       onClose();
       onSuccess();
     } catch (err) {
-      setError('Failed to delete book. Please try again.');
+      addError('Failed to delete book. Please try again.', 'error', 'deleteBook');
       console.error('Error deleting book:', err);
     }
   };
+
+  // Get errors for this context
+  const contextErrors = getErrorsByContext('deleteBook');
+  const hasError = contextErrors.length > 0 || deleteBookMutation.isError;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -62,7 +75,7 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
           </DialogDescription>
         </DialogHeader>
 
-        {error && (
+        {hasError && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex items-start">
               <svg
@@ -80,7 +93,9 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
               </svg>
               <div>
                 <h4 className="font-medium text-red-800">Error</h4>
-                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <p className="mt-1 text-sm text-red-700">
+                  {contextErrors[0]?.message || deleteBookMutation.error?.message || 'An error occurred'}
+                </p>
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 // src/pages/Books.tsx
-import React, { useState } from 'react';
+import React from 'react';
 
 import { Plus } from 'lucide-react';
 
@@ -9,39 +9,34 @@ import BookTable from '../components/books/BookTable';
 import DeleteBookModal from '../components/books/DeleteBookModal';
 import { Button } from '../components/ui/button';
 import { useBooks } from '../hooks/queries/useBooks';
+import { useModalStore } from '../stores/modalStore';
 import { Book } from '../types/book';
 
 const Books: React.FC = () => {
   // Use TanStack Query for books data
   const { data: books = [], isLoading: loading, error, isError } = useBooks();
 
-  // Modal states
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  // Use Zustand for modal state management
+  const {
+    bookFormModal,
+    deleteBookModal,
+    openBookFormModal,
+    closeBookFormModal,
+    openDeleteBookModal,
+    closeDeleteBookModal,
+  } = useModalStore();
 
   // Modal handlers
   const handleOpenCreateModal = () => {
-    setSelectedBook(null); // Ensure no book is selected for create mode
-    setIsFormModalOpen(true);
+    openBookFormModal(); // No book = create mode
   };
 
   const handleOpenEditModal = (book: Book) => {
-    setSelectedBook(book);
-    setIsFormModalOpen(true);
+    openBookFormModal(book); // With book = edit mode
   };
 
   const handleOpenDeleteModal = (book: Book) => {
-    setSelectedBook(book);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleCloseFormModal = () => {
-    setIsFormModalOpen(false);
-  };
-
-  const handleCloseDeleteModal = () => {
-    setIsDeleteModalOpen(false);
+    openDeleteBookModal(book);
   };
 
   // Note: With TanStack Query, we don't need a manual refresh function
@@ -90,19 +85,19 @@ const Books: React.FC = () => {
 
       {/* Create/Edit Book Modal */}
       <BookFormModal
-        isOpen={isFormModalOpen}
-        onClose={handleCloseFormModal}
+        isOpen={bookFormModal.isOpen}
+        onClose={closeBookFormModal}
         onBookCreated={handleBookSuccess}
-        book={selectedBook || undefined}
+        book={bookFormModal.book || undefined}
       />
 
       {/* Delete Confirmation Modal */}
-      {selectedBook && (
+      {deleteBookModal.book && (
         <DeleteBookModal
-          isOpen={isDeleteModalOpen}
-          onClose={handleCloseDeleteModal}
+          isOpen={deleteBookModal.isOpen}
+          onClose={closeDeleteBookModal}
           onSuccess={handleBookSuccess}
-          book={selectedBook}
+          book={deleteBookModal.book}
         />
       )}
     </div>
