@@ -61,7 +61,8 @@ const initialNotes: Note[] = [
   {
     id: 1,
     title: 'Reasoning Evolution',
-    content: 'Reasoning became an evolutionary advantage because it helped early humans solve complex problems, make better decisions, and cooperate in groups.',
+    content:
+      'Reasoning became an evolutionary advantage because it helped early humans solve complex problems, make better decisions, and cooperate in groups.',
     type: 'insight',
     timestamp: '2 min ago',
     isPinned: true,
@@ -69,7 +70,8 @@ const initialNotes: Note[] = [
   {
     id: 2,
     title: "Piaget's Stages Question",
-    content: 'How exactly do children transition between the concrete operational and formal operational stages?',
+    content:
+      'How exactly do children transition between the concrete operational and formal operational stages?',
     type: 'question',
     timestamp: '5 min ago',
     isPinned: false,
@@ -77,7 +79,8 @@ const initialNotes: Note[] = [
   {
     id: 3,
     title: 'Deductive vs Inductive',
-    content: 'Deductive: General to specific (all birds have wings → sparrows have wings). Inductive: Specific to general (observed sparrows have wings → all birds have wings).',
+    content:
+      'Deductive: General to specific (all birds have wings → sparrows have wings). Inductive: Specific to general (observed sparrows have wings → all birds have wings).',
     type: 'concept',
     timestamp: '10 min ago',
     isPinned: false,

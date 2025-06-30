@@ -3,7 +3,7 @@ import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../hooks/useAuth';
-import { useUiStore } from '../../stores/uiStore';
+import { useUiStore } from '../../stores/ui/uiStore';
 import Header from '../common/Header';
 import Sidebar from '../sidebar/Sidebar';
 

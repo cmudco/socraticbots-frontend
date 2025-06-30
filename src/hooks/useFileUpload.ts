@@ -1,4 +1,4 @@
-import { useFilesStore } from '../stores/filesStore';
+import { useFilesStore } from '../stores/core/filesStore';
 import { FileUploadStatus } from '../types/file';
 import { useDeleteFile, useUploadFile } from './queries/useFiles';
 

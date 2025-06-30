@@ -2,7 +2,7 @@ import React from 'react';
 
 import { useChapterToBookMapping, useChatChapters } from '@/hooks/queries/useChat';
 
-import { useChatStore } from '@/stores/chatStore';
+import { useChatStore } from '@/stores/core/chatStore';
 
 import { Chapter, chatService } from '@/services/chat.service';
 

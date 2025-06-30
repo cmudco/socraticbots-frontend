@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../hooks/useAuth';
-import { useFormStore } from '../stores/formStore';
+import { useFormStore } from '../stores/forms/formStore';
 
 interface LocationState {
   from?: {
@@ -17,13 +17,8 @@ const Login: React.FC = () => {
   const { login, isAuthenticated, isLoading, isLoginPending, loginError } = useAuth();
 
   // Use Zustand for form state management
-  const {
-    loginForm,
-    setLoginFormField,
-    setLoginFormError,
-    clearLoginFormErrors,
-    resetLoginForm,
-  } = useFormStore();
+  const { loginForm, setLoginFormField, setLoginFormError, clearLoginFormErrors, resetLoginForm } =
+    useFormStore();
 
   // Get the previous location with a fallback to home page
   const locationState = location.state as LocationState;
@@ -56,7 +51,10 @@ const Login: React.FC = () => {
         setLoginFormError('general', loginError?.message || 'Login failed');
       }
     } catch (err) {
-      setLoginFormError('general', err instanceof Error ? err.message : 'An unknown error occurred');
+      setLoginFormError(
+        'general',
+        err instanceof Error ? err.message : 'An unknown error occurred'
+      );
     }
   };
 

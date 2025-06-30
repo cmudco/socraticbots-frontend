@@ -3,7 +3,7 @@ import React from 'react';
 
 import { BookOpen, Clock, Sparkles } from 'lucide-react';
 
-import { useChatStore } from '@/stores/chatStore';
+import { useChatStore } from '@/stores/core/chatStore';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -63,10 +63,11 @@ const ChatHeader: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   disabled={!selectedChapterId}
-                  className={`h-8 px-3 text-xs font-medium transition-all ${selectedChapterId
+                  className={`h-8 px-3 text-xs font-medium transition-all ${
+                    selectedChapterId
                       ? 'bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-sm hover:from-violet-600 hover:to-purple-600'
                       : 'cursor-not-allowed bg-slate-200 text-slate-400'
-                    }`}
+                  }`}
                 >
                   <Sparkles className="mr-1.5 h-3 w-3" />
                   Classic

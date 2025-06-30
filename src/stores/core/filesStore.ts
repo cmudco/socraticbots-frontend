@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { FileUploadStatus } from '../types/file';
+import { FileUploadStatus } from '../../types/file';
 
 interface UploadingFile {
   id: string;
