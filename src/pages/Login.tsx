@@ -1,8 +1,10 @@
 // src/pages/Login.tsx
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
+
+import { useFormStore } from '@/stores/forms/formStore';
 
 interface LocationState {
   from?: {
@@ -11,37 +13,48 @@ interface LocationState {
 }
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated, isLoading, isLoginPending, loginError } = useAuth();
+
+  // Use Zustand for form state management
+  const { loginForm, setLoginFormField, setLoginFormError, clearLoginFormErrors, resetLoginForm } =
+    useFormStore();
 
   // Get the previous location with a fallback to home page
   const locationState = location.state as LocationState;
   const redirectPath = locationState?.from?.pathname || '/';
 
+  // Clear form when component mounts
+  useEffect(() => {
+    resetLoginForm();
+  }, [resetLoginForm]);
+
   // Redirect if already authenticated
   if (isAuthenticated && !isLoading) {
-    console.log('User is authenticated, redirecting to:', redirectPath);
     return <Navigate to={redirectPath} replace />;
   }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    clearLoginFormErrors();
 
     try {
-      const success = await login(username, password);
+      const success = await login(loginForm.username, loginForm.password);
 
       if (success) {
+        // Clear form on successful login
+        resetLoginForm();
         // Redirect to the page they were trying to visit, or home
         navigate(redirectPath, { replace: true });
       } else {
-        setError(loginError?.message || 'Login failed');
+        setLoginFormError('general', loginError?.message || 'Login failed');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setLoginFormError(
+        'general',
+        err instanceof Error ? err.message : 'An unknown error occurred'
+      );
     }
   };
 
@@ -56,9 +69,9 @@ const Login: React.FC = () => {
     <div className="mx-auto mt-10 max-w-md rounded-lg bg-white p-6 shadow-md">
       <h1 className="mb-4 text-2xl font-bold">Login</h1>
 
-      {error && (
+      {(loginForm.errors.general || loginError) && (
         <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
-          {error}
+          {loginForm.errors.general || loginError?.message}
         </div>
       )}
 
@@ -70,12 +83,15 @@ const Login: React.FC = () => {
           <input
             id="username"
             type="text"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
+            value={loginForm.username}
+            onChange={e => setLoginFormField('username', e.target.value)}
             className="w-full rounded-lg border px-3 py-2"
             required
             disabled={isLoginPending}
           />
+          {loginForm.errors.username && (
+            <p className="mt-1 text-sm text-red-600">{loginForm.errors.username}</p>
+          )}
         </div>
 
         <div className="mb-6">
@@ -85,12 +101,15 @@ const Login: React.FC = () => {
           <input
             id="password"
             type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
+            value={loginForm.password}
+            onChange={e => setLoginFormField('password', e.target.value)}
             className="w-full rounded-lg border px-3 py-2"
             required
             disabled={isLoginPending}
           />
+          {loginForm.errors.password && (
+            <p className="mt-1 text-sm text-red-600">{loginForm.errors.password}</p>
+          )}
         </div>
 
         <button

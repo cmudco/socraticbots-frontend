@@ -1,6 +1,7 @@
 // src/services/models.service.ts
-import { METHOD } from '../constants/requests';
-import { baseRequest } from '../utils/baseRequest';
+import { METHOD } from '@/constants/requests';
+
+import { baseRequest } from '@/utils/baseRequest';
 
 export interface AIModel {
   id: string;

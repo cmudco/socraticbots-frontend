@@ -5,7 +5,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { Editor, EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
-import { useChapterFormStore } from '../../../stores/chapterFormStore';
+import { useChapterFormStore } from '@/stores/forms/chapterFormStore';
 
 // Simplified menu bar with only bold and italic
 const MenuBar = ({ editor }: { editor: Editor | null }) => {

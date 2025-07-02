@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { ChapterFile } from '../../types/file';
-import { FileProcessingStatus, FileUploadStatus } from '../../types/file';
+import { ChapterFile, FileProcessingStatus, FileUploadStatus } from '@/types/file';
 
 interface UploadingFile {
   id: string;

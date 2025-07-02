@@ -7,16 +7,24 @@ interface UiStore {
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
 
-  // Book expansion state
+  // Book expansion state (for books page)
   expandedBooks: Set<string>;
   toggleBookExpansion: (bookId: string) => void;
   setBookExpanded: (bookId: string, expanded: boolean) => void;
+  clearExpandedBooks: () => void;
+
+  // Deleted chapters tracking (for immediate UI feedback)
+  deletedChapterIds: Set<string>;
+  addDeletedChapter: (chapterId: string) => void;
+  removeDeletedChapter: (chapterId: string) => void;
+  clearDeletedChapters: () => void;
 }
 
 export const useUiStore = create<UiStore>(set => ({
   // Initial state
   sidebarCollapsed: false,
   expandedBooks: new Set(),
+  deletedChapterIds: new Set(),
 
   // Sidebar actions
   toggleSidebar: () =>
@@ -51,4 +59,21 @@ export const useUiStore = create<UiStore>(set => ({
       }
       return { expandedBooks: newExpandedBooks };
     }),
+
+  clearExpandedBooks: () => set({ expandedBooks: new Set() }),
+
+  // Deleted chapters tracking
+  addDeletedChapter: chapterId =>
+    set(state => ({
+      deletedChapterIds: new Set([...state.deletedChapterIds, chapterId]),
+    })),
+
+  removeDeletedChapter: chapterId =>
+    set(state => {
+      const newDeleted = new Set(state.deletedChapterIds);
+      newDeleted.delete(chapterId);
+      return { deletedChapterIds: newDeleted };
+    }),
+
+  clearDeletedChapters: () => set({ deletedChapterIds: new Set() }),
 }));

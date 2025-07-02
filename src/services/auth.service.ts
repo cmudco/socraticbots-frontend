@@ -1,7 +1,9 @@
 // src/services/auth.service.ts
-import { METHOD } from '../constants/requests';
-import { AuthTokens, User } from '../types/auth';
-import { baseRequest } from '../utils/baseRequest';
+import { METHOD } from '@/constants/requests';
+
+import { baseRequest } from '@/utils/baseRequest';
+
+import { AuthTokens, User } from '@/types/auth';
 
 class AuthService {
   // Check if a token is valid

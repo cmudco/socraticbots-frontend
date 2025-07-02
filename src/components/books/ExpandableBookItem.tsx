@@ -3,10 +3,12 @@ import React, { useState } from 'react';
 
 import { ChevronDown, ChevronUp, Edit, Trash } from 'lucide-react';
 
-import { useUiStore } from '../../stores/uiStore';
-import { Book } from '../../types/book';
-import ChapterList from '../chapters/ChapterList';
-import { Button } from '../ui/button';
+import { useUiStore } from '@/stores/ui/uiStore';
+
+import ChapterList from '@/components/chapters/ChapterList';
+import { Button } from '@/components/ui/button';
+
+import { Book } from '@/types/book';
 
 interface ExpandableBookItemProps {
   book: Book;

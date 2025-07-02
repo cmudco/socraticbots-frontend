@@ -1,9 +1,11 @@
 // src/hooks/queries/useBooks.ts
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { CreateBookRequest, UpdateBookRequest, bookService } from '../../services/books.service';
-import { useAuthStore } from '../../stores/authStore';
-import { Book } from '../../types/book';
+import { useAuthStore } from '@/stores/authStore';
+
+import { CreateBookRequest, UpdateBookRequest, bookService } from '@/services/books.service';
+
+import { Book } from '@/types/book';
 
 // Query Keys
 export const bookKeys = {

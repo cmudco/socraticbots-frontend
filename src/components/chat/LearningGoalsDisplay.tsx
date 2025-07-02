@@ -5,7 +5,7 @@ import { Circle, FileText, Target } from 'lucide-react';
 import { useChapter } from '@/hooks/queries/useChapters';
 import { useChapterLearningGoals } from '@/hooks/queries/useChat';
 
-import { useChatStore } from '@/stores/chatStore';
+import { useChatStore } from '@/stores/core/chatStore';
 
 import { Card } from '@/components/ui/card';
 

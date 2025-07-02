@@ -3,7 +3,7 @@ import React from 'react';
 
 import { BookOpen, Clock, Sparkles } from 'lucide-react';
 
-import { useChatStore } from '@/stores/chatStore';
+import { useChatStore } from '@/stores/core/chatStore';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
