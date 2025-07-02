@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from 'react';
 
-import { useFilesStore } from '../../stores/filesStore';
+import { useFilesStore } from '@/stores/core/filesStore';
 
 interface FileUploadAreaProps {
   onFilesSelected: (files: FileList) => void;

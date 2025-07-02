@@ -1,7 +1,7 @@
 // src/components/chapters/tabs/FileListItem.tsx
 import React from 'react';
 
-import { ChapterFile } from '../../../types/file';
+import { ChapterFile } from '@/types/file';
 
 interface FileListItemProps {
   file: ChapterFile;

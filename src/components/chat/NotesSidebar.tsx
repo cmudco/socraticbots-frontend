@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import {
   BookOpen,
@@ -18,156 +18,53 @@ import {
   X,
 } from 'lucide-react';
 
+import { useNotesStore } from '@/stores/core/notesStore';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  type: 'insight' | 'question' | 'concept';
-  timestamp: string;
-  isPinned: boolean;
-}
 
 interface NotesSidebarProps {
   onCollapseChange?: (collapsed: boolean) => void;
 }
 
 const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createNoteType, setCreateNoteType] = useState<'insight' | 'question' | 'concept'>(
-    'insight'
-  );
-  const [newNoteTitle, setNewNoteTitle] = useState('');
-  const [newNoteContent, setNewNoteContent] = useState('');
-  const [editTitle, setEditTitle] = useState('');
-  const [editContent, setEditContent] = useState('');
+  // Use Zustand for all notes state management
+  const {
+    notes,
+    isCollapsed,
+    searchTerm,
+    isSearching,
+    editingId,
+    showCreateModal,
+    createNoteType,
+    newNoteTitle,
+    newNoteContent,
+    editTitle,
+    editContent,
+    toggleCollapse,
+    setSearchTerm,
+    setIsSearching,
+    createNote,
+    startEditing,
+    saveEdit,
+    cancelEdit,
+    togglePin,
+    deleteNote,
+    openCreateModal,
+    closeCreateModal,
+    setNewNoteTitle,
+    setNewNoteContent,
+    setEditTitle,
+    setEditContent,
+    getFilteredNotes,
+  } = useNotesStore();
 
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: 1,
-      title: 'Reasoning Evolution',
-      content:
-        'Reasoning became an evolutionary advantage because it helped early humans solve complex problems, make better decisions, and cooperate in groups.',
-      type: 'insight',
-      timestamp: '2 min ago',
-      isPinned: true,
-    },
-    {
-      id: 2,
-      title: "Piaget's Stages Question",
-      content:
-        'How exactly do children transition between the concrete operational and formal operational stages?',
-      type: 'question',
-      timestamp: '5 min ago',
-      isPinned: false,
-    },
-    {
-      id: 3,
-      title: 'Deductive vs Inductive',
-      content:
-        'Deductive: General to specific (all birds have wings → sparrows have wings). Inductive: Specific to general (observed sparrows have wings → all birds have wings).',
-      type: 'concept',
-      timestamp: '10 min ago',
-      isPinned: false,
-    },
-  ]);
-
-  const toggleCollapse = () => {
-    const newCollapsed = !isCollapsed;
-    setIsCollapsed(newCollapsed);
-    setIsSearching(false);
-    setSearchTerm('');
-    setEditingId(null);
-    setShowCreateModal(false);
-    onCollapseChange?.(newCollapsed);
+  const handleToggleCollapse = () => {
+    toggleCollapse();
+    onCollapseChange?.(isCollapsed);
   };
 
-  const openCreateModal = (type: 'insight' | 'question' | 'concept') => {
-    setCreateNoteType(type);
-    setNewNoteTitle('');
-    setNewNoteContent('');
-    setShowCreateModal(true);
-  };
-
-  const createNote = () => {
-    if (!newNoteTitle.trim() && !newNoteContent.trim()) return;
-
-    const titles = {
-      insight: newNoteTitle || 'New Insight',
-      question: newNoteTitle || 'New Question',
-      concept: newNoteTitle || 'New Concept',
-    };
-
-    const newNote: Note = {
-      id: Date.now(),
-      title: titles[createNoteType],
-      content: newNoteContent || 'Note content...',
-      type: createNoteType,
-      timestamp: 'Just now',
-      isPinned: false,
-    };
-
-    setNotes(prev => [newNote, ...prev]);
-    setShowCreateModal(false);
-    setNewNoteTitle('');
-    setNewNoteContent('');
-  };
-
-  const startEditing = (note: Note) => {
-    setEditingId(note.id);
-    setEditTitle(note.title);
-    setEditContent(note.content);
-  };
-
-  const saveEdit = () => {
-    if (!editingId) return;
-
-    setNotes(prev =>
-      prev.map(note =>
-        note.id === editingId
-          ? {
-              ...note,
-              title: editTitle.trim() || note.title,
-              content: editContent.trim() || note.content,
-            }
-          : note
-      )
-    );
-    setEditingId(null);
-    setEditTitle('');
-    setEditContent('');
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditTitle('');
-    setEditContent('');
-  };
-
-  const togglePin = (id: number) => {
-    setNotes(prev =>
-      prev.map(note => (note.id === id ? { ...note, isPinned: !note.isPinned } : note))
-    );
-  };
-
-  const deleteNote = (id: number) => {
-    setNotes(prev => prev.filter(note => note.id !== id));
-    if (editingId === id) {
-      setEditingId(null);
-    }
-  };
-
-  const filteredNotes = notes.filter(
-    note =>
-      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredNotes = getFilteredNotes();
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -203,7 +100,7 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
     >
       {/* Toggle Button - Fixed z-index issue */}
       <Button
-        onClick={toggleCollapse}
+        onClick={handleToggleCollapse}
         variant="ghost"
         size="sm"
         className="absolute top-6 -left-4 z-[100] h-8 w-8 rounded-full border border-slate-200/60 bg-white p-0 shadow-lg transition-all hover:border-violet-300 hover:bg-violet-50 hover:shadow-xl"
@@ -297,12 +194,7 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
                 </Badge>
                 <span className="text-sm font-medium text-slate-700">New Note</span>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => setShowCreateModal(false)}
-              >
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={closeCreateModal}>
                 <X className="h-3 w-3 text-slate-400" />
               </Button>
             </div>
@@ -327,7 +219,7 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowCreateModal(false)}
+                onClick={closeCreateModal}
                 className="h-8 px-3 text-xs"
               >
                 Cancel

@@ -1,9 +1,9 @@
 // src/pages/Chat.tsx
 import React from 'react';
 
-import ChatInterface from '../components/chat/ChatInterface';
-import NotesSidebar from '../components/chat/NotesSidebar';
-import TrackingSidebar from '../components/chat/TrackingSidebar';
+import ChatInterface from '@/components/chat/ChatInterface';
+import NotesSidebar from '@/components/chat/NotesSidebar';
+import TrackingSidebar from '@/components/chat/TrackingSidebar';
 
 const Chat: React.FC = () => {
   return (

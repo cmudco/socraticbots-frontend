@@ -1,7 +1,8 @@
+import { METHOD } from '@/constants/requests';
 import axios, { AxiosRequestConfig } from 'axios';
 
-import { METHOD } from '../constants/requests';
-import config from '../lib/config';
+import config from '@/lib/config';
+
 import { getErrorMessage } from './errorHandler';
 
 const BASE_URL = config.apiUrl;

@@ -1,15 +1,18 @@
 // src/components/chapters/tabs/FilesTab.tsx
 import React, { useEffect } from 'react';
 
-import { useChapterFiles } from '../../../hooks/queries/useFiles';
-import { useFileUpload } from '../../../hooks/useFileUpload';
-import { useChapterFormStore } from '../../../stores/chapterFormStore';
-import { FileProcessingStatus } from '../../../types/file';
-import FileItem from '../../files/FileItem';
-import FileStatusSummary from '../../files/FileStatusSummary';
-import FileUploadArea from '../../files/FileUploadArea';
-import UploadingFileItem from '../../files/UploadingFileItem';
-import ConfirmationModal from '../../ui/confirmation-modal';
+import { useChapterFiles } from '@/hooks/queries/useFiles';
+import { useFileUpload } from '@/hooks/useFileUpload';
+
+import { useChapterFormStore } from '@/stores/forms/chapterFormStore';
+
+import FileItem from '@/components/files/FileItem';
+import FileStatusSummary from '@/components/files/FileStatusSummary';
+import FileUploadArea from '@/components/files/FileUploadArea';
+import UploadingFileItem from '@/components/files/UploadingFileItem';
+import ConfirmationModal from '@/components/ui/confirmation-modal';
+
+import { FileProcessingStatus } from '@/types/file';
 
 const FilesTab: React.FC = () => {
   const { originalChapter } = useChapterFormStore();

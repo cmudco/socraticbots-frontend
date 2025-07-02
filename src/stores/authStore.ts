@@ -1,7 +1,7 @@
 // src/stores/authStore.ts
 import { create } from 'zustand';
 
-import type { AuthState, AuthTokens, User } from '../types/auth';
+import type { AuthState, AuthTokens, User } from '@/types/auth';
 
 interface AuthStore extends AuthState {
   setAuth: (authData: {

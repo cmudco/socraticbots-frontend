@@ -17,7 +17,7 @@ import {
 
 import { useStreamProgressTracking, useTrackingProgress } from '@/hooks/queries/useChat';
 
-import { useChatStore } from '@/stores/chatStore';
+import { useChatStore } from '@/stores/core/chatStore';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

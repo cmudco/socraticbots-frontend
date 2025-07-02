@@ -1,7 +1,12 @@
 // src/components/books/BookFormModal.tsx
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { BookOpen } from 'lucide-react';
+
+import { useCreateBook, useUpdateBook } from '@/hooks/queries/useBooks';
+
+import { useFormStore } from '@/stores/forms/formStore';
+import { useErrorStore } from '@/stores/ui/errorStore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,8 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-import { useCreateBook, useUpdateBook } from '../../hooks/queries/useBooks';
-import { Book } from '../../types/book';
+import { Book } from '@/types/book';
 
 interface BookFormModalProps {
   isOpen: boolean;
@@ -27,9 +31,17 @@ interface BookFormModalProps {
 }
 
 const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCreated, book }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  // Zustand stores
+  const {
+    bookForm,
+    setBookFormField,
+    setBookFormError,
+    clearBookFormErrors,
+    resetBookForm,
+    setBookFormData,
+  } = useFormStore();
+
+  const { addError, clearErrorsByContext } = useErrorStore();
 
   // TanStack Query mutations
   const createBookMutation = useCreateBook();
@@ -44,65 +56,78 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
   // Set form values when book changes (for edit mode)
   useEffect(() => {
     if (book) {
-      setTitle(book.title);
-      setDescription(book.description || '');
+      setBookFormData({
+        title: book.title,
+        description: book.description || '',
+        errors: {},
+      });
     } else {
       // Reset form when not in edit mode
-      setTitle('');
-      setDescription('');
+      resetBookForm();
     }
-  }, [book]);
+  }, [book, setBookFormData, resetBookForm]);
+
+  // Clear errors when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      clearBookFormErrors();
+      clearErrorsByContext('bookForm');
+    }
+  }, [isOpen, clearBookFormErrors, clearErrorsByContext]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
 
-      if (!title.trim()) {
-        setError('Title is required');
+      if (!bookForm.title.trim()) {
+        setBookFormError('title', 'Title is required');
         return;
       }
 
       try {
-        setError(null);
+        clearBookFormErrors();
+        clearErrorsByContext('bookForm');
 
         if (isEditMode && book) {
           // Update existing book
           await updateBookMutation.mutateAsync({
             id: book.id,
             bookData: {
-              title,
-              description: description || undefined,
+              title: bookForm.title,
+              description: bookForm.description || undefined,
             },
           });
         } else {
           // Create new book
           await createBookMutation.mutateAsync({
-            title,
-            description: description || undefined,
+            title: bookForm.title,
+            description: bookForm.description || undefined,
           });
         }
 
-        // Reset form
-        setTitle('');
-        setDescription('');
-
-        // Close modal and notify parent
+        // Reset form and close modal
+        resetBookForm();
         onClose();
         onBookCreated();
       } catch (err) {
-        setError(`Failed to ${isEditMode ? 'update' : 'create'} book. Please try again.`);
+        const errorMessage = `Failed to ${isEditMode ? 'update' : 'create'} book. Please try again.`;
+        addError(errorMessage, 'error', 'bookForm');
         console.error(`Error ${isEditMode ? 'updating' : 'creating'} book:`, err);
       }
     },
     [
-      title,
-      description,
+      bookForm,
       isEditMode,
       book,
+      setBookFormError,
+      clearBookFormErrors,
+      clearErrorsByContext,
       updateBookMutation,
       createBookMutation,
+      resetBookForm,
       onClose,
       onBookCreated,
+      addError,
     ]
   );
 
@@ -110,8 +135,8 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
   useEffect(() => {
     const keyHandler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        if (!title.trim()) {
-          setError('Title is required');
+        if (!bookForm.title.trim()) {
+          setBookFormError('title', 'Title is required');
           return;
         }
 
@@ -130,7 +155,13 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
     return () => {
       document.removeEventListener('keydown', keyHandler);
     };
-  }, [isOpen, title, description, handleSubmit]);
+  }, [isOpen, bookForm.title, handleSubmit, setBookFormError]);
+
+  // Get errors for this context
+  const formErrors = bookForm.errors;
+  const hasGlobalError =
+    Object.keys(formErrors).length === 0 &&
+    (createBookMutation.isError || updateBookMutation.isError);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -151,7 +182,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
           </DialogDescription>
         </DialogHeader>
 
-        {error && (
+        {hasGlobalError && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
             <div className="flex items-start">
               <svg
@@ -169,7 +200,11 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
               </svg>
               <div>
                 <h4 className="font-medium text-red-800">Error</h4>
-                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <p className="mt-1 text-sm text-red-700">
+                  {createBookMutation.error?.message ||
+                    updateBookMutation.error?.message ||
+                    'An error occurred'}
+                </p>
               </div>
             </div>
           </div>
@@ -183,12 +218,13 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
             <Input
               id="title"
               type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
+              value={bookForm.title}
+              onChange={e => setBookFormField('title', e.target.value)}
               placeholder="Enter book title"
               disabled={isSubmitting}
               className="border-slate-200 focus:border-violet-300 focus:ring-violet-200"
             />
+            {formErrors.title && <p className="text-sm text-red-600">{formErrors.title}</p>}
           </div>
 
           <div className="space-y-2">
@@ -197,13 +233,16 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
             </Label>
             <Textarea
               id="description"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
+              value={bookForm.description}
+              onChange={e => setBookFormField('description', e.target.value)}
               placeholder="Enter book description (optional)"
               rows={4}
               disabled={isSubmitting}
               className="resize-none border-slate-200 focus:border-violet-300 focus:ring-violet-200"
             />
+            {formErrors.description && (
+              <p className="text-sm text-red-600">{formErrors.description}</p>
+            )}
           </div>
 
           <DialogFooter className="flex gap-2 pt-4 sm:justify-end">

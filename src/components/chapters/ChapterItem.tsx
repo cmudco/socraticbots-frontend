@@ -3,8 +3,9 @@ import React from 'react';
 
 import { Edit, Trash } from 'lucide-react';
 
-import { Chapter } from '../../services/chapters.service';
-import { Button } from '../ui/button';
+import { Chapter } from '@/services/chapters.service';
+
+import { Button } from '@/components/ui/button';
 
 interface ChapterItemProps {
   chapter: Chapter;

@@ -1,9 +1,11 @@
 // src/hooks/queries/useAuth.ts
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { authService } from '../../services/auth.service';
-import { useAuthStore } from '../../stores/authStore';
-import type { AuthTokens } from '../../types/auth';
+import { useAuthStore } from '@/stores/authStore';
+
+import { authService } from '@/services/auth.service';
+
+import type { AuthTokens } from '@/types/auth';
 
 // Query keys
 export const authKeys = {
@@ -154,7 +156,7 @@ export const useChangePassword = () => {
     mutationFn: ({ oldPassword, newPassword }: { oldPassword: string; newPassword: string }) =>
       authService.changePassword(oldPassword, newPassword),
     onSuccess: () => {
-      console.log('Password changed successfully');
+      // Password changed successfully
     },
     onError: error => {
       console.error('Password change failed:', error);

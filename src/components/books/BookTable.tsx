@@ -1,7 +1,8 @@
 // src/components/books/BookTable.tsx
 import React from 'react';
 
-import { Book } from '../../types/book';
+import { Book } from '@/types/book';
+
 import ExpandableBookItem from './ExpandableBookItem';
 
 interface BookTableProps {

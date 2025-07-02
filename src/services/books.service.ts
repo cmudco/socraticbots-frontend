@@ -1,7 +1,9 @@
 // src/services/book.service.ts
-import { METHOD } from '../constants/requests';
-import { Book } from '../types/book';
-import { baseRequest } from '../utils/baseRequest';
+import { METHOD } from '@/constants/requests';
+
+import { baseRequest } from '@/utils/baseRequest';
+
+import { Book } from '@/types/book';
 
 export interface CreateBookRequest {
   title: string;

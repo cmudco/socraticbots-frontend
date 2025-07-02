@@ -1,7 +1,9 @@
 // src/services/files.service.ts
-import { METHOD } from '../constants/requests';
-import { ChapterFile, FileFilters, UploadFileRequest } from '../types/file';
-import { baseRequest } from '../utils/baseRequest';
+import { METHOD } from '@/constants/requests';
+
+import { baseRequest } from '@/utils/baseRequest';
+
+import { ChapterFile, FileFilters, UploadFileRequest } from '@/types/file';
 
 class FileService {
   private readonly baseUrl = 'files/';

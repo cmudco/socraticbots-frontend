@@ -2,10 +2,12 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
-import { useAuth } from '../../hooks/useAuth';
-import { useUiStore } from '../../stores/uiStore';
-import Header from '../common/Header';
-import Sidebar from '../sidebar/Sidebar';
+import { useAuth } from '@/hooks/useAuth';
+
+import { useUiStore } from '@/stores/ui/uiStore';
+
+import Header from '@/components/common/Header';
+import Sidebar from '@/components/sidebar/Sidebar';
 
 const Layout: React.FC = () => {
   const { isAuthenticated } = useAuth();

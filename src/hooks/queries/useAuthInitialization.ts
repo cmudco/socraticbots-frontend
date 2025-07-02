@@ -3,10 +3,13 @@ import { useEffect, useRef } from 'react';
 
 import { METHOD } from '@/constants/requests';
 
-import { authService } from '../../services/auth.service';
-import { useAuthStore } from '../../stores/authStore';
-import type { User } from '../../types/auth';
-import { baseRequest } from '../../utils/baseRequest';
+import { useAuthStore } from '@/stores/authStore';
+
+import { authService } from '@/services/auth.service';
+
+import { baseRequest } from '@/utils/baseRequest';
+
+import type { User } from '@/types/auth';
 
 /**
  * Hook to initialize authentication state on app startup
@@ -26,7 +29,6 @@ export const useAuthInitialization = () => {
     const initializeAuthState = async () => {
       try {
         setLoading(true);
-        console.log('Auth initialization starting...');
 
         // Initialize from localStorage first
         initializeAuth();
@@ -37,12 +39,9 @@ export const useAuthInitialization = () => {
 
         if (!accessToken || !refreshToken) {
           // No tokens stored, user is not authenticated
-          console.log('No stored tokens found');
           clearAuth();
           return;
         }
-
-        console.log('Found stored tokens, validating...');
 
         // Validate the access token
         const isValid = await validateToken(accessToken);
@@ -50,7 +49,6 @@ export const useAuthInitialization = () => {
         if (isValid) {
           // Token is valid, fetch user profile
           try {
-            console.log('Token is valid, fetching user profile...');
             const userData = await fetchUserProfile();
 
             setAuth({
@@ -59,7 +57,6 @@ export const useAuthInitialization = () => {
               isAuthenticated: true,
               isLoading: false,
             });
-            console.log('Auth initialization completed successfully');
           } catch (error) {
             console.error('Failed to fetch user profile:', error);
             clearAuth();
@@ -67,7 +64,6 @@ export const useAuthInitialization = () => {
         } else {
           // Access token is invalid, try to refresh
           try {
-            console.log('Access token invalid, attempting refresh');
             const newTokens = await authService.refreshToken(refreshToken);
 
             // Fetch user profile with new token
@@ -79,7 +75,6 @@ export const useAuthInitialization = () => {
               isAuthenticated: true,
               isLoading: false,
             });
-            console.log('Token refresh and auth initialization completed successfully');
           } catch (error) {
             console.error('Token refresh failed during initialization:', error);
             clearAuth();
