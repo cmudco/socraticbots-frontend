@@ -80,6 +80,19 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
       validateOnBlur={true}
     >
       {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => {
+        // Create enhanced change handlers that sync with Zustand store
+        const handleFieldChange =
+          (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+            const value = event.target.value;
+            handleChange(event); // Update Formik state
+            updateField(field, value); // Update Zustand store
+          };
+
+        const handleSelectChange = (field: string) => (value: string) => {
+          setFieldValue(field, value); // Update Formik state
+          updateField(field, value); // Update Zustand store
+        };
+
         return (
           <Form className="space-y-6">
             {/* Title Field */}
@@ -98,7 +111,7 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
                     ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                     : ''
                 }`}
-                onChange={handleChange}
+                onChange={handleFieldChange('title')}
                 onBlur={handleBlur}
               />
               {errors.title && touched.title && (
@@ -122,7 +135,7 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
                     ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                     : ''
                 }`}
-                onChange={handleChange}
+                onChange={handleFieldChange('subject')}
                 onBlur={handleBlur}
               />
               {errors.subject && touched.subject && (
@@ -146,7 +159,7 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
                     ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
                     : ''
                 }`}
-                onChange={handleChange}
+                onChange={handleFieldChange('topic')}
                 onBlur={handleBlur}
               />
               {errors.topic && touched.topic && (
@@ -164,7 +177,7 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
               ) : (
                 <Select
                   value={values.chat_model_id}
-                  onValueChange={value => setFieldValue('chat_model_id', value)}
+                  onValueChange={handleSelectChange('chat_model_id')}
                 >
                   <SelectTrigger className="border-slate-200 focus:border-violet-300 focus:ring-violet-200">
                     <SelectValue placeholder="Select Chat Model" />
@@ -193,7 +206,7 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
               ) : (
                 <Select
                   value={values.tracking_model_id}
-                  onValueChange={value => setFieldValue('tracking_model_id', value)}
+                  onValueChange={handleSelectChange('tracking_model_id')}
                 >
                   <SelectTrigger className="border-slate-200 focus:border-violet-300 focus:ring-violet-200">
                     <SelectValue placeholder="Select Progress Tracking Model" />
