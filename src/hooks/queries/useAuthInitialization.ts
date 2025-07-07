@@ -47,7 +47,7 @@ export const useAuthInitialization = () => {
         const isValid = await validateToken(accessToken);
 
         if (isValid) {
-          // Token is valid, fetch user profile
+          // Token is valid, fetch user profile from SocraticBooks
           try {
             const userData = await fetchUserProfile();
 
@@ -107,10 +107,10 @@ const validateToken = async (token: string): Promise<boolean> => {
   }
 };
 
-// Helper function to fetch user profile
+// Helper function to fetch user profile from SocraticBooks database
 const fetchUserProfile = async (): Promise<User> => {
   return baseRequest<User>({
-    url: 'users/me/',
+    url: 'users/user-info/',
     method: METHOD.GET,
   });
 };

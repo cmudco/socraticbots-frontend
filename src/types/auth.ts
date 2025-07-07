@@ -1,9 +1,13 @@
 // src/types/auth.ts
 export interface User {
   id: number;
-  username: string;
   email: string;
-  // Add any other user fields you need
+  name: string;
+  role: string;
+  external_user_id?: number;
+  is_active: boolean;
+  date_joined?: string;
+  platform: string;
 }
 
 export interface AuthTokens {
