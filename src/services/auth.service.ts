@@ -38,10 +38,10 @@ class AuthService {
     }
   }
 
-  // Login and get tokens
+  // Login and get tokens (forwards to DARE backend)
   async login(email: string, password: string): Promise<AuthTokens> {
     return baseRequest<AuthTokens>({
-      url: 'users/token/',
+      url: 'users/login/',
       method: METHOD.POST,
       data: { email, password },
       includeAuthToken: false,
@@ -71,10 +71,10 @@ class AuthService {
     }
   }
 
-  // Fetch user profile
+  // Fetch user profile (from SocraticBooks database)
   async fetchUserProfile(): Promise<User> {
     return baseRequest<User>({
-      url: 'users/me/',
+      url: 'users/user-info/',
       method: METHOD.GET,
     });
   }
