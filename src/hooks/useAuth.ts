@@ -12,9 +12,9 @@ export const useAuth = () => {
   const loginMutation = useLogin();
   const logoutMutation = useLogout();
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      await loginMutation.mutateAsync({ username, password });
+      await loginMutation.mutateAsync({ email, password });
       return true;
     } catch (error) {
       console.error('Login failed:', error);
