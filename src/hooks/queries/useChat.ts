@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LearningGoal, chapterService } from '@/services/chapters.service';
 import { Chapter, chatService } from '@/services/chat.service';
 
+import { ChatRole } from '@/types/chat';
 import type { ChatMessage, Conversation } from '@/types/chat';
 
 import { useBooks } from './useBooks';
@@ -179,7 +180,7 @@ export const useTrackingProgress = (conversationId: string | null) =>
     gcTime: 2 * 60 * 1000,
   });
 
-// Stream message hook with proper typing
+// Stream message hook with proper typing and optimistic updates
 export const useStreamMessage = () => {
   const queryClient = useQueryClient();
   const [isStreaming, setIsStreaming] = useState(false);
@@ -188,42 +189,82 @@ export const useStreamMessage = () => {
 
   const streamMessage = async ({
     conversationId,
+    chapterId,
     content,
   }: {
     conversationId: string;
+    chapterId: string;
     content: string;
   }) => {
     setIsStreaming(true);
     setError(null);
     setTokens([]);
 
+    // Use correct cache key with chapterId
+    const cacheKey = ['chat', 'conversation', 'chapter', chapterId];
+
+    // Generate temporary user message for optimistic update
+    const tempUserMessage: ChatMessage = {
+      id: `temp-user-${Date.now()}`,
+      content,
+      role: ChatRole.USER,
+      conversation: conversationId,
+      created_at: new Date().toISOString(),
+    };
+
+    // Generate temporary AI message for streaming
+    const tempAiMessage: ChatMessage = {
+      id: `temp-ai-${Date.now()}`,
+      content: '',
+      role: ChatRole.ASSISTANT,
+      conversation: conversationId,
+      created_at: new Date().toISOString(),
+    };
+
+    // Optimistically add both user message and empty AI message to cache
+    queryClient.setQueryData<Conversation>(cacheKey, (oldData: Conversation | undefined) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        messages: [...oldData.messages, tempUserMessage, tempAiMessage],
+      };
+    });
+
     try {
       const fullResponse = await chatService.streamMessage(conversationId, content, {
         onStart: () => setIsStreaming(true),
         onToken: (token: string) => {
           setTokens(prev => [...prev, token]);
+
+          // Update the streaming AI message in cache with accumulated tokens
+          queryClient.setQueryData<Conversation>(cacheKey, (oldData: Conversation | undefined) => {
+            if (!oldData) return oldData;
+
+            const messages = [...oldData.messages];
+            const lastMessageIndex = messages.length - 1;
+
+            // Update the last message (streaming AI response) with accumulated content
+            if (lastMessageIndex >= 0 && messages[lastMessageIndex].role === ChatRole.ASSISTANT) {
+              messages[lastMessageIndex] = {
+                ...messages[lastMessageIndex],
+                content: messages[lastMessageIndex].content + token,
+              };
+            }
+
+            return {
+              ...oldData,
+              messages,
+            };
+          });
         },
-        onComplete: async (completeMessage?: ChatMessage) => {
+        onComplete: async () => {
           setIsStreaming(false);
 
-          // Update the conversation with the complete message from server
-          if (completeMessage) {
-            queryClient.setQueryData<Conversation>(
-              ['chat', 'conversation', 'chapter', conversationId],
-              (oldData: Conversation | undefined) => {
-                if (!oldData) return oldData;
-                return {
-                  ...oldData,
-                  messages: [...oldData.messages, completeMessage],
-                };
-              }
-            );
-          } else {
-            // Fallback: invalidate queries to refetch
-            queryClient.invalidateQueries({
-              queryKey: ['chat', 'conversation', 'chapter', conversationId],
-            });
-          }
+          // Replace temporary messages with actual messages from server by invalidating
+          // This ensures we get the real messages with proper IDs and timestamps
+          queryClient.invalidateQueries({
+            queryKey: cacheKey,
+          });
 
           // Trigger progress tracking after message completion with Zustand store callbacks
           try {
@@ -255,6 +296,11 @@ export const useStreamMessage = () => {
         onError: (err: Error) => {
           setError(err);
           setIsStreaming(false);
+
+          // Remove optimistic updates on error and refetch
+          queryClient.invalidateQueries({
+            queryKey: cacheKey,
+          });
         },
       });
       setIsStreaming(false);
@@ -262,6 +308,11 @@ export const useStreamMessage = () => {
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
       setIsStreaming(false);
+
+      // Remove optimistic updates on error and refetch
+      queryClient.invalidateQueries({
+        queryKey: cacheKey,
+      });
       throw err;
     }
   };
