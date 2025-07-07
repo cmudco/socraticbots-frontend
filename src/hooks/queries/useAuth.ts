@@ -48,8 +48,8 @@ export const useLogin = () => {
   const { setAuth, clearAuth } = useAuthStore();
 
   return useMutation({
-    mutationFn: ({ username, password }: { username: string; password: string }) =>
-      authService.login(username, password),
+    mutationFn: ({ email, password }: { email: string; password: string }) =>
+      authService.login(email, password),
     onSuccess: async (tokens: AuthTokens) => {
       try {
         // First, store the tokens in the auth store (this will also store in localStorage)

@@ -22,13 +22,20 @@ export const authSchemas = {
     username: Yup.string()
       .min(3, 'Username must be at least 3 characters')
       .required('Username is required'),
-    email: Yup.string().email('Invalid email address').required('Email is required'),
     password: Yup.string()
       .min(6, 'Password must be at least 6 characters')
       .required('Password is required'),
-    confirmPassword: Yup.string()
+    confirm_password: Yup.string()
       .oneOf([Yup.ref('password')], 'Passwords must match')
       .required('Please confirm your password'),
+    role: Yup.string()
+      .oneOf(['Student', 'Professor'], 'Invalid role selected')
+      .required('Role is required'),
+    access_code: Yup.string().when('role', {
+      is: 'Student',
+      then: schema => schema.required('Access code is required for students'),
+      otherwise: schema => schema.optional(),
+    }),
   }),
 };
 
