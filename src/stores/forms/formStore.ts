@@ -22,7 +22,6 @@ interface RegistrationFormData {
   password: string;
   confirm_password: string;
   access_code: string;
-  role: string;
   errors: FormErrors;
 }
 
@@ -80,7 +79,6 @@ export const useFormStore = create<FormStoreState>(set => ({
     password: '',
     confirm_password: '',
     access_code: '',
-    role: 'Student',
     errors: {},
   },
 
@@ -226,7 +224,6 @@ export const useFormStore = create<FormStoreState>(set => ({
         password: '',
         confirm_password: '',
         access_code: '',
-        role: 'Student',
         errors: {},
       },
     }),
@@ -259,7 +256,6 @@ export const useFormStore = create<FormStoreState>(set => ({
         password: '',
         confirm_password: '',
         access_code: '',
-        role: 'Student',
         errors: {},
       },
     }),

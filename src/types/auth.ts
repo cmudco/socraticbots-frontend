@@ -3,7 +3,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
-  role: string;
+  is_professor: boolean;
   external_user_id?: number;
   is_active: boolean;
   date_joined?: string;

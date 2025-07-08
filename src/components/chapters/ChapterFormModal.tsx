@@ -30,6 +30,7 @@ interface ChapterFormModalProps {
   onClose: () => void;
   chapter?: Chapter | null;
   bookId: string;
+  viewOnly?: boolean; // New prop for view-only mode
 }
 
 interface FormValues {
@@ -45,6 +46,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   onClose,
   chapter,
   bookId,
+  viewOnly = false,
 }) => {
   const formRef = useRef<FormikProps<FormValues>>(null);
 
@@ -200,12 +202,12 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     { id: 'basic', label: 'Basic Info' },
     { id: 'prompts', label: 'Prompts' },
     ...(isEdit ? [{ id: 'files', label: 'Files' }] : []),
-    { id: 'deployment', label: 'Deployment' },
+    ...(isEdit ? [{ id: 'deployment', label: 'Deployment' }] : []),
   ];
 
-  // Reset to basic tab if we're on files tab but switched to create mode
+  // Reset to basic tab if we're on files or deployment tab but switched to create mode
   useEffect(() => {
-    if (!isEdit && activeTab === 'files') {
+    if (!isEdit && (activeTab === 'files' || activeTab === 'deployment')) {
       setActiveTab('basic');
     }
   }, [isEdit, activeTab, setActiveTab]);
@@ -213,15 +215,15 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'basic':
-        return <BasicInfoTab ref={formRef} />;
+        return <BasicInfoTab ref={formRef} viewOnly={viewOnly} />;
       case 'prompts':
-        return <PromptsTab />;
+        return <PromptsTab viewOnly={viewOnly} />;
       case 'files':
         return <FilesTab />;
       case 'deployment':
         return <DeploymentTab />;
       default:
-        return <BasicInfoTab ref={formRef} />;
+        return <BasicInfoTab ref={formRef} viewOnly={viewOnly} />;
     }
   };
 
@@ -235,12 +237,14 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
             </div>
             <div>
               <DialogTitle className="text-lg font-semibold">
-                {isEdit ? 'Edit Chapter' : 'Create New Chapter'}
+                {viewOnly ? 'Chapter Details' : isEdit ? 'Edit Chapter' : 'Create New Chapter'}
               </DialogTitle>
               <DialogDescription className="text-slate-600">
-                {isEdit
-                  ? 'Update the chapter details below.'
-                  : 'Fill in the details to create a new chapter.'}
+                {viewOnly
+                  ? 'View chapter information below.'
+                  : isEdit
+                    ? 'Update the chapter details below.'
+                    : 'Fill in the details to create a new chapter.'}
               </DialogDescription>
             </div>
           </div>
@@ -252,10 +256,12 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
             <div className="flex items-start gap-3">
               <Info size={20} className="mt-0.5 flex-shrink-0 text-blue-600" />
               <div className="text-sm">
-                <p className="font-medium text-blue-900">File Upload Available After Creation</p>
+                <p className="font-medium text-blue-900">
+                  Additional Features Available After Creation
+                </p>
                 <p className="mt-1 text-blue-700">
-                  Once your chapter is created, you'll be able to upload files and documents in the
-                  Files tab when editing the chapter.
+                  Once your chapter is created, you'll be able to upload files and generate
+                  deployment codes in the Files and Deployment tabs when editing the chapter.
                 </p>
               </div>
             </div>
@@ -288,30 +294,38 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
 
         {/* Modal Footer */}
         <DialogFooter className="flex items-center justify-end space-x-3 border-t p-6">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isSubmitting}
-            className="border-slate-200 text-slate-700 hover:bg-slate-50"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="bg-violet-600 text-white hover:bg-violet-700"
-          >
-            {isSubmitting ? (
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Saving...
-              </div>
-            ) : isEdit ? (
-              'Update Chapter'
-            ) : (
-              'Create Chapter'
-            )}
-          </Button>
+          {viewOnly ? (
+            <Button onClick={handleClose} className="bg-violet-600 text-white hover:bg-violet-700">
+              Close
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                disabled={isSubmitting}
+                className="border-slate-200 text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-violet-600 text-white hover:bg-violet-700"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Saving...
+                  </div>
+                ) : isEdit ? (
+                  'Update Chapter'
+                ) : (
+                  'Create Chapter'
+                )}
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

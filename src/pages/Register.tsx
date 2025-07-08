@@ -12,13 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 // Validation schema
 const registrationSchema = Yup.object({
@@ -33,12 +26,7 @@ const registrationSchema = Yup.object({
   confirm_password: Yup.string()
     .required('Confirm password is required')
     .oneOf([Yup.ref('password')], 'Passwords must match'),
-  role: Yup.string().oneOf(['Student', 'Professor'], 'Invalid role').required('Role is required'),
-  access_code: Yup.string().when('role', {
-    is: 'Student',
-    then: schema => schema.required('Access code is required for students'),
-    otherwise: schema => schema.optional(),
-  }),
+  access_code: Yup.string().required('Access code is required'),
 });
 
 interface FormValues {
@@ -46,7 +34,6 @@ interface FormValues {
   email: string;
   password: string;
   confirm_password: string;
-  role: string;
   access_code: string;
 }
 
@@ -65,7 +52,6 @@ const Register: React.FC = () => {
     email: '',
     password: '',
     confirm_password: '',
-    role: '',
     access_code: '',
   };
 
@@ -80,17 +66,6 @@ const Register: React.FC = () => {
       const errorMessage =
         error instanceof Error ? error.message : 'Registration failed. Please try again.';
       setGeneralError(errorMessage);
-    }
-  };
-
-  const handleRoleChange = (
-    value: string,
-    setFieldValue: (field: string, value: unknown) => void
-  ) => {
-    setFieldValue('role', value);
-    // Clear access code if switching to Professor
-    if (value === 'Professor') {
-      setFieldValue('access_code', '');
     }
   };
 
@@ -148,7 +123,9 @@ const Register: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>Create Account</CardTitle>
-          <CardDescription>Register for SocraticBooks as a student or professor</CardDescription>
+          <CardDescription>
+            Join SocraticBooks as a student using your instructor's access code
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Formik
@@ -156,7 +133,7 @@ const Register: React.FC = () => {
             validationSchema={registrationSchema}
             onSubmit={handleSubmit}
           >
-            {({ values, isSubmitting, setFieldValue }) => (
+            {({ isSubmitting }) => (
               <Form className="space-y-4">
                 {/* Name Field */}
                 <div className="space-y-2">
@@ -244,58 +221,32 @@ const Register: React.FC = () => {
                   />
                 </div>
 
-                {/* Role Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="role">I am a</Label>
-                  <Select
-                    value={values.role}
-                    onValueChange={value => handleRoleChange(value, setFieldValue)}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Student">Student</SelectItem>
-                      <SelectItem value="Professor">Professor</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <ErrorMessage name="role" component="p" className="text-sm text-red-600" />
-                </div>
-
                 {/* Access Code Field */}
                 <div className="space-y-2">
                   <Label htmlFor="access_code">
                     Access Code
-                    {values.role === 'Professor' && (
-                      <span className="text-sm font-normal text-gray-500">
-                        {' '}
-                        (Optional for professors)
-                      </span>
-                    )}
+                    <span className="text-sm font-normal text-gray-500"> (Required)</span>
                   </Label>
                   <Field
                     as={Input}
                     id="access_code"
                     name="access_code"
                     type="text"
-                    placeholder={
-                      values.role === 'Professor'
-                        ? 'Enter access code (optional)'
-                        : 'Enter your access code'
-                    }
+                    placeholder="Enter access code"
                     disabled={isSubmitting}
                   />
 
-                  {/* Show helpful text for professors */}
-                  {values.role === 'Professor' && !values.access_code && (
-                    <div className="rounded-md bg-blue-50 p-3">
-                      <p className="text-sm text-blue-700">
-                        As a professor, you can register without an access code. You'll have full
-                        access to create and manage content.
-                      </p>
-                    </div>
-                  )}
+                  {/* Show helpful text */}
+                  <div className="rounded-md bg-blue-50 p-3">
+                    <p className="text-sm text-blue-700">
+                      Enter the access code provided by your instructor to join their course and
+                      access chapter content.
+                    </p>
+                    <p className="mt-1 text-sm text-blue-700">
+                      <strong>Instructors:</strong> If you need to create an account as an
+                      instructor, please contact support.
+                    </p>
+                  </div>
 
                   <ErrorMessage name="access_code" component="p" className="text-sm text-red-600" />
                 </div>
