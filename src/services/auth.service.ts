@@ -11,8 +11,14 @@ export interface RegistrationRequest {
   email: string;
   password: string;
   confirm_password: string;
-  access_code: string;
-  role: string;
+  access_code: string; // Now required for students
+}
+
+export interface ProfessorRegistrationRequest {
+  name: string;
+  email: string;
+  password: string;
+  confirm_password: string;
 }
 
 export interface RegistrationResponse {
@@ -96,6 +102,18 @@ class AuthService {
   async register(registrationData: RegistrationRequest): Promise<RegistrationResponse> {
     return baseRequest<RegistrationResponse>({
       url: 'access-codes/register/',
+      method: METHOD.POST,
+      data: registrationData,
+      includeAuthToken: false,
+    });
+  }
+
+  // Register new professor without access code
+  async registerProfessor(
+    registrationData: ProfessorRegistrationRequest
+  ): Promise<RegistrationResponse> {
+    return baseRequest<RegistrationResponse>({
+      url: 'access-codes/register-professor/',
       method: METHOD.POST,
       data: registrationData,
       includeAuthToken: false,

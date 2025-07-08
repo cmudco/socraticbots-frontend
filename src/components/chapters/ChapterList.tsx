@@ -4,6 +4,7 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 
 import { useChapters } from '@/hooks/queries/useChapters';
+import { useAuth } from '@/hooks/useAuth';
 
 import { useModalStore } from '@/stores/ui/modalStore';
 import { useUiStore } from '@/stores/ui/uiStore';
@@ -23,6 +24,9 @@ interface ChapterListProps {
 }
 
 const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onChapterDeleted }) => {
+  // Get user information for access control
+  const { user } = useAuth();
+
   // Use TanStack Query for chapters data
   const { data: chapters = initialChapters || [], isLoading: loading, error } = useChapters(bookId);
 
@@ -47,6 +51,10 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
     openChapterFormModal(bookId, chapter); // With chapter = edit mode
   };
 
+  const handleOpenViewModal = (chapter: Chapter) => {
+    openChapterFormModal(bookId, chapter, true); // With viewOnly = true
+  };
+
   const handleDeleteChapter = (chapter: Chapter) => {
     openDeleteChapterModal(bookId, chapter);
   };
@@ -66,10 +74,13 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-md font-semibold">Chapters</h3>
-        <Button onClick={handleOpenCreateModal} size="sm" variant="outline">
-          <Plus size={14} />
-          Add Chapter
-        </Button>
+        {/* Only show Add Chapter button for professors */}
+        {user?.is_professor && (
+          <Button onClick={handleOpenCreateModal} size="sm" variant="outline">
+            <Plus size={14} />
+            Add Chapter
+          </Button>
+        )}
       </div>
 
       {loading ? (
@@ -77,7 +88,11 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
       ) : error ? (
         <p className="py-4 text-center text-red-500">Error loading chapters: {error.message}</p>
       ) : visibleChapters.length === 0 ? (
-        <p className="py-4 text-center text-gray-500">No chapters yet. Add your first chapter!</p>
+        <p className="py-4 text-center text-gray-500">
+          {user?.is_professor
+            ? 'No chapters yet. Add your first chapter!'
+            : 'No chapters available.'}
+        </p>
       ) : (
         <div className="space-y-2">
           {visibleChapters.map((chapter: Chapter) => (
@@ -86,6 +101,7 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
               chapter={chapter}
               onEdit={() => handleOpenEditModal(chapter)}
               onDelete={() => handleDeleteChapter(chapter)}
+              onView={() => handleOpenViewModal(chapter)}
             />
           ))}
         </div>
@@ -96,6 +112,7 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
         onClose={closeChapterFormModal}
         chapter={chapterFormModal.chapter}
         bookId={chapterFormModal.bookId || bookId}
+        viewOnly={chapterFormModal.mode === 'view'}
       />
 
       {deleteChapterModal.chapter && deleteChapterModal.bookId && (

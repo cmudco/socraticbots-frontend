@@ -9,7 +9,7 @@ interface ModalStoreState {
   bookFormModal: {
     isOpen: boolean;
     book: Book | null;
-    mode: 'create' | 'edit';
+    mode: 'create' | 'edit' | 'view';
   };
   deleteBookModal: {
     isOpen: boolean;
@@ -21,7 +21,7 @@ interface ModalStoreState {
     isOpen: boolean;
     chapter: Chapter | null;
     bookId: string | null;
-    mode: 'create' | 'edit';
+    mode: 'create' | 'edit' | 'view';
   };
   deleteChapterModal: {
     isOpen: boolean;
@@ -35,13 +35,13 @@ interface ModalStoreState {
   };
 
   // Book modal actions
-  openBookFormModal: (book?: Book) => void;
+  openBookFormModal: (book?: Book, viewOnly?: boolean) => void;
   closeBookFormModal: () => void;
   openDeleteBookModal: (book: Book) => void;
   closeDeleteBookModal: () => void;
 
   // Chapter modal actions
-  openChapterFormModal: (bookId: string, chapter?: Chapter) => void;
+  openChapterFormModal: (bookId: string, chapter?: Chapter, viewOnly?: boolean) => void;
   closeChapterFormModal: () => void;
   openDeleteChapterModal: (bookId: string, chapter: Chapter) => void;
   closeDeleteChapterModal: () => void;
@@ -81,12 +81,12 @@ export const useModalStore = create<ModalStoreState>(set => ({
   },
 
   // Book modal actions
-  openBookFormModal: (book?: Book) =>
+  openBookFormModal: (book?: Book, viewOnly?: boolean) =>
     set({
       bookFormModal: {
         isOpen: true,
         book: book || null,
-        mode: book ? 'edit' : 'create',
+        mode: viewOnly ? 'view' : book ? 'edit' : 'create',
       },
     }),
   closeBookFormModal: () =>
@@ -113,13 +113,13 @@ export const useModalStore = create<ModalStoreState>(set => ({
     }),
 
   // Chapter modal actions
-  openChapterFormModal: (bookId: string, chapter?: Chapter) =>
+  openChapterFormModal: (bookId: string, chapter?: Chapter, viewOnly?: boolean) =>
     set({
       chapterFormModal: {
         isOpen: true,
         chapter: chapter || null,
         bookId,
-        mode: chapter ? 'edit' : 'create',
+        mode: viewOnly ? 'view' : chapter ? 'edit' : 'create',
       },
     }),
   closeChapterFormModal: () =>

@@ -28,14 +28,7 @@ export const authSchemas = {
     confirm_password: Yup.string()
       .oneOf([Yup.ref('password')], 'Passwords must match')
       .required('Please confirm your password'),
-    role: Yup.string()
-      .oneOf(['Student', 'Professor'], 'Invalid role selected')
-      .required('Role is required'),
-    access_code: Yup.string().when('role', {
-      is: 'Student',
-      then: schema => schema.required('Access code is required for students'),
-      otherwise: schema => schema.optional(),
-    }),
+    access_code: Yup.string().optional(),
   }),
 };
 
