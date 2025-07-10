@@ -3,9 +3,11 @@ import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import StudentRoute from './components/auth/StudentRoute';
 import Layout from './components/layout/Layout';
 import { useAuthInitialization } from './hooks/queries/useAuthInitialization';
 import About from './pages/About';
+import AccessCodes from './pages/AccessCodes';
 import Books from './pages/Books';
 import Chat from './pages/Chat';
 import Home from './pages/Home';
@@ -40,6 +42,14 @@ const App: React.FC = () => {
             {/* Nested routes - these render in the Layout's Outlet */}
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />
+            <Route
+              path="access-codes"
+              element={
+                <StudentRoute>
+                  <AccessCodes />
+                </StudentRoute>
+              }
+            />
             <Route path="settings" element={<Settings />} />
             <Route path="books" element={<Books />} />
             <Route path="chat" element={<Chat />} />

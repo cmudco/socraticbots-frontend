@@ -4,8 +4,8 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 
 import { useChapters } from '@/hooks/queries/useChapters';
-import { useAuth } from '@/hooks/useAuth';
 
+import { useAuthStore } from '@/stores/authStore';
 import { useModalStore } from '@/stores/ui/modalStore';
 import { useUiStore } from '@/stores/ui/uiStore';
 
@@ -24,11 +24,11 @@ interface ChapterListProps {
 }
 
 const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onChapterDeleted }) => {
-  // Get user information for access control
-  const { user } = useAuth();
-
   // Use TanStack Query for chapters data
   const { data: chapters = initialChapters || [], isLoading: loading, error } = useChapters(bookId);
+
+  // Use auth store to check user permissions
+  const { user } = useAuthStore();
 
   // Use Zustand for modal and UI state management
   const {

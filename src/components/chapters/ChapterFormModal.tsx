@@ -5,6 +5,7 @@ import { FormikProps } from 'formik';
 import { BookOpen, Info } from 'lucide-react';
 
 import { useCreateChapter, useUpdateChapter } from '@/hooks/queries/useChapters';
+import { useAuth } from '@/hooks/useAuth';
 
 import { useChapterFormStore } from '@/stores/forms/chapterFormStore';
 
@@ -49,6 +50,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   viewOnly = false,
 }) => {
   const formRef = useRef<FormikProps<FormValues>>(null);
+  const { user } = useAuth();
 
   const {
     activeTab,
@@ -73,6 +75,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   const updateChapterMutation = useUpdateChapter();
 
   const isEdit = !!chapter;
+  const isProfessor = user?.is_professor ?? false;
 
   // Reset form when modal opens/closes or chapter changes
   useEffect(() => {
@@ -201,16 +204,16 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   const tabs = [
     { id: 'basic', label: 'Basic Info' },
     { id: 'prompts', label: 'Prompts' },
-    ...(isEdit ? [{ id: 'files', label: 'Files' }] : []),
-    ...(isEdit ? [{ id: 'deployment', label: 'Deployment' }] : []),
+    ...(isEdit && isProfessor ? [{ id: 'files', label: 'Files' }] : []),
+    ...(isEdit && isProfessor ? [{ id: 'deployment', label: 'Deployment' }] : []),
   ];
 
-  // Reset to basic tab if we're on files or deployment tab but switched to create mode
+  // Reset to basic tab if we're on files or deployment tab but switched to create mode or if user is not a professor
   useEffect(() => {
-    if (!isEdit && (activeTab === 'files' || activeTab === 'deployment')) {
+    if ((!isEdit || !isProfessor) && (activeTab === 'files' || activeTab === 'deployment')) {
       setActiveTab('basic');
     }
-  }, [isEdit, activeTab, setActiveTab]);
+  }, [isEdit, isProfessor, activeTab, setActiveTab]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -260,8 +263,10 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
                   Additional Features Available After Creation
                 </p>
                 <p className="mt-1 text-blue-700">
-                  Once your chapter is created, you'll be able to upload files and generate
-                  deployment codes in the Files and Deployment tabs when editing the chapter.
+                  Once your chapter is created,{' '}
+                  {isProfessor
+                    ? "you'll be able to upload files and generate deployment codes in the Files and Deployment tabs when editing the chapter."
+                    : 'professors will be able to upload files and manage deployment settings in additional tabs when editing the chapter.'}
                 </p>
               </div>
             </div>

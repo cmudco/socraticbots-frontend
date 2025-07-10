@@ -14,6 +14,17 @@ export interface GenerateAccessCodeRequest {
   chapter_id: string;
 }
 
+export interface RedeemAccessCodeRequest {
+  access_code: string;
+}
+
+export interface RedeemAccessCodeResponse {
+  message: string;
+  target_name: string;
+  target_type: string;
+  redeemed_at: string;
+}
+
 class AccessCodeService {
   // Generate an access code for a chapter
   async generateAccessCode(chapterId: string): Promise<AccessCode> {
@@ -21,6 +32,15 @@ class AccessCodeService {
       url: 'access-codes/generate/',
       method: METHOD.POST,
       data: { chapter_id: chapterId },
+    });
+  }
+
+  // Redeem an access code for a student
+  async redeemAccessCode(accessCode: string): Promise<RedeemAccessCodeResponse> {
+    return baseRequest<RedeemAccessCodeResponse>({
+      url: 'access-codes/redeem/',
+      method: METHOD.POST,
+      data: { access_code: accessCode },
     });
   }
 }

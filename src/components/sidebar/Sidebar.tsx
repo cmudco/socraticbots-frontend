@@ -1,28 +1,32 @@
 // src/components/sidebar/Sidebar.tsx
 import React from 'react';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useLocation } from 'react-router-dom';
+
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { useAuth } from '@/hooks/useAuth';
 
 import { useUiStore } from '@/stores/ui/uiStore';
 
-import { NAVIGATION_ITEMS } from '@/types/navigation';
+import { getNavigationItemsForRole } from '@/types/navigation';
 
 import SidebarButton from './SidebarButton';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { sidebarCollapsed, toggleSidebar } = useUiStore();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   // Don't render sidebar at all if not authenticated
   if (!isAuthenticated) {
     return null;
   }
 
-  const mainNavItems = NAVIGATION_ITEMS.filter(item => item.path !== '/settings');
-  const settingsItem = NAVIGATION_ITEMS.find(item => item.path === '/settings');
+  // Get navigation items based on user role
+  const navigationItems = getNavigationItemsForRole(user?.is_professor ?? false);
+
+  const mainNavItems = navigationItems.filter(item => item.path !== '/settings');
+  const settingsItem = navigationItems.find(item => item.path === '/settings');
 
   return (
     <div
@@ -33,7 +37,7 @@ const Sidebar: React.FC = () => {
         onClick={toggleSidebar}
         className="absolute top-4 right-[-12px] z-10 rounded-full bg-white p-2 shadow-md hover:bg-gray-100"
       >
-        {sidebarCollapsed ? <FaChevronRight size={12} /> : <FaChevronLeft size={12} />}
+        {sidebarCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
 
       <div className={`flex h-full flex-col ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
