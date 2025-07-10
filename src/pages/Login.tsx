@@ -8,6 +8,8 @@ import * as Yup from 'yup';
 
 import { useAuth } from '@/hooks/useAuth';
 
+import { getErrorMessage } from '@/utils/errorHandler';
+
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,10 +38,9 @@ interface LocationState {
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated, isLoading, isLoginPending } = useAuth();
+  const { login, isAuthenticated, isLoading, isLoginPending, loginError } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [generalError, setGeneralError] = useState<string | null>(null);
 
   // Get the previous location with a fallback to home page
   const locationState = location.state as LocationState;
@@ -56,22 +57,9 @@ const Login: React.FC = () => {
   };
 
   const handleSubmit = async (values: FormValues) => {
-    setGeneralError(null);
-
-    try {
-      const success = await login(values.email, values.password);
-
-      if (success) {
-        // Redirect to the page they were trying to visit, or home
-        navigate(redirectPath, { replace: true });
-      } else {
-        setGeneralError('Login failed. Please check your credentials.');
-      }
-    } catch (error: unknown) {
-      console.error('Login failed:', error);
-      const errorMessage =
-        error instanceof Error ? error.message : 'Login failed. Please try again.';
-      setGeneralError(errorMessage);
+    const success = await login(values.email, values.password);
+    if (success) {
+      navigate(redirectPath, { replace: true });
     }
   };
 
@@ -153,10 +141,10 @@ const Login: React.FC = () => {
             )}
           </Formik>
 
-          {generalError && (
+          {loginError && (
             <Alert variant="destructive" className="mt-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{generalError}</AlertDescription>
+              <AlertDescription>{getErrorMessage(loginError)}</AlertDescription>
             </Alert>
           )}
 
