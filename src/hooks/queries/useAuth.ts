@@ -110,40 +110,21 @@ export const useLogout = () => {
 };
 
 /**
- * Hook for token refresh mutation
+ * Hook for token refresh mutation - DISABLED
+ * Refresh token functionality has been disabled to prevent backend errors
  */
 export const useRefreshToken = () => {
-  const queryClient = useQueryClient();
-  const { setAuth, clearAuth } = useAuthStore();
+  const { clearAuth } = useAuthStore();
 
   return useMutation({
-    mutationFn: (refreshToken: string) => authService.refreshToken(refreshToken),
-    onSuccess: async (newTokens: AuthTokens) => {
-      try {
-        // Fetch updated user profile
-        const userData = await authService.fetchUserProfile();
-
-        // Update Zustand store (this will also store tokens in localStorage)
-        setAuth({
-          user: userData,
-          tokens: newTokens,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-
-        // Update cached user profile
-        queryClient.setQueryData(authKeys.profile(newTokens.access), userData);
-      } catch (error) {
-        console.error('Failed to fetch user profile after token refresh:', error);
-        throw error;
-      }
+    mutationFn: async () => {
+      // Refresh token is disabled - always clear auth instead
+      console.log('Refresh token disabled - clearing authentication');
+      throw new Error('Token refresh is disabled');
     },
-    onError: error => {
-      console.error('Token refresh failed:', error);
-      // Clear auth on refresh failure
+    onError: () => {
+      // Always clear auth when this hook is called
       clearAuth();
-      // Clear all queries on auth failure
-      queryClient.clear();
     },
   });
 };
