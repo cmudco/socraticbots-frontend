@@ -5,8 +5,6 @@ import { METHOD } from '@/constants/requests';
 
 import { useAuthStore } from '@/stores/authStore';
 
-import { authService } from '@/services/auth.service';
-
 import { baseRequest } from '@/utils/baseRequest';
 
 import type { User } from '@/types/auth';
@@ -62,23 +60,9 @@ export const useAuthInitialization = () => {
             clearAuth();
           }
         } else {
-          // Access token is invalid, try to refresh
-          try {
-            const newTokens = await authService.refreshToken(refreshToken);
-
-            // Fetch user profile with new token
-            const userData = await fetchUserProfile();
-
-            setAuth({
-              tokens: newTokens,
-              user: userData,
-              isAuthenticated: true,
-              isLoading: false,
-            });
-          } catch (error) {
-            console.error('Token refresh failed during initialization:', error);
-            clearAuth();
-          }
+          // Access token is invalid, clear auth instead of refreshing
+          console.log('Access token is invalid, clearing authentication');
+          clearAuth();
         }
       } catch (error) {
         console.error('Auth initialization failed:', error);

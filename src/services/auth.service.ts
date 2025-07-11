@@ -54,8 +54,14 @@ class AuthService {
     });
   }
 
-  // Refresh tokens
-  async refreshToken(refreshToken: string): Promise<AuthTokens> {
+  // Refresh tokens - DISABLED
+  // This method has been disabled to prevent backend errors
+  //
+  async refreshToken(): Promise<AuthTokens> {
+    console.log('Refresh token method called but is disabled');
+    throw new Error('Token refresh is disabled');
+
+    /* DISABLED CODE:
     try {
       const data = await baseRequest<AuthTokens>({
         url: 'users/token/refresh/',
@@ -75,6 +81,7 @@ class AuthService {
       console.error('Token refresh failed with exception:', error);
       throw error;
     }
+    */
   }
 
   // Fetch user profile (from SocraticBooks database)
