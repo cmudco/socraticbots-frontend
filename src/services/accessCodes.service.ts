@@ -3,17 +3,6 @@ import { METHOD } from '@/constants/requests';
 
 import { baseRequest } from '@/utils/baseRequest';
 
-export interface AccessCode {
-  code: string;
-  target_name: string;
-  target_type: string;
-  created_at: string;
-}
-
-export interface GenerateAccessCodeRequest {
-  chapter_id: string;
-}
-
 export interface RedeemAccessCodeRequest {
   access_code: string;
 }
@@ -25,16 +14,20 @@ export interface RedeemAccessCodeResponse {
   redeemed_at: string;
 }
 
-class AccessCodeService {
-  // Generate an access code for a chapter
-  async generateAccessCode(chapterId: string): Promise<AccessCode> {
-    return baseRequest<AccessCode>({
-      url: 'access-codes/generate/',
-      method: METHOD.POST,
-      data: { chapter_id: chapterId },
-    });
-  }
+export interface RedeemedAccessCode {
+  code: string;
+  target_name: string;
+  target_type: string;
+  redeemed_at: string;
+  access_code_created_at: string;
+}
 
+export interface StudentAccessCodesResponse {
+  redeemed_codes: RedeemedAccessCode[];
+  total_count: number;
+}
+
+class AccessCodeService {
   // Redeem an access code for a student
   async redeemAccessCode(accessCode: string): Promise<RedeemAccessCodeResponse> {
     return baseRequest<RedeemAccessCodeResponse>({
@@ -43,7 +36,14 @@ class AccessCodeService {
       data: { access_code: accessCode },
     });
   }
+
+  // Get list of redeemed access codes for a student
+  async getStudentAccessCodes(): Promise<StudentAccessCodesResponse> {
+    return baseRequest<StudentAccessCodesResponse>({
+      url: 'access-codes/student-list/',
+      method: METHOD.GET,
+    });
+  }
 }
 
-// Export a singleton instance
 export const accessCodeService = new AccessCodeService();
