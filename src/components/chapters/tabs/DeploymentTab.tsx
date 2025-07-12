@@ -1,13 +1,11 @@
 // src/components/chapters/tabs/DeploymentTab.tsx
 import React, { useState } from 'react';
 
-import { AlertCircle, CheckCircle, Copy, Loader, Send } from 'lucide-react';
+import { CheckCircle, Copy, RefreshCw } from 'lucide-react';
 
 import { useAuth } from '@/hooks/useAuth';
 
 import { useChapterFormStore } from '@/stores/forms/chapterFormStore';
-
-import { AccessCode, accessCodeService } from '@/services/accessCodes.service';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -18,54 +16,43 @@ import { Label } from '@/components/ui/label';
 const DeploymentTab: React.FC = () => {
   // Get user information for access control
   const { user } = useAuth();
-  const { originalChapter } = useChapterFormStore();
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedCode, setGeneratedCode] = useState<AccessCode | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { originalChapter, accessCode, updateAccessCode } = useChapterFormStore();
   const [copySuccess, setCopySuccess] = useState(false);
+  const [hasGeneratedCode, setHasGeneratedCode] = useState(false);
 
-  const chapterId = originalChapter?.id;
   const existingAccessCode = originalChapter?.access_code;
 
-  // Initialize the generated code from existing access code on mount
-  React.useEffect(() => {
-    if (existingAccessCode && !generatedCode) {
-      setGeneratedCode(existingAccessCode);
-    }
-  }, [existingAccessCode, generatedCode]);
+  // Generate a unique access code on the frontend
+  const generateAccessCode = () => {
+    const generateUniqueCode = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = 'SB-';
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    };
 
-  const handleGenerateCode = async () => {
-    if (!chapterId) {
-      setError('Chapter ID is required to generate access code');
-      return;
-    }
-
-    setIsGenerating(true);
-    setError(null);
-    setGeneratedCode(null);
-
-    try {
-      const code = await accessCodeService.generateAccessCode(chapterId);
-      setGeneratedCode(code);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to generate access code';
-      setError(errorMessage);
-    } finally {
-      setIsGenerating(false);
-    }
+    const newCode = generateUniqueCode();
+    updateAccessCode(newCode);
+    setHasGeneratedCode(true);
   };
 
   const handleCopyCode = async () => {
-    const codeToUse = generatedCode || existingAccessCode;
+    const codeToUse = accessCode || existingAccessCode?.code;
     if (!codeToUse) return;
 
     try {
-      await navigator.clipboard.writeText(codeToUse.code);
+      await navigator.clipboard.writeText(codeToUse);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy code:', err);
     }
+  };
+
+  const handleAccessCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateAccessCode(e.target.value);
   };
 
   // Only professors can generate access codes
@@ -89,6 +76,8 @@ const DeploymentTab: React.FC = () => {
     );
   }
 
+  const currentAccessCode = accessCode || existingAccessCode?.code;
+
   return (
     <div className="space-y-6 p-4">
       <div>
@@ -105,45 +94,24 @@ const DeploymentTab: React.FC = () => {
           </CardTitle>
           <CardDescription>
             {existingAccessCode
-              ? 'This chapter already has an access code. You can regenerate it if needed.'
+              ? 'This chapter already has an access code. You can modify it or generate a new one.'
               : 'Create a unique access code that students can use to access this chapter.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button
-            onClick={handleGenerateCode}
-            disabled={isGenerating || !chapterId}
-            className="w-full"
-          >
-            {isGenerating ? (
-              <>
-                <Loader size={16} className="mr-2 animate-spin" />
-                {existingAccessCode ? 'Regenerating...' : 'Generating...'}
-              </>
-            ) : (
-              <>
-                <Send size={16} className="mr-2" />
-                {existingAccessCode ? 'Regenerate Access Code' : 'Generate Access Code'}
-              </>
-            )}
+          <Button onClick={generateAccessCode} className="w-full" variant="outline">
+            <RefreshCw size={16} className="mr-2" />
+            {existingAccessCode ? 'Generate New Access Code' : 'Generate Access Code'}
           </Button>
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle size={16} />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {(generatedCode || existingAccessCode) && (
+          {(currentAccessCode || hasGeneratedCode || existingAccessCode) && (
             <div className="space-y-3">
               <Alert>
                 <CheckCircle size={16} />
                 <AlertDescription>
-                  {existingAccessCode &&
-                  (!generatedCode || generatedCode?.code === existingAccessCode.code)
-                    ? 'Access code for this chapter. Share this code with your students.'
-                    : 'Access code generated successfully! Share this code with your students.'}
+                  {existingAccessCode && !accessCode
+                    ? 'Current access code for this chapter. You can modify it below.'
+                    : 'Access code generated! You can customize it below and save when updating the chapter.'}
                 </AlertDescription>
               </Alert>
 
@@ -152,11 +120,17 @@ const DeploymentTab: React.FC = () => {
                 <div className="flex gap-2">
                   <Input
                     id="access-code"
-                    value={(generatedCode || existingAccessCode)?.code || ''}
-                    readOnly
+                    value={currentAccessCode || ''}
+                    onChange={handleAccessCodeChange}
+                    placeholder="Enter custom access code"
                     className="font-mono"
                   />
-                  <Button onClick={handleCopyCode} variant="outline" size="sm">
+                  <Button
+                    onClick={handleCopyCode}
+                    variant="outline"
+                    size="sm"
+                    disabled={!currentAccessCode}
+                  >
                     {copySuccess ? (
                       <CheckCircle size={16} className="text-green-500" />
                     ) : (
@@ -164,23 +138,27 @@ const DeploymentTab: React.FC = () => {
                     )}
                   </Button>
                 </div>
+                <p className="text-sm text-gray-500">
+                  You can customize this access code to make it memorable for your students.
+                </p>
               </div>
 
-              <div className="space-y-1 text-sm text-gray-600">
-                <p>
-                  <strong>Target:</strong>{' '}
-                  {(generatedCode || existingAccessCode)?.target_name || ''}
-                </p>
-                <p>
-                  <strong>Type:</strong> {(generatedCode || existingAccessCode)?.target_type || ''}
-                </p>
-                <p>
-                  <strong>Created:</strong>{' '}
-                  {(generatedCode || existingAccessCode)?.created_at
-                    ? new Date((generatedCode || existingAccessCode)!.created_at).toLocaleString()
-                    : ''}
-                </p>
-              </div>
+              {existingAccessCode && (
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p>
+                    <strong>Target:</strong> {existingAccessCode.target_name || ''}
+                  </p>
+                  <p>
+                    <strong>Type:</strong> {existingAccessCode.target_type || ''}
+                  </p>
+                  <p>
+                    <strong>Created:</strong>{' '}
+                    {existingAccessCode.created_at
+                      ? new Date(existingAccessCode.created_at).toLocaleString()
+                      : ''}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

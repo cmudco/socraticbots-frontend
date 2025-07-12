@@ -1,8 +1,8 @@
 // src/pages/AccessCodes.tsx
 import React, { useState } from 'react';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Key } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CheckCircle, Clock, Key } from 'lucide-react';
 
 import { accessCodeService } from '@/services/accessCodes.service';
 
@@ -21,14 +21,22 @@ const AccessCodes: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const queryClient = useQueryClient();
 
+  // Fetch student's redeemed access codes
+  const { data: studentAccessCodes, isLoading: isLoadingCodes } = useQuery({
+    queryKey: ['student-access-codes'],
+    queryFn: () => accessCodeService.getStudentAccessCodes(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   const redeemMutation = useMutation({
     mutationFn: (code: string) => accessCodeService.redeemAccessCode(code),
     onSuccess: data => {
       setMessage(data.message);
       setIsSuccess(true);
       setAccessCode('');
-      // Invalidate books query to refresh the user's available books
+      // Invalidate both books and access codes queries to refresh the user's available content
       queryClient.invalidateQueries({ queryKey: ['books'] });
+      queryClient.invalidateQueries({ queryKey: ['student-access-codes'] });
     },
     onError: (error: ApiError) => {
       const errorMessage =
@@ -47,8 +55,19 @@ const AccessCodes: React.FC = () => {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-4xl space-y-6">
+      {/* Add New Access Code Section */}
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
           <Key className="h-6 w-6 text-blue-600" />
@@ -105,6 +124,61 @@ const AccessCodes: React.FC = () => {
             <li>• Access codes can only be used once per student</li>
           </ul>
         </div>
+      </div>
+
+      {/* My Redeemed Access Codes Section */}
+      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-6 flex items-center gap-3">
+          <CheckCircle className="h-6 w-6 text-green-600" />
+          <h2 className="text-xl font-bold text-gray-900">My Redeemed Access Codes</h2>
+        </div>
+
+        {isLoadingCodes ? (
+          <div className="py-4 text-center">
+            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent"></div>
+            <p className="mt-2 text-gray-600">Loading your access codes...</p>
+          </div>
+        ) : studentAccessCodes && studentAccessCodes.redeemed_codes.length > 0 ? (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              You have redeemed {studentAccessCodes.total_count} access code
+              {studentAccessCodes.total_count !== 1 ? 's' : ''}.
+            </p>
+
+            <div className="space-y-3">
+              {studentAccessCodes.redeemed_codes.map((code, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-4"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <span className="rounded bg-blue-100 px-2 py-1 font-mono text-sm text-blue-800">
+                        {code.code}
+                      </span>
+                      <span className="text-sm text-gray-500 capitalize">{code.target_type}</span>
+                    </div>
+                    <p className="mt-1 font-medium text-gray-900">{code.target_name}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                      <Clock className="h-4 w-4" />
+                      <span>Redeemed {formatDate(code.redeemed_at)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="py-8 text-center">
+            <Key className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-2 text-gray-600">No access codes redeemed yet.</p>
+            <p className="text-sm text-gray-500">
+              Use the form above to redeem access codes from your instructors.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

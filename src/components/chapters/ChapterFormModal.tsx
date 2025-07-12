@@ -64,6 +64,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     learning_goals,
     chat_model_id,
     tracking_model_id,
+    accessCode,
     setActiveTab,
     closeForm,
     setSubmitting,
@@ -119,6 +120,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         title,
         subject,
         topic,
+        ...(accessCode && { access_code_input: accessCode }),
       };
 
       // Model preferences data
@@ -173,6 +175,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     learning_goals,
     chat_model_id,
     tracking_model_id,
+    accessCode,
     isEdit,
     chapter,
     updateChapterMutation,
