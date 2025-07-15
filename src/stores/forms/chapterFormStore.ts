@@ -23,6 +23,7 @@ interface ChapterFormState {
   learning_goals: string;
   chat_model_id: string;
   tracking_model_id: string;
+  accessCode: string;
 
   // Form validation state
   touched: Record<string, boolean>;
@@ -36,6 +37,7 @@ interface ChapterFormState {
   initEditChapter: (chapter: Chapter) => void;
   setSubmitting: (submitting: boolean) => void;
   updateField: (field: string, value: string) => void;
+  updateAccessCode: (code: string) => void;
   setFieldTouched: (field: string, touched: boolean) => void;
   validateField: (field: string, value: string) => void;
   validateForm: () => boolean;
@@ -53,6 +55,7 @@ const initialFormState = {
   learning_goals: '',
   chat_model_id: '',
   tracking_model_id: '',
+  accessCode: '',
 };
 
 const initialValidationState = {
@@ -122,6 +125,7 @@ export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
       learning_goals: chapter.prompts?.learning_goals || '',
       chat_model_id: chapter.model_preference?.chat_model?.id || '',
       tracking_model_id: chapter.model_preference?.tracking_model?.id || '',
+      accessCode: chapter.access_code?.code || '',
       ...initialValidationState,
     }),
 
@@ -137,6 +141,8 @@ export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
       },
     }));
   },
+
+  updateAccessCode: (code: string) => set({ accessCode: code }),
 
   setFieldTouched: (field: string, touched: boolean) => {
     set(state => ({

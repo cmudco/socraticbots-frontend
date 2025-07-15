@@ -14,8 +14,6 @@ import { useModalStore } from '@/stores/ui/modalStore';
 import { Card } from '@/components/ui/card';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 
-import { ChatMessage, ChatRole, ChatSender } from '@/types/chat';
-
 import ChatControls from './ChatControls';
 import ChatHeader from './ChatHeader';
 import ChatInput from './ChatInput';
@@ -31,9 +29,6 @@ const ChatInterface: React.FC = () => {
     setSelectedConversationId,
     inputValue,
     setInputValue,
-    pendingMessages,
-    addPendingMessage,
-    removePendingMessage,
   } = useChatStore();
 
   // Use Zustand for modal state management
@@ -42,7 +37,7 @@ const ChatInterface: React.FC = () => {
 
   const { data: conversation, isLoading: conversationLoading } =
     useConversationForChapter(selectedChapterId);
-  const { streamMessage, isStreaming, error: streamError, tokens } = useStreamMessage();
+  const { streamMessage, isStreaming, error: streamError } = useStreamMessage();
   const clearConversationMutation = useClearConversation();
 
   const actualConversationId = conversation?.id;
@@ -59,7 +54,7 @@ const ChatInterface: React.FC = () => {
     if (messageAreaRef.current) {
       messageAreaRef.current.scrollTop = messageAreaRef.current.scrollHeight;
     }
-  }, [messages, pendingMessages, isStreaming, tokens]);
+  }, [messages, isStreaming]);
 
   // Refocus input when streaming stops
   useEffect(() => {
@@ -77,24 +72,15 @@ const ChatInterface: React.FC = () => {
     const messageToSend = inputValue.trim();
     setInputValue('');
 
-    // Create a pending message
-    const pendingId = `pending-${Date.now()}`;
-    const pendingMessage: ChatMessage = {
-      id: pendingId,
-      conversation: actualConversationId,
-      role: 'user' as ChatRole,
-      content: messageToSend,
-      created_at: new Date().toISOString(),
-      sender: 'user' as ChatSender,
-      timestamp: new Date().toISOString(),
-    };
-    addPendingMessage(pendingMessage);
-
     try {
-      await streamMessage({ conversationId: actualConversationId, content: messageToSend });
-      removePendingMessage(pendingId);
-    } catch {
-      removePendingMessage(pendingId);
+      await streamMessage({
+        conversationId: actualConversationId,
+        chapterId: selectedChapterId!,
+        content: messageToSend,
+      });
+    } catch (error) {
+      // Handle error - could show toast notification
+      console.error('Failed to send message:', error);
     }
   };
 
@@ -118,21 +104,9 @@ const ChatInterface: React.FC = () => {
     closeClearConversationModal();
   };
 
-  // Merge messages with pending and streaming tokens
-  const allMessages = [...messages, ...pendingMessages];
-
-  // Add streaming message if streaming
-  if (isStreaming && tokens.length > 0) {
-    allMessages.push({
-      id: `streaming-${Date.now()}`,
-      conversation: actualConversationId || '',
-      role: 'assistant' as ChatRole,
-      content: tokens.join(''),
-      created_at: new Date().toISOString(),
-      sender: 'assistant' as ChatSender,
-      timestamp: new Date().toISOString(),
-    });
-  }
+  // Get messages from conversation (includes optimistic updates from TanStack Query)
+  // TanStack Query handles streaming via onToken callback, so no need for manual streaming message
+  const allMessages = [...messages];
 
   // Empty state when no chapter is selected
   if (!selectedChapterId) {

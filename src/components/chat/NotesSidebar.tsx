@@ -122,8 +122,8 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
             </div>
             {!isCollapsed && (
               <div>
-                <h2 className="text-base font-semibold text-slate-800">Smart Notes</h2>
-                <p className="text-sm text-slate-600">AI-enhanced learning</p>
+                <h2 className="text-base font-semibold text-slate-800">Notes</h2>
+                <p className="text-sm text-slate-600">Your notes</p>
               </div>
             )}
           </div>

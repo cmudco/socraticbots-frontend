@@ -76,10 +76,12 @@ const TiptapEditor = ({
   value,
   onChange,
   placeholder,
+  readOnly = false,
 }: {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
+  readOnly?: boolean;
 }) => {
   // Create a custom starter kit without the list extensions
   const CustomStarterKit = StarterKit.configure({
@@ -99,29 +101,36 @@ const TiptapEditor = ({
     extensions: [
       CustomStarterKit,
       Placeholder.configure({
-        placeholder: placeholder || 'Start writing...',
+        placeholder: readOnly ? undefined : placeholder || 'Start writing...',
       }),
     ],
     content: value,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
+    editable: !readOnly,
+    onUpdate: readOnly
+      ? undefined
+      : ({ editor }) => {
+          onChange(editor.getHTML());
+        },
     editorProps: {
       attributes: {
-        class: 'p-4 min-h-[160px] focus:outline-none',
+        class: `p-4 min-h-[160px] focus:outline-none ${readOnly ? 'bg-gray-50' : ''}`,
       },
     },
   });
 
   return (
     <div className="overflow-hidden rounded border bg-white">
-      <MenuBar editor={editor} />
+      {!readOnly && <MenuBar editor={editor} />}
       <EditorContent editor={editor} />
     </div>
   );
 };
 
-const PromptsTab: React.FC = () => {
+interface PromptsTabProps {
+  viewOnly?: boolean;
+}
+
+const PromptsTab: React.FC<PromptsTabProps> = ({ viewOnly = false }) => {
   const { greeting, chat_prompt, tracking_prompt, learning_goals, updateField } =
     useChapterFormStore();
 
@@ -155,6 +164,7 @@ const PromptsTab: React.FC = () => {
           value={greeting}
           onChange={handleGreetingChange}
           placeholder="Enter the greeting message for students..."
+          readOnly={viewOnly}
         />
       </div>
 
@@ -167,6 +177,7 @@ const PromptsTab: React.FC = () => {
           value={chat_prompt}
           onChange={handleChatPromptChange}
           placeholder="Enter instructions for the AI on how to respond to student messages..."
+          readOnly={viewOnly}
         />
       </div>
 
@@ -179,6 +190,7 @@ const PromptsTab: React.FC = () => {
           value={tracking_prompt}
           onChange={handleTrackingPromptChange}
           placeholder="Enter instructions for the AI on how to track student progress..."
+          readOnly={viewOnly}
         />
       </div>
 
@@ -192,6 +204,7 @@ const PromptsTab: React.FC = () => {
           value={learning_goals}
           onChange={handleLearningGoalsChange}
           placeholder="Enter the learning goals for this chapter, e.g., 'Understand photosynthesis, Describe the carbon cycle...'"
+          readOnly={viewOnly}
         />
       </div>
     </div>

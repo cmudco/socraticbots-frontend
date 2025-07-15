@@ -7,6 +7,13 @@ import { ChapterFile } from '@/types/file';
 
 import { AIModel } from './models.service';
 
+export interface AccessCode {
+  code: string;
+  target_name: string;
+  target_type: string;
+  created_at: string;
+}
+
 export interface ModelPreference {
   id: string;
   chat_model?: AIModel;
@@ -24,6 +31,7 @@ export interface Chapter {
   prompts?: ChapterPrompt;
   learning_goals?: LearningGoal[];
   files?: ChapterFile[];
+  access_code?: AccessCode | null;
   created_at: string;
   updated_at: string;
 }

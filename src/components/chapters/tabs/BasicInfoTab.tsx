@@ -44,182 +44,219 @@ interface FormValues {
   tracking_model_id: string;
 }
 
-const BasicInfoTab = forwardRef<FormikProps<FormValues>>((_, ref) => {
-  // Get form data from Zustand store
-  const { title, subject, topic, chat_model_id, tracking_model_id, updateField } =
-    useChapterFormStore();
+interface BasicInfoTabProps {
+  viewOnly?: boolean;
+}
 
-  // Use the models query hook
-  const { data: availableModels = [], isLoading: modelsLoading } = useModels();
+const BasicInfoTab = forwardRef<FormikProps<FormValues>, BasicInfoTabProps>(
+  ({ viewOnly = false }, ref) => {
+    // Get form data from Zustand store
+    const { title, subject, topic, chat_model_id, tracking_model_id, updateField } =
+      useChapterFormStore();
 
-  // Initial values for Formik
-  const initialValues: FormValues = {
-    title: title || '',
-    subject: subject || '',
-    topic: topic || '',
-    chat_model_id: chat_model_id || '',
-    tracking_model_id: tracking_model_id || '',
-  };
+    // Use the models query hook
+    const { data: availableModels = [], isLoading: modelsLoading } = useModels();
 
-  const handleSubmit = (values: FormValues) => {
-    // Update Zustand store with validated values
-    Object.entries(values).forEach(([field, value]) => {
-      updateField(field, value);
-    });
-  };
+    // Initial values for Formik
+    const initialValues: FormValues = {
+      title: title || '',
+      subject: subject || '',
+      topic: topic || '',
+      chat_model_id: chat_model_id || '',
+      tracking_model_id: tracking_model_id || '',
+    };
 
-  return (
-    <Formik
-      initialValues={initialValues}
-      validationSchema={BasicInfoSchema}
-      onSubmit={handleSubmit}
-      enableReinitialize
-      innerRef={ref}
-      validateOnMount={false}
-      validateOnChange={true}
-      validateOnBlur={true}
-    >
-      {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => {
-        return (
-          <Form className="space-y-6">
-            {/* Title Field */}
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-sm font-medium text-slate-700">
-                Title *
-              </Label>
-              <Field
-                as={Input}
-                id="title"
-                name="title"
-                type="text"
-                placeholder="Enter chapter title"
-                className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
-                  errors.title && touched.title
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                    : ''
-                }`}
-                onChange={handleChange}
-                onBlur={handleBlur}
-              />
-              {errors.title && touched.title && (
-                <div className="mt-1 text-sm text-red-600">{errors.title}</div>
-              )}
-            </div>
+    const handleSubmit = (values: FormValues) => {
+      // Update Zustand store with validated values
+      Object.entries(values).forEach(([field, value]) => {
+        updateField(field, value);
+      });
+    };
 
-            {/* Subject Field */}
-            <div className="space-y-2">
-              <Label htmlFor="subject" className="text-sm font-medium text-slate-700">
-                Subject *
-              </Label>
-              <Field
-                as={Input}
-                id="subject"
-                name="subject"
-                type="text"
-                placeholder="Enter subject area"
-                className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
-                  errors.subject && touched.subject
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                    : ''
-                }`}
-                onChange={handleChange}
-                onBlur={handleBlur}
-              />
-              {errors.subject && touched.subject && (
-                <div className="mt-1 text-sm text-red-600">{errors.subject}</div>
-              )}
-            </div>
+    return (
+      <Formik
+        initialValues={initialValues}
+        validationSchema={BasicInfoSchema}
+        onSubmit={handleSubmit}
+        enableReinitialize
+        innerRef={ref}
+        validateOnMount={false}
+        validateOnChange={true}
+        validateOnBlur={true}
+      >
+        {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => {
+          // Create enhanced change handlers that sync with Zustand store
+          const handleFieldChange =
+            (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+              const value = event.target.value;
+              handleChange(event); // Update Formik state
+              updateField(field, value); // Update Zustand store
+            };
 
-            {/* Topic Field */}
-            <div className="space-y-2">
-              <Label htmlFor="topic" className="text-sm font-medium text-slate-700">
-                Topic *
-              </Label>
-              <Field
-                as={Input}
-                id="topic"
-                name="topic"
-                type="text"
-                placeholder="Enter specific topic"
-                className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
-                  errors.topic && touched.topic
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                    : ''
-                }`}
-                onChange={handleChange}
-                onBlur={handleBlur}
-              />
-              {errors.topic && touched.topic && (
-                <div className="mt-1 text-sm text-red-600">{errors.topic}</div>
-              )}
-            </div>
+          const handleSelectChange = (field: string) => (value: string) => {
+            setFieldValue(field, value); // Update Formik state
+            updateField(field, value); // Update Zustand store
+          };
 
-            {/* Chat Model Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="chat_model_id" className="text-sm font-medium text-slate-700">
-                Chat Model
-              </Label>
-              {modelsLoading ? (
-                <div className="text-sm text-slate-500">Loading models...</div>
-              ) : (
-                <Select
-                  value={values.chat_model_id}
-                  onValueChange={value => setFieldValue('chat_model_id', value)}
-                >
-                  <SelectTrigger className="border-slate-200 focus:border-violet-300 focus:ring-violet-200">
-                    <SelectValue placeholder="Select Chat Model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableModels.map((model: Model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {errors.chat_model_id && touched.chat_model_id && (
-                <div className="mt-1 text-sm text-red-600">{errors.chat_model_id}</div>
-              )}
-            </div>
+          return (
+            <Form className="space-y-6">
+              {/* Title Field */}
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-sm font-medium text-slate-700">
+                  Title {!viewOnly && '*'}
+                </Label>
+                <Field
+                  as={Input}
+                  id="title"
+                  name="title"
+                  type="text"
+                  placeholder={viewOnly ? undefined : 'Enter chapter title'}
+                  disabled={viewOnly}
+                  readOnly={viewOnly}
+                  className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
+                    !viewOnly && errors.title && touched.title
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                      : ''
+                  }`}
+                  onChange={viewOnly ? undefined : handleFieldChange('title')}
+                  onBlur={viewOnly ? undefined : handleBlur}
+                />
+                {!viewOnly && errors.title && touched.title && (
+                  <div className="mt-1 text-sm text-red-600">{errors.title}</div>
+                )}
+              </div>
 
-            {/* Tracking Model Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="tracking_model_id" className="text-sm font-medium text-slate-700">
-                Progress Tracking Model
-              </Label>
-              {modelsLoading ? (
-                <div className="text-sm text-slate-500">Loading models...</div>
-              ) : (
-                <Select
-                  value={values.tracking_model_id}
-                  onValueChange={value => setFieldValue('tracking_model_id', value)}
-                >
-                  <SelectTrigger className="border-slate-200 focus:border-violet-300 focus:ring-violet-200">
-                    <SelectValue placeholder="Select Progress Tracking Model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableModels.map((model: Model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {errors.tracking_model_id && touched.tracking_model_id && (
-                <div className="mt-1 text-sm text-red-600">{errors.tracking_model_id}</div>
-              )}
-            </div>
+              {/* Subject Field */}
+              <div className="space-y-2">
+                <Label htmlFor="subject" className="text-sm font-medium text-slate-700">
+                  Subject {!viewOnly && '*'}
+                </Label>
+                <Field
+                  as={Input}
+                  id="subject"
+                  name="subject"
+                  type="text"
+                  placeholder={viewOnly ? undefined : 'Enter subject area'}
+                  disabled={viewOnly}
+                  readOnly={viewOnly}
+                  className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
+                    !viewOnly && errors.subject && touched.subject
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                      : ''
+                  }`}
+                  onChange={viewOnly ? undefined : handleFieldChange('subject')}
+                  onBlur={viewOnly ? undefined : handleBlur}
+                />
+                {!viewOnly && errors.subject && touched.subject && (
+                  <div className="mt-1 text-sm text-red-600">{errors.subject}</div>
+                )}
+              </div>
 
-            {/* Hidden submit button for Formik validation */}
-            <button type="submit" style={{ display: 'none' }} />
-          </Form>
-        );
-      }}
-    </Formik>
-  );
-});
+              {/* Topic Field */}
+              <div className="space-y-2">
+                <Label htmlFor="topic" className="text-sm font-medium text-slate-700">
+                  Topic {!viewOnly && '*'}
+                </Label>
+                <Field
+                  as={Input}
+                  id="topic"
+                  name="topic"
+                  type="text"
+                  placeholder={viewOnly ? undefined : 'Enter specific topic'}
+                  disabled={viewOnly}
+                  readOnly={viewOnly}
+                  className={`border-slate-200 focus:border-violet-300 focus:ring-violet-200 ${
+                    !viewOnly && errors.topic && touched.topic
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                      : ''
+                  }`}
+                  onChange={viewOnly ? undefined : handleFieldChange('topic')}
+                  onBlur={viewOnly ? undefined : handleBlur}
+                />
+                {!viewOnly && errors.topic && touched.topic && (
+                  <div className="mt-1 text-sm text-red-600">{errors.topic}</div>
+                )}
+              </div>
+
+              {/* Chat Model Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="chat_model_id" className="text-sm font-medium text-slate-700">
+                  Chat Model
+                </Label>
+                {modelsLoading ? (
+                  <div className="text-sm text-slate-500">Loading models...</div>
+                ) : (
+                  <Select
+                    value={values.chat_model_id}
+                    onValueChange={viewOnly ? undefined : handleSelectChange('chat_model_id')}
+                    disabled={viewOnly}
+                  >
+                    <SelectTrigger className="border-slate-200 focus:border-violet-300 focus:ring-violet-200">
+                      <SelectValue
+                        placeholder={viewOnly ? 'No model selected' : 'Select Chat Model'}
+                      />
+                    </SelectTrigger>
+                    {!viewOnly && (
+                      <SelectContent>
+                        {availableModels.map((model: Model) => (
+                          <SelectItem key={model.id} value={model.id}>
+                            {model.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    )}
+                  </Select>
+                )}
+                {errors.chat_model_id && touched.chat_model_id && (
+                  <div className="mt-1 text-sm text-red-600">{errors.chat_model_id}</div>
+                )}
+              </div>
+
+              {/* Tracking Model Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="tracking_model_id" className="text-sm font-medium text-slate-700">
+                  Progress Tracking Model
+                </Label>
+                {modelsLoading ? (
+                  <div className="text-sm text-slate-500">Loading models...</div>
+                ) : (
+                  <Select
+                    value={values.tracking_model_id}
+                    onValueChange={viewOnly ? undefined : handleSelectChange('tracking_model_id')}
+                    disabled={viewOnly}
+                  >
+                    <SelectTrigger className="border-slate-200 focus:border-violet-300 focus:ring-violet-200">
+                      <SelectValue
+                        placeholder={
+                          viewOnly ? 'No model selected' : 'Select Progress Tracking Model'
+                        }
+                      />
+                    </SelectTrigger>
+                    {!viewOnly && (
+                      <SelectContent>
+                        {availableModels.map((model: Model) => (
+                          <SelectItem key={model.id} value={model.id}>
+                            {model.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    )}
+                  </Select>
+                )}
+                {errors.tracking_model_id && touched.tracking_model_id && (
+                  <div className="mt-1 text-sm text-red-600">{errors.tracking_model_id}</div>
+                )}
+              </div>
+
+              {/* Hidden submit button for Formik validation */}
+              <button type="submit" style={{ display: 'none' }} />
+            </Form>
+          );
+        }}
+      </Formik>
+    );
+  }
+);
 
 BasicInfoTab.displayName = 'BasicInfoTab';
 
