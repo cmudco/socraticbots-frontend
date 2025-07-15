@@ -28,9 +28,16 @@ interface BookFormModalProps {
   onClose: () => void;
   onBookCreated: () => void;
   book?: Book;
+  viewOnly?: boolean; // New prop for view-only mode
 }
 
-const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCreated, book }) => {
+const BookFormModal: React.FC<BookFormModalProps> = ({
+  isOpen,
+  onClose,
+  onBookCreated,
+  book,
+  viewOnly = false,
+}) => {
   // Zustand stores
   const {
     bookForm,
@@ -172,13 +179,15 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
               <BookOpen className="h-5 w-5 text-violet-600" />
             </div>
             <DialogTitle className="text-lg font-semibold">
-              {isEditMode ? 'Edit Book' : 'Create New Book'}
+              {viewOnly ? 'Book Details' : isEditMode ? 'Edit Book' : 'Create New Book'}
             </DialogTitle>
           </div>
           <DialogDescription className="pt-2 text-slate-600">
-            {isEditMode
-              ? 'Update the book details below.'
-              : 'Fill in the details to create a new book.'}
+            {viewOnly
+              ? 'View book information below.'
+              : isEditMode
+                ? 'Update the book details below.'
+                : 'Fill in the details to create a new book.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -210,21 +219,24 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={viewOnly ? undefined : handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title" className="text-sm font-medium text-slate-700">
-              Title *
+              Title {!viewOnly && '*'}
             </Label>
             <Input
               id="title"
               type="text"
               value={bookForm.title}
-              onChange={e => setBookFormField('title', e.target.value)}
-              placeholder="Enter book title"
-              disabled={isSubmitting}
+              onChange={viewOnly ? undefined : e => setBookFormField('title', e.target.value)}
+              placeholder={viewOnly ? undefined : 'Enter book title'}
+              disabled={viewOnly || isSubmitting}
+              readOnly={viewOnly}
               className="border-slate-200 focus:border-violet-300 focus:ring-violet-200"
             />
-            {formErrors.title && <p className="text-sm text-red-600">{formErrors.title}</p>}
+            {!viewOnly && formErrors.title && (
+              <p className="text-sm text-red-600">{formErrors.title}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -234,43 +246,58 @@ const BookFormModal: React.FC<BookFormModalProps> = ({ isOpen, onClose, onBookCr
             <Textarea
               id="description"
               value={bookForm.description}
-              onChange={e => setBookFormField('description', e.target.value)}
-              placeholder="Enter book description (optional)"
+              onChange={viewOnly ? undefined : e => setBookFormField('description', e.target.value)}
+              placeholder={
+                viewOnly ? 'No description provided' : 'Enter book description (optional)'
+              }
               rows={4}
-              disabled={isSubmitting}
+              disabled={viewOnly || isSubmitting}
+              readOnly={viewOnly}
               className="resize-none border-slate-200 focus:border-violet-300 focus:ring-violet-200"
             />
-            {formErrors.description && (
+            {!viewOnly && formErrors.description && (
               <p className="text-sm text-red-600">{formErrors.description}</p>
             )}
           </div>
 
           <DialogFooter className="flex gap-2 pt-4 sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="border-slate-200 text-slate-700 hover:bg-slate-50"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-violet-600 text-white hover:bg-violet-700"
-            >
-              {isSubmitting ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  {isEditMode ? 'Saving...' : 'Creating...'}
-                </div>
-              ) : isEditMode ? (
-                'Save Changes'
-              ) : (
-                'Create Book'
-              )}
-            </Button>
+            {viewOnly ? (
+              <Button
+                type="button"
+                onClick={onClose}
+                className="bg-violet-600 text-white hover:bg-violet-700"
+              >
+                Close
+              </Button>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                  className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-violet-600 text-white hover:bg-violet-700"
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      {isEditMode ? 'Saving...' : 'Creating...'}
+                    </div>
+                  ) : isEditMode ? (
+                    'Save Changes'
+                  ) : (
+                    'Create Book'
+                  )}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

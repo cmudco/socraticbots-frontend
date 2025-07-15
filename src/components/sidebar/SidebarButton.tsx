@@ -1,12 +1,13 @@
 // src/components/sidebar/SidebarButton.tsx
 import React from 'react';
-import { IconType } from 'react-icons';
 import { Link } from 'react-router-dom';
+
+import { LucideIcon } from 'lucide-react';
 
 interface SidebarButtonProps {
   to: string;
   label: string;
-  icon: IconType;
+  icon: LucideIcon;
   isActive: boolean;
   isCollapsed: boolean;
 }

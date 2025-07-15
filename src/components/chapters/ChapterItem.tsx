@@ -1,7 +1,9 @@
 // src/components/chapters/ChapterItem.tsx
 import React from 'react';
 
-import { Edit, Trash } from 'lucide-react';
+import { Edit, Eye, Trash } from 'lucide-react';
+
+import { useAuth } from '@/hooks/useAuth';
 
 import { Chapter } from '@/services/chapters.service';
 
@@ -11,9 +13,13 @@ interface ChapterItemProps {
   chapter: Chapter;
   onEdit: () => void;
   onDelete: () => void;
+  onView?: () => void; // New prop for view action
 }
 
-const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete }) => {
+const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete, onView }) => {
+  // Get user information for access control
+  const { user } = useAuth();
+
   return (
     <div className="flex items-center justify-between rounded border bg-white p-3">
       <div className="flex-1">
@@ -24,26 +30,45 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete }) 
         </div>
       </div>
       <div className="flex space-x-1">
-        <Button
-          onClick={onEdit}
-          variant="ghost"
-          size="sm"
-          className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
-          title="Edit chapter"
-        >
-          <Edit size={14} className="mr-1" />
-          Edit
-        </Button>
-        <Button
-          onClick={onDelete}
-          variant="ghost"
-          size="sm"
-          className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-red-100 hover:text-red-700"
-          title="Delete chapter"
-        >
-          <Trash size={14} className="mr-1" />
-          Delete
-        </Button>
+        {user?.is_professor ? (
+          /* Professor actions: Edit and Delete */
+          <>
+            <Button
+              onClick={onEdit}
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
+              title="Edit chapter"
+            >
+              <Edit size={14} className="mr-1" />
+              Edit
+            </Button>
+            <Button
+              onClick={onDelete}
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-red-100 hover:text-red-700"
+              title="Delete chapter"
+            >
+              <Trash size={14} className="mr-1" />
+              Delete
+            </Button>
+          </>
+        ) : (
+          /* Student action: View only */
+          onView && (
+            <Button
+              onClick={onView}
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
+              title="View chapter details"
+            >
+              <Eye size={14} className="mr-1" />
+              View
+            </Button>
+          )
+        )}
       </div>
     </div>
   );

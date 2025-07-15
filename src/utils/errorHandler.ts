@@ -28,12 +28,12 @@ export const getErrorMessage = (error: unknown): string => {
         return data.message;
       }
 
-      if (typeof data.error === 'string') {
-        return data.error;
-      }
-
       if (typeof data.detail === 'string') {
         return data.detail;
+      }
+
+      if (typeof data.error === 'string') {
+        return data.error;
       }
 
       // Handle Django REST Framework non_field_errors
