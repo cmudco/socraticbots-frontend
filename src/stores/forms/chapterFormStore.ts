@@ -1,19 +1,15 @@
-// src/stores/chapterFormStore.ts
 import { create } from 'zustand';
 
 import type { Chapter } from '@/services/chapters.service';
 
 interface ChapterFormState {
-  // Modal state
   isOpen: boolean;
   isEdit: boolean;
   activeTab: string;
   isSubmitting: boolean;
 
-  // Original chapter data (for edit mode)
   originalChapter: Chapter | null;
 
-  // Form data
   title: string;
   subject: string;
   topic: string;
@@ -25,11 +21,9 @@ interface ChapterFormState {
   tracking_model_id: string;
   accessCode: string;
 
-  // Form validation state
   touched: Record<string, boolean>;
   errors: Record<string, string>;
 
-  // Actions
   setActiveTab: (tab: string) => void;
   openForm: () => void;
   closeForm: () => void;
@@ -63,7 +57,6 @@ const initialValidationState = {
   errors: {},
 };
 
-// Simple validation rules
 const validateFieldValue = (field: string, value: string): string => {
   switch (field) {
     case 'title':
@@ -78,7 +71,6 @@ const validateFieldValue = (field: string, value: string): string => {
 };
 
 export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
-  // Initial state
   isOpen: false,
   isEdit: false,
   activeTab: 'basic',
@@ -86,7 +78,6 @@ export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
   ...initialFormState,
   ...initialValidationState,
 
-  // Actions
   setActiveTab: (tab: string) => set({ activeTab: tab }),
 
   openForm: () => set({ isOpen: true }),
@@ -167,14 +158,12 @@ export const useChapterFormStore = create<ChapterFormState>((set, get) => ({
     const state = get();
     const newErrors: Record<string, string> = {};
 
-    // Validate required fields
     newErrors.title = validateFieldValue('title', state.title);
     newErrors.subject = validateFieldValue('subject', state.subject);
     newErrors.topic = validateFieldValue('topic', state.topic);
 
     set({ errors: newErrors });
 
-    // Return true if no errors
     return !Object.values(newErrors).some(error => error !== '');
   },
 

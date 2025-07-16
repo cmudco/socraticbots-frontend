@@ -1,4 +1,3 @@
-// src/components/books/DeleteBookModal.tsx
 import React, { useEffect } from 'react';
 
 import { AlertTriangle } from 'lucide-react';
@@ -27,16 +26,12 @@ interface DeleteBookModalProps {
 }
 
 const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSuccess, book }) => {
-  // Zustand stores
   const { addError, clearErrorsByContext, getErrorsByContext } = useErrorStore();
 
-  // TanStack Query mutation
   const deleteBookMutation = useDeleteBook();
 
-  // Loading state from mutation
   const isDeleting = deleteBookMutation.isPending;
 
-  // Clear errors when modal opens
   useEffect(() => {
     if (isOpen) {
       clearErrorsByContext('deleteBook');
@@ -57,7 +52,6 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
     }
   };
 
-  // Get errors for this context
   const contextErrors = getErrorsByContext('deleteBook');
   const hasError = contextErrors.length > 0 || deleteBookMutation.isError;
 

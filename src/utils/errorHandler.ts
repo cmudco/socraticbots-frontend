@@ -1,28 +1,24 @@
 import axios, { AxiosError } from 'axios';
 
-// Django REST Framework error response interface
 interface DjangoErrorResponse {
   message?: string;
   error?: string;
   detail?: string;
   non_field_errors?: string[];
-  [key: string]: unknown; // For field-specific errors
+  [key: string]: unknown;
 }
 
 export const getErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<DjangoErrorResponse>;
 
-    // Handle network errors
     if (!axiosError.response) {
       return 'Network error. Please check your internet connection.';
     }
 
-    // Handle HTTP errors
     const status = axiosError.response.status;
     const data = axiosError.response.data;
 
-    // Try to get error message from response data
     if (data) {
       if (typeof data.message === 'string') {
         return data.message;
@@ -36,12 +32,10 @@ export const getErrorMessage = (error: unknown): string => {
         return data.error;
       }
 
-      // Handle Django REST Framework non_field_errors
       if (Array.isArray(data.non_field_errors) && data.non_field_errors.length > 0) {
         return data.non_field_errors[0];
       }
 
-      // Handle field-specific errors
       const fieldErrors = Object.keys(data).find(
         key =>
           key !== 'message' && key !== 'error' && key !== 'detail' && key !== 'non_field_errors'
@@ -52,7 +46,6 @@ export const getErrorMessage = (error: unknown): string => {
       }
     }
 
-    // Handle specific status codes
     switch (status) {
       case 400:
         return 'Bad request. Please check your input.';
@@ -73,7 +66,6 @@ export const getErrorMessage = (error: unknown): string => {
     }
   }
 
-  // Handle other types of errors
   if (error instanceof Error) {
     return error.message;
   }

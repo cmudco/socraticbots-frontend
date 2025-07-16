@@ -28,7 +28,6 @@ interface NotesSidebarProps {
 }
 
 const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
-  // Use Zustand for all notes state management
   const {
     notes,
     isCollapsed,
@@ -98,7 +97,6 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
         isCollapsed ? 'w-12' : 'w-80'
       } relative flex h-full flex-shrink-0 flex-col border-l border-slate-200/60 bg-gradient-to-br from-slate-50 via-white to-violet-50/30 backdrop-blur-sm transition-all duration-300 ease-in-out`}
     >
-      {/* Toggle Button - Fixed z-index issue */}
       <Button
         onClick={handleToggleCollapse}
         variant="ghost"
@@ -113,7 +111,6 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
         )}
       </Button>
 
-      {/* Enhanced Header */}
       <div className="border-b border-slate-200/60 px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -152,7 +149,6 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
         </div>
       </div>
 
-      {/* Search Bar */}
       {!isCollapsed && isSearching && (
         <div className="border-b border-slate-200/60 px-4 py-3">
           <div className="relative">
@@ -238,7 +234,6 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
         </div>
       )}
 
-      {/* Rich Content */}
       <div
         className={`flex-1 overflow-hidden transition-all duration-300 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}
       >
@@ -246,7 +241,6 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
           <div className="h-full overflow-y-auto">
             <div className="px-4 py-4">
               <div className="space-y-4">
-                {/* Quick Actions */}
                 <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm">
                   <h3 className="mb-3 text-sm font-semibold text-slate-800">Quick Actions</h3>
                   <div className="grid grid-cols-2 gap-2">
@@ -271,7 +265,6 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
                   </div>
                 </div>
 
-                {/* Recent Notes Section */}
                 <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur-sm">
                   <div className="border-b border-slate-200/60 px-4 py-3">
                     <div className="flex items-center justify-between">
@@ -292,7 +285,6 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
                           className="group relative rounded-xl border border-slate-200 bg-slate-50/50 p-3 transition-all hover:border-violet-200 hover:bg-violet-50/30 hover:shadow-sm"
                         >
                           {editingId === note.id ? (
-                            // Edit Mode
                             <div className="space-y-3">
                               <div className="flex items-center justify-between">
                                 <Badge
@@ -342,7 +334,6 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
                               </div>
                             </div>
                           ) : (
-                            // View Mode
                             <>
                               <div className="mb-2 flex items-start justify-between">
                                 <div className="flex items-center space-x-2">
@@ -429,7 +420,6 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
                   </div>
                 </div>
 
-                {/* Study Tips */}
                 <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 p-4 shadow-sm">
                   <div className="mb-3 flex items-center space-x-2">
                     <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500">
@@ -448,10 +438,8 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
         )}
       </div>
 
-      {/* Improved Collapsed state content */}
       {isCollapsed && (
         <div className="flex flex-1 flex-col items-center justify-start space-y-4 px-2 pt-8">
-          {/* Quick add buttons */}
           <div className="space-y-2">
             <Button
               variant="ghost"
@@ -482,7 +470,6 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
             </Button>
           </div>
 
-          {/* Notes count */}
           <div className="flex flex-col items-center space-y-1">
             <div className="h-px w-6 bg-slate-300"></div>
             <Badge variant="secondary" className="bg-slate-100 text-xs text-slate-600">

@@ -1,4 +1,3 @@
-// src/components/books/BookListEmpty.tsx
 import React from 'react';
 
 import { Plus } from 'lucide-react';

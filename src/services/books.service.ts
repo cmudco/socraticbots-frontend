@@ -1,4 +1,3 @@
-// src/services/book.service.ts
 import { METHOD } from '@/constants/requests';
 
 import { baseRequest } from '@/utils/baseRequest';
@@ -18,7 +17,6 @@ export interface UpdateBookRequest {
 }
 
 class BookService {
-  // Get all books for the current user
   async getBooks(): Promise<Book[]> {
     return baseRequest<Book[]>({
       url: 'books/',
@@ -26,7 +24,6 @@ class BookService {
     });
   }
 
-  // Get a single book by ID
   async getBook(id: string): Promise<Book> {
     return baseRequest<Book>({
       url: `books/${id}/`,
@@ -34,7 +31,6 @@ class BookService {
     });
   }
 
-  // Create a new book
   async createBook(bookData: CreateBookRequest): Promise<Book> {
     return baseRequest<Book>({
       url: 'books/',
@@ -43,7 +39,6 @@ class BookService {
     });
   }
 
-  // Update a book
   async updateBook(id: string, bookData: UpdateBookRequest): Promise<Book> {
     return baseRequest<Book>({
       url: `books/${id}/`,
@@ -52,7 +47,6 @@ class BookService {
     });
   }
 
-  // Delete a book
   async deleteBook(id: string): Promise<void> {
     return baseRequest<void>({
       url: `books/${id}/`,
@@ -60,7 +54,6 @@ class BookService {
     });
   }
 
-  // Search books (if you implement search in your backend)
   async searchBooks(query: string): Promise<Book[]> {
     return baseRequest<Book[]>({
       url: 'books/',
@@ -69,7 +62,6 @@ class BookService {
     });
   }
 
-  // Filter books by published status
   async getPublishedBooks(isPublished: boolean = true): Promise<Book[]> {
     return baseRequest<Book[]>({
       url: 'books/',
@@ -79,5 +71,4 @@ class BookService {
   }
 }
 
-// Export a singleton instance
 export const bookService = new BookService();

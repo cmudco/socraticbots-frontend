@@ -1,4 +1,3 @@
-// src/services/chat.service.ts
 import { METHOD } from '@/constants/requests';
 
 import config from '@/lib/config';
@@ -25,7 +24,6 @@ interface StreamCallbacks {
 }
 
 class ChatService {
-  // Fetch available chapters
   async getAvailableChapters(): Promise<Chapter[]> {
     return baseRequest<Chapter[]>({
       url: 'chat/available-chapters/',
@@ -87,18 +85,15 @@ class ChatService {
 
       let fullResponse = '';
 
-      // Read the stream
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
           break;
         }
 
-        // Convert the chunk to text
         const chunk = new TextDecoder().decode(value);
         const lines = chunk.split('\n');
 
-        // Process each line
         for (const line of lines) {
           if (line.startsWith('data:')) {
             try {
@@ -111,7 +106,6 @@ class ChatService {
               console.error('Error parsing SSE data:', e);
             }
           } else if (line.startsWith('event: complete')) {
-            // Try to parse the complete message data if available
             try {
               const completeData = line.replace('event: complete', '').trim();
               if (completeData) {
@@ -124,7 +118,7 @@ class ChatService {
               callbacks.onComplete?.();
             }
           } else if (line.startsWith('event: end')) {
-            // Stream has ended, but we don't need to do anything special here
+            // Stream ended
           }
         }
       }
@@ -187,7 +181,7 @@ class ChatService {
           } else if (line.startsWith('event: complete')) {
             callbacks.onComplete?.();
           } else if (line.startsWith('event: end')) {
-            // Stream has ended
+            // Stream ended
           }
         }
       }
@@ -200,13 +194,11 @@ class ChatService {
     }
   }
 
-  // Trigger progress tracking after message completion
   async triggerProgressTracking(
     conversationId: string,
     callbacks?: StreamCallbacks
   ): Promise<void> {
     try {
-      // This will trigger the progress tracking stream with real-time updates
       await this.streamTrackingProgress(conversationId, {
         onStart: () => {
           callbacks?.onStart?.();
@@ -245,5 +237,4 @@ class ChatService {
   }
 }
 
-// Export a singleton instance
 export const chatService = new ChatService();
