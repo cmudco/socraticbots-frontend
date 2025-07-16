@@ -16,14 +16,12 @@ interface LearningGoalsDisplayProps {
 const LearningGoalsDisplay: React.FC<LearningGoalsDisplayProps> = ({ className = '' }) => {
   const { selectedBookId, selectedChapterId } = useChatStore();
 
-  // Fetch structured learning goals first
   const {
     data: structuredGoals,
     isLoading: structuredLoading,
     error: structuredError,
   } = useChapterLearningGoals(selectedBookId, selectedChapterId);
 
-  // Fetch chapter details to get text-based learning goals as fallback
   const { data: chapterData, isLoading: chapterLoading } = useChapter(
     selectedBookId || '',
     selectedChapterId || '',
@@ -58,10 +56,8 @@ const LearningGoalsDisplay: React.FC<LearningGoalsDisplayProps> = ({ className =
     );
   }
 
-  // Check if we have structured learning goals
   const hasStructuredGoals = structuredGoals && structuredGoals.length > 0;
 
-  // Check if we have text-based learning goals from prompts
   const textBasedGoals = chapterData?.prompts?.learning_goals;
   const hasTextBasedGoals = textBasedGoals && textBasedGoals.trim().length > 0;
 
@@ -104,7 +100,6 @@ const LearningGoalsDisplay: React.FC<LearningGoalsDisplayProps> = ({ className =
       </div>
 
       <div className="space-y-4">
-        {/* Render structured goals if available */}
         {hasStructuredGoals &&
           structuredGoals.map((goal, index) => (
             <div key={goal.id} className="group">
@@ -130,7 +125,6 @@ const LearningGoalsDisplay: React.FC<LearningGoalsDisplayProps> = ({ className =
             </div>
           ))}
 
-        {/* Render text-based goals if no structured goals are available */}
         {!hasStructuredGoals && hasTextBasedGoals && (
           <div className="group">
             <div className="flex items-start space-x-3">

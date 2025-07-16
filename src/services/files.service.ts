@@ -1,4 +1,3 @@
-// src/services/files.service.ts
 import { METHOD } from '@/constants/requests';
 
 import { baseRequest } from '@/utils/baseRequest';
@@ -8,7 +7,6 @@ import { ChapterFile, FileFilters, UploadFileRequest } from '@/types/file';
 class FileService {
   private readonly baseUrl = 'files/';
 
-  // Get files for a chapter
   async getChapterFiles(chapterPublicId: string, filters?: FileFilters): Promise<ChapterFile[]> {
     const params = new URLSearchParams();
     if (filters?.processing_status) {
@@ -30,7 +28,6 @@ class FileService {
     });
   }
 
-  // Get a single file by ID
   async getFile(chapterPublicId: string, fileId: string): Promise<ChapterFile> {
     return baseRequest<ChapterFile>({
       url: `${this.baseUrl}chapters/${chapterPublicId}/${fileId}/`,
@@ -38,7 +35,6 @@ class FileService {
     });
   }
 
-  // Upload a file to a chapter
   async uploadChapterFile(
     chapterPublicId: string,
     uploadData: UploadFileRequest
@@ -57,7 +53,6 @@ class FileService {
     });
   }
 
-  // Update file metadata
   async updateFile(
     chapterPublicId: string,
     fileId: string,
@@ -70,7 +65,6 @@ class FileService {
     });
   }
 
-  // Delete a file
   async deleteFile(chapterPublicId: string, fileId: string): Promise<void> {
     return baseRequest<void>({
       url: `${this.baseUrl}chapters/${chapterPublicId}/${fileId}/`,
@@ -78,7 +72,6 @@ class FileService {
     });
   }
 
-  // Reprocess a file (if backend supports it)
   async reprocessFile(chapterPublicId: string, fileId: string): Promise<ChapterFile> {
     return baseRequest<ChapterFile>({
       url: `${this.baseUrl}chapters/${chapterPublicId}/${fileId}/reprocess/`,
@@ -86,17 +79,14 @@ class FileService {
     });
   }
 
-  // Get secure file URL for download/viewing
   getSecureFileUrl(fileId: string): string {
     return `/api/files/serve/${fileId}/`;
   }
 
-  // Get file download URL
   getDownloadUrl(chapterPublicId: string, fileId: string): string {
     return `${this.baseUrl}chapters/${chapterPublicId}/${fileId}/download/`;
   }
 
-  // Search files across all chapters (if backend supports it)
   async searchFiles(query: string): Promise<ChapterFile[]> {
     return baseRequest<ChapterFile[]>({
       url: `${this.baseUrl}search/?q=${encodeURIComponent(query)}`,
@@ -104,7 +94,6 @@ class FileService {
     });
   }
 
-  // Get files by processing status
   async getFilesByStatus(
     chapterPublicId: string,
     status: ChapterFile['processing_status']
@@ -116,5 +105,4 @@ class FileService {
   }
 }
 
-// Export a singleton instance
 export const fileService = new FileService();

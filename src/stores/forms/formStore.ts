@@ -26,7 +26,6 @@ interface RegistrationFormData {
 }
 
 interface FormStoreState {
-  // Book form
   bookForm: BookFormData;
   setBookFormField: (field: keyof Omit<BookFormData, 'errors'>, value: string) => void;
   setBookFormError: (field: string, error: string) => void;
@@ -34,7 +33,6 @@ interface FormStoreState {
   resetBookForm: () => void;
   setBookFormData: (data: Partial<BookFormData>) => void;
 
-  // Login form
   loginForm: LoginFormData;
   setLoginFormField: (field: keyof Omit<LoginFormData, 'errors'>, value: string) => void;
   setLoginFormError: (field: string, error: string) => void;
@@ -42,7 +40,6 @@ interface FormStoreState {
   resetLoginForm: () => void;
   setLoginFormData: (data: Partial<LoginFormData>) => void;
 
-  // Registration form
   registrationForm: RegistrationFormData;
   setRegistrationFormField: (
     field: keyof Omit<RegistrationFormData, 'errors'>,
@@ -53,26 +50,22 @@ interface FormStoreState {
   resetRegistrationForm: () => void;
   setRegistrationFormData: (data: Partial<RegistrationFormData>) => void;
 
-  // Global form utilities
   resetAllForms: () => void;
 }
 
 export const useFormStore = create<FormStoreState>(set => ({
-  // Book form initial state
   bookForm: {
     title: '',
     description: '',
     errors: {},
   },
 
-  // Login form initial state
   loginForm: {
     email: '',
     password: '',
     errors: {},
   },
 
-  // Registration form initial state
   registrationForm: {
     name: '',
     email: '',
@@ -82,13 +75,11 @@ export const useFormStore = create<FormStoreState>(set => ({
     errors: {},
   },
 
-  // Book form actions
   setBookFormField: (field, value) =>
     set(state => ({
       bookForm: {
         ...state.bookForm,
         [field]: value,
-        // Clear error for this field when user starts typing
         errors: {
           ...state.bookForm.errors,
           [field]: '',
@@ -133,13 +124,11 @@ export const useFormStore = create<FormStoreState>(set => ({
       },
     })),
 
-  // Login form actions
   setLoginFormField: (field, value) =>
     set(state => ({
       loginForm: {
         ...state.loginForm,
         [field]: value,
-        // Clear error for this field when user starts typing
         errors: {
           ...state.loginForm.errors,
           [field]: '',
@@ -183,13 +172,11 @@ export const useFormStore = create<FormStoreState>(set => ({
       },
     })),
 
-  // Registration form actions
   setRegistrationFormField: (field, value) =>
     set(state => ({
       registrationForm: {
         ...state.registrationForm,
         [field]: value,
-        // Clear error for this field when user starts typing
         errors: {
           ...state.registrationForm.errors,
           [field]: '',
@@ -237,7 +224,6 @@ export const useFormStore = create<FormStoreState>(set => ({
       },
     })),
 
-  // Global utilities
   resetAllForms: () =>
     set({
       bookForm: {

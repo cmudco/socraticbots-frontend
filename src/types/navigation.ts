@@ -1,11 +1,10 @@
-// src/types/navigation.ts
 import { Book, Home, Info, Key, type LucideIcon, MessageCircle, Settings } from 'lucide-react';
 
 interface NavigationItem {
   path: string;
   label: string;
   icon: LucideIcon;
-  roles?: ('student' | 'professor')[]; // If undefined, available to all roles
+  roles?: ('student' | 'professor')[];
 }
 
 export const NAVIGATION_ITEMS: NavigationItem[] = [
@@ -23,7 +22,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     path: '/access-codes',
     label: 'Access Codes',
     icon: Key,
-    roles: ['student'], // Only show to students
+    roles: ['student'],
   },
   {
     path: '/books',
@@ -42,7 +41,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   },
 ];
 
-// Helper function to filter navigation items based on user role
 export const getNavigationItemsForRole = (isProfessor: boolean): NavigationItem[] => {
   const userRole = isProfessor ? 'professor' : 'student';
 

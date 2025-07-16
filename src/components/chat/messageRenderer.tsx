@@ -26,7 +26,6 @@ export const renderMessageContent = ({
 }: MessageRendererProps): React.ReactElement => {
   const isAssistant = sender === 'assistant';
 
-  // For greeting messages, sanitize and render HTML
   if (isGreeting) {
     const sanitizedHTML = DOMPurify.sanitize(content, {
       USE_PROFILES: { html: true },
@@ -63,7 +62,6 @@ export const renderMessageContent = ({
     );
   }
 
-  // Assistant messages get rich markdown rendering
   if (isAssistant) {
     return (
       <div className="max-w-none leading-relaxed">
@@ -114,6 +112,5 @@ export const renderMessageContent = ({
     );
   }
 
-  // Regular user messages get simple text rendering (no markdown to avoid wrapping issues)
   return <div className="leading-relaxed">{content}</div>;
 };

@@ -7,7 +7,6 @@ import {
   authService,
 } from '@/services/auth.service';
 
-// Query Keys
 export const registrationKeys = {
   all: ['registration'] as const,
 };
@@ -18,7 +17,7 @@ export const registrationKeys = {
 export const useRegister = () => {
   return useMutation<RegistrationResponse, Error, RegistrationRequest>({
     mutationFn: (registrationData: RegistrationRequest) => authService.register(registrationData),
-    retry: false, // Disable retries to prevent double requests
+    retry: false,
     onSuccess: data => {
       console.log('Student registration successful:', data);
     },
@@ -35,7 +34,7 @@ export const useRegisterProfessor = () => {
   return useMutation<RegistrationResponse, Error, ProfessorRegistrationRequest>({
     mutationFn: (registrationData: ProfessorRegistrationRequest) =>
       authService.registerProfessor(registrationData),
-    retry: false, // Disable retries to prevent double requests
+    retry: false,
     onSuccess: data => {
       console.log('Professor registration successful:', data);
     },

@@ -1,5 +1,3 @@
-// src/types/file.ts
-
 export enum FileProcessingStatus {
   PENDING = 'pending',
   PROCESSING = 'processing',

@@ -33,16 +33,12 @@ const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
   chapter,
   bookId,
 }) => {
-  // Zustand stores
   const { addError, clearErrorsByContext, getErrorsByContext } = useErrorStore();
 
-  // TanStack Query mutation
   const deleteChapterMutation = useDeleteChapter();
 
-  // Loading state from mutation
   const isDeleting = deleteChapterMutation.isPending;
 
-  // Clear errors when modal opens
   useEffect(() => {
     if (isOpen) {
       clearErrorsByContext('deleteChapter');
@@ -63,7 +59,6 @@ const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
     }
   };
 
-  // Get errors for this context
   const contextErrors = getErrorsByContext('deleteChapter');
   const hasError = contextErrors.length > 0 || deleteChapterMutation.isError;
 

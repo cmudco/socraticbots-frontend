@@ -1,4 +1,3 @@
-// src/components/common/AuthTest.tsx
 import React, { useState } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
@@ -9,7 +8,6 @@ const AuthTest: React.FC = () => {
   const { tokens } = useAuth();
   const { addError, clearErrorsByContext, getErrorsByContext } = useErrorStore();
 
-  // Keep local state for temporary test data
   const [response, setResponse] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +38,6 @@ const AuthTest: React.FC = () => {
     }
   };
 
-  // Get errors for this context
   const contextErrors = getErrorsByContext('authTest');
 
   return (

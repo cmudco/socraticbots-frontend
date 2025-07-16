@@ -1,15 +1,12 @@
-// Formik + Yup utilities for form handling
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 
-// Common form field types
 type FormFieldValue = string | number | boolean | null | undefined;
 type FormValues = Record<
   string,
   FormFieldValue | FormFieldValue[] | Record<string, FormFieldValue>
 >;
 
-// Authentication schemas
 export const authSchemas = {
   login: Yup.object({
     username: Yup.string().required('Username is required'),
@@ -32,7 +29,6 @@ export const authSchemas = {
   }),
 };
 
-// Book and Chapter schemas
 export const bookSchemas = {
   createBook: Yup.object({
     title: Yup.string().min(1, 'Title is required').required('Title is required'),
@@ -54,7 +50,6 @@ export const bookSchemas = {
   }),
 };
 
-// Individual validation schemas for specific forms
 export const bookValidationSchema = Yup.object({
   title: Yup.string().required('Title is required').min(1, 'Title cannot be empty'),
   description: Yup.string().optional(),
@@ -99,7 +94,6 @@ export const chapterPromptsValidationSchema = Yup.object({
   learning_goals: Yup.string().optional(),
 });
 
-// Custom hook for form handling with proper typing
 export function useCustomForm<T extends FormValues>(
   initialValues: T,
   validationSchema: Yup.ObjectSchema<T>,
@@ -114,7 +108,6 @@ export function useCustomForm<T extends FormValues>(
   });
 }
 
-// Helper function to safely extract form values with proper typing
 export const getFormValues = <T extends FormValues>(values: FormValues): T => {
   return values as T;
 };

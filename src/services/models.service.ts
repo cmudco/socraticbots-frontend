@@ -1,4 +1,3 @@
-// src/services/models.service.ts
 import { METHOD } from '@/constants/requests';
 
 import { baseRequest } from '@/utils/baseRequest';
@@ -19,7 +18,6 @@ export interface AIModel {
 }
 
 class ModelsService {
-  // Get all available AI models
   async getModels(): Promise<AIModel[]> {
     return baseRequest<AIModel[]>({
       url: 'models/',
@@ -27,7 +25,6 @@ class ModelsService {
     });
   }
 
-  // Get a single AI model by ID
   async getModel(modelId: string): Promise<AIModel> {
     return baseRequest<AIModel>({
       url: `models/${modelId}/`,
@@ -35,7 +32,6 @@ class ModelsService {
     });
   }
 
-  // Get all models for a specific provider
   async getModelsByProvider(provider: string): Promise<AIModel[]> {
     try {
       const allModels = await this.getModels();
@@ -48,18 +44,15 @@ class ModelsService {
     }
   }
 
-  // Format pricing for display
   formatPrice(pricePerMillion: number): string {
     if (pricePerMillion >= 1) {
       return `$${pricePerMillion.toFixed(2)} per million tokens`;
     } else {
-      // Convert to dollars per thousand tokens for readability when price is small
       const pricePerThousand = pricePerMillion / 1000;
       return `$${(pricePerThousand * 1000).toFixed(4)} per thousand tokens`;
     }
   }
 
-  // Calculate estimated cost for a given number of tokens
   calculateCost(inputTokens: number, outputTokens: number, model: AIModel): number {
     const inputCost = (inputTokens / 1000000) * model.input_price;
     const outputCost = (outputTokens / 1000000) * model.output_price;
@@ -67,5 +60,4 @@ class ModelsService {
   }
 }
 
-// Export a singleton instance
 export const modelsService = new ModelsService();

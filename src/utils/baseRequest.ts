@@ -37,7 +37,6 @@ export const baseRequest = async <T>({
 
   if (includeAuthToken) {
     try {
-      // Get token from localStorage (simpler than Zustand for this use case)
       const authToken = localStorage.getItem('access_token');
 
       if (authToken) {

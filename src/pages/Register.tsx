@@ -13,7 +13,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-// Validation schema
 const registrationSchema = Yup.object({
   name: Yup.string()
     .required('Name is required')
@@ -44,7 +43,6 @@ const Register: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
 
-  // React Query hooks
   const registerMutation = useRegister();
 
   const initialValues: FormValues = {
@@ -135,7 +133,6 @@ const Register: React.FC = () => {
           >
             {({ isSubmitting }) => (
               <Form className="space-y-4">
-                {/* Name Field */}
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <Field
@@ -149,7 +146,6 @@ const Register: React.FC = () => {
                   <ErrorMessage name="name" component="p" className="text-sm text-red-600" />
                 </div>
 
-                {/* Email Field */}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <Field
@@ -163,7 +159,6 @@ const Register: React.FC = () => {
                   <ErrorMessage name="email" component="p" className="text-sm text-red-600" />
                 </div>
 
-                {/* Password Field */}
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
@@ -188,7 +183,6 @@ const Register: React.FC = () => {
                   <ErrorMessage name="password" component="p" className="text-sm text-red-600" />
                 </div>
 
-                {/* Confirm Password Field */}
                 <div className="space-y-2">
                   <Label htmlFor="confirm_password">Confirm Password</Label>
                   <div className="relative">
@@ -221,7 +215,6 @@ const Register: React.FC = () => {
                   />
                 </div>
 
-                {/* Access Code Field */}
                 <div className="space-y-2">
                   <Label htmlFor="access_code">
                     Access Code
@@ -236,7 +229,6 @@ const Register: React.FC = () => {
                     disabled={isSubmitting}
                   />
 
-                  {/* Show helpful text */}
                   <div className="rounded-md bg-blue-50 p-3">
                     <p className="text-sm text-blue-700">
                       Enter the access code provided by your instructor to join their course and

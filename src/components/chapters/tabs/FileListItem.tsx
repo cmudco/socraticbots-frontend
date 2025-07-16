@@ -1,4 +1,3 @@
-// src/components/chapters/tabs/FileListItem.tsx
 import React from 'react';
 
 import { ChapterFile } from '@/types/file';
@@ -18,7 +17,6 @@ const FileListItem: React.FC<FileListItemProps> = ({
   error,
   onDelete,
 }) => {
-  // Function to get file icon based on type
   const getFileIcon = (fileType: string) => {
     switch (fileType.toLowerCase()) {
       case 'pdf':
@@ -43,12 +41,10 @@ const FileListItem: React.FC<FileListItemProps> = ({
     }
   };
 
-  // Get status color
   const getStatusColor = () => {
     if (error) {
-      // Check if it's the large file processing message
       if (error.includes('Large file is still processing')) {
-        return 'text-yellow-500'; // Keep it yellow like processing
+        return 'text-yellow-500';
       }
       return 'text-red-500';
     }
@@ -57,12 +53,10 @@ const FileListItem: React.FC<FileListItemProps> = ({
     return 'text-gray-500';
   };
 
-  // Get status text
   const getStatusText = () => {
     if (error) {
-      // Check if it's the large file processing message
       if (error.includes('Large file is still processing')) {
-        return 'Processing'; // Still show as "Processing"
+        return 'Processing';
       }
       return 'Error';
     }
@@ -79,7 +73,6 @@ const FileListItem: React.FC<FileListItemProps> = ({
   return (
     <div className="rounded-lg bg-white p-4 shadow">
       <div className="flex items-center justify-between">
-        {/* File Info */}
         <div className="flex items-center space-x-3">
           {getFileIcon(file.file_type)}
           <div>
@@ -91,12 +84,9 @@ const FileListItem: React.FC<FileListItemProps> = ({
           </div>
         </div>
 
-        {/* Status and Actions */}
         <div className="flex items-center space-x-4">
-          {/* Status */}
           <span className={`text-sm ${getStatusColor()}`}>{getStatusText()}</span>
 
-          {/* Progress Bar */}
           {progress !== undefined && (
             <div className="h-2 w-24 rounded-full bg-gray-200">
               <div
@@ -106,9 +96,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex space-x-2">
-            {/* Delete button */}
             <button
               onClick={onDelete}
               className="text-red-500 hover:text-red-700"
@@ -127,7 +115,6 @@ const FileListItem: React.FC<FileListItemProps> = ({
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div
           className={`mt-2 text-sm ${

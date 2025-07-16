@@ -1,4 +1,3 @@
-// src/components/sidebar/Sidebar.tsx
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -17,12 +16,10 @@ const Sidebar: React.FC = () => {
   const { sidebarCollapsed, toggleSidebar } = useUiStore();
   const { isAuthenticated, user } = useAuth();
 
-  // Don't render sidebar at all if not authenticated
   if (!isAuthenticated) {
     return null;
   }
 
-  // Get navigation items based on user role
   const navigationItems = getNavigationItemsForRole(user?.is_professor ?? false);
 
   const mainNavItems = navigationItems.filter(item => item.path !== '/settings');
@@ -32,7 +29,6 @@ const Sidebar: React.FC = () => {
     <div
       className={`fixed top-14 left-0 ${sidebarCollapsed ? 'w-16' : 'w-64'} z-10 h-[calc(100vh-3.5rem)] bg-white shadow-lg transition-all duration-300`}
     >
-      {/* Toggle Button */}
       <button
         onClick={toggleSidebar}
         className="absolute top-4 right-[-12px] z-10 rounded-full bg-white p-2 shadow-md hover:bg-gray-100"
@@ -41,7 +37,6 @@ const Sidebar: React.FC = () => {
       </button>
 
       <div className={`flex h-full flex-col ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
-        {/* Main navigation items */}
         <div className="flex-grow space-y-2">
           {mainNavItems.map(item => (
             <SidebarButton
@@ -55,7 +50,6 @@ const Sidebar: React.FC = () => {
           ))}
         </div>
 
-        {/* Settings button at bottom */}
         {settingsItem && (
           <div className="mt-4 border-t border-gray-200 pt-4">
             <SidebarButton

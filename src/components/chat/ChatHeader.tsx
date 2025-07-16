@@ -1,4 +1,3 @@
-// src/components/chat/ChatHeader.tsx
 import React from 'react';
 
 import { BookOpen, Clock, Sparkles } from 'lucide-react';
@@ -16,11 +15,8 @@ const ChatHeader: React.FC = () => {
   return (
     <header className="sticky top-0 z-10 w-full border-b border-slate-200/60 bg-gradient-to-r from-white via-slate-50/90 to-white shadow-sm backdrop-blur-sm">
       <div className="px-6 py-4">
-        {/* Main header content */}
         <div className="flex items-center justify-between">
-          {/* Left section - Chapter info with enhanced visual hierarchy */}
           <div className="flex items-center space-x-4">
-            {/* Chapter icon and info */}
             <div className="flex items-center space-x-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md">
                 <BookOpen className="h-5 w-5 text-white" />
@@ -53,12 +49,10 @@ const ChatHeader: React.FC = () => {
             </div>
           </div>
 
-          {/* Right section - Mode selection with enhanced styling */}
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-slate-600">Mode:</span>
               <div className="flex items-center space-x-1 rounded-lg bg-slate-100/80 p-1">
-                {/* Classic Mode Button */}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -73,7 +67,6 @@ const ChatHeader: React.FC = () => {
                   Classic
                 </Button>
 
-                {/* New Mode Button (disabled) */}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -93,7 +86,6 @@ const ChatHeader: React.FC = () => {
           </div>
         </div>
 
-        {/* Optional status bar for additional context */}
         {selectedChapterId && (
           <div className="mt-3 flex items-center justify-between rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2">
             <div className="flex items-center space-x-2 text-sm">

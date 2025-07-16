@@ -1,4 +1,3 @@
-// src/components/chapters/ChapterFormModal.tsx
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { FormikProps } from 'formik';
@@ -31,7 +30,7 @@ interface ChapterFormModalProps {
   onClose: () => void;
   chapter?: Chapter | null;
   bookId: string;
-  viewOnly?: boolean; // New prop for view-only mode
+  viewOnly?: boolean;
 }
 
 interface FormValues {
@@ -78,14 +77,11 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   const isEdit = !!chapter;
   const isProfessor = user?.is_professor ?? false;
 
-  // Reset form when modal opens/closes or chapter changes
   useEffect(() => {
     if (isOpen) {
       if (chapter) {
-        // Populate form with existing chapter data
         initEditChapter(chapter);
       } else {
-        // Reset form for new chapter
         initNewChapter();
       }
     }
@@ -99,23 +95,19 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   }, [isSubmitting, closeForm, onClose]);
 
   const handleSubmit = useCallback(async () => {
-    // Trigger Formik validation first
     if (formRef.current) {
       const errors = await formRef.current.validateForm();
       if (Object.keys(errors).length > 0) {
-        // Mark all fields as touched to show errors
         formRef.current.setTouched(
           Object.keys(errors).reduce((acc, key) => ({ ...acc, [key]: true }), {})
         );
-        return; // Don't submit if there are validation errors
+        return;
       }
     }
 
-    // Set submitting state to true
     setSubmitting(true);
 
     try {
-      // Basic chapter data
       const chapterData = {
         title,
         subject,
@@ -123,13 +115,11 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         ...(accessCode && { access_code_input: accessCode }),
       };
 
-      // Model preferences data
       const modelPreferences = {
         chat_model_id: chat_model_id || undefined,
         tracking_model_id: tracking_model_id || undefined,
       };
 
-      // Prompts data
       const promptData = {
         greeting: greeting || undefined,
         chat_prompt: chat_prompt || undefined,
@@ -138,7 +128,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
       };
 
       if (isEdit && chapter) {
-        // If editing, use update mutation with separate calls
         await updateChapterMutation.mutateAsync({
           bookId,
           chapterId: chapter.id,
@@ -147,7 +136,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           promptData,
         });
       } else {
-        // If creating, use create mutation with separate calls
         await createChapterMutation.mutateAsync({
           bookId,
           chapterData,
@@ -156,12 +144,10 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         });
       }
 
-      // Close the modal after successful submission
       closeForm();
       onClose();
     } catch (error) {
       console.error('Error saving chapter:', error);
-      // Error handling is managed by TanStack Query
     } finally {
       setSubmitting(false);
     }
@@ -186,7 +172,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     setSubmitting,
   ]);
 
-  // Handle Ctrl+Enter for form submission
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -211,7 +196,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
     ...(isEdit && isProfessor ? [{ id: 'deployment', label: 'Deployment' }] : []),
   ];
 
-  // Reset to basic tab if we're on files or deployment tab but switched to create mode or if user is not a professor
   useEffect(() => {
     if ((!isEdit || !isProfessor) && (activeTab === 'files' || activeTab === 'deployment')) {
       setActiveTab('basic');
@@ -256,7 +240,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
           </div>
         </DialogHeader>
 
-        {/* Information banner for chapter creation */}
         {!isEdit && (
           <div className="mx-6 mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-start gap-3">
@@ -277,7 +260,6 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
         )}
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Custom Tab Navigation */}
           <div className="flex-shrink-0 border-b px-6">
             <div className="flex rounded-md bg-slate-100 p-1">
               {tabs.map(tab => (
@@ -296,11 +278,9 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
             </div>
           </div>
 
-          {/* Tab Content */}
           <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
         </div>
 
-        {/* Modal Footer */}
         <DialogFooter className="flex items-center justify-end space-x-3 border-t p-6">
           {viewOnly ? (
             <Button onClick={handleClose} className="bg-violet-600 text-white hover:bg-violet-700">
