@@ -1,4 +1,3 @@
-// src/services/chapters.service.ts
 import { METHOD } from '@/constants/requests';
 
 import { baseRequest } from '@/utils/baseRequest';
@@ -115,7 +114,6 @@ export interface ReorderGoalsRequest {
 }
 
 class ChapterService {
-  // Get all chapters for a specific book
   async getChapters(bookId: string): Promise<Chapter[]> {
     return baseRequest<Chapter[]>({
       url: `books/${bookId}/chapters/`,
@@ -123,7 +121,6 @@ class ChapterService {
     });
   }
 
-  // Get a single chapter by ID for a specific book
   async getChapter(bookId: string, chapterId: string): Promise<Chapter> {
     return baseRequest<Chapter>({
       url: `books/${bookId}/chapters/${chapterId}/`,
@@ -131,7 +128,6 @@ class ChapterService {
     });
   }
 
-  // Create a new chapter for a book
   async createChapter(
     bookId: string,
     chapterData: CreateChapterRequest,
@@ -139,17 +135,14 @@ class ChapterService {
     promptData?: ChapterPromptRequest
   ): Promise<Chapter> {
     try {
-      // First create the chapter
       const newChapter = await baseRequest<Chapter>({
         url: `books/${bookId}/chapters/`,
         method: METHOD.POST,
         data: chapterData,
       });
 
-      // Track if we need to fetch the updated chapter
       let needsRefetch = false;
 
-      // If model preferences are provided, set them
       if (
         modelPreferences &&
         (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)
@@ -158,7 +151,6 @@ class ChapterService {
         needsRefetch = true;
       }
 
-      // Add this block for prompts
       if (
         promptData &&
         (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)
@@ -167,7 +159,6 @@ class ChapterService {
         needsRefetch = true;
       }
 
-      // Fetch the updated chapter if needed
       if (needsRefetch) {
         return await this.getChapter(bookId, newChapter.id);
       }
@@ -179,7 +170,6 @@ class ChapterService {
     }
   }
 
-  // Update a chapter
   async updateChapter(
     bookId: string,
     chapterId: string,
@@ -188,17 +178,14 @@ class ChapterService {
     promptData?: ChapterPromptRequest
   ): Promise<Chapter> {
     try {
-      // Update the chapter basic info
       const updatedChapter = await baseRequest<Chapter>({
         url: `books/${bookId}/chapters/${chapterId}/`,
         method: METHOD.PATCH,
         data: chapterData,
       });
 
-      // Track if we need to fetch the updated chapter
       let needsRefetch = false;
 
-      // If model preferences are provided, update them
       if (
         modelPreferences &&
         (modelPreferences.chat_model_id || modelPreferences.tracking_model_id)
@@ -207,7 +194,6 @@ class ChapterService {
         needsRefetch = true;
       }
 
-      // Add this block for prompts
       if (
         promptData &&
         (promptData.greeting || promptData.chat_prompt || promptData.tracking_prompt)
@@ -216,7 +202,6 @@ class ChapterService {
         needsRefetch = true;
       }
 
-      // Fetch the updated chapter if needed
       if (needsRefetch) {
         return await this.getChapter(bookId, chapterId);
       }
@@ -228,7 +213,6 @@ class ChapterService {
     }
   }
 
-  // Set model preferences for a chapter
   async setChapterModelPreferences(
     bookId: string,
     chapterId: string,
@@ -241,7 +225,6 @@ class ChapterService {
     });
   }
 
-  // Get model preferences for a chapter
   async getChapterModelPreferences(bookId: string, chapterId: string): Promise<ModelPreference> {
     return baseRequest<ModelPreference>({
       url: `books/${bookId}/chapters/${chapterId}/model-preferences/`,
@@ -249,7 +232,6 @@ class ChapterService {
     });
   }
 
-  // Delete a chapter
   async deleteChapter(bookId: string, chapterId: string): Promise<void> {
     await baseRequest<void>({
       url: `books/${bookId}/chapters/${chapterId}/`,
@@ -257,7 +239,6 @@ class ChapterService {
     });
   }
 
-  // Get prompts for a chapter
   async getChapterPrompts(bookId: string, chapterId: string): Promise<ChapterPrompt> {
     return baseRequest<ChapterPrompt>({
       url: `books/${bookId}/chapters/${chapterId}/prompts/`,
@@ -265,7 +246,6 @@ class ChapterService {
     });
   }
 
-  // Set prompts for a chapter
   async setChapterPrompts(
     bookId: string,
     chapterId: string,
@@ -278,7 +258,6 @@ class ChapterService {
     });
   }
 
-  // Get learning goals for a chapter
   async getLearningGoals(bookId: string, chapterId: string): Promise<LearningGoal[]> {
     return baseRequest<LearningGoal[]>({
       url: `books/${bookId}/chapters/${chapterId}/learning-goals/`,
@@ -286,7 +265,6 @@ class ChapterService {
     });
   }
 
-  // Get a specific learning goal
   async getLearningGoal(bookId: string, chapterId: string, goalId: string): Promise<LearningGoal> {
     return baseRequest<LearningGoal>({
       url: `books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`,
@@ -294,7 +272,6 @@ class ChapterService {
     });
   }
 
-  // Create a learning goal
   async createLearningGoal(
     bookId: string,
     chapterId: string,
@@ -307,7 +284,6 @@ class ChapterService {
     });
   }
 
-  // Update a learning goal
   async updateLearningGoal(
     bookId: string,
     chapterId: string,
@@ -321,7 +297,6 @@ class ChapterService {
     });
   }
 
-  // Delete a learning goal
   async deleteLearningGoal(bookId: string, chapterId: string, goalId: string): Promise<void> {
     await baseRequest<void>({
       url: `books/${bookId}/chapters/${chapterId}/learning-goals/${goalId}/`,
@@ -329,7 +304,6 @@ class ChapterService {
     });
   }
 
-  // Reorder learning goals
   async reorderLearningGoals(
     bookId: string,
     chapterId: string,
@@ -342,7 +316,6 @@ class ChapterService {
     });
   }
 
-  // Create a subgoal
   async createSubGoal(
     bookId: string,
     chapterId: string,
@@ -356,7 +329,6 @@ class ChapterService {
     });
   }
 
-  // Update a subgoal
   async updateSubGoal(
     bookId: string,
     chapterId: string,
@@ -371,7 +343,6 @@ class ChapterService {
     });
   }
 
-  // Delete a subgoal
   async deleteSubGoal(
     bookId: string,
     chapterId: string,
@@ -385,5 +356,4 @@ class ChapterService {
   }
 }
 
-// Export a singleton instance
 export const chapterService = new ChapterService();

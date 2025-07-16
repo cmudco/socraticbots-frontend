@@ -1,4 +1,3 @@
-// src/stores/authStore.ts
 import { create } from 'zustand';
 
 import type { AuthState, AuthTokens, User } from '@/types/auth';
@@ -17,7 +16,6 @@ interface AuthStore extends AuthState {
   initializeAuth: () => void;
 }
 
-// Helper functions for localStorage
 const getStoredTokens = (): AuthTokens | null => {
   try {
     const access = localStorage.getItem('access_token');
@@ -59,13 +57,11 @@ const setStoredUser = (user: User | null) => {
 };
 
 export const useAuthStore = create<AuthStore>(set => ({
-  // Initial state
   user: null,
   tokens: null,
   isAuthenticated: false,
   isLoading: true,
 
-  // Actions
   setAuth: authData => {
     setStoredTokens(authData.tokens);
     setStoredUser(authData.user);

@@ -1,4 +1,3 @@
-// src/pages/AccessCodes.tsx
 import React, { useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -21,11 +20,10 @@ const AccessCodes: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch student's redeemed access codes
   const { data: studentAccessCodes, isLoading: isLoadingCodes } = useQuery({
     queryKey: ['student-access-codes'],
     queryFn: () => accessCodeService.getStudentAccessCodes(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   const redeemMutation = useMutation({
@@ -34,7 +32,6 @@ const AccessCodes: React.FC = () => {
       setMessage(data.message);
       setIsSuccess(true);
       setAccessCode('');
-      // Invalidate both books and access codes queries to refresh the user's available content
       queryClient.invalidateQueries({ queryKey: ['books'] });
       queryClient.invalidateQueries({ queryKey: ['student-access-codes'] });
     },
@@ -67,7 +64,6 @@ const AccessCodes: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      {/* Add New Access Code Section */}
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
           <Key className="h-6 w-6 text-blue-600" />
@@ -126,7 +122,6 @@ const AccessCodes: React.FC = () => {
         </div>
       </div>
 
-      {/* My Redeemed Access Codes Section */}
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
           <CheckCircle className="h-6 w-6 text-green-600" />

@@ -1,4 +1,3 @@
-// src/hooks/queries/useChapters.ts
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuthStore } from '@/stores/authStore';
@@ -12,7 +11,6 @@ import {
   chapterService,
 } from '@/services/chapters.service';
 
-// Query Keys
 export const chapterKeys = {
   all: ['chapters'] as const,
   lists: () => [...chapterKeys.all, 'list'] as const,
@@ -21,8 +19,6 @@ export const chapterKeys = {
   detail: (bookId: string, chapterId: string) =>
     [...chapterKeys.details(), bookId, chapterId] as const,
 };
-
-// Query Hooks
 
 /**
  * Get all chapters for a specific book
@@ -34,8 +30,8 @@ export const useChapters = (bookId: string, enabled: boolean = true) => {
     queryKey: chapterKeys.list(bookId),
     queryFn: () => chapterService.getChapters(bookId),
     enabled: enabled && !!bookId && isAuthenticated && !!tokens?.access,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -49,12 +45,10 @@ export const useChapter = (bookId: string, chapterId: string, enabled: boolean =
     queryKey: chapterKeys.detail(bookId, chapterId),
     queryFn: () => chapterService.getChapter(bookId, chapterId),
     enabled: enabled && !!bookId && !!chapterId && isAuthenticated && !!tokens?.access,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
-
-// Mutation Hooks
 
 /**
  * Create a new chapter
@@ -75,12 +69,10 @@ export const useCreateChapter = () => {
       promptData?: ChapterPromptRequest;
     }) => chapterService.createChapter(bookId, chapterData, modelPreferences, promptData),
     onSuccess: (newChapter: Chapter, { bookId }) => {
-      // Add to cache optimistically
       queryClient.setQueryData<Chapter[]>(chapterKeys.list(bookId), oldChapters => {
         return oldChapters ? [...oldChapters, newChapter] : [newChapter];
       });
 
-      // Invalidate and refetch chapter-related queries
       queryClient.invalidateQueries({ queryKey: chapterKeys.list(bookId) });
     },
     onError: error => {
@@ -111,10 +103,8 @@ export const useUpdateChapter = () => {
     }) =>
       chapterService.updateChapter(bookId, chapterId, chapterData, modelPreferences, promptData),
     onSuccess: (updatedChapter: Chapter, { bookId, chapterId }) => {
-      // Update the specific chapter in cache
       queryClient.setQueryData<Chapter>(chapterKeys.detail(bookId, chapterId), updatedChapter);
 
-      // Update chapter in the list cache
       queryClient.setQueryData<Chapter[]>(chapterKeys.list(bookId), oldChapters => {
         return oldChapters
           ? oldChapters.map(chapter => (chapter.id === chapterId ? updatedChapter : chapter))
@@ -137,12 +127,10 @@ export const useDeleteChapter = () => {
     mutationFn: ({ bookId, chapterId }: { bookId: string; chapterId: string }) =>
       chapterService.deleteChapter(bookId, chapterId),
     onSuccess: (_, { bookId, chapterId }) => {
-      // Remove from list cache
       queryClient.setQueryData<Chapter[]>(chapterKeys.list(bookId), oldChapters => {
         return oldChapters ? oldChapters.filter(chapter => chapter.id !== chapterId) : [];
       });
 
-      // Remove from detail cache
       queryClient.removeQueries({ queryKey: chapterKeys.detail(bookId, chapterId) });
     },
     onError: error => {

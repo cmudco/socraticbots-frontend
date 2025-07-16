@@ -1,5 +1,5 @@
 export interface Book {
-  id: string; // UUID from backend
+  id: string;
   title: string;
   description?: string;
   is_published: boolean;

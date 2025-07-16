@@ -1,4 +1,3 @@
-// src/components/books/BookFormModal.tsx
 import React, { useCallback, useEffect } from 'react';
 
 import { BookOpen } from 'lucide-react';
@@ -28,7 +27,7 @@ interface BookFormModalProps {
   onClose: () => void;
   onBookCreated: () => void;
   book?: Book;
-  viewOnly?: boolean; // New prop for view-only mode
+  viewOnly?: boolean;
 }
 
 const BookFormModal: React.FC<BookFormModalProps> = ({
@@ -38,7 +37,6 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
   book,
   viewOnly = false,
 }) => {
-  // Zustand stores
   const {
     bookForm,
     setBookFormField,
@@ -50,17 +48,13 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
 
   const { addError, clearErrorsByContext } = useErrorStore();
 
-  // TanStack Query mutations
   const createBookMutation = useCreateBook();
   const updateBookMutation = useUpdateBook();
 
-  // Determine if we're in edit mode
   const isEditMode = !!book;
 
-  // Loading state from mutations
   const isSubmitting = createBookMutation.isPending || updateBookMutation.isPending;
 
-  // Set form values when book changes (for edit mode)
   useEffect(() => {
     if (book) {
       setBookFormData({
@@ -69,12 +63,10 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
         errors: {},
       });
     } else {
-      // Reset form when not in edit mode
       resetBookForm();
     }
   }, [book, setBookFormData, resetBookForm]);
 
-  // Clear errors when modal opens
   useEffect(() => {
     if (isOpen) {
       clearBookFormErrors();
@@ -96,7 +88,6 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
         clearErrorsByContext('bookForm');
 
         if (isEditMode && book) {
-          // Update existing book
           await updateBookMutation.mutateAsync({
             id: book.id,
             bookData: {
@@ -105,14 +96,12 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
             },
           });
         } else {
-          // Create new book
           await createBookMutation.mutateAsync({
             title: bookForm.title,
             description: bookForm.description || undefined,
           });
         }
 
-        // Reset form and close modal
         resetBookForm();
         onClose();
         onBookCreated();
@@ -138,7 +127,6 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
     ]
   );
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     const keyHandler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -164,7 +152,6 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
     };
   }, [isOpen, bookForm.title, handleSubmit, setBookFormError]);
 
-  // Get errors for this context
   const formErrors = bookForm.errors;
   const hasGlobalError =
     Object.keys(formErrors).length === 0 &&

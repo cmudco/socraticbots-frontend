@@ -1,4 +1,3 @@
-// src/components/chapters/tabs/BasicInfoTab.tsx
 import { forwardRef } from 'react';
 
 import { Field, Form, Formik, FormikProps } from 'formik';
@@ -18,7 +17,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Validation schema for the basic info form
 const BasicInfoSchema = Yup.object().shape({
   title: Yup.string()
     .min(1, 'Title is required')
@@ -50,14 +48,11 @@ interface BasicInfoTabProps {
 
 const BasicInfoTab = forwardRef<FormikProps<FormValues>, BasicInfoTabProps>(
   ({ viewOnly = false }, ref) => {
-    // Get form data from Zustand store
     const { title, subject, topic, chat_model_id, tracking_model_id, updateField } =
       useChapterFormStore();
 
-    // Use the models query hook
     const { data: availableModels = [], isLoading: modelsLoading } = useModels();
 
-    // Initial values for Formik
     const initialValues: FormValues = {
       title: title || '',
       subject: subject || '',
@@ -67,7 +62,6 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>, BasicInfoTabProps>(
     };
 
     const handleSubmit = (values: FormValues) => {
-      // Update Zustand store with validated values
       Object.entries(values).forEach(([field, value]) => {
         updateField(field, value);
       });
@@ -85,22 +79,20 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>, BasicInfoTabProps>(
         validateOnBlur={true}
       >
         {({ values, errors, touched, handleChange, handleBlur, setFieldValue }) => {
-          // Create enhanced change handlers that sync with Zustand store
           const handleFieldChange =
             (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
               const value = event.target.value;
-              handleChange(event); // Update Formik state
-              updateField(field, value); // Update Zustand store
+              handleChange(event);
+              updateField(field, value);
             };
 
           const handleSelectChange = (field: string) => (value: string) => {
-            setFieldValue(field, value); // Update Formik state
-            updateField(field, value); // Update Zustand store
+            setFieldValue(field, value);
+            updateField(field, value);
           };
 
           return (
             <Form className="space-y-6">
-              {/* Title Field */}
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-sm font-medium text-slate-700">
                   Title {!viewOnly && '*'}
@@ -126,7 +118,6 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>, BasicInfoTabProps>(
                 )}
               </div>
 
-              {/* Subject Field */}
               <div className="space-y-2">
                 <Label htmlFor="subject" className="text-sm font-medium text-slate-700">
                   Subject {!viewOnly && '*'}
@@ -152,7 +143,6 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>, BasicInfoTabProps>(
                 )}
               </div>
 
-              {/* Topic Field */}
               <div className="space-y-2">
                 <Label htmlFor="topic" className="text-sm font-medium text-slate-700">
                   Topic {!viewOnly && '*'}
@@ -178,7 +168,6 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>, BasicInfoTabProps>(
                 )}
               </div>
 
-              {/* Chat Model Selection */}
               <div className="space-y-2">
                 <Label htmlFor="chat_model_id" className="text-sm font-medium text-slate-700">
                   Chat Model
@@ -212,7 +201,6 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>, BasicInfoTabProps>(
                 )}
               </div>
 
-              {/* Tracking Model Selection */}
               <div className="space-y-2">
                 <Label htmlFor="tracking_model_id" className="text-sm font-medium text-slate-700">
                   Progress Tracking Model
@@ -248,7 +236,6 @@ const BasicInfoTab = forwardRef<FormikProps<FormValues>, BasicInfoTabProps>(
                 )}
               </div>
 
-              {/* Hidden submit button for Formik validation */}
               <button type="submit" style={{ display: 'none' }} />
             </Form>
           );

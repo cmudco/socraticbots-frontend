@@ -1,4 +1,3 @@
-// src/components/chat/MessageList.tsx
 import React, { useEffect, useRef } from 'react';
 
 import type { ChatMessage } from '@/types/chat';
@@ -37,7 +36,6 @@ const MessageList: React.FC<MessageListProps> = ({ messages, greeting, isStreami
   }
   const normalizedMessages = allMessages.map(normalizeMessage);
 
-  // Auto-scroll to bottom
   const listRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (listRef.current) {
@@ -53,7 +51,6 @@ const MessageList: React.FC<MessageListProps> = ({ messages, greeting, isStreami
     );
   }
 
-  // Find the last AI message index
   const lastAssistantIdx = [...normalizedMessages]
     .reverse()
     .findIndex(m => m.sender === ChatSender.ASSISTANT);

@@ -21,15 +21,12 @@ const ChapterSelector: React.FC = () => {
     useChatStore();
 
   const handleChapterChange = async (chapterId: string) => {
-    // Clear existing chat state
     clearChatState();
 
     try {
-      // Get book ID from mapping
       const bookId = chapterToBookMapping?.[chapterId];
 
       if (bookId) {
-        // Get the conversation for this chapter
         try {
           const conversation = await chatService.getConversationForChapter(chapterId);
           setChapterContext(bookId, chapterId, conversation.id);
@@ -38,17 +35,13 @@ const ChapterSelector: React.FC = () => {
           console.warn('Could not fetch conversation for chapter:', error);
         }
 
-        // Set chapter context without conversation ID if conversation fetch fails
         setChapterContext(bookId, chapterId, '');
       } else {
-        // If we can't find the book in the mapping, just set the chapter ID
-        // The learning goals won't work, but at least the chat can function
         console.warn('Could not find book for chapter in mapping:', chapterId);
         setSelectedChapterId(chapterId);
       }
     } catch (error) {
       console.error('Error in handleChapterChange:', error);
-      // Fallback to just setting chapter ID
       setSelectedChapterId(chapterId);
     }
   };

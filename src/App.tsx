@@ -1,4 +1,3 @@
-// src/App.tsx
 import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
@@ -15,7 +14,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Settings from './pages/Settings';
 
-// Auth initialization component
 const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useAuthInitialization();
   return <>{children}</>;
@@ -26,11 +24,9 @@ const App: React.FC = () => {
     <AuthInitializer>
       <BrowserRouter>
         <Routes>
-          {/* Public routes - no layout */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected routes with shared layout */}
           <Route
             path="/"
             element={
@@ -39,7 +35,6 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           >
-            {/* Nested routes - these render in the Layout's Outlet */}
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />
             <Route
@@ -55,7 +50,6 @@ const App: React.FC = () => {
             <Route path="chat" element={<Chat />} />
           </Route>
 
-          {/* Catch all - redirect to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

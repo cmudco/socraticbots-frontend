@@ -1,4 +1,3 @@
-// src/components/chapters/tabs/FilesTab.tsx
 import React, { useEffect } from 'react';
 
 import { useChapterFiles } from '@/hooks/queries/useFiles';
@@ -36,7 +35,6 @@ const FilesTab: React.FC = () => {
     isDeleting,
   } = useFileUpload(chapterId || '');
 
-  // Auto-refresh to check for processing status updates
   useEffect(() => {
     const processingFiles = files.filter(
       f =>
@@ -52,7 +50,6 @@ const FilesTab: React.FC = () => {
     }
   }, [files, refetch]);
 
-  // Show message if no chapter ID (chapter not saved yet)
   if (!chapterId) {
     return (
       <div className="p-6">
@@ -113,17 +110,14 @@ const FilesTab: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
       <div>
         <h3 className="text-lg font-medium text-gray-900">Files</h3>
         <p className="mt-1 text-sm text-gray-500">Upload and manage files for this chapter</p>
         <FileStatusSummary files={files} uploadingFiles={uploadingFiles} />
       </div>
 
-      {/* Upload Area */}
       <FileUploadArea onFilesSelected={handleFilesSelected} disabled={isUploading} />
 
-      {/* Uploading Files */}
       {uploadingFiles.length > 0 && (
         <div>
           <h4 className="mb-2 font-medium text-gray-900">Uploading Files</h4>
@@ -135,7 +129,6 @@ const FilesTab: React.FC = () => {
         </div>
       )}
 
-      {/* Files List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-6">
           <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-500"></div>
@@ -157,7 +150,6 @@ const FilesTab: React.FC = () => {
         )
       )}
 
-      {/* Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={deleteModal.isOpen}
         onClose={cancelDelete}
