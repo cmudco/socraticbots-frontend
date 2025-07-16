@@ -1,4 +1,3 @@
-// src/components/chat/TrackingSidebar.tsx
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
@@ -32,14 +31,12 @@ const TrackingSidebar: React.FC = () => {
   } = useTrackingProgress(selectedConversationId);
   const { streamProgressTracking } = useStreamProgressTracking();
 
-  // Get progress streaming state from Zustand store
   const { isProgressStreaming, progressTokens, setProgressStreaming, clearProgressTokens } =
     useChatStore();
 
   if (!selectedConversationId) {
     return (
       <div className="flex h-full flex-col bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
-        {/* Header - consistent with chat styling */}
         <div className="border-b border-slate-200/60 px-4 py-4">
           <div className="flex items-center space-x-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md">
@@ -52,7 +49,6 @@ const TrackingSidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* Empty state - consistent spacing */}
         <div className="flex flex-1 items-center justify-center px-4 py-4">
           <div className="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-6 text-center shadow-sm backdrop-blur-sm">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200">
@@ -71,9 +67,7 @@ const TrackingSidebar: React.FC = () => {
   return (
     <div className="flex h-full flex-col bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-        {/* Progress Assessment Card - matching message bubble styling */}
         <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur-sm">
-          {/* Card Header */}
           <div className="border-b border-slate-200/60 px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -117,7 +111,6 @@ const TrackingSidebar: React.FC = () => {
             </div>
           </div>
 
-          {/* Card Content */}
           <div className="px-4 py-3">
             {progressLoading ? (
               <div className="space-y-4 py-6">
@@ -154,7 +147,6 @@ const TrackingSidebar: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Show streaming progress if active */}
                 {isProgressStreaming && progressTokens.length > 0 && (
                   <div className="space-y-4">
                     <div className="prose prose-sm prose-slate max-w-none">
@@ -218,7 +210,6 @@ const TrackingSidebar: React.FC = () => {
                   </div>
                 )}
 
-                {/* Show final progress data when not streaming */}
                 {!isProgressStreaming && progressData?.content && (
                   <div className="prose prose-sm prose-slate max-w-none">
                     <ReactMarkdown
@@ -272,7 +263,6 @@ const TrackingSidebar: React.FC = () => {
                   </div>
                 )}
 
-                {/* Show loading state when streaming but no tokens yet */}
                 {isProgressStreaming && progressTokens.length === 0 && (
                   <div className="space-y-4 py-6">
                     <div className="flex items-center justify-center">
@@ -302,7 +292,6 @@ const TrackingSidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* Quick Stats */}
         {progressData?.content && !isProgressStreaming && (
           <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-violet-50 to-purple-50 shadow-sm">
             <div className="px-4 py-3">
@@ -320,7 +309,6 @@ const TrackingSidebar: React.FC = () => {
         )}
       </div>
 
-      {/* Footer - consistent with chat styling */}
       <div className="border-t border-slate-200/60 bg-white/90 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center justify-center space-x-2 text-xs text-slate-500">
           <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></div>

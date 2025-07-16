@@ -1,4 +1,3 @@
-// src/components/chapters/ChapterList.tsx - Migrated to TanStack Query + Zustand
 import React from 'react';
 
 import { Plus } from 'lucide-react';
@@ -24,13 +23,10 @@ interface ChapterListProps {
 }
 
 const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onChapterDeleted }) => {
-  // Use TanStack Query for chapters data
   const { data: chapters = initialChapters || [], isLoading: loading, error } = useChapters(bookId);
 
-  // Use auth store to check user permissions
   const { user } = useAuthStore();
 
-  // Use Zustand for modal and UI state management
   const {
     chapterFormModal,
     deleteChapterModal,
@@ -40,7 +36,6 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
     closeDeleteChapterModal,
   } = useModalStore();
 
-  // Use UI store for tracking deleted chapters (for immediate UI feedback)
   const { deletedChapterIds, addDeletedChapter } = useUiStore();
 
   const handleOpenCreateModal = () => {
@@ -48,11 +43,11 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
   };
 
   const handleOpenEditModal = (chapter: Chapter) => {
-    openChapterFormModal(bookId, chapter); // With chapter = edit mode
+    openChapterFormModal(bookId, chapter);
   };
 
   const handleOpenViewModal = (chapter: Chapter) => {
-    openChapterFormModal(bookId, chapter, true); // With viewOnly = true
+    openChapterFormModal(bookId, chapter, true);
   };
 
   const handleDeleteChapter = (chapter: Chapter) => {
@@ -60,21 +55,17 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
   };
 
   const handleConfirmDelete = (chapterId: string) => {
-    // Immediately update local state to hide the chapter
     addDeletedChapter(chapterId);
 
-    // Notify parent component
     onChapterDeleted?.(chapterId);
   };
 
-  // Filter out deleted chapters from the display
   const visibleChapters = chapters.filter(chapter => !deletedChapterIds.has(chapter.id));
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-md font-semibold">Chapters</h3>
-        {/* Only show Add Chapter button for professors */}
         {user?.is_professor && (
           <Button onClick={handleOpenCreateModal} size="sm" variant="outline">
             <Plus size={14} />

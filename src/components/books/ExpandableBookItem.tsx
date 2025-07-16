@@ -1,4 +1,3 @@
-// src/components/books/ExpandableBookItem.tsx
 import React, { useState } from 'react';
 
 import { ChevronDown, ChevronUp, Edit, Eye, Trash } from 'lucide-react';
@@ -16,7 +15,7 @@ interface ExpandableBookItemProps {
   book: Book;
   onEdit: (book: Book) => void;
   onDelete: (book: Book) => void;
-  onView?: (book: Book) => void; // New prop for view action
+  onView?: (book: Book) => void;
 }
 
 const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
@@ -25,14 +24,11 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
   onDelete,
   onView,
 }) => {
-  // Get user information for access control
   const { user } = useAuth();
 
-  // Zustand for UI state (book expansion)
   const { expandedBooks, toggleBookExpansion } = useUiStore();
   const expanded = expandedBooks.has(book.id);
 
-  // React state only for temporary hover interactions
   const [showActions, setShowActions] = useState(false);
 
   const toggleExpand = () => {
@@ -53,12 +49,10 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* Book actions - visible on hover */}
           <div
             className={`flex space-x-1 transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}
           >
             {user?.is_professor ? (
-              /* Professor actions: Edit and Delete */
               <>
                 <Button
                   onClick={e => {
@@ -88,7 +82,6 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
                 </Button>
               </>
             ) : (
-              /* Student action: View only */
               onView && (
                 <Button
                   onClick={e => {
@@ -107,7 +100,6 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
             )}
           </div>
 
-          {/* Expand/collapse indicator - always visible */}
           <div className="flex items-center">
             {expanded ? (
               <ChevronUp size={20} className="text-gray-400" />

@@ -1,4 +1,3 @@
-// src/pages/Login.tsx
 import React, { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
@@ -16,7 +15,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-// Validation schema
 const loginSchema = Yup.object({
   email: Yup.string().email('Invalid email format').required('Email is required'),
   password: Yup.string()
@@ -42,11 +40,9 @@ const Login: React.FC = () => {
 
   const [showPassword, setShowPassword] = useState(false);
 
-  // Get the previous location with a fallback to home page
   const locationState = location.state as LocationState;
   const redirectPath = locationState?.from?.pathname || '/';
 
-  // Redirect if already authenticated
   if (isAuthenticated && !isLoading) {
     return <Navigate to={redirectPath} replace />;
   }
@@ -63,7 +59,6 @@ const Login: React.FC = () => {
     }
   };
 
-  // Show loading state while initial auth check is in progress
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -88,7 +83,6 @@ const Login: React.FC = () => {
           >
             {({ isSubmitting }) => (
               <Form className="space-y-4">
-                {/* Email Field */}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <Field
@@ -102,7 +96,6 @@ const Login: React.FC = () => {
                   <ErrorMessage name="email" component="p" className="text-sm text-red-600" />
                 </div>
 
-                {/* Password Field */}
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">

@@ -1,4 +1,3 @@
-// src/pages/Books.tsx
 import React from 'react';
 
 import { Plus } from 'lucide-react';
@@ -17,13 +16,10 @@ import { Button } from '@/components/ui/button';
 import { Book } from '@/types/book';
 
 const Books: React.FC = () => {
-  // Use TanStack Query for books data
   const { data: books = [], isLoading: loading, error, isError } = useBooks();
 
-  // Get user information for access control
   const { user } = useAuth();
 
-  // Use Zustand for modal state management
   const {
     bookFormModal,
     deleteBookModal,
@@ -33,29 +29,23 @@ const Books: React.FC = () => {
     closeDeleteBookModal,
   } = useModalStore();
 
-  // Modal handlers
   const handleOpenCreateModal = () => {
     openBookFormModal(); // No book = create mode
   };
 
   const handleOpenEditModal = (book: Book) => {
-    openBookFormModal(book); // With book = edit mode
+    openBookFormModal(book);
   };
 
   const handleOpenViewModal = (book: Book) => {
-    openBookFormModal(book, true); // With viewOnly = true
+    openBookFormModal(book, true);
   };
 
   const handleOpenDeleteModal = (book: Book) => {
     openDeleteBookModal(book);
   };
 
-  // Note: With TanStack Query, we don't need a manual refresh function
-  // The cache will be automatically updated by the mutation hooks
-  const handleBookSuccess = () => {
-    // Cache will be updated automatically by TanStack Query mutations
-    // This function is kept for compatibility with existing modals
-  };
+  const handleBookSuccess = () => {};
 
   const renderContent = () => {
     if (loading) {
@@ -71,7 +61,6 @@ const Books: React.FC = () => {
     }
 
     if (books.length === 0) {
-      // Show different empty state for students vs professors
       if (user?.is_professor) {
         return <BookListEmpty onCreateClick={handleOpenCreateModal} />;
       } else {
@@ -115,7 +104,6 @@ const Books: React.FC = () => {
 
       {renderContent()}
 
-      {/* Create/Edit Book Modal */}
       <BookFormModal
         isOpen={bookFormModal.isOpen}
         onClose={closeBookFormModal}
@@ -124,7 +112,6 @@ const Books: React.FC = () => {
         viewOnly={bookFormModal.mode === 'view'}
       />
 
-      {/* Delete Confirmation Modal */}
       {deleteBookModal.book && (
         <DeleteBookModal
           isOpen={deleteBookModal.isOpen}

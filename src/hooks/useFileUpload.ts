@@ -22,7 +22,6 @@ export const useFileUpload = (chapterId: string) => {
     Array.from(fileList).forEach(file => {
       const fileId = `upload-${Date.now()}-${Math.random()}`;
 
-      // Add to uploading files state
       addUploadingFile({
         id: fileId,
         name: file.name,
@@ -39,13 +38,11 @@ export const useFileUpload = (chapterId: string) => {
         },
         {
           onSuccess: () => {
-            // Update status to processing
             updateUploadingFile(fileId, {
               status: FileUploadStatus.PROCESSING,
               progress: 100,
             });
 
-            // Remove from uploading state after a delay to show completion
             setTimeout(() => {
               removeUploadingFile(fileId);
             }, 3000);

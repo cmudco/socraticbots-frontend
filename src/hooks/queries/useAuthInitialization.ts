@@ -1,4 +1,3 @@
-// src/hooks/queries/useAuthInitialization.ts
 import { useEffect, useRef } from 'react';
 
 import { METHOD } from '@/constants/requests';
@@ -18,7 +17,6 @@ export const useAuthInitialization = () => {
   const initializationRef = useRef(false);
 
   useEffect(() => {
-    // Prevent multiple initialization attempts
     if (initializationRef.current) {
       return;
     }
@@ -28,24 +26,19 @@ export const useAuthInitialization = () => {
       try {
         setLoading(true);
 
-        // Initialize from localStorage first
         initializeAuth();
 
-        // Check if we have tokens
         const accessToken = localStorage.getItem('access_token');
         const refreshToken = localStorage.getItem('refresh_token');
 
         if (!accessToken || !refreshToken) {
-          // No tokens stored, user is not authenticated
           clearAuth();
           return;
         }
 
-        // Validate the access token
         const isValid = await validateToken(accessToken);
 
         if (isValid) {
-          // Token is valid, fetch user profile from SocraticBooks
           try {
             const userData = await fetchUserProfile();
 
@@ -60,7 +53,6 @@ export const useAuthInitialization = () => {
             clearAuth();
           }
         } else {
-          // Access token is invalid, clear auth instead of refreshing
           console.log('Access token is invalid, clearing authentication');
           clearAuth();
         }
@@ -71,11 +63,9 @@ export const useAuthInitialization = () => {
     };
 
     initializeAuthState();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array to run only once - Zustand store methods are stable
+  }, []);
 };
 
-// Helper function to validate token
 const validateToken = async (token: string): Promise<boolean> => {
   try {
     await baseRequest({
@@ -91,7 +81,6 @@ const validateToken = async (token: string): Promise<boolean> => {
   }
 };
 
-// Helper function to fetch user profile from SocraticBooks database
 const fetchUserProfile = async (): Promise<User> => {
   return baseRequest<User>({
     url: 'users/user-info/',

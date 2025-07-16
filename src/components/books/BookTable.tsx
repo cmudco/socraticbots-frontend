@@ -1,4 +1,3 @@
-// src/components/books/BookTable.tsx
 import React from 'react';
 
 import { Book } from '@/types/book';
@@ -9,7 +8,7 @@ interface BookTableProps {
   books: Book[];
   onEdit: (book: Book) => void;
   onDelete: (book: Book) => void;
-  onView?: (book: Book) => void; // New prop for view action
+  onView?: (book: Book) => void;
 }
 
 const BookTable: React.FC<BookTableProps> = ({ books, onEdit, onDelete, onView }) => {

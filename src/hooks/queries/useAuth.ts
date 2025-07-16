@@ -1,4 +1,3 @@
-// src/hooks/queries/useAuth.ts
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuthStore } from '@/stores/authStore';
@@ -7,7 +6,6 @@ import { authService } from '@/services/auth.service';
 
 import type { AuthTokens } from '@/types/auth';
 
-// Query keys
 export const authKeys = {
   all: ['auth'] as const,
   user: () => [...authKeys.all, 'user'] as const,
@@ -22,8 +20,8 @@ export const useValidateToken = (token?: string) => {
     queryKey: [...authKeys.all, 'validate', token],
     queryFn: () => authService.validateToken(token!),
     enabled: !!token,
-    staleTime: 30 * 1000, // 30 seconds
-    retry: false, // Don't retry failed token validation
+    staleTime: 30 * 1000,
+    retry: false,
   });
 };
 
@@ -35,7 +33,7 @@ export const useUserProfile = (token?: string) => {
     queryKey: authKeys.profile(token || ''),
     queryFn: () => authService.fetchUserProfile(),
     enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 };
@@ -52,18 +50,15 @@ export const useLogin = () => {
       authService.login(email, password),
     onSuccess: async (tokens: AuthTokens) => {
       try {
-        // First, store the tokens in the auth store (this will also store in localStorage)
         setAuth({
-          user: null, // We'll update this after fetching the profile
+          user: null,
           tokens,
           isAuthenticated: true,
           isLoading: false,
         });
 
-        // Now fetch user profile (tokens are now available)
         const userData = await authService.fetchUserProfile();
 
-        // Update the user in the store
         setAuth({
           user: userData,
           tokens,
@@ -71,11 +66,9 @@ export const useLogin = () => {
           isLoading: false,
         });
 
-        // Cache user profile in React Query
         queryClient.setQueryData(authKeys.profile(tokens.access), userData);
       } catch (error) {
         console.error('Failed to fetch user profile after login:', error);
-        // Clear auth on profile fetch failure
         clearAuth();
         throw error;
       }
@@ -96,14 +89,11 @@ export const useLogout = () => {
 
   return useMutation({
     mutationFn: async () => {
-      // No server-side logout needed for JWT
       return Promise.resolve();
     },
     onSuccess: () => {
-      // Clear Zustand store (this will also clear localStorage)
       clearAuth();
 
-      // Clear all queries from cache
       queryClient.clear();
     },
   });
@@ -118,12 +108,10 @@ export const useRefreshToken = () => {
 
   return useMutation({
     mutationFn: async () => {
-      // Refresh token is disabled - always clear auth instead
       console.log('Refresh token disabled - clearing authentication');
       throw new Error('Token refresh is disabled');
     },
     onError: () => {
-      // Always clear auth when this hook is called
       clearAuth();
     },
   });
@@ -136,9 +124,7 @@ export const useChangePassword = () => {
   return useMutation({
     mutationFn: ({ oldPassword, newPassword }: { oldPassword: string; newPassword: string }) =>
       authService.changePassword(oldPassword, newPassword),
-    onSuccess: () => {
-      // Password changed successfully
-    },
+    onSuccess: () => {},
     onError: error => {
       console.error('Password change failed:', error);
       throw error;

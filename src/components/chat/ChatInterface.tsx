@@ -31,7 +31,6 @@ const ChatInterface: React.FC = () => {
     setInputValue,
   } = useChatStore();
 
-  // Use Zustand for modal state management
   const { clearConversationModal, openClearConversationModal, closeClearConversationModal } =
     useModalStore();
 
@@ -56,10 +55,8 @@ const ChatInterface: React.FC = () => {
     }
   }, [messages, isStreaming]);
 
-  // Refocus input when streaming stops
   useEffect(() => {
     if (!isStreaming && inputRef.current) {
-      // Small delay to ensure the UI has updated
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
@@ -79,14 +76,11 @@ const ChatInterface: React.FC = () => {
         content: messageToSend,
       });
     } catch (error) {
-      // Handle error - could show toast notification
       console.error('Failed to send message:', error);
     }
   };
 
-  const handleStopStreaming = () => {
-    // Note: Current implementation doesn't support stopping
-  };
+  const handleStopStreaming = () => {};
 
   const handleActionClick = (message: string) => {
     if (!actualConversationId || conversationLoading || isStreaming) return;
@@ -104,11 +98,8 @@ const ChatInterface: React.FC = () => {
     closeClearConversationModal();
   };
 
-  // Get messages from conversation (includes optimistic updates from TanStack Query)
-  // TanStack Query handles streaming via onToken callback, so no need for manual streaming message
   const allMessages = [...messages];
 
-  // Empty state when no chapter is selected
   if (!selectedChapterId) {
     return (
       <div className="flex h-full flex-1 flex-col bg-white">
@@ -134,10 +125,8 @@ const ChatInterface: React.FC = () => {
 
   return (
     <div className="flex h-full flex-1 flex-col bg-white">
-      {/* Chat Header */}
       <ChatHeader />
 
-      {/* Message Area */}
       <div
         ref={messageAreaRef}
         className="flex-1 overflow-y-auto bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30"
@@ -155,7 +144,6 @@ const ChatInterface: React.FC = () => {
                   and answer your questions.
                 </p>
 
-                {/* Quick Action Buttons */}
                 <div className="grid w-full max-w-md grid-cols-1 gap-3 md:grid-cols-2">
                   <button
                     onClick={() =>
@@ -204,7 +192,6 @@ const ChatInterface: React.FC = () => {
         </div>
       </div>
 
-      {/* Show errors */}
       {(streamError || clearConversationMutation.isError) && (
         <div className="mx-4 mb-4">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
@@ -236,7 +223,6 @@ const ChatInterface: React.FC = () => {
         </div>
       )}
 
-      {/* Chat Controls - Only show when there are messages */}
       {hasMessages && (
         <div className="border-t border-slate-200/60 bg-white/90 px-4 py-3 backdrop-blur-sm">
           <div className="mx-auto max-w-5xl">
@@ -249,7 +235,6 @@ const ChatInterface: React.FC = () => {
         </div>
       )}
 
-      {/* Chat Input */}
       <div className="border-t border-slate-200/60 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-4">
           <ChatInput
@@ -264,7 +249,6 @@ const ChatInterface: React.FC = () => {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={clearConversationModal.isOpen}
         onClose={closeClearConversationModal}

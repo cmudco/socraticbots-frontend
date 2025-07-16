@@ -1,4 +1,3 @@
-// src/components/chapters/tabs/PromptsTab.tsx
 import React from 'react';
 
 import Placeholder from '@tiptap/extension-placeholder';
@@ -7,7 +6,6 @@ import StarterKit from '@tiptap/starter-kit';
 
 import { useChapterFormStore } from '@/stores/forms/chapterFormStore';
 
-// Simplified menu bar with only bold and italic
 const MenuBar = ({ editor }: { editor: Editor | null }) => {
   if (!editor) {
     return null;
@@ -15,7 +13,6 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
 
   return (
     <div className="flex items-center gap-2 border-b bg-gray-50 p-2">
-      {/* Bold */}
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -40,7 +37,6 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
         </svg>
       </button>
 
-      {/* Italic */}
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleItalic().run()}
@@ -71,7 +67,6 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
   );
 };
 
-// Clean, minimal editor component with only essential formatting
 const TiptapEditor = ({
   value,
   onChange,
@@ -83,14 +78,11 @@ const TiptapEditor = ({
   placeholder?: string;
   readOnly?: boolean;
 }) => {
-  // Create a custom starter kit without the list extensions
   const CustomStarterKit = StarterKit.configure({
-    // Disable list-related extensions
     bulletList: false,
     orderedList: false,
     listItem: false,
 
-    // You can disable other unused extensions as well
     heading: false,
     blockquote: false,
     codeBlock: false,
@@ -134,17 +126,14 @@ const PromptsTab: React.FC<PromptsTabProps> = ({ viewOnly = false }) => {
   const { greeting, chat_prompt, tracking_prompt, learning_goals, updateField } =
     useChapterFormStore();
 
-  // Handler to update greeting in Zustand
   const handleGreetingChange = (html: string) => {
     updateField('greeting', html);
   };
 
-  // Handler to update chat prompt in Zustand
   const handleChatPromptChange = (html: string) => {
     updateField('chat_prompt', html);
   };
 
-  // Handler to update tracking prompt in Zustand
   const handleTrackingPromptChange = (html: string) => {
     updateField('tracking_prompt', html);
   };

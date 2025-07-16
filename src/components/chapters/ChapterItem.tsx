@@ -1,4 +1,3 @@
-// src/components/chapters/ChapterItem.tsx
 import React from 'react';
 
 import { Edit, Eye, Trash } from 'lucide-react';
@@ -13,11 +12,10 @@ interface ChapterItemProps {
   chapter: Chapter;
   onEdit: () => void;
   onDelete: () => void;
-  onView?: () => void; // New prop for view action
+  onView?: () => void;
 }
 
 const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete, onView }) => {
-  // Get user information for access control
   const { user } = useAuth();
 
   return (
@@ -31,7 +29,6 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete, on
       </div>
       <div className="flex space-x-1">
         {user?.is_professor ? (
-          /* Professor actions: Edit and Delete */
           <>
             <Button
               onClick={onEdit}
@@ -55,7 +52,6 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete, on
             </Button>
           </>
         ) : (
-          /* Student action: View only */
           onView && (
             <Button
               onClick={onView}

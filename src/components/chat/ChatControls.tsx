@@ -1,15 +1,13 @@
-// src/components/chat/ChatControls.tsx
 import React from 'react';
 
 import { Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-// Define a type for our action buttons (excluding special ones like "Clear Conversation")
 interface ActionButton {
   id: string;
   label: string;
-  message: string; // Text to insert into the chat input
+  message: string;
   icon?: React.ReactNode;
 }
 
@@ -24,7 +22,6 @@ const ChatControls: React.FC<ChatControlsProps> = ({
   onClearConversation,
   disabled,
 }) => {
-  // Define our preset action buttons - easy to add more or modify
   const actionButtons: ActionButton[] = [
     {
       id: 'learning-goals',
@@ -50,7 +47,6 @@ const ChatControls: React.FC<ChatControlsProps> = ({
 
   return (
     <div className="flex items-center justify-between">
-      {/* Action buttons */}
       <div className="flex flex-wrap items-center gap-2">
         {actionButtons.map(button => (
           <Button
@@ -68,7 +64,6 @@ const ChatControls: React.FC<ChatControlsProps> = ({
         ))}
       </div>
 
-      {/* Clear conversation button */}
       <Button
         variant="ghost"
         size="sm"

@@ -1,4 +1,3 @@
-// src/components/common/Header.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -13,13 +12,8 @@ const Header: React.FC = () => {
     <header className="fixed top-0 right-0 left-0 z-20 h-14 bg-white shadow-md">
       <div className="flex h-full items-center justify-between px-4">
         {' '}
-        {/* Reduced padding here */}
         <div className="flex items-center space-x-2">
-          <img
-            src={logo}
-            alt="Socratic Books Logo"
-            className="h-8 w-8 object-contain" // Adjust size as needed
-          />
+          <img src={logo} alt="Socratic Books Logo" className="h-8 w-8 object-contain" />
           <Link to="/" className="text-xl font-bold text-gray-600">
             Socratic Books
           </Link>

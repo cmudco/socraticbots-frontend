@@ -1,4 +1,3 @@
-// src/components/chapters/tabs/DeploymentTab.tsx
 import React, { useState } from 'react';
 
 import { CheckCircle, Copy, RefreshCw } from 'lucide-react';
@@ -14,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 const DeploymentTab: React.FC = () => {
-  // Get user information for access control
   const { user } = useAuth();
   const { originalChapter, accessCode, updateAccessCode } = useChapterFormStore();
   const [copySuccess, setCopySuccess] = useState(false);
@@ -22,7 +20,6 @@ const DeploymentTab: React.FC = () => {
 
   const existingAccessCode = originalChapter?.access_code;
 
-  // Generate a unique access code on the frontend
   const generateAccessCode = () => {
     const generateUniqueCode = () => {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -55,7 +52,6 @@ const DeploymentTab: React.FC = () => {
     updateAccessCode(e.target.value);
   };
 
-  // Only professors can generate access codes
   if (!user?.is_professor) {
     return (
       <div className="space-y-6 p-4">

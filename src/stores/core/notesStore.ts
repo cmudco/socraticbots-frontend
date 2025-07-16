@@ -10,10 +10,8 @@ export interface Note {
 }
 
 interface NotesStoreState {
-  // Core notes data
   notes: Note[];
 
-  // UI state
   isCollapsed: boolean;
   searchTerm: string;
   isSearching: boolean;
@@ -21,19 +19,16 @@ interface NotesStoreState {
   showCreateModal: boolean;
   createNoteType: 'insight' | 'question' | 'concept';
 
-  // Form data for creating/editing
   newNoteTitle: string;
   newNoteContent: string;
   editTitle: string;
   editContent: string;
 
-  // Actions
   setCollapsed: (collapsed: boolean) => void;
   toggleCollapse: () => void;
   setSearchTerm: (term: string) => void;
   setIsSearching: (searching: boolean) => void;
 
-  // Note CRUD operations
   createNote: () => void;
   startEditing: (note: Note) => void;
   saveEdit: () => void;
@@ -41,7 +36,6 @@ interface NotesStoreState {
   togglePin: (id: number) => void;
   deleteNote: (id: number) => void;
 
-  // Create modal management
   openCreateModal: (type: 'insight' | 'question' | 'concept') => void;
   closeCreateModal: () => void;
   setNewNoteTitle: (title: string) => void;
@@ -49,10 +43,8 @@ interface NotesStoreState {
   setEditTitle: (title: string) => void;
   setEditContent: (content: string) => void;
 
-  // Computed values
   getFilteredNotes: () => Note[];
 
-  // Reset functions
   resetCreateForm: () => void;
   resetEditForm: () => void;
 }
@@ -88,7 +80,6 @@ const initialNotes: Note[] = [
 ];
 
 export const useNotesStore = create<NotesStoreState>((set, get) => ({
-  // Initial state
   notes: initialNotes,
   isCollapsed: false,
   searchTerm: '',
@@ -101,11 +92,9 @@ export const useNotesStore = create<NotesStoreState>((set, get) => ({
   editTitle: '',
   editContent: '',
 
-  // Basic UI actions
   setCollapsed: (collapsed: boolean) => {
     set({ isCollapsed: collapsed });
     if (collapsed) {
-      // Reset UI state when collapsing
       set({
         isSearching: false,
         searchTerm: '',
@@ -123,7 +112,6 @@ export const useNotesStore = create<NotesStoreState>((set, get) => ({
   setSearchTerm: (term: string) => set({ searchTerm: term }),
   setIsSearching: (searching: boolean) => set({ isSearching: searching }),
 
-  // Note CRUD operations
   createNote: () => {
     const { newNoteTitle, newNoteContent, createNoteType } = get();
 
@@ -201,7 +189,6 @@ export const useNotesStore = create<NotesStoreState>((set, get) => ({
     }
   },
 
-  // Create modal management
   openCreateModal: (type: 'insight' | 'question' | 'concept') => {
     set({
       createNoteType: type,
@@ -220,7 +207,6 @@ export const useNotesStore = create<NotesStoreState>((set, get) => ({
   setEditTitle: (title: string) => set({ editTitle: title }),
   setEditContent: (content: string) => set({ editContent: content }),
 
-  // Computed values
   getFilteredNotes: () => {
     const { notes, searchTerm } = get();
     return notes.filter(
@@ -230,7 +216,6 @@ export const useNotesStore = create<NotesStoreState>((set, get) => ({
     );
   },
 
-  // Reset functions
   resetCreateForm: () => {
     set({
       newNoteTitle: '',

@@ -1,4 +1,3 @@
-// src/services/accessCodes.service.ts
 import { METHOD } from '@/constants/requests';
 
 import { baseRequest } from '@/utils/baseRequest';
@@ -28,7 +27,6 @@ export interface StudentAccessCodesResponse {
 }
 
 class AccessCodeService {
-  // Redeem an access code for a student
   async redeemAccessCode(accessCode: string): Promise<RedeemAccessCodeResponse> {
     return baseRequest<RedeemAccessCodeResponse>({
       url: 'access-codes/redeem/',
@@ -37,7 +35,6 @@ class AccessCodeService {
     });
   }
 
-  // Get list of redeemed access codes for a student
   async getStudentAccessCodes(): Promise<StudentAccessCodesResponse> {
     return baseRequest<StudentAccessCodesResponse>({
       url: 'access-codes/student-list/',

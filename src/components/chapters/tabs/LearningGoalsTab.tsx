@@ -1,4 +1,3 @@
-// src/components/chapters/tabs/LearningGoalsTab.tsx
 import React from 'react';
 
 import { useChapterFormStore } from '@/stores/forms/chapterFormStore';

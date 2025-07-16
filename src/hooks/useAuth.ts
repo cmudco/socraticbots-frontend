@@ -1,4 +1,3 @@
-// src/hooks/useAuth.ts
 import { useAuthStore } from '@/stores/authStore';
 
 import { useLogin, useLogout } from './queries/useAuth';
@@ -31,14 +30,11 @@ export const useAuth = () => {
   };
 
   return {
-    // Auth state
     ...authState,
 
-    // Actions
     login,
     logout,
 
-    // Mutation states for UI feedback
     isLoginPending: loginMutation.isPending,
     isLogoutPending: logoutMutation.isPending,
     loginError: loginMutation.error,

@@ -1,5 +1,3 @@
-// Chat types and enums for the chat module
-
 export enum ChatRole {
   USER = 'user',
   ASSISTANT = 'assistant',
@@ -14,13 +12,12 @@ export enum ChatSender {
 
 export interface ChatMessage {
   id: string;
-  conversation?: string; // UUID, optional for now
+  conversation?: string;
   role: ChatRole;
   content: string;
   created_at: string;
-  // UI compatibility fields
-  sender?: ChatSender; // maps to role
-  timestamp?: string; // maps to created_at
+  sender?: ChatSender;
+  timestamp?: string;
 }
 
 export interface ChapterDetails {
@@ -47,5 +44,3 @@ export interface SendMessagePayload {
   conversationId: string;
   content: string;
 }
-
-// Add enums for status, sender, etc. as needed

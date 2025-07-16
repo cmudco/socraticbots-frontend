@@ -17,12 +17,10 @@ interface DeleteModalState {
 }
 
 interface FilesState {
-  // UI state
   dragActive: boolean;
   uploadingFiles: UploadingFile[];
   deleteModal: DeleteModalState;
 
-  // Actions
   setDragActive: (active: boolean) => void;
   addUploadingFile: (file: UploadingFile) => void;
   updateUploadingFile: (id: string, updates: Partial<UploadingFile>) => void;
