@@ -70,7 +70,7 @@ const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
               <AlertTriangle className="h-5 w-5 text-red-600" />
             </div>
-            <DialogTitle className="text-lg font-semibold">Delete Chapter</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Delete Bot</DialogTitle>
           </div>
           <DialogDescription className="pt-2 text-slate-600">
             Are you sure you want to delete "<span className="font-semibold">{chapter.title}</span>
@@ -127,7 +127,7 @@ const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
                 Deleting...
               </div>
             ) : (
-              'Delete Chapter'
+              'Delete Bot'
             )}
           </Button>
         </DialogFooter>

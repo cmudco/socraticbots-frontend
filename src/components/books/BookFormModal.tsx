@@ -166,15 +166,19 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
               <BookOpen className="h-5 w-5 text-violet-600" />
             </div>
             <DialogTitle className="text-lg font-semibold">
-              {viewOnly ? 'Book Details' : isEditMode ? 'Edit Book' : 'Create New Book'}
+              {viewOnly
+                ? 'Chatbot Group Details'
+                : isEditMode
+                  ? 'Edit Chatbot Group'
+                  : 'Create New Chatbot Group'}
             </DialogTitle>
           </div>
           <DialogDescription className="pt-2 text-slate-600">
             {viewOnly
-              ? 'View book information below.'
+              ? 'View chatbot group information below.'
               : isEditMode
-                ? 'Update the book details below.'
-                : 'Fill in the details to create a new book.'}
+                ? 'Update the chatbot group details below.'
+                : 'Fill in the details to create a new chatbot group.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -216,7 +220,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
               type="text"
               value={bookForm.title}
               onChange={viewOnly ? undefined : e => setBookFormField('title', e.target.value)}
-              placeholder={viewOnly ? undefined : 'Enter book title'}
+              placeholder={viewOnly ? undefined : 'Enter chatbot group title'}
               disabled={viewOnly || isSubmitting}
               readOnly={viewOnly}
               className="border-slate-200 focus:border-violet-300 focus:ring-violet-200"
@@ -235,7 +239,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
               value={bookForm.description}
               onChange={viewOnly ? undefined : e => setBookFormField('description', e.target.value)}
               placeholder={
-                viewOnly ? 'No description provided' : 'Enter book description (optional)'
+                viewOnly ? 'No description provided' : 'Enter chatbot group description (optional)'
               }
               rows={4}
               disabled={viewOnly || isSubmitting}
@@ -280,7 +284,7 @@ const BookFormModal: React.FC<BookFormModalProps> = ({
                   ) : isEditMode ? (
                     'Save Changes'
                   ) : (
-                    'Create Book'
+                    'Create Chatbot Group'
                   )}
                 </Button>
               </>

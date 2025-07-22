@@ -56,7 +56,7 @@ const DeploymentTab: React.FC = () => {
     return (
       <div className="space-y-6 p-4">
         <div>
-          <h3 className="mb-2 text-lg font-medium">Chapter Deployment</h3>
+          <h3 className="mb-2 text-lg font-medium">Bot Deployment</h3>
           <p className="text-sm text-gray-600">
             Access code generation is only available for instructors.
           </p>
@@ -64,7 +64,7 @@ const DeploymentTab: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <p className="text-center text-gray-500">
-              You don't have permission to generate access codes for this chapter.
+              You don't have permission to generate access codes for this bot.
             </p>
           </CardContent>
         </Card>
@@ -77,21 +77,19 @@ const DeploymentTab: React.FC = () => {
   return (
     <div className="space-y-6 p-4">
       <div>
-        <h3 className="mb-2 text-lg font-medium">Chapter Deployment</h3>
+        <h3 className="mb-2 text-lg font-medium">Bot Deployment</h3>
         <p className="text-sm text-gray-600">
-          Generate an access code to share this chapter with students.
+          Generate an access code to share this bot with students.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>
-            {existingAccessCode ? 'Chapter Access Code' : 'Generate Access Code'}
-          </CardTitle>
+          <CardTitle>{existingAccessCode ? 'Bot Access Code' : 'Generate Access Code'}</CardTitle>
           <CardDescription>
             {existingAccessCode
-              ? 'This chapter already has an access code. You can modify it or generate a new one.'
-              : 'Create a unique access code that students can use to access this chapter.'}
+              ? 'This bot already has an access code. You can modify it or generate a new one.'
+              : 'Create a unique access code that students can use to access this bot.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -106,8 +104,8 @@ const DeploymentTab: React.FC = () => {
                 <CheckCircle size={16} />
                 <AlertDescription>
                   {existingAccessCode && !accessCode
-                    ? 'Current access code for this chapter. You can modify it below.'
-                    : 'Access code generated! You can customize it below and save when updating the chapter.'}
+                    ? 'Current access code for this bot. You can modify it below.'
+                    : 'Access code generated! You can customize it below and save when updating the bot.'}
                 </AlertDescription>
               </Alert>
 
@@ -166,18 +164,18 @@ const DeploymentTab: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm text-gray-600">
-            <p>Share the access code with your students to give them access to this chapter:</p>
+            <p>Share the access code with your students to give them access to this bot:</p>
             <ol className="ml-4 list-inside list-decimal space-y-1">
-              <li>Go to the SocraticBooks registration page</li>
+              <li>Go to the Socratic Bots registration page</li>
               <li>Enter their personal details (name, email, password)</li>
               <li>Enter the access code you generated in the "Access Code" field</li>
               <li>Complete registration - they'll be automatically enrolled as students</li>
-              <li>They can then access and interact with this chapter content</li>
+              <li>They can then access and interact with this bot content</li>
             </ol>
             <p className="mt-3 text-xs text-gray-500">
-              <strong>Note:</strong> Each chapter has one unique access code that remains the same.
-              Students who register with an access code will only have access to the specific
-              chapter associated with that code.
+              <strong>Note:</strong> Each bot has one unique access code that remains the same.
+              Students who register with an access code will only have access to the specific bot
+              associated with that code.
             </p>
           </div>
         </CardContent>

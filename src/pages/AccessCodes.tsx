@@ -71,7 +71,8 @@ const AccessCodes: React.FC = () => {
         </div>
 
         <p className="mb-6 text-gray-600">
-          Enter an access code from your instructor to gain access to additional books and chapters.
+          Enter an access code from your instructor to gain access to additional chatbot groups and
+          bots.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -115,7 +116,7 @@ const AccessCodes: React.FC = () => {
           <h3 className="mb-2 font-semibold text-gray-900">How to use access codes:</h3>
           <ul className="space-y-1 text-sm text-gray-600">
             <li>• Get access codes from your instructors</li>
-            <li>• Each code gives you access to specific books or chapters</li>
+            <li>• Each code gives you access to specific chatbot groups or bots</li>
             <li>• You can redeem multiple codes to access content from different courses</li>
             <li>• Access codes can only be used once per student</li>
           </ul>

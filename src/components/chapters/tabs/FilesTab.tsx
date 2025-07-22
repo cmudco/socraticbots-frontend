@@ -112,7 +112,7 @@ const FilesTab: React.FC = () => {
     <div className="flex flex-col gap-4">
       <div>
         <h3 className="text-lg font-medium text-gray-900">Files</h3>
-        <p className="mt-1 text-sm text-gray-500">Upload and manage files for this chapter</p>
+        <p className="mt-1 text-sm text-gray-500">Upload and manage files for this bot</p>
         <FileStatusSummary files={files} uploadingFiles={uploadingFiles} />
       </div>
 

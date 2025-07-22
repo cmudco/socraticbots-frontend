@@ -62,10 +62,10 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
                   variant="ghost"
                   size="sm"
                   className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
-                  title="Edit book"
+                  title="Edit chatbot group"
                 >
                   <Edit size={14} className="mr-1" />
-                  Edit Book
+                  Edit Chatbot Group
                 </Button>
                 <Button
                   onClick={e => {
@@ -75,7 +75,7 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
                   variant="ghost"
                   size="sm"
                   className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-red-100 hover:text-red-700"
-                  title="Delete book"
+                  title="Delete chatbot group"
                 >
                   <Trash size={14} className="mr-1" />
                   Delete
@@ -91,7 +91,7 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
                   variant="ghost"
                   size="sm"
                   className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
-                  title="View book details"
+                  title="View chatbot group details"
                 >
                   <Eye size={14} className="mr-1" />
                   View Details
