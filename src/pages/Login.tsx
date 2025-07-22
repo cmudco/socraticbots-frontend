@@ -73,7 +73,7 @@ const Login: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>Welcome Back</CardTitle>
-          <CardDescription>Sign in to your SocraticBooks account</CardDescription>
+          <CardDescription>Sign in to your Socratic Bots account</CardDescription>
         </CardHeader>
         <CardContent>
           <Formik

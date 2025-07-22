@@ -49,13 +49,13 @@ const Books: React.FC = () => {
 
   const renderContent = () => {
     if (loading) {
-      return <div className="p-4 text-center">Loading books...</div>;
+      return <div className="p-4 text-center">Loading chatbot groups...</div>;
     }
 
     if (isError) {
       return (
         <div className="p-4 text-center text-red-500">
-          {error?.message || 'Could not load books. Please try again later.'}
+          {error?.message || 'Could not load chatbot groups. Please try again later.'}
         </div>
       );
     }
@@ -66,10 +66,10 @@ const Books: React.FC = () => {
       } else {
         return (
           <div className="rounded-lg bg-gray-50 p-6 text-center">
-            <h3 className="text-lg font-medium text-gray-600">No Books Available</h3>
+            <h3 className="text-lg font-medium text-gray-600">No Chatbot Groups Available</h3>
             <p className="mt-1 text-gray-500">
-              You don't have access to any books yet. Please contact your instructor for an access
-              code.
+              You don't have access to any chatbot groups yet. Please contact your instructor for an
+              access code.
             </p>
           </div>
         );
@@ -89,15 +89,15 @@ const Books: React.FC = () => {
   return (
     <div className="p-4">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Books</h1>
-        {/* Only show Create New Book button for professors */}
+        <h1 className="text-2xl font-bold">Chatbot groups</h1>
+        {/* Only show Create New Chatbot Group button for professors */}
         {user?.is_professor && (
           <Button
             onClick={handleOpenCreateModal}
             className="bg-violet-600 text-white hover:bg-violet-700"
           >
             <Plus size={16} />
-            Create New Book
+            Create New Chatbot Group
           </Button>
         )}
       </div>

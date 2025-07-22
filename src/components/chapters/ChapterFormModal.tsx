@@ -227,14 +227,14 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
             </div>
             <div>
               <DialogTitle className="text-lg font-semibold">
-                {viewOnly ? 'Chapter Details' : isEdit ? 'Edit Chapter' : 'Create New Chapter'}
+                {viewOnly ? 'Bot Details' : isEdit ? 'Edit Bot' : 'Create New Bot'}
               </DialogTitle>
               <DialogDescription className="text-slate-600">
                 {viewOnly
-                  ? 'View chapter information below.'
+                  ? 'View bot information below.'
                   : isEdit
-                    ? 'Update the chapter details below.'
-                    : 'Fill in the details to create a new chapter.'}
+                    ? 'Update the bot details below.'
+                    : 'Fill in the details to create a new bot.'}
               </DialogDescription>
             </div>
           </div>
@@ -249,10 +249,10 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
                   Additional Features Available After Creation
                 </p>
                 <p className="mt-1 text-blue-700">
-                  Once your chapter is created,{' '}
+                  Once your bot is created,{' '}
                   {isProfessor
-                    ? "you'll be able to upload files and generate deployment codes in the Files and Deployment tabs when editing the chapter."
-                    : 'professors will be able to upload files and manage deployment settings in additional tabs when editing the chapter.'}
+                    ? "you'll be able to upload files and generate deployment codes in the Files and Deployment tabs when editing the bot."
+                    : 'professors will be able to upload files and manage deployment settings in additional tabs when editing the bot.'}
                 </p>
               </div>
             </div>
@@ -307,9 +307,9 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
                     Saving...
                   </div>
                 ) : isEdit ? (
-                  'Update Chapter'
+                  'Update Bot'
                 ) : (
-                  'Create Chapter'
+                  'Create Bot'
                 )}
               </Button>
             </>

@@ -74,7 +74,7 @@ const Register: React.FC = () => {
           <CardHeader className="text-center">
             <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />
             <CardTitle className="text-green-700">Registration Successful!</CardTitle>
-            <CardDescription>Welcome to SocraticBooks</CardDescription>
+            <CardDescription>Welcome to Socratic Bots</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {registerMutation.data && (
@@ -122,7 +122,7 @@ const Register: React.FC = () => {
         <CardHeader>
           <CardTitle>Create Account</CardTitle>
           <CardDescription>
-            Join SocraticBooks as a student using your instructor's access code
+            Join Socratic Bots as a student using your instructor's access code
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -58,7 +58,7 @@ const ChapterSelector: React.FC = () => {
     <div className="w-64">
       <Select value={selectedChapterId || ''} onValueChange={handleChapterChange}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select a chapter..." />
+          <SelectValue placeholder="Select a bot..." />
         </SelectTrigger>
         <SelectContent>
           {chapters?.map((chapter: Chapter) => (

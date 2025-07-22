@@ -23,7 +23,7 @@ const ChatHeader: React.FC = () => {
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-slate-600">Chapter:</span>
+                  <span className="text-sm font-medium text-slate-600">Bot:</span>
                   {selectedChapterId ? (
                     <Badge
                       variant="secondary"
@@ -38,7 +38,7 @@ const ChatHeader: React.FC = () => {
                       className="border-slate-300 bg-slate-50 text-slate-600"
                     >
                       <Clock className="mr-1 h-3 w-3" />
-                      Select Chapter
+                      Select Bot
                     </Badge>
                   )}
                 </div>

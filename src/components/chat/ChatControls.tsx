@@ -26,12 +26,12 @@ const ChatControls: React.FC<ChatControlsProps> = ({
     {
       id: 'learning-goals',
       label: 'Learning Goals',
-      message: 'What are the learning goals for this chapter?',
+      message: 'What are the learning goals for this bot?',
     },
     {
       id: 'explain-topic',
       label: 'Explain Topic',
-      message: 'Can you explain the main topic of this chapter?',
+      message: 'Can you explain the main topic of this bot?',
     },
     {
       id: 'give-example',

@@ -13,8 +13,8 @@ const LearningGoalsTab: React.FC = () => {
     <div className="p-4">
       <div className="mb-4">
         <h3 className="mb-2 text-lg font-medium">Learning Goals</h3>
-        <p className="mb-4 text-sm text-gray-600">
-          Define the learning objectives for this chapter. Enter each goal on a new line.
+        <p className="text-sm text-gray-600">
+          Define the learning objectives for this bot. Enter each goal on a new line.
         </p>
         <textarea
           value={learning_goals}
