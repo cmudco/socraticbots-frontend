@@ -147,7 +147,7 @@ const PromptsTab: React.FC<PromptsTabProps> = ({ viewOnly = false }) => {
       <div>
         <h3 className="mb-2 text-lg font-medium">Greeting</h3>
         <p className="mb-2 text-sm text-gray-600">
-          This is the initial greeting message shown to the student when they start the chapter.
+          This is the initial greeting message shown to the student when they start the bot.
         </p>
         <TiptapEditor
           value={greeting}
@@ -160,7 +160,7 @@ const PromptsTab: React.FC<PromptsTabProps> = ({ viewOnly = false }) => {
       <div>
         <h3 className="mb-2 text-lg font-medium">Chat Prompt</h3>
         <p className="mb-2 text-sm text-gray-600">
-          This prompt guides the AI in how to respond to student messages during the chapter.
+          This prompt guides the AI in how to respond to student messages during the bot.
         </p>
         <TiptapEditor
           value={chat_prompt}
@@ -185,14 +185,14 @@ const PromptsTab: React.FC<PromptsTabProps> = ({ viewOnly = false }) => {
 
       <div>
         <h3 className="mb-2 text-lg font-medium">Learning Goals</h3>
-        <p className="mb-2 text-sm text-gray-600">
-          Define the learning goals for this chapter. The more structure you are able to provide the
-          better the AI will be able to help students achieve their goals.
+        <p className="text-sm text-gray-600">
+          Define the learning goals for this bot. The more structure you are able to provide the
+          better the AI will be at tracking student progress.
         </p>
         <TiptapEditor
           value={learning_goals}
           onChange={handleLearningGoalsChange}
-          placeholder="Enter the learning goals for this chapter, e.g., 'Understand photosynthesis, Describe the carbon cycle...'"
+          placeholder="Enter the learning goals for this bot, e.g., 'Understand photosynthesis, Describe the carbon cycle...'"
           readOnly={viewOnly}
         />
       </div>

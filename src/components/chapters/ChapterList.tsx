@@ -65,24 +65,22 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-md font-semibold">Chapters</h3>
+        <h3 className="text-md font-semibold">Bots</h3>
         {user?.is_professor && (
           <Button onClick={handleOpenCreateModal} size="sm" variant="outline">
             <Plus size={14} />
-            Add Chapter
+            Add Bot
           </Button>
         )}
       </div>
 
       {loading ? (
-        <p className="py-4 text-center text-gray-500">Loading chapters...</p>
+        <p className="py-4 text-center text-gray-500">Loading bots...</p>
       ) : error ? (
-        <p className="py-4 text-center text-red-500">Error loading chapters: {error.message}</p>
+        <p className="py-4 text-center text-red-500">Error loading bots: {error.message}</p>
       ) : visibleChapters.length === 0 ? (
         <p className="py-4 text-center text-gray-500">
-          {user?.is_professor
-            ? 'No chapters yet. Add your first chapter!'
-            : 'No chapters available.'}
+          {user?.is_professor ? 'No bots yet. Add your first bot!' : 'No bots available.'}
         </p>
       ) : (
         <div className="space-y-2">

@@ -11,11 +11,11 @@ interface BookListEmptyProps {
 const BookListEmpty: React.FC<BookListEmptyProps> = ({ onCreateClick }) => {
   return (
     <div className="rounded-lg bg-gray-50 p-6 text-center">
-      <h3 className="text-lg font-medium text-gray-600">No Books Found</h3>
-      <p className="mt-1 text-gray-500">You don't have any books yet.</p>
+      <h3 className="text-lg font-medium text-gray-600">No Chatbot Groups Found</h3>
+      <p className="mt-1 text-gray-500">You don't have any chatbot groups yet.</p>
       <Button onClick={onCreateClick} className="mt-4">
         <Plus size={16} />
-        Create Your First Book
+        Create Your First Chatbot Group
       </Button>
     </div>
   );
