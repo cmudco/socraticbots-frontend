@@ -63,7 +63,7 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
               <AlertTriangle className="h-5 w-5 text-red-600" />
             </div>
-            <DialogTitle className="text-lg font-semibold">Delete Book</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Delete Chatbot Group</DialogTitle>
           </div>
           <DialogDescription className="pt-2 text-slate-600">
             Are you sure you want to delete "<span className="font-semibold">{book.title}</span>"?
@@ -120,7 +120,7 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
                 Deleting...
               </div>
             ) : (
-              'Delete Book'
+              'Delete Chatbot Group'
             )}
           </Button>
         </DialogFooter>

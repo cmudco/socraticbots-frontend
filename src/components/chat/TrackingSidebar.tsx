@@ -54,9 +54,9 @@ const TrackingSidebar: React.FC = () => {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200">
               <BookOpen className="h-6 w-6 text-slate-400" />
             </div>
-            <h3 className="mb-2 text-sm font-semibold text-slate-800">Select a Chapter</h3>
+            <h3 className="mb-2 text-sm font-semibold text-slate-800">Select a Bot</h3>
             <p className="text-sm leading-relaxed text-slate-600">
-              Choose a chapter to start tracking your learning progress.
+              Choose a bot to start tracking your learning progress.
             </p>
           </div>
         </div>

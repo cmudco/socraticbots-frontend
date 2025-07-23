@@ -110,10 +110,10 @@ const ChatInterface: React.FC = () => {
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-purple-400 shadow-sm">
               <MessageSquare className="h-8 w-8 text-white" />
             </div>
-            <h2 className="mb-3 text-xl font-semibold text-slate-800">Please Select a Chapter</h2>
+            <h2 className="mb-3 text-xl font-semibold text-slate-800">Please Select a Bot</h2>
             <p className="leading-relaxed text-slate-600">
-              Use the dropdown box along the top of the screen to select a chapter. Once you select
-              a chapter, you can begin chatting.
+              Use the dropdown box along the top of the screen to select a bot. Once you select a
+              bot, you can begin chatting.
             </p>
           </Card>
         </div>
@@ -140,14 +140,14 @@ const ChatInterface: React.FC = () => {
                 </div>
                 <h3 className="mb-4 text-2xl font-semibold text-slate-800">Start a Conversation</h3>
                 <p className="mb-8 max-w-md leading-relaxed text-slate-600">
-                  Ask me anything about this chapter. I'm here to help you understand the concepts
-                  and answer your questions.
+                  Ask me anything about this bot. I'm here to help you understand the concepts and
+                  answer your questions.
                 </p>
 
                 <div className="grid w-full max-w-md grid-cols-1 gap-3 md:grid-cols-2">
                   <button
                     onClick={() =>
-                      handleActionClick('Can you explain the main concepts in this chapter?')
+                      handleActionClick('Can you explain the main concepts in this bot?')
                     }
                     className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all duration-200 hover:border-violet-200 hover:bg-violet-50/50"
                   >

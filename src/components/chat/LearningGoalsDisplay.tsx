@@ -80,9 +80,9 @@ const LearningGoalsDisplay: React.FC<LearningGoalsDisplayProps> = ({ className =
           <Target className="h-5 w-5 text-slate-400" />
           <h3 className="font-semibold text-slate-800">Learning Goals</h3>
         </div>
-        <div className="text-sm text-slate-500">
-          No learning goals defined for this chapter yet.
-        </div>
+        <p className="text-center text-sm text-slate-500">
+          No learning goals defined for this bot yet.
+        </p>
       </Card>
     );
   }

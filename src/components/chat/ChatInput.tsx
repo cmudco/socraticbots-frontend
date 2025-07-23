@@ -27,8 +27,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const getPlaceholder = () => {
     if (isStreaming) return 'AI is responding...';
-    if (disabled) return 'Please select a chapter first';
-    return 'Ask me anything about this chapter...';
+    if (disabled) return 'Please select a bot first';
+    return 'Ask me anything about this bot...';
   };
 
   const canSend = !disabled && !isStreaming && value.trim().length > 0;
