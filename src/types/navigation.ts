@@ -1,4 +1,4 @@
-import { Book, Home, Info, Key, type LucideIcon, MessageCircle, Settings } from 'lucide-react';
+import { Book, Home, Key, type LucideIcon, MessageCircle, Settings } from 'lucide-react';
 
 interface NavigationItem {
   path: string;
@@ -13,11 +13,11 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     label: 'Home',
     icon: Home,
   },
-  {
-    path: '/about',
-    label: 'About',
-    icon: Info,
-  },
+  // {
+  //   path: '/about',
+  //   label: 'About',
+  //   icon: Info,
+  // },
   {
     path: '/access-codes',
     label: 'Access Codes',
@@ -26,7 +26,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   },
   {
     path: '/books',
-    label: 'Chatbot groups',
+    label: 'Chatbot Groups',
     icon: Book,
   },
   {
