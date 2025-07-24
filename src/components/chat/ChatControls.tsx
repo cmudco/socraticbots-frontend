@@ -4,12 +4,12 @@ import { Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-interface ActionButton {
-  id: string;
-  label: string;
-  message: string;
-  icon?: React.ReactNode;
-}
+// interface ActionButton {
+//   id: string;
+//   label: string;
+//   message: string;
+//   icon?: React.ReactNode;
+// }
 
 interface ChatControlsProps {
   onActionClick: (message: string) => void;
@@ -18,36 +18,36 @@ interface ChatControlsProps {
 }
 
 const ChatControls: React.FC<ChatControlsProps> = ({
-  onActionClick,
+  // onActionClick,
   onClearConversation,
   disabled,
 }) => {
-  const actionButtons: ActionButton[] = [
-    {
-      id: 'learning-goals',
-      label: 'Learning Goals',
-      message: 'What are the learning goals for this bot?',
-    },
-    {
-      id: 'explain-topic',
-      label: 'Explain Topic',
-      message: 'Can you explain the main topic of this bot?',
-    },
-    {
-      id: 'give-example',
-      label: 'Give Example',
-      message: 'Can you give me an example related to this topic?',
-    },
-    {
-      id: 'quiz-me',
-      label: 'Quiz Me',
-      message: 'Can you quiz me on this material?',
-    },
-  ];
+  // const actionButtons: ActionButton[] = [
+  //   {
+  //     id: 'learning-goals',
+  //     label: 'Learning Goals',
+  //     message: 'What are the learning goals for this bot?',
+  //   },
+  //   {
+  //     id: 'explain-topic',
+  //     label: 'Explain Topic',
+  //     message: 'Can you explain the main topic of this bot?',
+  //   },
+  //   {
+  //     id: 'give-example',
+  //     label: 'Give Example',
+  //     message: 'Can you give me an example related to this topic?',
+  //   },
+  //   {
+  //     id: 'quiz-me',
+  //     label: 'Quiz Me',
+  //     message: 'Can you quiz me on this material?',
+  //   },
+  // ];
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex items-center justify-end">
+      {/* <div className="flex flex-wrap items-center gap-2">
         {actionButtons.map(button => (
           <Button
             key={button.id}
@@ -62,7 +62,7 @@ const ChatControls: React.FC<ChatControlsProps> = ({
             {button.label}
           </Button>
         ))}
-      </div>
+      </div> */}
 
       <Button
         variant="ghost"
