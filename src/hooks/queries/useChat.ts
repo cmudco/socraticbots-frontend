@@ -109,34 +109,50 @@ export const useClearConversation = () => {
   return useMutation({
     mutationFn: (conversationId: string) => chatService.clearConversation(conversationId),
     onSuccess: (updatedConversation, conversationId) => {
-      queryClient.setQueryData<Conversation>(
-        ['chat', 'conversation', 'chapter', conversationId],
-        updatedConversation
-      );
+      // Get the chapterId from the updated conversation
+      const chapterId = updatedConversation.chapter_details?.id || updatedConversation.chapter;
 
+      // Update the conversation cache with the correct chapterId
+      if (chapterId) {
+        queryClient.setQueryData<Conversation>(
+          ['chat', 'conversation', 'chapter', chapterId],
+          updatedConversation
+        );
+      }
+
+      // Invalidate conversation-related queries
       queryClient.invalidateQueries({
         predicate: query => {
           const queryKey = query.queryKey;
           return (
             queryKey.includes('chat') &&
             queryKey.includes('conversation') &&
-            queryKey.includes(conversationId)
+            (queryKey.includes(conversationId) ||
+              (chapterId ? queryKey.includes(chapterId) : false))
           );
         },
       });
 
+      // Invalidate chapters cache if needed
       queryClient
         .getQueryCache()
         .getAll()
         .forEach(query => {
           if (query.queryKey.includes('chapters')) {
             const chapters = query.state.data as Chapter[] | undefined;
-            if (chapters?.some(chapter => chapter.id === conversationId)) {
+            // Check if the current conversation's chapter is in this chapters list
+            if (
+              chapters &&
+              Array.isArray(chapters) &&
+              chapterId &&
+              chapters.some(chapter => chapter.id === chapterId)
+            ) {
               queryClient.invalidateQueries({ queryKey: query.queryKey });
             }
           }
         });
 
+      // Remove tracking progress queries
       queryClient.removeQueries({ queryKey: ['chat', 'trackingProgress', conversationId] });
     },
   });
