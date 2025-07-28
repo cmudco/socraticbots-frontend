@@ -1,233 +1,140 @@
 import { create } from 'zustand';
 
-export interface Note {
-  id: number;
+import {
+  type CollapsibleState,
+  type EditingState,
+  type FormState,
+  type SearchState,
+  createCollapsibleActions,
+  createCollapsibleState,
+  createEditingActions,
+  createEditingState,
+  createFormState,
+  createSearchActions,
+  createSearchState,
+} from '@/stores/utils/formStateHelpers';
+
+import { NoteType } from '@/types/note';
+
+interface CreateNoteFormData {
   title: string;
   content: string;
-  type: 'insight' | 'question' | 'concept';
-  timestamp: string;
-  isPinned: boolean;
+  type: NoteType;
 }
 
-interface NotesStoreState {
-  notes: Note[];
-
-  isCollapsed: boolean;
-  searchTerm: string;
-  isSearching: boolean;
-  editingId: number | null;
-  showCreateModal: boolean;
-  createNoteType: 'insight' | 'question' | 'concept';
-
-  newNoteTitle: string;
-  newNoteContent: string;
-  editTitle: string;
-  editContent: string;
-
+interface NotesStoreState extends CollapsibleState, SearchState, EditingState {
+  createNoteForm: FormState<CreateNoteFormData>;
   setCollapsed: (collapsed: boolean) => void;
   toggleCollapse: () => void;
   setSearchTerm: (term: string) => void;
   setIsSearching: (searching: boolean) => void;
-
-  createNote: () => void;
-  startEditing: (note: Note) => void;
-  saveEdit: () => void;
+  clearSearch: () => void;
+  startEditing: (id: string, data: { title: string; content: string }) => void;
   cancelEdit: () => void;
-  togglePin: (id: number) => void;
-  deleteNote: (id: number) => void;
-
-  openCreateModal: (type: 'insight' | 'question' | 'concept') => void;
+  resetEdit: () => void;
+  openCreateModal: (type: NoteType) => void;
   closeCreateModal: () => void;
   setNewNoteTitle: (title: string) => void;
   setNewNoteContent: (content: string) => void;
+  resetCreateForm: () => void;
   setEditTitle: (title: string) => void;
   setEditContent: (content: string) => void;
-
-  getFilteredNotes: () => Note[];
-
-  resetCreateForm: () => void;
-  resetEditForm: () => void;
 }
 
-const initialNotes: Note[] = [
-  // {
-  //   id: 1,
-  //   title: 'Reasoning Evolution',
-  //   content:
-  //     'Reasoning became an evolutionary advantage because it helped early humans solve complex problems, make better decisions, and cooperate in groups.',
-  //   type: 'insight',
-  //   timestamp: '2 min ago',
-  //   isPinned: true,
-  // },
-  // {
-  //   id: 2,
-  //   title: "Piaget's Stages Question",
-  //   content:
-  //     'How exactly do children transition between the concrete operational and formal operational stages?',
-  //   type: 'question',
-  //   timestamp: '5 min ago',
-  //   isPinned: false,
-  // },
-  // {
-  //   id: 3,
-  //   title: 'Deductive vs Inductive',
-  //   content:
-  //     'Deductive: General to specific (all birds have wings → sparrows have wings). Inductive: Specific to general (observed sparrows have wings → all birds have wings).',
-  //   type: 'concept',
-  //   timestamp: '10 min ago',
-  //   isPinned: false,
-  // },
-];
+export const notesSelectors = {
+  showCreateModal: (state: NotesStoreState) => state.createNoteForm.isOpen,
+  createNoteType: (state: NotesStoreState) => state.createNoteForm.data.type,
+  newNoteTitle: (state: NotesStoreState) => state.createNoteForm.data.title,
+  newNoteContent: (state: NotesStoreState) => state.createNoteForm.data.content,
+  editTitle: (state: NotesStoreState) => state.editData.title || '',
+  editContent: (state: NotesStoreState) => state.editData.content || '',
+};
 
-export const useNotesStore = create<NotesStoreState>((set, get) => ({
-  notes: initialNotes,
-  isCollapsed: false,
-  searchTerm: '',
-  isSearching: false,
-  editingId: null,
-  showCreateModal: false,
-  createNoteType: 'insight',
-  newNoteTitle: '',
-  newNoteContent: '',
-  editTitle: '',
-  editContent: '',
+const initialCreateFormData: CreateNoteFormData = {
+  title: '',
+  content: '',
+  type: NoteType.INSIGHT,
+};
 
-  setCollapsed: (collapsed: boolean) => {
-    set({ isCollapsed: collapsed });
-    if (collapsed) {
+export const useNotesStore = create<NotesStoreState>((set, get) => {
+  const collapsibleActions = createCollapsibleActions();
+  const searchActions = createSearchActions();
+  const editingActions = createEditingActions();
+
+  return {
+    ...createCollapsibleState(),
+    ...createSearchState(),
+    ...createEditingState(),
+    createNoteForm: createFormState(initialCreateFormData),
+
+    setCollapsed: (collapsed: boolean) => collapsibleActions.setCollapsed(collapsed)(set, get),
+    toggleCollapse: () => collapsibleActions.toggleCollapse()(set, get),
+    setSearchTerm: (term: string) => searchActions.setSearchTerm(term)(set),
+    setIsSearching: (searching: boolean) => searchActions.setIsSearching(searching)(set),
+    clearSearch: () => searchActions.clearSearch()(set),
+    startEditing: (id: string, data: { title: string; content: string }) =>
+      editingActions.startEditing(id, data)(set),
+    cancelEdit: () => editingActions.cancelEdit()(set),
+    resetEdit: () => editingActions.resetEdit()(set),
+
+    openCreateModal: (type: NoteType) => {
       set({
-        isSearching: false,
-        searchTerm: '',
-        editingId: null,
-        showCreateModal: false,
+        createNoteForm: {
+          isOpen: true,
+          data: { ...initialCreateFormData, type },
+          mode: 'create',
+        },
       });
-    }
-  },
+    },
 
-  toggleCollapse: () => {
-    const { isCollapsed } = get();
-    get().setCollapsed(!isCollapsed);
-  },
+    closeCreateModal: () => {
+      set({
+        createNoteForm: createFormState(initialCreateFormData),
+      });
+    },
 
-  setSearchTerm: (term: string) => set({ searchTerm: term }),
-  setIsSearching: (searching: boolean) => set({ isSearching: searching }),
+    setNewNoteTitle: (title: string) => {
+      const { createNoteForm } = get();
+      set({
+        createNoteForm: {
+          ...createNoteForm,
+          data: { ...createNoteForm.data, title },
+        },
+      });
+    },
 
-  createNote: () => {
-    const { newNoteTitle, newNoteContent, createNoteType } = get();
+    setNewNoteContent: (content: string) => {
+      const { createNoteForm } = get();
+      set({
+        createNoteForm: {
+          ...createNoteForm,
+          data: { ...createNoteForm.data, content },
+        },
+      });
+    },
 
-    if (!newNoteTitle.trim() && !newNoteContent.trim()) return;
+    resetCreateForm: () => {
+      const { createNoteForm } = get();
+      set({
+        createNoteForm: {
+          ...createNoteForm,
+          data: initialCreateFormData,
+        },
+      });
+    },
 
-    const titles = {
-      insight: newNoteTitle || 'New Insight',
-      question: newNoteTitle || 'New Question',
-      concept: newNoteTitle || 'New Concept',
-    };
+    setEditTitle: (title: string) => {
+      const { editData } = get();
+      set({
+        editData: { ...editData, title },
+      });
+    },
 
-    const newNote: Note = {
-      id: Date.now(),
-      title: titles[createNoteType],
-      content: newNoteContent || 'Note content...',
-      type: createNoteType,
-      timestamp: 'Just now',
-      isPinned: false,
-    };
-
-    set(state => ({
-      notes: [newNote, ...state.notes],
-    }));
-
-    get().closeCreateModal();
-  },
-
-  startEditing: (note: Note) => {
-    set({
-      editingId: note.id,
-      editTitle: note.title,
-      editContent: note.content,
-    });
-  },
-
-  saveEdit: () => {
-    const { editingId, editTitle, editContent } = get();
-    if (!editingId) return;
-
-    set(state => ({
-      notes: state.notes.map(note =>
-        note.id === editingId
-          ? {
-              ...note,
-              title: editTitle.trim() || note.title,
-              content: editContent.trim() || note.content,
-            }
-          : note
-      ),
-    }));
-
-    get().resetEditForm();
-  },
-
-  cancelEdit: () => {
-    get().resetEditForm();
-  },
-
-  togglePin: (id: number) => {
-    set(state => ({
-      notes: state.notes.map(note =>
-        note.id === id ? { ...note, isPinned: !note.isPinned } : note
-      ),
-    }));
-  },
-
-  deleteNote: (id: number) => {
-    set(state => ({
-      notes: state.notes.filter(note => note.id !== id),
-    }));
-
-    const { editingId } = get();
-    if (editingId === id) {
-      get().resetEditForm();
-    }
-  },
-
-  openCreateModal: (type: 'insight' | 'question' | 'concept') => {
-    set({
-      createNoteType: type,
-      showCreateModal: true,
-    });
-    get().resetCreateForm();
-  },
-
-  closeCreateModal: () => {
-    set({ showCreateModal: false });
-    get().resetCreateForm();
-  },
-
-  setNewNoteTitle: (title: string) => set({ newNoteTitle: title }),
-  setNewNoteContent: (content: string) => set({ newNoteContent: content }),
-  setEditTitle: (title: string) => set({ editTitle: title }),
-  setEditContent: (content: string) => set({ editContent: content }),
-
-  getFilteredNotes: () => {
-    const { notes, searchTerm } = get();
-    return notes.filter(
-      note =>
-        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  },
-
-  resetCreateForm: () => {
-    set({
-      newNoteTitle: '',
-      newNoteContent: '',
-    });
-  },
-
-  resetEditForm: () => {
-    set({
-      editingId: null,
-      editTitle: '',
-      editContent: '',
-    });
-  },
-}));
+    setEditContent: (content: string) => {
+      const { editData } = get();
+      set({
+        editData: { ...editData, content },
+      });
+    },
+  };
+});
