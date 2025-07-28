@@ -4,6 +4,13 @@ import type { Chapter } from '@/services/chapters.service';
 
 import type { Book } from '@/types/book';
 
+interface DeleteConfirmationModal {
+  isOpen: boolean;
+  itemId: string | null;
+  itemTitle: string;
+  itemType: string;
+}
+
 interface ModalStoreState {
   bookFormModal: {
     isOpen: boolean;
@@ -31,6 +38,8 @@ interface ModalStoreState {
     isOpen: boolean;
   };
 
+  deleteConfirmationModal: DeleteConfirmationModal;
+
   openBookFormModal: (book?: Book, viewOnly?: boolean) => void;
   closeBookFormModal: () => void;
   openDeleteBookModal: (book: Book) => void;
@@ -43,6 +52,9 @@ interface ModalStoreState {
 
   openClearConversationModal: () => void;
   closeClearConversationModal: () => void;
+
+  openDeleteConfirmation: (itemId: string, itemTitle: string, itemType: string) => void;
+  closeDeleteConfirmation: () => void;
 
   resetAllModals: () => void;
 }
@@ -70,6 +82,12 @@ export const useModalStore = create<ModalStoreState>(set => ({
   },
   clearConversationModal: {
     isOpen: false,
+  },
+  deleteConfirmationModal: {
+    isOpen: false,
+    itemId: null,
+    itemTitle: '',
+    itemType: '',
   },
 
   openBookFormModal: (book?: Book, viewOnly?: boolean) =>
@@ -151,6 +169,25 @@ export const useModalStore = create<ModalStoreState>(set => ({
       },
     }),
 
+  openDeleteConfirmation: (itemId: string, itemTitle: string, itemType: string) =>
+    set({
+      deleteConfirmationModal: {
+        isOpen: true,
+        itemId,
+        itemTitle,
+        itemType,
+      },
+    }),
+  closeDeleteConfirmation: () =>
+    set({
+      deleteConfirmationModal: {
+        isOpen: false,
+        itemId: null,
+        itemTitle: '',
+        itemType: '',
+      },
+    }),
+
   resetAllModals: () =>
     set({
       bookFormModal: {
@@ -175,6 +212,12 @@ export const useModalStore = create<ModalStoreState>(set => ({
       },
       clearConversationModal: {
         isOpen: false,
+      },
+      deleteConfirmationModal: {
+        isOpen: false,
+        itemId: null,
+        itemTitle: '',
+        itemType: '',
       },
     }),
 }));
