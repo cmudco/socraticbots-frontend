@@ -55,11 +55,12 @@ export const bookValidationSchema = Yup.object({
   description: Yup.string().optional(),
 });
 
-export const chapterValidationSchema = Yup.object({
-  title: Yup.string().required('Title is required').min(1, 'Title cannot be empty'),
-  subject: Yup.string().required('Subject is required').min(1, 'Subject cannot be empty'),
-  topic: Yup.string().required('Topic is required').min(1, 'Topic cannot be empty'),
-});
+// Temporarily disabled - will be rewritten for bots architecture
+// export const chapterValidationSchema = Yup.object({
+//   title: Yup.string().required('Title is required').min(1, 'Title cannot be empty'),
+//   subject: Yup.string().required('Subject is required').min(1, 'Subject cannot be empty'),
+//   topic: Yup.string().required('Topic is required').min(1, 'Topic cannot be empty'),
+// });
 
 export const userProfileValidationSchema = Yup.object({
   first_name: Yup.string().optional(),
@@ -87,12 +88,13 @@ export const learningGoalValidationSchema = Yup.object({
   order: Yup.number().optional(),
 });
 
-export const chapterPromptsValidationSchema = Yup.object({
-  greeting: Yup.string().optional(),
-  chatPrompt: Yup.string().optional(),
-  trackingPrompt: Yup.string().optional(),
-  learningGoals: Yup.string().optional(),
-});
+// Temporarily disabled - will be rewritten for bots architecture
+// export const chapterPromptsValidationSchema = Yup.object({
+//   greeting: Yup.string().optional(),
+//   chatPrompt: Yup.string().optional(),
+//   trackingPrompt: Yup.string().optional(),
+//   learningGoals: Yup.string().optional(),
+// });
 
 export function useCustomForm<T extends FormValues>(
   initialValues: T,

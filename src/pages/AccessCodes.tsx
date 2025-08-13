@@ -20,11 +20,12 @@ const AccessCodes: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: studentAccessCodes, isLoading: isLoadingCodes } = useQuery({
+  const { data: studentAccessCodes, isLoading: isLoadingCodes, error: codesError } = useQuery({
     queryKey: ['student-access-codes'],
     queryFn: () => accessCodeService.getStudentAccessCodes(),
     staleTime: 5 * 60 * 1000,
   });
+
 
   const redeemMutation = useMutation({
     mutationFn: (code: string) => accessCodeService.redeemAccessCode(code),
@@ -32,7 +33,7 @@ const AccessCodes: React.FC = () => {
       setMessage(data.message);
       setIsSuccess(true);
       setAccessCode('');
-      queryClient.invalidateQueries({ queryKey: ['books'] });
+      queryClient.invalidateQueries({ queryKey: ['bot-groups'] });
       queryClient.invalidateQueries({ queryKey: ['student-access-codes'] });
     },
     onError: (error: ApiError) => {
@@ -134,15 +135,19 @@ const AccessCodes: React.FC = () => {
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent"></div>
             <p className="mt-2 text-gray-600">Loading your access codes...</p>
           </div>
-        ) : studentAccessCodes && studentAccessCodes.redeemed_codes.length > 0 ? (
+        ) : codesError ? (
+          <div className="py-4 text-center">
+            <p className="text-red-600">Error loading access codes: {codesError?.message || 'Unknown error'}</p>
+          </div>
+        ) : studentAccessCodes && studentAccessCodes.redeemedCodes && studentAccessCodes.redeemedCodes.length > 0 ? (
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              You have redeemed {studentAccessCodes.total_count} access code
-              {studentAccessCodes.total_count !== 1 ? 's' : ''}.
+              You have redeemed {studentAccessCodes?.totalCount || 0} access code
+              {(studentAccessCodes?.totalCount || 0) !== 1 ? 's' : ''}.
             </p>
 
             <div className="space-y-3">
-              {studentAccessCodes.redeemed_codes.map((code, index) => (
+              {studentAccessCodes.redeemedCodes?.map((code, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-4"
@@ -152,14 +157,14 @@ const AccessCodes: React.FC = () => {
                       <span className="rounded bg-blue-100 px-2 py-1 font-mono text-sm text-blue-800">
                         {code.code}
                       </span>
-                      <span className="text-sm text-gray-500 capitalize">{code.target_type}</span>
+                      <span className="text-sm text-gray-500 capitalize">{code.targetType}</span>
                     </div>
-                    <p className="mt-1 font-medium text-gray-900">{code.target_name}</p>
+                    <p className="mt-1 font-medium text-gray-900">{code.targetName}</p>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-1 text-sm text-gray-500">
                       <Clock className="h-4 w-4" />
-                      <span>Redeemed {formatDate(code.redeemed_at)}</span>
+                      <span>Redeemed {formatDate(code.redeemedAt)}</span>
                     </div>
                   </div>
                 </div>

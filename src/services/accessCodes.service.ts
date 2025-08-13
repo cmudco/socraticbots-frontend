@@ -15,15 +15,15 @@ export interface RedeemAccessCodeResponse {
 
 export interface RedeemedAccessCode {
   code: string;
-  target_name: string;
-  target_type: string;
-  redeemed_at: string;
-  access_code_created_at: string;
+  targetName: string;
+  targetType: string;
+  redeemedAt: string;
+  accessCodeCreatedAt: string;
 }
 
 export interface StudentAccessCodesResponse {
-  redeemed_codes: RedeemedAccessCode[];
-  total_count: number;
+  redeemedCodes: RedeemedAccessCode[];
+  totalCount: number;
 }
 
 class AccessCodeService {
