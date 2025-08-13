@@ -1,16 +1,14 @@
 import React from 'react';
 
-import { Plus } from 'lucide-react';
-
 import { useBots } from '@/hooks/queries/useBots';
 
-import { useIsProfessor } from '@/hooks/queries/useUser';
 import { useModalStore } from '@/stores/ui/modalStore';
 import { useUiStore } from '@/stores/ui/uiStore';
 
-import { Bot } from '@/types/bot';
+import CreateButton from '@/components/widgets/buttons/CreateButton';
+import EmptyMessage from '@/components/widgets/states/EmptyMessage';
 
-import { Button } from '@/components/ui/button';
+import { Bot } from '@/types/bot';
 
 import BotFormModal from './BotFormModal';
 import BotItem from './BotItem';
@@ -24,8 +22,6 @@ interface BotListProps {
 
 const BotList: React.FC<BotListProps> = ({ botGroupId, initialBots, onBotDeleted }) => {
   const { data: bots = initialBots || [], isLoading: loading, error } = useBots(botGroupId);
-
-  const isProfessor = useIsProfessor();
 
   const {
     botFormModal,
@@ -65,12 +61,9 @@ const BotList: React.FC<BotListProps> = ({ botGroupId, initialBots, onBotDeleted
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-md font-semibold">Bots</h3>
-        {isProfessor && (
-          <Button onClick={handleOpenCreateModal} size="sm" variant="outline">
-            <Plus size={14} />
-            Add Bot
-          </Button>
-        )}
+        <CreateButton onClick={handleOpenCreateModal} size="sm" variant="outline">
+          Add Bot
+        </CreateButton>
       </div>
 
       {loading ? (
@@ -78,9 +71,10 @@ const BotList: React.FC<BotListProps> = ({ botGroupId, initialBots, onBotDeleted
       ) : error ? (
         <p className="py-4 text-center text-red-500">Error loading bots: {error.message}</p>
       ) : visibleBots.length === 0 ? (
-        <p className="py-4 text-center text-gray-500">
-          {isProfessor ? 'No bots yet. Add your first bot!' : 'No bots available.'}
-        </p>
+        <EmptyMessage
+          professorMessage="No bots yet. Add your first bot!"
+          studentMessage="No bots available."
+        />
       ) : (
         <div className="space-y-2">
           {visibleBots.map((bot: Bot) => (
