@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Edit, Eye, FileText, Trash } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useIsProfessor } from '@/hooks/queries/useUser';
 
 import { Bot } from '@/types/bot';
 
@@ -16,7 +16,7 @@ interface BotItemProps {
 }
 
 const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView }) => {
-  const { user } = useAuth();
+  const isProfessor = useIsProfessor();
 
   return (
     <div className="flex items-center justify-between rounded border bg-white p-3">
@@ -41,7 +41,7 @@ const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView }) => {
         )}
       </div>
       <div className="flex space-x-1">
-        {user?.isProfessor ? (
+        {isProfessor ? (
           <>
             <Button
               onClick={onEdit}

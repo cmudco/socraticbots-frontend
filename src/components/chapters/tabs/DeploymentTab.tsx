@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { CheckCircle, Copy, RefreshCw } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useIsProfessor } from '@/hooks/queries/useUser';
 
 import { useChapterFormStore } from '@/stores/forms/chapterFormStore';
 
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 const DeploymentTab: React.FC = () => {
-  const { user } = useAuth();
+  const isProfessor = useIsProfessor();
   const { originalChapter, accessCode, updateAccessCode } = useChapterFormStore();
   const [copySuccess, setCopySuccess] = useState(false);
   const [hasGeneratedCode, setHasGeneratedCode] = useState(false);
@@ -52,7 +52,7 @@ const DeploymentTab: React.FC = () => {
     updateAccessCode(e.target.value);
   };
 
-  if (!user?.isProfessor) {
+  if (!isProfessor) {
     return (
       <div className="space-y-6 p-4">
         <div>

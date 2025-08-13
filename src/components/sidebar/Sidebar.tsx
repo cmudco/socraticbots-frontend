@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useUser, useIsAuthenticated } from '@/hooks/queries/useUser';
 
 import { useUiStore } from '@/stores/ui/uiStore';
 
@@ -14,7 +14,8 @@ import SidebarButton from './SidebarButton';
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { sidebarCollapsed, toggleSidebar } = useUiStore();
-  const { isAuthenticated, user } = useAuth();
+  const user = useUser();
+  const isAuthenticated = useIsAuthenticated();
 
   if (!isAuthenticated) {
     return null;

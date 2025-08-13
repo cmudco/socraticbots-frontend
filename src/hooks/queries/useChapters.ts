@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuthStore } from '@/stores/authStore';
+import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
 import {
   Chapter,
@@ -24,12 +24,12 @@ export const chapterKeys = {
  * Get all chapters for a specific book
  */
 export const useChapters = (bookId: string, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: chapterKeys.list(bookId),
     queryFn: () => chapterService.getChapters(bookId),
-    enabled: enabled && !!bookId && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!bookId && isAuthenticated,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -39,12 +39,12 @@ export const useChapters = (bookId: string, enabled: boolean = true) => {
  * Get a single chapter by ID
  */
 export const useChapter = (bookId: string, chapterId: string, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: chapterKeys.detail(bookId, chapterId),
     queryFn: () => chapterService.getChapter(bookId, chapterId),
-    enabled: enabled && !!bookId && !!chapterId && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!bookId && !!chapterId && isAuthenticated,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });

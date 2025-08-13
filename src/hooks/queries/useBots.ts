@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuthStore } from '@/stores/authStore';
+import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
 import {
   Bot,
@@ -26,12 +26,12 @@ export const botKeys = {
  * Get all bots for a specific bot group
  */
 export const useBots = (botGroupId: number, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: botKeys.list(botGroupId),
     queryFn: () => botService.getBots(botGroupId),
-    enabled: enabled && !!botGroupId && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!botGroupId && isAuthenticated,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -41,12 +41,12 @@ export const useBots = (botGroupId: number, enabled: boolean = true) => {
  * Get a single bot by ID
  */
 export const useBot = (botGroupId: number, botId: number, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: botKeys.detail(botGroupId, botId),
     queryFn: () => botService.getBot(botGroupId, botId),
-    enabled: enabled && !!botGroupId && !!botId && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!botGroupId && !!botId && isAuthenticated,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -69,7 +69,15 @@ export const useCreateBot = () => {
       botData: CreateBotRequest;
       modelPreferences?: BotModelPreferenceRequest;
       promptData?: BotPromptRequest;
-    }) => botService.createBot(botGroupId, botData, modelPreferences, promptData),
+    }) => {
+      // Merge all data into a single request object
+      const fullBotData = {
+        ...botData,
+        ...modelPreferences,
+        ...promptData,
+      };
+      return botService.createBot(botGroupId, fullBotData);
+    },
     onSuccess: (newBot: Bot, { botGroupId }) => {
       // Optimistically update the bots list
       queryClient.setQueryData<Bot[]>(botKeys.list(botGroupId), oldBots => {
@@ -105,8 +113,15 @@ export const useUpdateBot = () => {
       botData: UpdateBotRequest;
       modelPreferences?: BotModelPreferenceRequest;
       promptData?: BotPromptRequest;
-    }) =>
-      botService.updateBot(botGroupId, botId, botData, modelPreferences, promptData),
+    }) => {
+      // Merge all data into a single request object
+      const fullBotData = {
+        ...botData,
+        ...modelPreferences,
+        ...promptData,
+      };
+      return botService.updateBot(botGroupId, botId, fullBotData);
+    },
     onSuccess: (updatedBot: Bot, { botGroupId, botId }) => {
       // Update the specific bot detail
       queryClient.setQueryData<Bot>(botKeys.detail(botGroupId, botId), updatedBot);

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuthStore } from '@/stores/authStore';
+import { useIsAuthenticated } from '@/hooks/queries/useUser';
 import { useChatStore } from '@/stores/core/chatStore';
 
 import { CreateNoteRequest, UpdateNoteRequest, notesService } from '@/services/notes.service';
@@ -21,76 +21,76 @@ export const noteKeys = {
 };
 
 export const useNotes = () => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
   const { selectedChapterId } = useChatStore();
 
   return useQuery({
     queryKey: noteKeys.list(selectedChapterId || undefined),
     queryFn: () => notesService.getNotes(selectedChapterId || undefined),
-    enabled: isAuthenticated && !!tokens?.access,
+    enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
 };
 
 export const useNotesByChapter = (chapterId: string) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: noteKeys.byChapter(chapterId),
     queryFn: () => notesService.getNotesByChapter(chapterId),
-    enabled: isAuthenticated && !!tokens?.access && !!chapterId,
+    enabled: isAuthenticated && !!chapterId,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
 };
 
 export const useNote = (id: string) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: noteKeys.detail(id),
     queryFn: () => notesService.getNote(id),
-    enabled: isAuthenticated && !!tokens?.access && !!id,
+    enabled: isAuthenticated && !!id,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 };
 
 export const useSearchNotes = (query: string) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
   const { selectedChapterId } = useChatStore();
 
   return useQuery({
     queryKey: noteKeys.search(query, selectedChapterId || undefined),
     queryFn: () => notesService.searchNotes(query, selectedChapterId || undefined),
-    enabled: isAuthenticated && !!tokens?.access && query.trim().length > 0,
+    enabled: isAuthenticated && query.trim().length > 0,
     staleTime: 1 * 60 * 1000,
     gcTime: 2 * 60 * 1000,
   });
 };
 
 export const useNotesByType = (type: NoteType) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
   const { selectedChapterId } = useChatStore();
 
   return useQuery({
     queryKey: noteKeys.byType(type, selectedChapterId || undefined),
     queryFn: () => notesService.getNotesByType(type, selectedChapterId || undefined),
-    enabled: isAuthenticated && !!tokens?.access,
+    enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
 };
 
 export const usePinnedNotes = () => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
   const { selectedChapterId } = useChatStore();
 
   return useQuery({
     queryKey: noteKeys.pinned(selectedChapterId || undefined),
     queryFn: () => notesService.getPinnedNotes(selectedChapterId || undefined),
-    enabled: isAuthenticated && !!tokens?.access,
+    enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });

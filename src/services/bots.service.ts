@@ -3,12 +3,7 @@ import { baseRequest } from '@/utils/baseRequest';
 import {
   Bot,
   CreateBotRequest,
-  UpdateBotRequest,
-  BotModelPreferenceRequest,
-  BotPromptRequest,
-  BotModelPreference,
-  BotPrompt,
-  BotAccessCode
+  UpdateBotRequest
 } from '@/types/bot';
 
 class BotService {
@@ -28,36 +23,43 @@ class BotService {
 
   async createBot(
     botGroupId: number,
-    botData: CreateBotRequest,
-    modelPreferences?: BotModelPreferenceRequest,
-    promptData?: BotPromptRequest
+    botData: CreateBotRequest & {
+      chatModelDareId?: number;
+      trackingModelDareId?: number;
+      greeting?: string;
+      chatPrompt?: string;
+      trackingPrompt?: string;
+      learningGoals?: string;
+    }
   ): Promise<Bot> {
     try {
+      // Transform frontend field names to backend field names
+      const requestData = {
+        ...botData,
+        // Access code handling
+        ...(botData.accessCode !== undefined && { access_code: botData.accessCode }),
+        // Model preferences inline
+        ...(botData.chatModelDareId !== undefined && { chat_model_dare_id: botData.chatModelDareId }),
+        ...(botData.trackingModelDareId !== undefined && { tracking_model_dare_id: botData.trackingModelDareId }),
+        // Prompts inline (already have correct names)
+        ...(botData.greeting !== undefined && { greeting: botData.greeting }),
+        ...(botData.chatPrompt !== undefined && { chat_prompt: botData.chatPrompt }),
+        ...(botData.trackingPrompt !== undefined && { tracking_prompt: botData.trackingPrompt }),
+        ...(botData.learningGoals !== undefined && { learning_goals: botData.learningGoals }),
+      };
+
       const newBot = await baseRequest<Bot>({
         url: `bot-groups/${botGroupId}/bots/`,
         method: METHOD.POST,
-        data: botData,
+        data: requestData,
       });
 
-      let needsRefetch = false;
-
-      if (
-        modelPreferences &&
-        (modelPreferences.chatModelDareId || modelPreferences.trackingModelDareId)
-      ) {
-        await this.setBotModelPreferences(botGroupId, newBot.id, modelPreferences);
-        needsRefetch = true;
-      }
-
-      if (
-        promptData &&
-        (promptData.greeting || promptData.chatPrompt || promptData.trackingPrompt)
-      ) {
-        await this.setBotPrompts(botGroupId, newBot.id, promptData);
-        needsRefetch = true;
-      }
-
-      if (needsRefetch) {
+      // If we have nested data, refetch to get the complete bot with relationships
+      const hasNestedData = botData.chatModelDareId || botData.trackingModelDareId || 
+                           botData.greeting || botData.chatPrompt || 
+                           botData.trackingPrompt || botData.learningGoals;
+      
+      if (hasNestedData) {
         return await this.getBot(botGroupId, newBot.id);
       }
 
@@ -71,38 +73,36 @@ class BotService {
   async updateBot(
     botGroupId: number,
     botId: number,
-    botData: UpdateBotRequest,
-    modelPreferences?: BotModelPreferenceRequest,
-    promptData?: BotPromptRequest
+    botData: UpdateBotRequest & {
+      chatModelDareId?: number;
+      trackingModelDareId?: number;
+      greeting?: string;
+      chatPrompt?: string;
+      trackingPrompt?: string;
+      learningGoals?: string;
+    }
   ): Promise<Bot> {
     try {
+      // Transform frontend field names to backend field names
+      const requestData = {
+        ...botData,
+        // Access code handling
+        ...(botData.accessCode !== undefined && { access_code: botData.accessCode }),
+        // Model preferences inline
+        ...(botData.chatModelDareId !== undefined && { chat_model_dare_id: botData.chatModelDareId }),
+        ...(botData.trackingModelDareId !== undefined && { tracking_model_dare_id: botData.trackingModelDareId }),
+        // Prompts inline (already have correct names)
+        ...(botData.greeting !== undefined && { greeting: botData.greeting }),
+        ...(botData.chatPrompt !== undefined && { chat_prompt: botData.chatPrompt }),
+        ...(botData.trackingPrompt !== undefined && { tracking_prompt: botData.trackingPrompt }),
+        ...(botData.learningGoals !== undefined && { learning_goals: botData.learningGoals }),
+      };
+
       const updatedBot = await baseRequest<Bot>({
         url: `bot-groups/${botGroupId}/bots/${botId}/`,
         method: METHOD.PATCH,
-        data: botData,
+        data: requestData,
       });
-
-      let needsRefetch = false;
-
-      if (
-        modelPreferences &&
-        (modelPreferences.chatModelDareId || modelPreferences.trackingModelDareId)
-      ) {
-        await this.setBotModelPreferences(botGroupId, botId, modelPreferences);
-        needsRefetch = true;
-      }
-
-      if (
-        promptData &&
-        (promptData.greeting || promptData.chatPrompt || promptData.trackingPrompt)
-      ) {
-        await this.setBotPrompts(botGroupId, botId, promptData);
-        needsRefetch = true;
-      }
-
-      if (needsRefetch) {
-        return await this.getBot(botGroupId, botId);
-      }
 
       return updatedBot;
     } catch (error) {
@@ -118,43 +118,6 @@ class BotService {
     });
   }
 
-  async setBotModelPreferences(
-    botGroupId: number,
-    botId: number,
-    preferences: BotModelPreferenceRequest
-  ): Promise<BotModelPreference> {
-    return baseRequest<BotModelPreference>({
-      url: `bot-groups/${botGroupId}/bots/${botId}/model_preference/`,
-      method: METHOD.POST,
-      data: preferences,
-    });
-  }
-
-  async getBotModelPreferences(botGroupId: number, botId: number): Promise<BotModelPreference> {
-    return baseRequest<BotModelPreference>({
-      url: `bot-groups/${botGroupId}/bots/${botId}/model_preference/`,
-      method: METHOD.GET,
-    });
-  }
-
-  async getBotPrompts(botGroupId: number, botId: number): Promise<BotPrompt> {
-    return baseRequest<BotPrompt>({
-      url: `bot-groups/${botGroupId}/bots/${botId}/prompts/`,
-      method: METHOD.GET,
-    });
-  }
-
-  async setBotPrompts(
-    botGroupId: number,
-    botId: number,
-    promptData: BotPromptRequest
-  ): Promise<BotPrompt> {
-    return baseRequest<BotPrompt>({
-      url: `bot-groups/${botGroupId}/bots/${botId}/prompts/`,
-      method: METHOD.POST,
-      data: promptData,
-    });
-  }
 
   async attachFiles(botGroupId: number, botId: number, fileIds: number[]): Promise<void> {
     return baseRequest<void>({
@@ -172,48 +135,6 @@ class BotService {
     });
   }
 
-  async getBotAccessCode(botGroupId: number, botId: number): Promise<BotAccessCode | null> {
-    try {
-      const response = await baseRequest<{ code: string; created_at: string; created_by: string }>({
-        url: `access-codes/bot-groups/${botGroupId}/bots/${botId}/`,
-        method: METHOD.GET,
-      });
-      
-      if (!response.code) {
-        return null;
-      }
-      
-      return {
-        code: response.code,
-        created_at: response.created_at || '',
-        created_by: response.created_by || ''
-      };
-    } catch (error) {
-      // Return null if access code doesn't exist
-      return null;
-    }
-  }
-
-  async generateBotAccessCode(botGroupId: number, botId: number, customCode?: string): Promise<BotAccessCode> {
-    const response = await baseRequest<{ code: string; created_at: string; created_by: string }>({
-      url: `access-codes/bot-groups/${botGroupId}/bots/${botId}/generate/`,
-      method: METHOD.POST,
-      data: customCode ? { code: customCode } : {},
-    });
-    
-    return {
-      code: response.code,
-      created_at: response.created_at,
-      created_by: response.created_by
-    };
-  }
-
-  async deleteBotAccessCode(botGroupId: number, botId: number): Promise<void> {
-    await baseRequest<void>({
-      url: `access-codes/bot-groups/${botGroupId}/bots/${botId}/delete/`,
-      method: METHOD.DELETE,
-    });
-  }
 }
 
 export const botService = new BotService();

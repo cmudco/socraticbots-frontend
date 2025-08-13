@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import { CheckCircle, Copy, RefreshCw } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useIsProfessor } from '@/hooks/queries/useUser';
 
 import { useBotFormStore } from '@/stores/forms/botFormStore';
-import { botService } from '@/services/bots.service';
-import { BotAccessCode } from '@/types/bot';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -19,79 +17,41 @@ interface BotDeploymentTabProps {
   botId: number;
 }
 
-const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId, botId }) => {
-  const { user } = useAuth();
+const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId: _botGroupId, botId: _botId }) => {
+  const isProfessor = useIsProfessor();
   const { accessCode, updateAccessCode } = useBotFormStore();
   const [copySuccess, setCopySuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [botAccessCode, setBotAccessCode] = useState<BotAccessCode | null>(null);
   const [customCode, setCustomCode] = useState('');
 
-  // Load existing access code when component mounts
-  useEffect(() => {
-    loadAccessCode();
-  }, [botGroupId, botId]);
-
-  const loadAccessCode = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const existingCode = await botService.getBotAccessCode(botGroupId, botId);
-      setBotAccessCode(existingCode);
-      if (existingCode) {
-        updateAccessCode(existingCode.code);
-      }
-    } catch (err) {
-      console.error('Error loading access code:', err);
-      setError('Failed to load access code');
-    } finally {
-      setLoading(false);
+  const generateRandomCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    return result;
   };
 
-  const generateAccessCode = async (useCustomCode = false) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const codeToUse = useCustomCode ? customCode.trim() : undefined;
-      const newCode = await botService.generateBotAccessCode(botGroupId, botId, codeToUse);
-      setBotAccessCode(newCode);
-      updateAccessCode(newCode.code);
-      setCustomCode(''); // Clear custom code input after successful generation
-    } catch (err) {
-      console.error('Error generating access code:', err);
-      setError('Failed to generate access code. The code might already exist.');
-    } finally {
-      setLoading(false);
-    }
+  const generateAccessCode = (useCustomCode = false) => {
+    const codeToUse = useCustomCode ? customCode.trim() : generateRandomCode();
+    updateAccessCode(codeToUse);
+    setCustomCode('');
   };
 
-  const regenerateAccessCode = async () => {
-    await generateAccessCode(false); // Generate random code
+  const regenerateAccessCode = () => {
+    const newCode = generateRandomCode();
+    updateAccessCode(newCode);
   };
 
-  const deleteAccessCode = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      await botService.deleteBotAccessCode(botGroupId, botId);
-      setBotAccessCode(null);
-      updateAccessCode('');
-    } catch (err) {
-      console.error('Error deleting access code:', err);
-      setError('Failed to delete access code');
-    } finally {
-      setLoading(false);
-    }
+  const deleteAccessCode = () => {
+    updateAccessCode('');
   };
 
   const handleCopyCode = async () => {
-    const codeToUse = accessCode || botAccessCode?.code;
-    if (!codeToUse) return;
+    if (!accessCode) return;
 
     try {
-      await navigator.clipboard.writeText(codeToUse);
+      await navigator.clipboard.writeText(accessCode);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
@@ -104,7 +64,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId, botId }
   };
 
   // Only show deployment tab for professors
-  if (!user?.isProfessor) {
+  if (!isProfessor) {
     return (
       <div className="p-4 text-center text-gray-500">
         <p>Deployment features are only available for professors.</p>
@@ -112,27 +72,19 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId, botId }
     );
   }
 
-  const currentAccessCode = accessCode || botAccessCode?.code;
-
   return (
     <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      
       <Card>
         <CardHeader>
-          <CardTitle>{botAccessCode ? 'Bot Access Code' : 'Generate Access Code'}</CardTitle>
+          <CardTitle>{accessCode ? 'Bot Access Code' : 'Generate Access Code'}</CardTitle>
           <CardDescription>
-            {botAccessCode
+            {accessCode
               ? 'Students can use this code to access this specific bot.'
               : 'Generate an access code for students to access this bot.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!botAccessCode && (
+          {!accessCode && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="custom-code">Custom Access Code (Optional)</Label>
@@ -151,27 +103,17 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId, botId }
               <div className="flex space-x-2">
                 <Button
                   onClick={() => generateAccessCode(false)}
-                  disabled={loading}
                   variant="outline"
                 >
-                  {loading ? (
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                  )}
+                  <RefreshCw className="mr-2 h-4 w-4" />
                   Generate Random Code
                 </Button>
                 
                 {customCode.trim() && (
                   <Button
                     onClick={() => generateAccessCode(true)}
-                    disabled={loading}
                   >
-                    {loading ? (
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                    )}
+                    <RefreshCw className="mr-2 h-4 w-4" />
                     Use Custom Code
                   </Button>
                 )}
@@ -179,29 +121,14 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId, botId }
             </div>
           )}
 
-          {botAccessCode && (
-            <Button
-              onClick={() => generateAccessCode(false)}
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? (
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="mr-2 h-4 w-4" />
-              )}
-              Generate New Access Code
-            </Button>
-          )}
-
-          {currentAccessCode && (
+          {accessCode && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="access-code">Access Code</Label>
                 <div className="flex space-x-2">
                   <Input
                     id="access-code"
-                    value={currentAccessCode}
+                    value={accessCode}
                     onChange={handleAccessCodeChange}
                     className="font-mono"
                     placeholder="Enter custom access code"
@@ -226,7 +153,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId, botId }
                   </Button>
                 </div>
                 <p className="text-sm text-gray-500">
-                  You can customize this access code to make it memorable for your students.
+                  You can customize this access code to make it memorable for your students. Click "Update Bot" to save changes.
                 </p>
               </div>
 
@@ -234,8 +161,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId, botId }
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => regenerateAccessCode()}
-                  disabled={loading}
+                  onClick={regenerateAccessCode}
                 >
                   <RefreshCw className="mr-1 h-4 w-4" />
                   Regenerate
@@ -244,25 +170,10 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId, botId }
                   size="sm"
                   variant="destructive"
                   onClick={deleteAccessCode}
-                  disabled={loading}
                 >
                   Delete Code
                 </Button>
               </div>
-
-              {botAccessCode && (
-                <div className="rounded-lg bg-gray-50 p-3 text-sm">
-                  <p>
-                    <strong>Created by:</strong> {botAccessCode.created_by}
-                  </p>
-                  <p>
-                    <strong>Created:</strong>{' '}
-                    {botAccessCode.created_at
-                      ? new Date(botAccessCode.created_at).toLocaleString()
-                      : 'Unknown'}
-                  </p>
-                </div>
-              )}
 
               {copySuccess && (
                 <Alert>

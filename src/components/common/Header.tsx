@@ -4,13 +4,15 @@ import { Link } from 'react-router-dom';
 import logo from '@/assets/logo.png';
 import { BookOpen, GraduationCap, LogOut, User } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useUser, useIsAuthenticated, useLogout } from '@/hooks/queries/useUser';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 const Header: React.FC = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const user = useUser();
+  const isAuthenticated = useIsAuthenticated();
+  const logout = useLogout();
 
   const getUserInitials = (name: string) => {
     return name
