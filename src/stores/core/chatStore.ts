@@ -3,10 +3,10 @@ import { create } from 'zustand';
 import type { ChatMessage } from '@/types/chat';
 
 interface ChatStoreState {
-  selectedBookId: string | null;
-  setSelectedBookId: (id: string | null) => void;
-  selectedChapterId: string | null;
-  setSelectedChapterId: (id: string | null) => void;
+  selectedBotGroupId: number | null;
+  setSelectedBotGroupId: (id: number | null) => void;
+  selectedBotId: number | null;
+  setSelectedBotId: (id: number | null) => void;
   selectedConversationId: string | null;
   setSelectedConversationId: (id: string | null) => void;
   inputValue: string;
@@ -23,15 +23,21 @@ interface ChatStoreState {
   addProgressToken: (token: string) => void;
   clearProgressTokens: () => void;
 
-  setChapterContext: (bookId: string, chapterId: string, conversationId: string) => void;
+  setBotContext: (botGroupId: number, botId: number, conversationId: string) => void;
   clearChatState: () => void;
+
+  // Legacy compatibility methods (temporarily map to bot methods)
+  selectedBookId: string | null;
+  selectedChapterId: string | null;
+  setChapterContext: (bookId: string, chapterId: string, conversationId: string) => void;
+  setSelectedChapterId: (id: string | null) => void;
 }
 
-export const useChatStore = create<ChatStoreState>(set => ({
-  selectedBookId: null,
-  setSelectedBookId: id => set({ selectedBookId: id }),
-  selectedChapterId: null,
-  setSelectedChapterId: id => set({ selectedChapterId: id }),
+export const useChatStore = create<ChatStoreState>((set, get) => ({
+  selectedBotGroupId: null,
+  setSelectedBotGroupId: id => set({ selectedBotGroupId: id }),
+  selectedBotId: null,
+  setSelectedBotId: id => set({ selectedBotId: id }),
   selectedConversationId: null,
   setSelectedConversationId: id => set({ selectedConversationId: id }),
   inputValue: '',
@@ -49,10 +55,10 @@ export const useChatStore = create<ChatStoreState>(set => ({
   addProgressToken: token => set(state => ({ progressTokens: [...state.progressTokens, token] })),
   clearProgressTokens: () => set({ progressTokens: [] }),
 
-  setChapterContext: (bookId, chapterId, conversationId) =>
+  setBotContext: (botGroupId, botId, conversationId) =>
     set({
-      selectedBookId: bookId,
-      selectedChapterId: chapterId,
+      selectedBotGroupId: botGroupId,
+      selectedBotId: botId,
       selectedConversationId: conversationId,
       inputValue: '',
       pendingMessages: [],
@@ -61,11 +67,31 @@ export const useChatStore = create<ChatStoreState>(set => ({
 
   clearChatState: () =>
     set({
-      selectedBookId: null,
-      selectedChapterId: null,
+      selectedBotGroupId: null,
+      selectedBotId: null,
       selectedConversationId: null,
       inputValue: '',
       pendingMessages: [],
       progressTokens: [],
     }),
+
+  // Legacy compatibility methods (map to bot methods for now)
+  get selectedBookId() {
+    const botGroupId = get().selectedBotGroupId;
+    return botGroupId ? botGroupId.toString() : null;
+  },
+  get selectedChapterId() {
+    const botId = get().selectedBotId;
+    return botId ? botId.toString() : null;
+  },
+  setChapterContext: (bookId, chapterId, conversationId) =>
+    set({
+      selectedBotGroupId: parseInt(bookId),
+      selectedBotId: parseInt(chapterId),
+      selectedConversationId: conversationId,
+      inputValue: '',
+      pendingMessages: [],
+      progressTokens: [],
+    }),
+  setSelectedChapterId: (id) => set({ selectedBotId: id ? parseInt(id) : null }),
 }));

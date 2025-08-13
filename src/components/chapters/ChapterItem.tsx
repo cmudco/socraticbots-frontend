@@ -28,7 +28,7 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete, on
         </div>
       </div>
       <div className="flex space-x-1">
-        {user?.is_professor ? (
+        {user?.isProfessor ? (
           <>
             <Button
               onClick={onEdit}

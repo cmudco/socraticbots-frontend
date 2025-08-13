@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useChatStore } from '@/stores/core/chatStore';
 
 import { CreateNoteRequest, UpdateNoteRequest, notesService } from '@/services/notes.service';
+import { NoteType } from '@/types/note';
 
 export const noteKeys = {
   all: ['notes'] as const,
@@ -69,7 +70,7 @@ export const useSearchNotes = (query: string) => {
   });
 };
 
-export const useNotesByType = (type: 'insight' | 'question' | 'concept') => {
+export const useNotesByType = (type: NoteType) => {
   const { isAuthenticated, tokens } = useAuthStore();
   const { selectedChapterId } = useChatStore();
 

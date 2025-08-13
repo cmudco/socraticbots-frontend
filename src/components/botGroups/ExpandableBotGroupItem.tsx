@@ -1,38 +1,38 @@
 import React, { useState } from 'react';
 
-import { ChevronDown, ChevronUp, Edit, Eye, Trash } from 'lucide-react';
+import { ChevronDown, ChevronUp, Edit, Eye, Trash, Users } from 'lucide-react';
 
 import { useAuth } from '@/hooks/useAuth';
 
 import { useUiStore } from '@/stores/ui/uiStore';
 
-import ChapterList from '@/components/chapters/ChapterList';
+import BotList from '@/components/bots/BotList';
 import { Button } from '@/components/ui/button';
 
-import { Book } from '@/types/book';
+import { BotGroup } from '@/types/botGroup';
 
-interface ExpandableBookItemProps {
-  book: Book;
-  onEdit: (book: Book) => void;
-  onDelete: (book: Book) => void;
-  onView?: (book: Book) => void;
+interface ExpandableBotGroupItemProps {
+  botGroup: BotGroup;
+  onEdit: (botGroup: BotGroup) => void;
+  onDelete: (botGroup: BotGroup) => void;
+  onView?: (botGroup: BotGroup) => void;
 }
 
-const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
-  book,
+const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
+  botGroup,
   onEdit,
   onDelete,
   onView,
 }) => {
   const { user } = useAuth();
 
-  const { expandedBooks, toggleBookExpansion } = useUiStore();
-  const expanded = expandedBooks.has(book.id);
+  const { expandedBotGroups, toggleBotGroupExpansion } = useUiStore();
+  const expanded = expandedBotGroups.has(botGroup.id);
 
   const [showActions, setShowActions] = useState(false);
 
   const toggleExpand = () => {
-    toggleBookExpansion(book.id);
+    toggleBotGroupExpansion(botGroup.id);
   };
 
   return (
@@ -44,38 +44,52 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
         onMouseLeave={() => setShowActions(false)}
       >
         <div className="flex-1">
-          <h3 className="text-lg font-bold">{book.title}</h3>
-          {book.description && <p className="text-sm text-gray-600">{book.description}</p>}
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-bold">{botGroup.title}</h3>
+            {botGroup.collaborators && botGroup.collaborators.length > 0 && (
+              <div className="flex items-center gap-1 text-sm text-gray-500">
+                <Users size={14} />
+                <span>{botGroup.collaborators.length}</span>
+              </div>
+            )}
+          </div>
+          {botGroup.description && (
+            <p className="text-sm text-gray-600">{botGroup.description}</p>
+          )}
+          <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
+            <span>{botGroup.botsCount} bots</span>
+            <span>Created {new Date(botGroup.createdAt).toLocaleDateString()}</span>
+          </div>
         </div>
 
         <div className="flex items-center space-x-3">
           <div
             className={`flex space-x-1 transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}
           >
-            {user?.is_professor ? (
+            {user?.isProfessor ? (
               <>
                 <Button
                   onClick={e => {
                     e.stopPropagation();
-                    onEdit(book);
+                    onEdit(botGroup);
                   }}
                   variant="ghost"
                   size="sm"
                   className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
-                  title="Edit chatbot group"
+                  title="Edit bot group"
                 >
                   <Edit size={14} className="mr-1" />
-                  Edit Chatbot Group
+                  Edit Group
                 </Button>
                 <Button
                   onClick={e => {
                     e.stopPropagation();
-                    onDelete(book);
+                    onDelete(botGroup);
                   }}
                   variant="ghost"
                   size="sm"
                   className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-red-100 hover:text-red-700"
-                  title="Delete chatbot group"
+                  title="Delete bot group"
                 >
                   <Trash size={14} className="mr-1" />
                   Delete
@@ -86,12 +100,12 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
                 <Button
                   onClick={e => {
                     e.stopPropagation();
-                    onView(book);
+                    onView(botGroup);
                   }}
                   variant="ghost"
                   size="sm"
                   className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
-                  title="View chatbot group details"
+                  title="View bot group details"
                 >
                   <Eye size={14} className="mr-1" />
                   View Details
@@ -112,11 +126,15 @@ const ExpandableBookItem: React.FC<ExpandableBookItemProps> = ({
 
       {expanded && (
         <div className="border-t bg-gray-50 p-4">
-          <ChapterList bookId={book.id} initialChapters={[]} onChapterDeleted={() => {}} />
+          <BotList 
+            botGroupId={botGroup.id} 
+            initialBots={[]} 
+            onBotDeleted={() => {}} 
+          />
         </div>
       )}
     </div>
   );
 };
 
-export default ExpandableBookItem;
+export default ExpandableBotGroupItem;

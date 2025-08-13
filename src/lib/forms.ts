@@ -42,9 +42,9 @@ export const bookSchemas = {
     subject: Yup.string().min(1, 'Subject is required').required('Subject is required'),
     topic: Yup.string().min(1, 'Topic is required').required('Topic is required'),
     greeting: Yup.string().optional(),
-    chat_prompt: Yup.string().optional(),
-    tracking_prompt: Yup.string().optional(),
-    learning_goals: Yup.string().optional(),
+    chatPrompt: Yup.string().optional(),
+    trackingPrompt: Yup.string().optional(),
+    learningGoals: Yup.string().optional(),
     chat_model_id: Yup.string().optional(),
     tracking_model_id: Yup.string().optional(),
   }),
@@ -89,9 +89,9 @@ export const learningGoalValidationSchema = Yup.object({
 
 export const chapterPromptsValidationSchema = Yup.object({
   greeting: Yup.string().optional(),
-  chat_prompt: Yup.string().optional(),
-  tracking_prompt: Yup.string().optional(),
-  learning_goals: Yup.string().optional(),
+  chatPrompt: Yup.string().optional(),
+  trackingPrompt: Yup.string().optional(),
+  learningGoals: Yup.string().optional(),
 });
 
 export function useCustomForm<T extends FormValues>(

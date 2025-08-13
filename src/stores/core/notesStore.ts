@@ -46,8 +46,8 @@ export const notesSelectors = {
   createNoteType: (state: NotesStoreState) => state.createNoteForm.data.type,
   newNoteTitle: (state: NotesStoreState) => state.createNoteForm.data.title,
   newNoteContent: (state: NotesStoreState) => state.createNoteForm.data.content,
-  editTitle: (state: NotesStoreState) => state.editData.title || '',
-  editContent: (state: NotesStoreState) => state.editData.content || '',
+  editTitle: (state: NotesStoreState) => (state.editData?.title as string) || '',
+  editContent: (state: NotesStoreState) => (state.editData?.content as string) || '',
 };
 
 const initialCreateFormData: CreateNoteFormData = {
@@ -67,8 +67,8 @@ export const useNotesStore = create<NotesStoreState>((set, get) => {
     ...createEditingState(),
     createNoteForm: createFormState(initialCreateFormData),
 
-    setCollapsed: (collapsed: boolean) => collapsibleActions.setCollapsed(collapsed)(set, get),
-    toggleCollapse: () => collapsibleActions.toggleCollapse()(set, get),
+    setCollapsed: (collapsed: boolean) => collapsibleActions.setCollapsed(collapsed)(set, get as any),
+    toggleCollapse: () => collapsibleActions.toggleCollapse()(set, get as any),
     setSearchTerm: (term: string) => searchActions.setSearchTerm(term)(set),
     setIsSearching: (searching: boolean) => searchActions.setIsSearching(searching)(set),
     clearSearch: () => searchActions.clearSearch()(set),

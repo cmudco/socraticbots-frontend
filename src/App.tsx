@@ -7,7 +7,7 @@ import Layout from './components/layout/Layout';
 import { useAuthInitialization } from './hooks/queries/useAuthInitialization';
 import About from './pages/About';
 import AccessCodes from './pages/AccessCodes';
-import Books from './pages/Books';
+import BotGroups from './pages/BotGroups';
 import Chat from './pages/Chat';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -46,7 +46,7 @@ const App: React.FC = () => {
               }
             />
             <Route path="settings" element={<Settings />} />
-            <Route path="books" element={<Books />} />
+            <Route path="bot-groups" element={<BotGroups />} />
             <Route path="chat" element={<Chat />} />
           </Route>
 

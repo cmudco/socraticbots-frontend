@@ -20,7 +20,7 @@ const Sidebar: React.FC = () => {
     return null;
   }
 
-  const navigationItems = getNavigationItemsForRole(user?.is_professor ?? false);
+  const navigationItems = getNavigationItemsForRole(user?.isProfessor ?? false);
 
   const mainNavItems = navigationItems.filter(item => item.path !== '/settings');
   const settingsItem = navigationItems.find(item => item.path === '/settings');

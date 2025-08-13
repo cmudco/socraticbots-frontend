@@ -8,7 +8,7 @@ import { Chapter, chatService } from '@/services/chat.service';
 import { ChatRole } from '@/types/chat';
 import type { ChatMessage, Conversation } from '@/types/chat';
 
-import { useBooks } from './useBooks';
+import { useBotGroups } from './useBotGroups';
 
 export const chatKeys = {
   all: ['chat'] as const,
@@ -18,30 +18,30 @@ export const chatKeys = {
   tracking: (conversationId: string) => [...chatKeys.all, 'tracking', conversationId] as const,
 };
 
-export const useChapterToBookMapping = () => {
-  const { data: books } = useBooks();
+export const useChapterToBotGroupMapping = () => {
+  const { data: botGroups } = useBotGroups();
 
   return useQuery<Record<string, string>>({
-    queryKey: ['chat', 'chapterToBookMapping'],
+    queryKey: ['chat', 'chapterToBotGroupMapping'],
     queryFn: async () => {
-      if (!books) return {};
+      if (!botGroups) return {};
 
       const mapping: Record<string, string> = {};
 
-      for (const book of books) {
+      for (const botGroup of botGroups) {
         try {
-          const chapters = await chapterService.getChapters(book.id);
+          const chapters = await chapterService.getChapters(botGroup.id.toString());
           chapters.forEach(chapter => {
-            mapping[chapter.id] = book.id;
+            mapping[chapter.id] = botGroup.id.toString();
           });
         } catch (error) {
-          console.warn(`Error fetching chapters for book ${book.id}:`, error);
+          console.warn(`Error fetching chapters for botGroup ${botGroup.id}:`, error);
         }
       }
 
       return mapping;
     },
-    enabled: !!books && books.length > 0,
+    enabled: !!botGroups && botGroups.length > 0,
     staleTime: 10 * 60 * 1000,
   });
 };
