@@ -1,23 +1,19 @@
 import React from 'react';
 
-import { Plus } from 'lucide-react';
-
 import { useBotGroups } from '@/hooks/queries/useBotGroups';
-import { useIsProfessor } from '@/hooks/queries/useUser';
 
 import { useModalStore } from '@/stores/ui/modalStore';
 
 import BotGroupFormModal from '@/components/botGroups/BotGroupFormModal';
 import BotGroupTable from '@/components/botGroups/BotGroupTable';
 import DeleteBotGroupModal from '@/components/botGroups/DeleteBotGroupModal';
-import { Button } from '@/components/ui/button';
+import CreateButton from '@/components/widgets/buttons/CreateButton';
+import EmptyStateCard from '@/components/widgets/states/EmptyStateCard';
 
 import { BotGroup } from '@/types/botGroup';
 
 const BotGroups: React.FC = () => {
   const { data: botGroups = [], isLoading: loading, error, isError } = useBotGroups();
-
-  const isProfessor = useIsProfessor();
 
   const {
     botGroupFormModal,
@@ -60,33 +56,16 @@ const BotGroups: React.FC = () => {
     }
 
     if (botGroups.length === 0) {
-      if (isProfessor) {
-        return (
-          <div className="rounded-lg bg-gray-50 p-6 text-center">
-            <h3 className="text-lg font-medium text-gray-600">No Chatbot Groups</h3>
-            <p className="mt-1 text-gray-500">
-              Create your first chatbot group to get started.
-            </p>
-            <Button
-              onClick={handleOpenCreateModal}
-              className="mt-4 bg-violet-600 text-white hover:bg-violet-700"
-            >
-              <Plus size={16} />
-              Create New Chatbot Group
-            </Button>
-          </div>
-        );
-      } else {
-        return (
-          <div className="rounded-lg bg-gray-50 p-6 text-center">
-            <h3 className="text-lg font-medium text-gray-600">No Chatbot Groups Available</h3>
-            <p className="mt-1 text-gray-500">
-              You don't have access to any chatbot groups yet. Please contact your instructor for an
-              access code.
-            </p>
-          </div>
-        );
-      }
+      return (
+        <EmptyStateCard
+          professorTitle="No Chatbot Groups"
+          professorMessage="Create your first chatbot group to get started."
+          studentTitle="No Chatbot Groups Available"
+          studentMessage="You don't have access to any chatbot groups yet. Please contact your instructor for an access code."
+          actionText="Create New Chatbot Group"
+          onAction={handleOpenCreateModal}
+        />
+      );
     }
 
     return (
@@ -103,16 +82,12 @@ const BotGroups: React.FC = () => {
     <div className="p-4">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Chatbot groups</h1>
-        {/* Only show Create New Chatbot Group button for professors */}
-        {isProfessor && (
-          <Button
-            onClick={handleOpenCreateModal}
-            className="bg-violet-600 text-white hover:bg-violet-700"
-          >
-            <Plus size={16} />
-            Create New Chatbot Group
-          </Button>
-        )}
+        <CreateButton
+          onClick={handleOpenCreateModal}
+          className="bg-violet-600 text-white hover:bg-violet-700"
+        >
+          Create New Chatbot Group
+        </CreateButton>
       </div>
 
       {renderContent()}
