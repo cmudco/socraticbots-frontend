@@ -117,7 +117,7 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       learningGoals: bot.prompts?.learningGoals || '',
       chatModelDareId: bot.modelPreference?.chatModelDareId || null,
       trackingModelDareId: bot.modelPreference?.trackingModelDareId || null,
-      accessCode: bot.access_code?.code || '',
+      accessCode: bot.accessCode?.code || '',
       ...initialValidationState,
     }),
 

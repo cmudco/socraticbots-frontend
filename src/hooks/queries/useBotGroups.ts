@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuthStore } from '@/stores/authStore';
+import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
 import { 
   CreateBotGroupRequest, 
@@ -24,12 +24,12 @@ export const botGroupKeys = {
  * Get all bot groups for the current user
  */
 export const useBotGroups = () => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: botGroupKeys.lists(),
     queryFn: () => botGroupService.getBotGroups(),
-    enabled: isAuthenticated && !!tokens?.access,
+    enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -39,12 +39,12 @@ export const useBotGroups = () => {
  * Get a single bot group by ID with detailed information
  */
 export const useBotGroup = (id: number, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: botGroupKeys.detail(id),
     queryFn: () => botGroupService.getBotGroup(id),
-    enabled: enabled && !!id && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!id && isAuthenticated,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -54,12 +54,12 @@ export const useBotGroup = (id: number, enabled: boolean = true) => {
  * Search bot groups by query
  */
 export const useSearchBotGroups = (query: string, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: botGroupKeys.search(query),
     queryFn: () => botGroupService.searchBotGroups(query),
-    enabled: enabled && !!query.trim() && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!query.trim() && isAuthenticated,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });

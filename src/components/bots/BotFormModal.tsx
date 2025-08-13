@@ -4,7 +4,7 @@ import { FormikProps } from 'formik';
 import { Bot, Info } from 'lucide-react';
 
 import { useCreateBot, useUpdateBot } from '@/hooks/queries/useBots';
-import { useAuth } from '@/hooks/useAuth';
+import { useIsProfessor } from '@/hooks/queries/useUser';
 
 import { useBotFormStore } from '@/stores/forms/botFormStore';
 
@@ -49,7 +49,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
   viewOnly = false,
 }) => {
   const formRef = useRef<FormikProps<FormValues>>(null);
-  const { user } = useAuth();
+  const isProfessor = useIsProfessor();
 
   const {
     activeTab,
@@ -75,7 +75,6 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
   const updateBotMutation = useUpdateBot();
 
   const isEdit = !!bot;
-  const isProfessor = user?.isProfessor ?? false;
 
   useEffect(() => {
     if (isOpen) {
@@ -108,39 +107,34 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     setSubmitting(true);
 
     try {
-      const botData = {
+      // Build single unified bot data object
+      const botFormData = {
+        // Basic info
         title,
         subject,
         topic,
-        accessCode: accessCode || undefined,
-      };
-
-      const modelPreferences = {
-        chatModelDareId: chatModelDareId || undefined,
-        trackingModelDareId: trackingModelDareId || undefined,
-      };
-
-      const promptData = {
-        greeting: greeting || undefined,
-        chatPrompt: chatPrompt || undefined,
-        trackingPrompt: trackingPrompt || undefined,
-        learningGoals: learningGoals || undefined,
+        // Access code
+        ...(accessCode && { accessCode }),
+        // Model preferences
+        ...(chatModelDareId && { chatModelDareId }),
+        ...(trackingModelDareId && { trackingModelDareId }),
+        // Prompts
+        ...(greeting && { greeting }),
+        ...(chatPrompt && { chatPrompt }),
+        ...(trackingPrompt && { trackingPrompt }),
+        ...(learningGoals && { learningGoals }),
       };
 
       if (isEdit && bot) {
         await updateBotMutation.mutateAsync({
           botGroupId,
           botId: bot.id,
-          botData,
-          modelPreferences,
-          promptData,
+          botData: botFormData,
         });
       } else {
         await createBotMutation.mutateAsync({
           botGroupId,
-          botData,
-          modelPreferences,
-          promptData,
+          botData: botFormData,
         });
       }
 

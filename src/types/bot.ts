@@ -40,7 +40,7 @@ export interface Bot {
   filesCount: number;
   modelPreference?: BotModelPreference;
   prompts?: BotPrompt;
-  access_code?: BotAccessCode;
+  accessCode?: BotAccessCode;
   createdAt: string;
   updatedAt: string;
 }

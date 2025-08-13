@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useAuthStore } from '@/stores/authStore';
+import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
 import { dareLLMModelsService, DareLLMModel } from '@/services/dareLLMModels.service';
 
@@ -18,12 +18,12 @@ export const dareLLMModelKeys = {
  * Get all DARE LLM models
  */
 export const useDareLLMModels = () => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: dareLLMModelKeys.lists(),
     queryFn: () => dareLLMModelsService.getDareLLMModels(),
-    enabled: isAuthenticated && !!tokens?.access,
+    enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -33,12 +33,12 @@ export const useDareLLMModels = () => {
  * Get a single DARE LLM model by ID
  */
 export const useDareLLMModel = (id: number, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: dareLLMModelKeys.detail(id),
     queryFn: () => dareLLMModelsService.getDareLLMModel(id),
-    enabled: enabled && !!id && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!id && isAuthenticated,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -48,12 +48,12 @@ export const useDareLLMModel = (id: number, enabled: boolean = true) => {
  * Search DARE LLM models by query
  */
 export const useSearchDareLLMModels = (query: string, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: dareLLMModelKeys.search(query),
     queryFn: () => dareLLMModelsService.searchDareLLMModels(query),
-    enabled: enabled && !!query.trim() && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!query.trim() && isAuthenticated,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
@@ -63,12 +63,12 @@ export const useSearchDareLLMModels = (query: string, enabled: boolean = true) =
  * Get DARE LLM models by provider
  */
 export const useDareLLMModelsByProvider = (provider: string, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: dareLLMModelKeys.provider(provider),
     queryFn: () => dareLLMModelsService.getDareLLMModelsByProvider(provider),
-    enabled: enabled && !!provider && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!provider && isAuthenticated,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });

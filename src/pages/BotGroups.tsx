@@ -3,7 +3,7 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 
 import { useBotGroups } from '@/hooks/queries/useBotGroups';
-import { useAuth } from '@/hooks/useAuth';
+import { useIsProfessor } from '@/hooks/queries/useUser';
 
 import { useModalStore } from '@/stores/ui/modalStore';
 
@@ -17,7 +17,7 @@ import { BotGroup } from '@/types/botGroup';
 const BotGroups: React.FC = () => {
   const { data: botGroups = [], isLoading: loading, error, isError } = useBotGroups();
 
-  const { user } = useAuth();
+  const isProfessor = useIsProfessor();
 
   const {
     botGroupFormModal,
@@ -60,7 +60,7 @@ const BotGroups: React.FC = () => {
     }
 
     if (botGroups.length === 0) {
-      if (user?.isProfessor) {
+      if (isProfessor) {
         return (
           <div className="rounded-lg bg-gray-50 p-6 text-center">
             <h3 className="text-lg font-medium text-gray-600">No Chatbot Groups</h3>
@@ -104,7 +104,7 @@ const BotGroups: React.FC = () => {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Chatbot groups</h1>
         {/* Only show Create New Chatbot Group button for professors */}
-        {user?.isProfessor && (
+        {isProfessor && (
           <Button
             onClick={handleOpenCreateModal}
             className="bg-violet-600 text-white hover:bg-violet-700"

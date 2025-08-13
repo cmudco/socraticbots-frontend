@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useAuthStore } from '@/stores/authStore';
+import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
 import { fileService } from '@/services/files.service';
 
@@ -28,12 +28,12 @@ export const useChapterFiles = (
   filters?: FileFilters,
   enabled: boolean = true
 ) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: fileKeys.chapterFiles(chapterId, filters),
     queryFn: () => fileService.getChapterFiles(chapterId, filters),
-    enabled: enabled && !!chapterId && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!chapterId && isAuthenticated,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
@@ -43,12 +43,12 @@ export const useChapterFiles = (
  * Get a single file by ID
  */
 export const useFile = (chapterId: string, fileId: string, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: fileKeys.detail(chapterId, fileId),
     queryFn: () => fileService.getFile(chapterId, fileId),
-    enabled: enabled && !!chapterId && !!fileId && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!chapterId && !!fileId && isAuthenticated,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
@@ -58,12 +58,12 @@ export const useFile = (chapterId: string, fileId: string, enabled: boolean = tr
  * Search files across all chapters
  */
 export const useSearchFiles = (query: string, enabled: boolean = true) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: fileKeys.search(query),
     queryFn: () => fileService.searchFiles(query),
-    enabled: enabled && !!query.trim() && isAuthenticated && !!tokens?.access,
+    enabled: enabled && !!query.trim() && isAuthenticated,
     staleTime: 1 * 60 * 1000,
     gcTime: 3 * 60 * 1000,
   });
@@ -73,12 +73,12 @@ export const useSearchFiles = (query: string, enabled: boolean = true) => {
  * Get files by processing status
  */
 export const useFilesByStatus = (chapterId: string, status: ChapterFile['processing_status']) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: fileKeys.status(chapterId, status),
     queryFn: () => fileService.getFilesByStatus(chapterId, status),
-    enabled: !!chapterId && isAuthenticated && !!tokens?.access,
+    enabled: !!chapterId && isAuthenticated,
     staleTime: 30 * 1000,
     gcTime: 2 * 60 * 1000,
   });

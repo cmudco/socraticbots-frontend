@@ -4,7 +4,7 @@ import { FormikProps } from 'formik';
 import { BookOpen, Info } from 'lucide-react';
 
 import { useCreateChapter, useUpdateChapter } from '@/hooks/queries/useChapters';
-import { useAuth } from '@/hooks/useAuth';
+import { useIsProfessor } from '@/hooks/queries/useUser';
 
 import { useChapterFormStore } from '@/stores/forms/chapterFormStore';
 
@@ -49,7 +49,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   viewOnly = false,
 }) => {
   const formRef = useRef<FormikProps<FormValues>>(null);
-  const { user } = useAuth();
+  const isProfessor = useIsProfessor();
 
   const {
     activeTab,
@@ -75,7 +75,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   const updateChapterMutation = useUpdateChapter();
 
   const isEdit = !!chapter;
-  const isProfessor = user?.isProfessor ?? false;
+  // isProfessor already defined above
 
   useEffect(() => {
     if (isOpen) {

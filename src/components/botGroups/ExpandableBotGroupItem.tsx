@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { ChevronDown, ChevronUp, Edit, Eye, Trash, Users } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useIsProfessor } from '@/hooks/queries/useUser';
 
 import { useUiStore } from '@/stores/ui/uiStore';
 
@@ -24,7 +24,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
   onDelete,
   onView,
 }) => {
-  const { user } = useAuth();
+  const isProfessor = useIsProfessor();
 
   const { expandedBotGroups, toggleBotGroupExpansion } = useUiStore();
   const expanded = expandedBotGroups.has(botGroup.id);
@@ -66,7 +66,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
           <div
             className={`flex space-x-1 transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}
           >
-            {user?.isProfessor ? (
+            {isProfessor ? (
               <>
                 <Button
                   onClick={e => {

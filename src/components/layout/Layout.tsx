@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
 import { useUiStore } from '@/stores/ui/uiStore';
 
@@ -9,7 +9,7 @@ import Header from '@/components/common/Header';
 import Sidebar from '@/components/sidebar/Sidebar';
 
 const Layout: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const isAuthenticated = useIsAuthenticated();
   const { sidebarCollapsed } = useUiStore();
   const location = useLocation();
 

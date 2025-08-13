@@ -13,14 +13,14 @@ import {
   Users,
 } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useUser } from '@/hooks/queries/useUser';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Home: React.FC = () => {
-  const { user } = useAuth();
+  const user = useUser();
   const navigate = useNavigate();
 
   const features = [

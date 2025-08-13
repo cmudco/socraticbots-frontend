@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Edit, Eye, Trash } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useIsProfessor } from '@/hooks/queries/useUser';
 
 import { Chapter } from '@/services/chapters.service';
 
@@ -16,7 +16,7 @@ interface ChapterItemProps {
 }
 
 const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete, onView }) => {
-  const { user } = useAuth();
+  const isProfessor = useIsProfessor();
 
   return (
     <div className="flex items-center justify-between rounded border bg-white p-3">
@@ -28,7 +28,7 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, onEdit, onDelete, on
         </div>
       </div>
       <div className="flex space-x-1">
-        {user?.isProfessor ? (
+        {isProfessor ? (
           <>
             <Button
               onClick={onEdit}

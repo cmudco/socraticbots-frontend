@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useAuthStore } from '@/stores/authStore';
+import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
 import { AIModel, modelsService } from '@/services/models.service';
 
@@ -20,14 +20,14 @@ export const modelKeys = {
  * Get all available models
  */
 export const useModels = () => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: modelKeys.lists(),
     queryFn: async (): Promise<AIModel[]> => {
       return await modelsService.getModels();
     },
-    enabled: isAuthenticated && !!tokens?.access,
+    enabled: isAuthenticated,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
@@ -37,14 +37,14 @@ export const useModels = () => {
  * Get a single model by ID
  */
 export const useModel = (modelId: string) => {
-  const { isAuthenticated, tokens } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
     queryKey: modelKeys.detail(modelId),
     queryFn: async (): Promise<AIModel> => {
       return await modelsService.getModel(modelId);
     },
-    enabled: isAuthenticated && !!tokens?.access && !!modelId,
+    enabled: isAuthenticated && !!modelId,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
