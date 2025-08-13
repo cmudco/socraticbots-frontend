@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useChapterToBotGroupMapping, useChatChapters } from '@/hooks/queries/useChat';
+import { /* useChapterToBotGroupMapping, */ useChatChapters } from '@/hooks/queries/useChat';
 
 import { useChatStore } from '@/stores/core/chatStore';
 
@@ -16,7 +16,7 @@ import {
 
 const ChapterSelector: React.FC = () => {
   const { data: chapters, isLoading } = useChatChapters();
-  const { data: chapterToBotGroupMapping } = useChapterToBotGroupMapping();
+  // const { data: chapterToBotGroupMapping } = useChapterToBotGroupMapping(); // Temporarily disabled
   const { selectedChapterId, setChapterContext, setSelectedChapterId, clearChatState } =
     useChatStore();
 
@@ -24,22 +24,21 @@ const ChapterSelector: React.FC = () => {
     clearChatState();
 
     try {
-      const botGroupId = chapterToBotGroupMapping?.[chapterId];
-
-      if (botGroupId) {
-        try {
-          const conversation = await chatService.getConversationForChapter(chapterId);
-          setChapterContext(botGroupId, chapterId, conversation.id);
-          return;
-        } catch (error) {
-          console.warn('Could not fetch conversation for chapter:', error);
-        }
-
-        setChapterContext(botGroupId, chapterId, '');
-      } else {
-        console.warn('Could not find book for chapter in mapping:', chapterId);
-        setSelectedChapterId(chapterId);
-      }
+      // Temporarily simplified - will be rewritten for bots architecture
+      setSelectedChapterId(chapterId);
+      
+      // TODO: Implement bot context setting when chat module is rewritten
+      // const botGroupId = chapterToBotGroupMapping?.[chapterId];
+      // if (botGroupId) {
+      //   try {
+      //     const conversation = await chatService.getConversationForChapter(chapterId);
+      //     setChapterContext(botGroupId, chapterId, conversation.id);
+      //     return;
+      //   } catch (error) {
+      //     console.warn('Could not fetch conversation for chapter:', error);
+      //   }
+      //   setChapterContext(botGroupId, chapterId, '');
+      // }
     } catch (error) {
       console.error('Error in handleChapterChange:', error);
       setSelectedChapterId(chapterId);

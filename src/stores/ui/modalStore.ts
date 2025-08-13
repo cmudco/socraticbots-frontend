@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 
-import type { Chapter } from '@/services/chapters.service';
+// import type { Chapter } from '@/services/chapters.service'; // Temporarily disabled
+
+// Temporary interface for backward compatibility
+interface Chapter {
+  id: string;
+  title: string;
+  [key: string]: any;
+}
 
 import type { Bot } from '@/types/bot';
 import type { BotGroup } from '@/types/botGroup';

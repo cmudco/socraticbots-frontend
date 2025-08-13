@@ -2,13 +2,13 @@ import { useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { LearningGoal, chapterService } from '@/services/chapters.service';
+// import { LearningGoal, chapterService } from '@/services/chapters.service';
 import { Chapter, chatService } from '@/services/chat.service';
 
 import { ChatRole } from '@/types/chat';
 import type { ChatMessage, Conversation } from '@/types/chat';
 
-import { useBotGroups } from './useBotGroups';
+// import { useBotGroups } from './useBotGroups'; // Temporarily disabled
 
 export const chatKeys = {
   all: ['chat'] as const,
@@ -18,33 +18,34 @@ export const chatKeys = {
   tracking: (conversationId: string) => [...chatKeys.all, 'tracking', conversationId] as const,
 };
 
-export const useChapterToBotGroupMapping = () => {
-  const { data: botGroups } = useBotGroups();
+// Temporarily disabled - will be rewritten for bots architecture
+// export const useChapterToBotGroupMapping = () => {
+//   const { data: botGroups } = useBotGroups();
 
-  return useQuery<Record<string, string>>({
-    queryKey: ['chat', 'chapterToBotGroupMapping'],
-    queryFn: async () => {
-      if (!botGroups) return {};
+//   return useQuery<Record<string, string>>({
+//     queryKey: ['chat', 'chapterToBotGroupMapping'],
+//     queryFn: async () => {
+//       if (!botGroups) return {};
 
-      const mapping: Record<string, string> = {};
+//       const mapping: Record<string, string> = {};
 
-      for (const botGroup of botGroups) {
-        try {
-          const chapters = await chapterService.getChapters(botGroup.id.toString());
-          chapters.forEach(chapter => {
-            mapping[chapter.id] = botGroup.id.toString();
-          });
-        } catch (error) {
-          console.warn(`Error fetching chapters for botGroup ${botGroup.id}:`, error);
-        }
-      }
+//       for (const botGroup of botGroups) {
+//         try {
+//           const chapters = await chapterService.getChapters(botGroup.id.toString());
+//           chapters.forEach(chapter => {
+//             mapping[chapter.id] = botGroup.id.toString();
+//           });
+//         } catch (error) {
+//           console.warn(`Error fetching chapters for botGroup ${botGroup.id}:`, error);
+//         }
+//       }
 
-      return mapping;
-    },
-    enabled: !!botGroups && botGroups.length > 0,
-    staleTime: 10 * 60 * 1000,
-  });
-};
+//       return mapping;
+//     },
+//     enabled: !!botGroups && botGroups.length > 0,
+//     staleTime: 10 * 60 * 1000,
+//   });
+// };
 
 export const useChatChapters = () =>
   useQuery({
@@ -71,16 +72,17 @@ export const useChatMessages = (chapterId: string | null) => {
   };
 };
 
-export const useChapterLearningGoals = (bookId: string | null, chapterId: string | null) =>
-  useQuery<LearningGoal[]>({
-    queryKey: ['chat', 'learningGoals', bookId, chapterId],
-    queryFn: () => {
-      if (!bookId || !chapterId) return [];
-      return chapterService.getLearningGoals(bookId, chapterId);
-    },
-    enabled: !!bookId && !!chapterId,
-    staleTime: 10 * 60 * 1000,
-  });
+// Temporarily disabled - will be rewritten for bots architecture
+// export const useChapterLearningGoals = (bookId: string | null, chapterId: string | null) =>
+//   useQuery<LearningGoal[]>({
+//     queryKey: ['chat', 'learningGoals', bookId, chapterId],
+//     queryFn: () => {
+//       if (!bookId || !chapterId) return [];
+//       return chapterService.getLearningGoals(bookId, chapterId);
+//     },
+//     enabled: !!bookId && !!chapterId,
+//     staleTime: 10 * 60 * 1000,
+//   });
 
 export const useSendMessage = () => {
   const queryClient = useQueryClient();
