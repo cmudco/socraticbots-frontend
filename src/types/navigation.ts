@@ -1,4 +1,4 @@
-import { Book, Home, Key, type LucideIcon, MessageCircle, Settings } from 'lucide-react';
+import { Bot, Home, Key, type LucideIcon, MessageCircle, Settings } from 'lucide-react';
 
 interface NavigationItem {
   path: string;
@@ -25,9 +25,9 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     roles: ['student'],
   },
   {
-    path: '/books',
+    path: '/bot-groups',
     label: 'Chatbot Groups',
-    icon: Book,
+    icon: Bot,
   },
   {
     path: '/chat',

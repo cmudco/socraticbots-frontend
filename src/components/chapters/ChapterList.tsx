@@ -66,7 +66,7 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-md font-semibold">Bots</h3>
-        {user?.is_professor && (
+        {user?.isProfessor && (
           <Button onClick={handleOpenCreateModal} size="sm" variant="outline">
             <Plus size={14} />
             Add Bot
@@ -80,7 +80,7 @@ const ChapterList: React.FC<ChapterListProps> = ({ bookId, initialChapters, onCh
         <p className="py-4 text-center text-red-500">Error loading bots: {error.message}</p>
       ) : visibleChapters.length === 0 ? (
         <p className="py-4 text-center text-gray-500">
-          {user?.is_professor ? 'No bots yet. Add your first bot!' : 'No bots available.'}
+          {user?.isProfessor ? 'No bots yet. Add your first bot!' : 'No bots available.'}
         </p>
       ) : (
         <div className="space-y-2">

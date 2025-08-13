@@ -14,7 +14,7 @@ const StudentRoute: React.FC<StudentRouteProps> = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (user?.is_professor) {
+  if (user?.isProfessor) {
     return <Navigate to="/" replace />;
   }
 

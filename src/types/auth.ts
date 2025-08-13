@@ -2,10 +2,10 @@ export interface User {
   id: number;
   email: string;
   name: string;
-  is_professor: boolean;
-  external_user_id?: number;
-  is_active: boolean;
-  date_joined?: string;
+  isProfessor: boolean;
+  externalUserId?: number;
+  isActive: boolean;
+  dateJoined?: string;
   platform: string;
 }
 

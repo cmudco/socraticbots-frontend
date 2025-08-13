@@ -242,7 +242,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* Getting Started Section - Only show to professors */}
-      {user?.is_professor && (
+      {user?.isProfessor && (
         <Card className="border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50">
           <CardContent className="p-8 text-center">
             <div className="mx-auto max-w-3xl space-y-6">

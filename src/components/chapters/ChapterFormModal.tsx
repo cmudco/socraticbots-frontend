@@ -75,7 +75,7 @@ const ChapterFormModal: React.FC<ChapterFormModalProps> = ({
   const updateChapterMutation = useUpdateChapter();
 
   const isEdit = !!chapter;
-  const isProfessor = user?.is_professor ?? false;
+  const isProfessor = user?.isProfessor ?? false;
 
   useEffect(() => {
     if (isOpen) {

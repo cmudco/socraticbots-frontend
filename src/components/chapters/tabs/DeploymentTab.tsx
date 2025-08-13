@@ -52,7 +52,7 @@ const DeploymentTab: React.FC = () => {
     updateAccessCode(e.target.value);
   };
 
-  if (!user?.is_professor) {
+  if (!user?.isProfessor) {
     return (
       <div className="space-y-6 p-4">
         <div>

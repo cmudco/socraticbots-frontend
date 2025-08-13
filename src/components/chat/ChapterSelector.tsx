@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useChapterToBookMapping, useChatChapters } from '@/hooks/queries/useChat';
+import { useChapterToBotGroupMapping, useChatChapters } from '@/hooks/queries/useChat';
 
 import { useChatStore } from '@/stores/core/chatStore';
 
@@ -16,7 +16,7 @@ import {
 
 const ChapterSelector: React.FC = () => {
   const { data: chapters, isLoading } = useChatChapters();
-  const { data: chapterToBookMapping } = useChapterToBookMapping();
+  const { data: chapterToBotGroupMapping } = useChapterToBotGroupMapping();
   const { selectedChapterId, setChapterContext, setSelectedChapterId, clearChatState } =
     useChatStore();
 
@@ -24,18 +24,18 @@ const ChapterSelector: React.FC = () => {
     clearChatState();
 
     try {
-      const bookId = chapterToBookMapping?.[chapterId];
+      const botGroupId = chapterToBotGroupMapping?.[chapterId];
 
-      if (bookId) {
+      if (botGroupId) {
         try {
           const conversation = await chatService.getConversationForChapter(chapterId);
-          setChapterContext(bookId, chapterId, conversation.id);
+          setChapterContext(botGroupId, chapterId, conversation.id);
           return;
         } catch (error) {
           console.warn('Could not fetch conversation for chapter:', error);
         }
 
-        setChapterContext(bookId, chapterId, '');
+        setChapterContext(botGroupId, chapterId, '');
       } else {
         console.warn('Could not find book for chapter in mapping:', chapterId);
         setSelectedChapterId(chapterId);

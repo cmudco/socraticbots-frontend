@@ -2,9 +2,11 @@ import React, { useEffect } from 'react';
 
 import { AlertTriangle } from 'lucide-react';
 
-import { useDeleteBook } from '@/hooks/queries/useBooks';
+import { useDeleteBotGroup } from '@/hooks/queries/useBotGroups';
 
 import { useErrorStore } from '@/stores/ui/errorStore';
+
+import { BotGroup } from '@/types/botGroup';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,44 +18,47 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-import { Book } from '@/types/book';
-
-interface DeleteBookModalProps {
+interface DeleteBotGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  book: Book;
+  botGroup: BotGroup;
 }
 
-const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSuccess, book }) => {
+const DeleteBotGroupModal: React.FC<DeleteBotGroupModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  botGroup,
+}) => {
   const { addError, clearErrorsByContext, getErrorsByContext } = useErrorStore();
 
-  const deleteBookMutation = useDeleteBook();
+  const deleteBotGroupMutation = useDeleteBotGroup();
 
-  const isDeleting = deleteBookMutation.isPending;
+  const isDeleting = deleteBotGroupMutation.isPending;
 
   useEffect(() => {
     if (isOpen) {
-      clearErrorsByContext('deleteBook');
+      clearErrorsByContext('deleteBotGroup');
     }
   }, [isOpen, clearErrorsByContext]);
 
   const handleDelete = async () => {
     try {
-      clearErrorsByContext('deleteBook');
+      clearErrorsByContext('deleteBotGroup');
 
-      await deleteBookMutation.mutateAsync(book.id);
+      await deleteBotGroupMutation.mutateAsync(botGroup.id);
 
       onClose();
       onSuccess();
     } catch (err) {
-      addError('Failed to delete book. Please try again.', 'error', 'deleteBook');
-      console.error('Error deleting book:', err);
+      addError('Failed to delete bot group. Please try again.', 'error', 'deleteBotGroup');
+      console.error('Error deleting bot group:', err);
     }
   };
 
-  const contextErrors = getErrorsByContext('deleteBook');
-  const hasError = contextErrors.length > 0 || deleteBookMutation.isError;
+  const contextErrors = getErrorsByContext('deleteBotGroup');
+  const hasError = contextErrors.length > 0 || deleteBotGroupMutation.isError;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -63,13 +68,40 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
               <AlertTriangle className="h-5 w-5 text-red-600" />
             </div>
-            <DialogTitle className="text-lg font-semibold">Delete Chatbot Group</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Delete Bot Group</DialogTitle>
           </div>
           <DialogDescription className="pt-2 text-slate-600">
-            Are you sure you want to delete "<span className="font-semibold">{book.title}</span>"?
-            This action cannot be undone.
+            Are you sure you want to delete "<span className="font-semibold">{botGroup.title}</span>
+            "? This action cannot be undone and will delete all bots in this group along with their data.
           </DialogDescription>
         </DialogHeader>
+
+        {botGroup.botsCount > 0 && (
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+            <div className="flex items-start">
+              <svg
+                className="mt-0.5 mr-3 h-5 w-5 text-yellow-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01M21 12c0 4.418-4.03 8-9 8s-9-3.582-9-8 4.03-8 9-8 9 3.582 9 8z"
+                />
+              </svg>
+              <div>
+                <h4 className="font-medium text-yellow-800">Warning</h4>
+                <p className="mt-1 text-sm text-yellow-700">
+                  This group contains {botGroup.botsCount} bot{botGroup.botsCount !== 1 ? 's' : ''}. 
+                  All bots and their associated data will be permanently deleted.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {hasError && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
@@ -91,7 +123,7 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
                 <h4 className="font-medium text-red-800">Error</h4>
                 <p className="mt-1 text-sm text-red-700">
                   {contextErrors[0]?.message ||
-                    deleteBookMutation.error?.message ||
+                    deleteBotGroupMutation.error?.message ||
                     'An error occurred'}
                 </p>
               </div>
@@ -120,7 +152,7 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
                 Deleting...
               </div>
             ) : (
-              'Delete Chatbot Group'
+              'Delete Group'
             )}
           </Button>
         </DialogFooter>
@@ -129,4 +161,4 @@ const DeleteBookModal: React.FC<DeleteBookModalProps> = ({ isOpen, onClose, onSu
   );
 };
 
-export default DeleteBookModal;
+export default DeleteBotGroupModal;
