@@ -3,14 +3,16 @@ import React from 'react';
 import { BookOpen, Clock, Sparkles } from 'lucide-react';
 
 import { useChatStore } from '@/stores/core/chatStore';
+import { useConversationStore } from '@/stores/core/conversationStore';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-import ChapterSelector from './ChapterSelector';
+import BotSelector from './ChapterSelector';
 
 const ChatHeader: React.FC = () => {
   const { selectedChapterId } = useChatStore();
+  const { currentBotId } = useConversationStore();
 
   return (
     <header className="sticky top-0 z-10 w-full border-b border-slate-200/60 bg-gradient-to-r from-white via-slate-50/90 to-white shadow-sm backdrop-blur-sm">
@@ -24,7 +26,7 @@ const ChatHeader: React.FC = () => {
               <div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-slate-600">Bot:</span>
-                  {selectedChapterId ? (
+                  {currentBotId ? (
                     <Badge
                       variant="secondary"
                       className="border-violet-200 bg-violet-50 text-violet-700"
@@ -43,7 +45,7 @@ const ChatHeader: React.FC = () => {
                   )}
                 </div>
                 <div className="mt-1">
-                  <ChapterSelector />
+                  <BotSelector />
                 </div>
               </div>
             </div>
@@ -56,9 +58,9 @@ const ChatHeader: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={!selectedChapterId}
+                  disabled={!currentBotId}
                   className={`h-8 px-3 text-xs font-medium transition-all ${
-                    selectedChapterId
+                    currentBotId
                       ? 'bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-sm hover:from-violet-600 hover:to-purple-600'
                       : 'cursor-not-allowed bg-slate-200 text-slate-400'
                   }`}
@@ -86,7 +88,7 @@ const ChatHeader: React.FC = () => {
           </div>
         </div>
 
-        {selectedChapterId && (
+        {currentBotId && (
           <div className="mt-3 flex items-center justify-between rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2">
             <div className="flex items-center space-x-2 text-sm">
               <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></div>

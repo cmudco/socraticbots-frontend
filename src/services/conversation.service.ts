@@ -1,0 +1,95 @@
+import { METHOD } from '@/constants/requests';
+import { baseRequest } from '@/utils/baseRequest';
+
+// Types based on DARE's conversation structure
+export interface DareConversation {
+  conversationId: string;
+  title?: string;
+  createdAt: string;
+  user?: string;
+  maxContextSnippets: number;
+  documentSimilarityThreshold: number;
+  temperature: number;
+  maxTokens: number;
+  historyLimit: number;
+  promptId?: string | null;
+  sortOrder?: number;
+  selectedEmbeddingIds?: number[];
+  selectedFileIds?: number[];
+}
+
+export interface DareMessage {
+  id: string;
+  message: string;
+  senderType: 'USER' | 'ASSISTANT';
+  senderName: string;
+  isSender: boolean;
+  date: string;
+  llmId?: number;
+  streaming?: boolean;
+  feedbackType?: string | null;
+  feedbackText?: string;
+  isEdited?: boolean;
+  isRegenerated?: boolean;
+  originalMessage?: string;
+  cost?: string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+}
+
+export interface BotConversationResponse {
+  dareConversationId: string;
+  botId: number;
+  botName: string;
+  identifier: string;
+}
+
+export interface SendMessageRequest {
+  conversationId: string;
+  message: string;
+  streaming?: boolean;
+}
+
+/**
+ * Service for managing bot conversations through proxy to DARE backend
+ */
+class ConversationService {
+  
+  /**
+   * Create or get existing conversation for a bot and authenticated user
+   * Uses bot_id + user_id to create deterministic conversation in DARE
+   * No local conversation models - works directly with DARE backend
+   */
+  async getOrCreateBotConversation(botId: number): Promise<BotConversationResponse> {
+    return baseRequest<BotConversationResponse>({
+      url: `conversations/bots/${botId}/conversations/`,
+      method: METHOD.POST,
+    });
+  }
+
+  /**
+   * Send message through DARE backend (non-streaming)
+   * For streaming, we'll use direct WebSocket connection to DARE
+   */
+  async sendMessage(conversationId: string, message: string): Promise<DareMessage> {
+    return baseRequest<DareMessage>({
+      url: `conversations/${conversationId}/send/`,
+      method: METHOD.POST,
+      data: { message },
+    });
+  }
+
+  // getConversationHistory removed - WebSocket handles message history automatically
+
+  /**
+   * Get available LLM models from DARE
+   */
+  async getAvailableModels(): Promise<any[]> {
+    return baseRequest<any[]>({
+      url: 'conversations/models/',
+      method: METHOD.GET,
+    });
+  }
+}
+
+export const conversationService = new ConversationService();
