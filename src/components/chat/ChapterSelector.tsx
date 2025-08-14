@@ -1,10 +1,11 @@
 import React from 'react';
 
-import { /* useChapterToBotGroupMapping, */ useChatChapters } from '@/hooks/queries/useChat';
+import { useChatBots } from '@/hooks/queries/useChat';
 
 import { useChatStore } from '@/stores/core/chatStore';
+import { useConversationStore } from '@/stores/core/conversationStore';
 
-import { Chapter, chatService } from '@/services/chat.service';
+import { AvailableBot } from '@/services/chat.service';
 
 import {
   Select,
@@ -14,34 +15,24 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-const ChapterSelector: React.FC = () => {
-  const { data: chapters, isLoading } = useChatChapters();
-  // const { data: chapterToBotGroupMapping } = useChapterToBotGroupMapping(); // Temporarily disabled
-  const { selectedChapterId, setChapterContext, setSelectedChapterId, clearChatState } =
-    useChatStore();
+const BotSelector: React.FC = () => {
+  const { data: bots, isLoading, error } = useChatBots();
+  const { clearChatState } = useChatStore();
+  const { setActiveBot, currentBotId } = useConversationStore();
+  
+  // Debug logging
+  console.log('BotSelector - bots:', bots);
+  console.log('BotSelector - isLoading:', isLoading);
+  console.log('BotSelector - error:', error);
 
-  const handleChapterChange = async (chapterId: string) => {
+  const handleBotChange = async (botId: string) => {
     clearChatState();
 
     try {
-      // Temporarily simplified - will be rewritten for bots architecture
-      setSelectedChapterId(chapterId);
-      
-      // TODO: Implement bot context setting when chat module is rewritten
-      // const botGroupId = chapterToBotGroupMapping?.[chapterId];
-      // if (botGroupId) {
-      //   try {
-      //     const conversation = await chatService.getConversationForChapter(chapterId);
-      //     setChapterContext(botGroupId, chapterId, conversation.id);
-      //     return;
-      //   } catch (error) {
-      //     console.warn('Could not fetch conversation for chapter:', error);
-      //   }
-      //   setChapterContext(botGroupId, chapterId, '');
-      // }
+      // Set active bot using the new conversation system
+      await setActiveBot(parseInt(botId));
     } catch (error) {
-      console.error('Error in handleChapterChange:', error);
-      setSelectedChapterId(chapterId);
+      console.error('Error setting active bot:', error);
     }
   };
 
@@ -53,27 +44,39 @@ const ChapterSelector: React.FC = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="w-64">
+        <div className="text-red-500 text-sm">Error loading bots: {error.message}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-64">
-      <Select value={selectedChapterId || ''} onValueChange={handleChapterChange}>
+      <Select value={currentBotId?.toString() || ''} onValueChange={handleBotChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select a bot..." />
         </SelectTrigger>
         <SelectContent>
-          {chapters?.map((chapter: Chapter) => (
-            <SelectItem key={chapter.id} value={chapter.id}>
-              <div className="flex flex-col">
-                <span className="font-medium">{chapter.title}</span>
-                {chapter.subject && (
-                  <span className="text-xs text-gray-500">{chapter.subject}</span>
-                )}
-              </div>
+          {bots && bots.length > 0 ? (
+            bots.map((bot: AvailableBot) => (
+              <SelectItem key={bot.id} value={bot.id.toString()}>
+                <div className="flex flex-col">
+                  <span className="font-medium">{bot.name}</span>
+                  <span className="text-xs text-gray-500">{bot.botGroup.name}</span>
+                </div>
+              </SelectItem>
+            ))
+          ) : (
+            <SelectItem value="" disabled>
+              No bots available
             </SelectItem>
-          ))}
+          )}
         </SelectContent>
       </Select>
     </div>
   );
 };
 
-export default ChapterSelector;
+export default BotSelector;

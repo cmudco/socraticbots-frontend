@@ -2,8 +2,8 @@ import { useState } from 'react';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-// import { LearningGoal, chapterService } from '@/services/chapters.service';
-import { Chapter, chatService } from '@/services/chat.service';
+// Updated to use bots instead of chapters
+import { AvailableBot, chatService } from '@/services/chat.service';
 
 import { ChatRole } from '@/types/chat';
 import type { ChatMessage, Conversation } from '@/types/chat';
@@ -47,10 +47,10 @@ export const chatKeys = {
 //   });
 // };
 
-export const useChatChapters = () =>
+export const useChatBots = () =>
   useQuery({
-    queryKey: chatKeys.chapters(),
-    queryFn: chatService.getAvailableChapters,
+    queryKey: [...chatKeys.all, 'bots'],
+    queryFn: chatService.getAvailableBots,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -140,14 +140,14 @@ export const useClearConversation = () => {
         .getQueryCache()
         .getAll()
         .forEach(query => {
-          if (query.queryKey.includes('chapters')) {
-            const chapters = query.state.data as Chapter[] | undefined;
-            // Check if the current conversation's chapter is in this chapters list
+          if (query.queryKey.includes('bots')) {
+            const bots = query.state.data as AvailableBot[] | undefined;
+            // Check if the current conversation's bot is in this bots list
             if (
-              chapters &&
-              Array.isArray(chapters) &&
+              bots &&
+              Array.isArray(bots) &&
               chapterId &&
-              chapters.some(chapter => chapter.id === chapterId)
+              bots.some((bot: any) => bot.id === chapterId)
             ) {
               queryClient.invalidateQueries({ queryKey: query.queryKey });
             }

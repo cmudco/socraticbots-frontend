@@ -6,14 +6,17 @@ import { baseRequest } from '@/utils/baseRequest';
 
 import type { ChatMessage, Conversation } from '@/types/chat';
 
-export interface Chapter {
-  id: string;
-  title: string;
-  subject?: string;
-  topic?: string;
+// Updated interface for bots instead of chapters (camelCase)
+export interface AvailableBot {
+  id: number;
+  name: string;
+  botGroup: {
+    id: number;
+    name: string;
+  };
   greeting?: string;
-  created_at?: string;
-  updated_at?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface StreamCallbacks {
@@ -24,11 +27,34 @@ interface StreamCallbacks {
 }
 
 class ChatService {
-  async getAvailableChapters(): Promise<Chapter[]> {
-    return baseRequest<Chapter[]>({
-      url: 'chat/available-chapters/',
+  async getAvailableBots(): Promise<AvailableBot[]> {
+    // Get bot groups with bots that user has access to
+    const botGroups = await baseRequest<any[]>({
+      url: 'bot-groups/',
       method: METHOD.GET,
     });
+    
+    // Flatten to get all available bots (map from API response)
+    const availableBots: AvailableBot[] = [];
+    for (const group of botGroups) {
+      if (group.bots) {
+        for (const bot of group.bots) {
+          availableBots.push({
+            id: bot.id,
+            name: bot.title, // API returns 'title' but we map to 'name'
+            botGroup: {
+              id: group.id,
+              name: group.title, // API returns 'title' but we map to 'name'
+            },
+            greeting: bot.prompts?.greeting, // Greeting is nested in prompts
+            createdAt: bot.createdAt,
+            updatedAt: bot.updatedAt,
+          });
+        }
+      }
+    }
+    
+    return availableBots;
   }
 
   async getConversationForChapter(chapterId: string): Promise<Conversation> {
