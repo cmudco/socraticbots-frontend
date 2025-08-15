@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { 
-  DareConversation, 
   DareMessage, 
   BotConversationResponse,
   conversationService 
@@ -123,18 +122,7 @@ export const useConversationStore = create<ConversationStore>()(
       }
 
       try {
-        // Add user message immediately to UI
-        const userMessage: DareMessage = {
-          id: `temp-${Date.now()}`,
-          message,
-          senderType: 'USER',
-          senderName: 'You',
-          isSender: true,
-          date: new Date().toISOString(),
-          streaming: false,
-        };
-
-        get().addMessage(userMessage);
+        // Clear input and set typing state
         set({ inputMessage: '', isTyping: true });
 
         // Send via WebSocket for real-time streaming
@@ -151,17 +139,31 @@ export const useConversationStore = create<ConversationStore>()(
     },
 
     addMessage: (message: DareMessage) => {
-      set(state => ({
-        messages: [...state.messages, message]
-      }));
+      set(state => {
+        // Check if message already exists (like DARE does)
+        const index = state.messages.findIndex(msg => msg.id === message.id);
+        if (index !== -1) {
+          // Replace existing message
+          const newMessages = [...state.messages];
+          newMessages[index] = message;
+          return { messages: newMessages };
+        } else {
+          // Add new message
+          return { messages: [...state.messages, message] };
+        }
+      });
     },
 
     updateMessage: (messageId: string, updates: Partial<DareMessage>) => {
-      set(state => ({
-        messages: state.messages.map(msg => 
-          msg.id === messageId ? { ...msg, ...updates } : msg
-        )
-      }));
+      set(state => {
+        const index = state.messages.findIndex(msg => msg.id === messageId);
+        if (index !== -1) {
+          const newMessages = [...state.messages];
+          newMessages[index] = { ...newMessages[index], ...updates };
+          return { messages: newMessages };
+        }
+        return state;
+      });
     },
 
     setInputMessage: (message: string) => {
@@ -188,7 +190,6 @@ export const useConversationStore = create<ConversationStore>()(
         const socket = new WebSocket(socketUrl);
 
         socket.onopen = () => {
-          console.log('WebSocket connected to DARE');
           set({ 
             websocket: { 
               ...get().websocket, 
@@ -201,42 +202,62 @@ export const useConversationStore = create<ConversationStore>()(
 
         socket.onmessage = (event) => {
           const data = JSON.parse(event.data);
-          console.log('WebSocket message:', data);
 
           switch (data.type) {
             case 'conversation_history':
               if (data.conversationHistory) {
-                set({ messages: data.conversationHistory });
+                // Map senderType from numbers to strings for all messages
+                const mappedMessages = data.conversationHistory.map((msg: any) => ({
+                  ...msg,
+                  senderType: msg.senderType === 1 ? 'USER' : 'ASSISTANT'
+                }));
+                set({ messages: mappedMessages });
               }
               break;
               
             case 'message':
+              // Map senderType from number to string  
+              const senderType = data.senderType === 1 ? 'USER' : 'ASSISTANT';
+              
               if (data.regenerate) {
-                // Update existing message
-                get().updateMessage(data.messageId, {
-                  message: data.message,
+                // Update existing message (regeneration)
+                get().updateMessage(data.id, {
+                  ...data,
+                  senderType,
                   streaming: false,
                 });
               } else {
-                // Add new message
+                // Add message (DARE pattern - addMessage handles existing vs new)
                 get().addMessage({
-                  id: data.messageId || `msg-${Date.now()}`,
+                  id: data.id,
                   message: data.message,
-                  senderType: data.sender_type || 'ASSISTANT',
-                  senderName: data.sender_name || 'Assistant',
-                  isSender: false,
-                  date: data.date || new Date().toISOString(),
-                  streaming: data.streaming || false,
-                  llmId: data.llm_id,
+                  senderType,
+                  senderName: data.senderName,
+                  isSender: data.isSender,
+                  date: data.date,
+                  streaming: data.streaming,
+                  llmId: data.llmId,
                   cost: data.cost,
-                  inputTokens: data.input_tokens,
-                  outputTokens: data.output_tokens,
+                  inputTokens: data.inputTokens,
+                  outputTokens: data.outputTokens,
+                  feedbackType: data.feedbackType,
+                  feedbackText: data.feedbackText,
+                  isEdited: data.isEdited,
+                  isRegenerated: data.isRegenerated,
+                  originalMessage: data.originalMessage
                 });
               }
               
               if (!data.streaming) {
                 set({ isTyping: false });
               }
+              break;
+
+            case 'ai_stream':
+              // Update streaming AI message content (DARE pattern)
+              get().updateMessage(data.id, {
+                message: data.message,
+              });
               break;
               
             case 'error':
@@ -261,7 +282,6 @@ export const useConversationStore = create<ConversationStore>()(
         };
 
         socket.onclose = () => {
-          console.log('WebSocket disconnected');
           set({ 
             websocket: { 
               ...get().websocket, 
