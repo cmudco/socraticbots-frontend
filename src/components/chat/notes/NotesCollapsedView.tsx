@@ -2,10 +2,10 @@ import React from 'react';
 
 import { Plus } from 'lucide-react';
 
-import { useNotesStore } from '../../../../stores/core/notesStore';
+import { useNotesStore } from '@/stores/core/notesStore';
 
-import { Badge } from '../../../ui/badge';
-import { Button } from '../../../ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface NotesCollapsedViewProps {
   selectedBotId: string | null;

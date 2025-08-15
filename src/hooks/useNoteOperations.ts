@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { notesService, CreateNoteRequest, UpdateNoteRequest } from '@/services/notes.service';
 
-import type { Note } from '@/types/note';
 
 export const useNoteOperations = (selectedBotId: string | null) => {
   const queryClient = useQueryClient();

@@ -8,21 +8,24 @@ import {
 
 import { useNotesStore } from '../../../stores/core/notesStore';
 import { useNoteOperations } from '../../../hooks/useNoteOperations';
+import { useConversationStore } from '../../../stores/core/conversationStore';
 
-import NotesCollapsedView from './components/NotesCollapsedView';
-import NotesContent from './components/NotesContent';
 import { Button } from '../../ui/button';
+import NotesCollapsedView from './NotesCollapsedView';
+import NotesContent from './NotesContent';
 
 interface NotesSidebarProps {
-  selectedBotId: string | null;
   onCollapseChange?: (collapsed: boolean) => void;
 }
 
 const NotesSidebar: React.FC<NotesSidebarProps> = ({ 
-  selectedBotId,
   onCollapseChange 
 }) => {
   const { isCollapsed, toggleCollapse } = useNotesStore();
+  const { currentBotId } = useConversationStore();
+  
+  // Convert number to string for notes operations
+  const selectedBotId = currentBotId ? String(currentBotId) : null;
   const { notes, isLoading } = useNoteOperations(selectedBotId);
 
   const handleToggleCollapse = () => {
