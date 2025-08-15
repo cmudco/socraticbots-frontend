@@ -8,10 +8,9 @@ import { useConversationStore } from '@/stores/core/conversationStore';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-import BotSelector from './ChapterSelector';
+import BotSelector from './BotSelector';
 
 const ChatHeader: React.FC = () => {
-  const { selectedChapterId } = useChatStore();
   const { currentBotId } = useConversationStore();
 
   return (

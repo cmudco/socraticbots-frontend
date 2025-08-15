@@ -2,7 +2,7 @@ import React from 'react';
 
 import { useUserInfo } from '@/hooks/queries/useUser';
 import { useConversationStore } from '@/stores/core/conversationStore';
-import BotChatInterface from '@/components/chat/BotChatInterface';
+import BotChatInterface from '@/components/chat/bot/BotChatInterface';
 import ChatHeader from '@/components/chat/ChatHeader';
 import NotesSidebar from '@/components/chat/NotesSidebar';
 import TrackingSidebar from '@/components/chat/TrackingSidebar';
