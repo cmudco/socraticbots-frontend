@@ -4,7 +4,7 @@ import { useUserInfo } from '@/hooks/queries/useUser';
 import { useConversationStore } from '@/stores/core/conversationStore';
 import BotChatInterface from '@/components/chat/bot/BotChatInterface';
 import ChatHeader from '@/components/chat/ChatHeader';
-import NotesSidebar from '@/components/chat/NotesSidebar';
+import { NotesSidebar } from '@/components/chat/notes';
 import TrackingSidebar from '@/components/chat/TrackingSidebar';
 
 const Chat: React.FC = () => {
@@ -65,7 +65,7 @@ const Chat: React.FC = () => {
       </div>
 
       <div className="min-w-0 flex-shrink-0">
-        <NotesSidebar />
+        <NotesSidebar selectedBotId={currentBotId} />
       </div>
     </div>
   );
