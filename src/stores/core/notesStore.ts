@@ -64,7 +64,7 @@ const initialDeleteConfirmation: DeleteConfirmationData = {
   noteTitle: '',
 };
 
-export const useNotesStore = create<NotesStoreState>((set, get) => ({
+export const useNotesStore = create<NotesStoreState>((set) => ({
   // Initial state
   isCollapsed: false,
   isCreating: false,

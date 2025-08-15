@@ -2,7 +2,6 @@ import React from 'react';
 
 import { BookOpen, Clock, Sparkles } from 'lucide-react';
 
-import { useChatStore } from '@/stores/core/chatStore';
 import { useConversationStore } from '@/stores/core/conversationStore';
 
 import { Badge } from '@/components/ui/badge';

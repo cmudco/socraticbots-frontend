@@ -2,15 +2,15 @@ import React from 'react';
 
 import { Edit3, NotebookPen, Plus, X } from 'lucide-react';
 
-import { useNotesStore } from '../../../../stores/core/notesStore';
-import { useNoteOperations } from '../../../../hooks/useNoteOperations';
+import { useNotesStore } from '@/stores/core/notesStore';
+import { useNoteOperations } from '@/hooks/useNoteOperations';
 
-import { Button } from '../../../ui/button';
-import { Input } from '../../../ui/input';
-import { Textarea } from '../../../ui/textarea';
-import ConfirmationModal from '../../../ui/confirmation-modal';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import ConfirmationModal from '@/components/ui/confirmation-modal';
 
-import type { Note } from '../../../../types/note';
+import type { Note } from '@/types/note';
 
 interface NotesContentProps {
   selectedBotId: string | null;
@@ -81,13 +81,13 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
               <div className="space-y-2">
                 <Input
                   value={editingData.title}
-                  onChange={e => setEditTitle(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditTitle(e.target.value)}
                   className="h-8 text-sm"
                   placeholder="Note title..."
                 />
                 <Textarea
                   value={editingData.content}
-                  onChange={e => setEditContent(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditContent(e.target.value)}
                   className="min-h-[60px] resize-none text-sm"
                   placeholder="Note content..."
                 />
@@ -162,13 +162,13 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
               type="text"
               placeholder="Note title..."
               value={createForm.title}
-              onChange={e => setCreateTitle(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateTitle(e.target.value)}
               className="h-8 border-slate-200 text-sm focus:border-violet-300 focus:ring-violet-200"
             />
             <Textarea
               placeholder="Write your note content..."
               value={createForm.content}
-              onChange={e => setCreateContent(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCreateContent(e.target.value)}
               rows={3}
               className="min-h-[60px] resize-none border-slate-200 text-sm focus:border-violet-300 focus:ring-violet-200"
             />

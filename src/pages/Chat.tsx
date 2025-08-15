@@ -4,7 +4,7 @@ import { useUserInfo } from '@/hooks/queries/useUser';
 import { useConversationStore } from '@/stores/core/conversationStore';
 import BotChatInterface from '@/components/chat/bot/BotChatInterface';
 import ChatHeader from '@/components/chat/ChatHeader';
-import { NotesSidebar } from '@/components/chat/notes';
+import NotesSidebar from '@/components/chat/notes/NotesSidebar';
 import TrackingSidebar from '@/components/chat/TrackingSidebar';
 
 const Chat: React.FC = () => {
@@ -42,10 +42,7 @@ const Chat: React.FC = () => {
         <ChatHeader />
         
         {currentBotId ? (
-          <BotChatInterface
-            className="flex-1"
-            showHeader={false}
-          />
+          <BotChatInterface className="flex-1" />
         ) : (
           <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30">
             <div className="text-center max-w-md">
@@ -65,7 +62,7 @@ const Chat: React.FC = () => {
       </div>
 
       <div className="min-w-0 flex-shrink-0">
-        <NotesSidebar selectedBotId={currentBotId} />
+        <NotesSidebar />
       </div>
     </div>
   );

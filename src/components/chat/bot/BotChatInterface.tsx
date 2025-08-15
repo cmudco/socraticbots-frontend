@@ -5,18 +5,15 @@ import { useConversationStore } from '@/stores/core/conversationStore';
 import { useUserInfo } from '@/hooks/queries/useUser';
 
 import { Card } from '@/components/ui/card';
-import BotChatHeader from './BotChatHeader';
 import BotMessageList from './BotMessageList';
 import BotChatInput from './BotChatInput';
 
 interface BotChatInterfaceProps {
   className?: string;
-  showHeader?: boolean;
 }
 
 const BotChatInterface: React.FC<BotChatInterfaceProps> = ({ 
-  className = '',
-  showHeader = true
+  className = ''
 }) => {
   const { data: user } = useUserInfo();
   const { 
@@ -58,10 +55,7 @@ const BotChatInterface: React.FC<BotChatInterfaceProps> = ({
   }
 
   return (
-    <div className={`flex flex-col bg-white ${showHeader ? 'h-[600px] rounded-lg shadow-lg overflow-hidden' : 'h-full'} ${className}`}>
-      {/* Header - optional */}
-      {showHeader && <BotChatHeader />}
-
+    <div className={`flex flex-col bg-white h-full ${className}`}>
       {/* Messages */}
       <BotMessageList className="flex-1" />
 
