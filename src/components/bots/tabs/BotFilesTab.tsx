@@ -3,7 +3,6 @@ import { Upload, File, Trash2, Download, AlertCircle, Clock } from 'lucide-react
 
 import { useBotFiles, useUploadBotFiles, useRemoveBotFile } from '@/hooks/queries/useBotFiles';
 import { BotFile } from '@/services/botFiles.service';
-import { useFilesStore } from '@/stores/core/filesStore';
 import { FileStatusBadge } from '@/components/FileStatusBadge';
 import { FileStatus } from '@/utils/fileStatus';
 
@@ -32,9 +31,9 @@ const getFileIcon = (fileType: string) => {
 const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const [enablePolling, setEnablePolling] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { dragActive, setDragActive } = useFilesStore();
   const { data: filesData, isLoading, error } = useBotFiles(botGroupId, botId, { enablePolling });
   const uploadMutation = useUploadBotFiles();
   const removeMutation = useRemoveBotFile();

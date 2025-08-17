@@ -2,7 +2,6 @@ import React from 'react';
 
 import { useChatBots } from '@/hooks/queries/useChat';
 
-import { useChatStore } from '@/stores/core/chatStore';
 import { useConversationStore } from '@/stores/core/conversationStore';
 
 import { Bot } from '@/types/bot';
@@ -17,8 +16,7 @@ import {
 
 const BotSelector: React.FC = () => {
   const { data: bots, isLoading, error } = useChatBots();
-  const { clearChatState } = useChatStore();
-  const { setActiveBot, currentBotId } = useConversationStore();
+  const { setActiveBot, currentBotId, clearActiveConversation } = useConversationStore();
   
   // Debug logging
   console.log('BotSelector - bots:', bots);
@@ -26,7 +24,7 @@ const BotSelector: React.FC = () => {
   console.log('BotSelector - error:', error);
 
   const handleBotChange = async (botId: string) => {
-    clearChatState();
+    clearActiveConversation();
 
     try {
       // Find the full bot object and set it directly

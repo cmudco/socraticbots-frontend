@@ -20,27 +20,5 @@ export interface ChatMessage {
   timestamp?: string;
 }
 
-export interface ChapterDetails {
-  id: string;
-  title: string;
-  subject: string;
-  topic: string;
-  created_at: string;
-  greeting?: string;
-}
-
-export interface Conversation {
-  id: string;
-  user: string;
-  chapter: string;
-  chapter_details?: ChapterDetails;
-  created_at: string;
-  updated_at: string;
-  messages: ChatMessage[];
-  latest_progress?: string | null;
-}
-
-export interface SendMessagePayload {
-  conversationId: string;
-  content: string;
-}
+// Old chapter-based interfaces removed - we use bot-based architecture now
+// All conversation handling is done via DARE backend and conversationService
