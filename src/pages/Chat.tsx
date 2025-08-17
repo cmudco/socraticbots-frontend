@@ -37,12 +37,16 @@ const Chat: React.FC = () => {
         <TrackingSidebar />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden h-full">
         {/* Always show the header with bot selector */}
-        <ChatHeader />
+        <div className="flex-shrink-0">
+          <ChatHeader />
+        </div>
         
         {currentBotId ? (
-          <BotChatInterface className="flex-1" />
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <BotChatInterface className="h-full" />
+          </div>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30">
             <div className="text-center max-w-md">

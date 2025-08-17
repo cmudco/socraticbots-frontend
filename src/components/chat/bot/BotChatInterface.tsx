@@ -55,12 +55,14 @@ const BotChatInterface: React.FC<BotChatInterfaceProps> = ({
   }
 
   return (
-    <div className={`flex flex-col bg-white h-full ${className}`}>
-      {/* Messages */}
-      <BotMessageList className="flex-1" />
+    <div className={`flex flex-col bg-white h-full min-h-0 ${className}`}>
+      {/* Messages - with min-h-0 to allow proper flex shrinking */}
+      <BotMessageList className="flex-1 min-h-0" />
 
-      {/* Input */}
-      <BotChatInput />
+      {/* Input - fixed at bottom */}
+      <div className="flex-shrink-0">
+        <BotChatInput />
+      </div>
     </div>
   );
 };

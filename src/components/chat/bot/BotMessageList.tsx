@@ -4,6 +4,7 @@ import { useMessages, useIsTyping, useConversationStore } from '@/stores/core/co
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 import EmptyState from './EmptyState';
+import { scrollManager } from '@/utils/scrollManager';
 
 interface BotMessageListProps {
   className?: string;
@@ -15,16 +16,93 @@ const BotMessageList: React.FC<BotMessageListProps> = ({
 }) => {
   const messages = useMessages();
   const isStreaming = useIsTyping();
-  const { isLoadingMessages } = useConversationStore();
+  const { isLoadingMessages, currentBotId, activeConversation } = useConversationStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Debug logging
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    console.log('BotMessageList debug:', {
+      messagesCount: messages.length,
+      isStreaming,
+      isLoadingMessages,
+      currentBotId,
+      activeConversation: activeConversation?.dareConversationId,
+      messages: messages.map(m => ({ id: m.id, senderType: m.senderType, message: m.message?.substring(0, 50) + '...' }))
+    });
+  }, [messages, isStreaming, isLoadingMessages, currentBotId, activeConversation]);
+
+  // Enhanced auto-scroll logic - scroll on message changes AND during streaming
+  useEffect(() => {
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end',
+          inline: 'nearest'
+        });
+      }
+    };
+
+    // Always scroll when messages change or during streaming
+    if (messages.length > 0) {
+      scrollToBottom();
     }
-  }, [messages.length, isStreaming]);
+  }, [messages, isStreaming]);
+
+  // Subscribe to scroll manager for real-time streaming updates
+  useEffect(() => {
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end',
+          inline: 'nearest'
+        });
+      }
+    };
+
+    const unsubscribe = scrollManager.subscribe(scrollToBottom);
+    return unsubscribe;
+  }, []);
+
+  // Track last message content to detect updates during streaming
+  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+  const lastMessageContent = lastMessage?.message || '';
+  
+  useEffect(() => {
+    if (isStreaming && lastMessage && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest'
+      });
+    }
+  }, [lastMessageContent, isStreaming]);
+
+  // Additional safety net - periodic scroll during active streaming
+  useEffect(() => {
+    if (isStreaming && messages.length > 0) {
+      const interval = setInterval(() => {
+        if (messagesEndRef.current) {
+          const container = containerRef.current;
+          if (container) {
+            // Check if user has scrolled up manually
+            const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+            if (isNearBottom) {
+              messagesEndRef.current.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'end',
+                inline: 'nearest'
+              });
+            }
+          }
+        }
+      }, 300); // More frequent updates during streaming
+
+      return () => clearInterval(interval);
+    }
+  }, [isStreaming, messages.length]);
 
   if (isLoadingMessages) {
     return (
@@ -48,7 +126,7 @@ const BotMessageList: React.FC<BotMessageListProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={`flex-1 overflow-y-auto bg-gradient-to-br from-slate-50/30 via-white to-blue-50/20 ${className}`}
+      className={`flex-1 overflow-y-auto min-h-0 bg-gradient-to-br from-slate-50/30 via-white to-blue-50/20 ${className}`}
     >
       <div className="mx-auto max-w-4xl px-4 py-6">
         {messages.map((message,) => {
