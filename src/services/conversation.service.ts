@@ -124,6 +124,16 @@ class ConversationService {
       method: METHOD.GET,
     });
   }
+
+  /**
+   * Delete conversation and all its messages/learning progress from DARE
+   */
+  async deleteConversation(conversationId: string): Promise<{success: boolean, message: string}> {
+    return baseRequest<{success: boolean, message: string}>({
+      url: `conversations/${conversationId}/delete/`,
+      method: METHOD.DELETE,
+    });
+  }
 }
 
 export const conversationService = new ConversationService();

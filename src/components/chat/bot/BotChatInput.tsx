@@ -63,16 +63,6 @@ const BotChatInput: React.FC<BotChatInputProps> = ({
   return (
     <div className={`border-t border-slate-200/60 bg-white/95 backdrop-blur-sm ${className}`}>
       <div className="px-6 py-4">
-        {/* Connection Warning */}
-        {!isConnected && (
-          <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <span className="text-amber-800">
-              Connection lost. Reconnecting to bot...
-            </span>
-          </div>
-        )}
-
         {/* Input Form */}
         <form onSubmit={(e) => { e.preventDefault(); if (canSend) handleSendMessage(); }} className="flex gap-3">
           <div className="flex-1 relative">
