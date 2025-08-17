@@ -300,6 +300,18 @@ export const useWebSocketStore = create<WebSocketStore>()(
             console.log('Progress streaming ended');
             set({ isProgressStreaming: false });
             break;
+
+          case 'latest_progress':
+            console.log('Processing latest_progress assessment:', data.assessment);
+            // Handle assessment data by setting it as progress content
+            if (data.assessment && data.assessment.content) {
+              set({ 
+                progressContent: data.assessment.content,
+                isProgressStreaming: false,
+                progressTokens: [data.assessment.content]
+              });
+            }
+            break;
             
           default:
             console.log('Unknown WebSocket message type:', data.type);
