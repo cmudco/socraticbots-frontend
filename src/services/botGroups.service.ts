@@ -17,8 +17,8 @@ export interface AddCollaboratorRequest {
 }
 
 class BotGroupService {
-  async getBotGroups(): Promise<BotGroup[]> {
-    return baseRequest<BotGroup[]>({
+  async getBotGroups(): Promise<BotGroupDetail[]> {
+    return baseRequest<BotGroupDetail[]>({
       url: 'bot-groups/',
       method: METHOD.GET,
     });

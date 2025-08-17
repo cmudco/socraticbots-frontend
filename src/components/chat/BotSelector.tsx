@@ -5,7 +5,7 @@ import { useChatBots } from '@/hooks/queries/useChat';
 import { useChatStore } from '@/stores/core/chatStore';
 import { useConversationStore } from '@/stores/core/conversationStore';
 
-import { AvailableBot } from '@/services/chat.service';
+import { Bot } from '@/types/bot';
 
 import {
   Select,
@@ -29,8 +29,11 @@ const BotSelector: React.FC = () => {
     clearChatState();
 
     try {
-      // Set active bot using the new conversation system
-      await setActiveBot(parseInt(botId));
+      // Find the full bot object and set it directly
+      const selectedBot = bots?.find(bot => bot.id.toString() === botId);
+      if (selectedBot) {
+        await setActiveBot(selectedBot);
+      }
     } catch (error) {
       console.error('Error setting active bot:', error);
     }
@@ -60,11 +63,11 @@ const BotSelector: React.FC = () => {
         </SelectTrigger>
         <SelectContent>
           {bots && bots.length > 0 ? (
-            bots.map((bot: AvailableBot) => (
+            bots.map((bot: Bot) => (
               <SelectItem key={bot.id} value={bot.id.toString()}>
                 <div className="flex flex-col">
-                  <span className="font-medium">{bot.name}</span>
-                  <span className="text-xs text-gray-500">{bot.botGroup.name}</span>
+                  <span className="font-medium">{bot.title}</span>
+                  <span className="text-xs text-gray-500">{bot.subject}</span>
                 </div>
               </SelectItem>
             ))

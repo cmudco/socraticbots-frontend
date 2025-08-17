@@ -5,6 +5,7 @@ import {
   BotConversationResponse,
   conversationService 
 } from '@/services/conversation.service';
+import type { Bot } from '@/types/bot';
 
 export interface WebSocketState {
   isConnected: boolean;
@@ -30,14 +31,15 @@ export interface ConversationState {
   
   // Bot context
   currentBotId: number | null;
+  currentBot: Bot | null;
   
   // Available models
   availableModels: any[];
 }
 
 export interface ConversationActions {
-  // Conversation management
-  setActiveBot: (botId: number) => Promise<void>;
+  // Conversation management - simplified to only work with full bot objects
+  setActiveBot: (bot: Bot) => Promise<void>;
   clearActiveConversation: () => void;
   
   // Message handling
@@ -77,12 +79,17 @@ export const useConversationStore = create<ConversationStore>()(
     isTyping: false,
     inputMessage: '',
     currentBotId: null,
+    currentBot: null,
     availableModels: [],
 
     // Actions
-    setActiveBot: async (botId: number) => {
+    setActiveBot: async (bot: Bot) => {
       try {
-        set({ currentBotId: botId });
+        // Extract bot ID from the object
+        const botId = bot.id;
+        
+        // Set the bot directly - no more lookup needed!
+        set({ currentBotId: botId, currentBot: bot });
         
         // Get or create conversation using bot_id + user_id deterministic approach
         const conversation = await conversationService.getOrCreateBotConversation(botId);
@@ -107,6 +114,7 @@ export const useConversationStore = create<ConversationStore>()(
         activeConversation: null,
         messages: [],
         currentBotId: null,
+        currentBot: null,
         inputMessage: '',
         websocket: initialWebSocketState,
       });
@@ -115,7 +123,7 @@ export const useConversationStore = create<ConversationStore>()(
     // Removed loadConversationHistory - WebSocket handles message history automatically
 
     sendMessage: async (message: string) => {
-      const { activeConversation, websocket } = get();
+      const { activeConversation, websocket, currentBot } = get();
       if (!activeConversation || !websocket.socket || !websocket.isConnected) {
         console.error('Cannot send message: no active conversation or WebSocket connection');
         return;
@@ -125,12 +133,35 @@ export const useConversationStore = create<ConversationStore>()(
         // Clear input and set typing state
         set({ inputMessage: '', isTyping: true });
 
-        // Send via WebSocket for real-time streaming
-        websocket.socket.send(JSON.stringify({
-          type: 'message',
+        // Build Socratic FE payload additions
+        const payload: any = {
           message: message,
-          streaming: true
-        }));
+          enable_progress: true, // platform-gated server-side; explicit opt-in too
+        };
+
+        if (currentBot) {
+          // We always have complete Bot objects now!
+          payload.llm_id = currentBot.modelPreference?.chatModelDareId;
+          payload.file_ids = currentBot.dareFileIds || [];
+          payload.tracking_prompt = currentBot.prompts?.trackingPrompt;
+          payload.learning_goals = currentBot.prompts?.learningGoals;
+          payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
+          payload.bot_meta = {
+            title: currentBot.title,
+            subject: currentBot.subject,
+            topic: currentBot.topic,
+          };
+        } else {
+          // Fallback if no bot is selected
+          payload.bot_meta = {
+            title: '',
+            subject: '',
+            topic: '',
+          };
+        }
+
+        // Send via WebSocket for real-time streaming
+        websocket.socket.send(JSON.stringify(payload));
 
       } catch (error) {
         console.error('Error sending message:', error);
@@ -259,6 +290,32 @@ export const useConversationStore = create<ConversationStore>()(
                 message: data.message,
               });
               break;
+
+            case 'progress_stream': {
+              // Update progress tokens in chatStore
+              import('@/stores/core/chatStore').then(({ useChatStore }) => {
+                const store = useChatStore.getState();
+                store.setProgressStreaming(true);
+                if (data.chunk) store.addProgressToken(data.chunk);
+              });
+              break;
+            }
+
+            case 'progress_complete': {
+              import('@/stores/core/chatStore').then(({ useChatStore }) => {
+                const store = useChatStore.getState();
+                store.setProgressStreaming(false);
+              });
+              break;
+            }
+
+            case 'progress_error': {
+              import('@/stores/core/chatStore').then(({ useChatStore }) => {
+                const store = useChatStore.getState();
+                store.setProgressStreaming(false);
+              });
+              break;
+            }
               
             case 'error':
               console.error('WebSocket error:', data.message);
@@ -337,3 +394,4 @@ export const useMessages = () => useConversationStore(state => state.messages);
 export const useWebSocketState = () => useConversationStore(state => state.websocket);
 export const useIsTyping = () => useConversationStore(state => state.isTyping);
 export const useInputMessage = () => useConversationStore(state => state.inputMessage);
+export const useCurrentBot = () => useConversationStore(state => state.currentBot);
