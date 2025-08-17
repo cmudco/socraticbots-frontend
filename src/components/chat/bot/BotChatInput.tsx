@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { 
   useInputMessage, 
   useIsTyping, 
-  useWebSocketState, 
   useConversationStore 
 } from '@/stores/core/conversationStore';
+import { useIsWebSocketConnected } from '@/stores/core/websocketStore';
 
 interface BotChatInputProps {
   className?: string;
@@ -18,7 +18,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({
 }) => {
   const inputMessage = useInputMessage();
   const isTyping = useIsTyping();
-  const websocketState = useWebSocketState();
+  const isWebSocketConnected = useIsWebSocketConnected();
   const { 
     sendMessage, 
     setInputMessage, 
@@ -27,7 +27,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({
   } = useConversationStore();
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isTyping || !websocketState.isConnected) return;
+    if (!inputMessage.trim() || isTyping || !isWebSocketConnected) return;
     await sendMessage(inputMessage.trim());
   };
 
@@ -40,7 +40,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({
     console.log('Stop streaming requested');
   };
 
-  const isConnected = websocketState.isConnected;
+  const isConnected = isWebSocketConnected;
   const disabled = !activeConversation;
   const placeholder = `Chat with Bot ${currentBotId}...`;
   const getPlaceholder = () => {

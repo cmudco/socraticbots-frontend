@@ -37,17 +37,7 @@ export const bookSchemas = {
       .required('Description is required'),
   }),
 
-  createChapter: Yup.object({
-    title: Yup.string().min(1, 'Title is required').required('Title is required'),
-    subject: Yup.string().min(1, 'Subject is required').required('Subject is required'),
-    topic: Yup.string().min(1, 'Topic is required').required('Topic is required'),
-    greeting: Yup.string().optional(),
-    chatPrompt: Yup.string().optional(),
-    trackingPrompt: Yup.string().optional(),
-    learningGoals: Yup.string().optional(),
-    chat_model_id: Yup.string().optional(),
-    tracking_model_id: Yup.string().optional(),
-  }),
+  // createChapter removed - we use bot-based architecture now
 };
 
 export const bookValidationSchema = Yup.object({
@@ -88,13 +78,7 @@ export const learningGoalValidationSchema = Yup.object({
   order: Yup.number().optional(),
 });
 
-// Temporarily disabled - will be rewritten for bots architecture
-// export const chapterPromptsValidationSchema = Yup.object({
-//   greeting: Yup.string().optional(),
-//   chatPrompt: Yup.string().optional(),
-//   trackingPrompt: Yup.string().optional(),
-//   learningGoals: Yup.string().optional(),
-// });
+// All old chapter-based schemas removed - we use bot-based architecture now
 
 export function useCustomForm<T extends FormValues>(
   initialValues: T,

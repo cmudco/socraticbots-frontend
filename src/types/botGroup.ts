@@ -15,7 +15,7 @@ export interface BotGroup {
   updatedAt: string;
 }
 
-// Forward declaration - Bot will be imported where needed
+// Import Bot lazily in consumers to avoid circular deps; here we type as any to keep flexibility
 export interface BotGroupDetail extends BotGroup {
-  bots: unknown[]; // Will be properly typed as Bot[] in components that import both types
+  bots: any[]; // API returns full Bot-like objects
 }
