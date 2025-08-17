@@ -1,11 +1,10 @@
 import React from 'react';
 
-import { BookOpen, Clock, Sparkles } from 'lucide-react';
+import { BookOpen, Clock, } from 'lucide-react';
 
 import { useConversationStore } from '@/stores/core/conversationStore';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 
 import BotSelector from './BotSelector';
 
@@ -49,52 +48,7 @@ const ChatHeader: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-slate-600">Mode:</span>
-              <div className="flex items-center space-x-1 rounded-lg bg-slate-100/80 p-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={!currentBotId}
-                  className={`h-8 px-3 text-xs font-medium transition-all ${
-                    currentBotId
-                      ? 'bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-sm hover:from-violet-600 hover:to-purple-600'
-                      : 'cursor-not-allowed bg-slate-200 text-slate-400'
-                  }`}
-                >
-                  <Sparkles className="mr-1.5 h-3 w-3" />
-                  Classic
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={true}
-                  className="h-8 cursor-not-allowed bg-slate-200 px-3 text-xs font-medium text-slate-400"
-                >
-                  New
-                  <Badge
-                    variant="secondary"
-                    className="ml-1.5 h-4 border-amber-200 bg-amber-100 px-1.5 text-xs text-amber-700"
-                  >
-                    Soon
-                  </Badge>
-                </Button>
-              </div>
-            </div>
-          </div>
         </div>
-
-        {currentBotId && (
-          <div className="mt-3 flex items-center justify-between rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2">
-            <div className="flex items-center space-x-2 text-sm">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></div>
-              <span className="text-slate-600">Ready to chat</span>
-            </div>
-            <div className="text-xs text-slate-500">AI assistant ready • Learning mode active</div>
-          </div>
-        )}
       </div>
     </header>
   );
