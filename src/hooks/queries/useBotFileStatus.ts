@@ -1,1 +1,0 @@
-// This file is no longer needed - polling is now handled by useBotFiles hook

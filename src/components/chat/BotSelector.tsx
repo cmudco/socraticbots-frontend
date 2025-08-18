@@ -17,11 +17,6 @@ import {
 const BotSelector: React.FC = () => {
   const { data: bots, isLoading, error } = useChatBots();
   const { setActiveBot, currentBotId, clearActiveConversation } = useConversationStore();
-  
-  // Debug logging
-  console.log('BotSelector - bots:', bots);
-  console.log('BotSelector - isLoading:', isLoading);
-  console.log('BotSelector - error:', error);
 
   const handleBotChange = async (botId: string) => {
     clearActiveConversation();

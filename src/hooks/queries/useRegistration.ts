@@ -18,11 +18,9 @@ export const useRegister = () => {
   return useMutation<RegistrationResponse, Error, RegistrationRequest>({
     mutationFn: (registrationData: RegistrationRequest) => authService.register(registrationData),
     retry: false,
-    onSuccess: data => {
-      console.log('Student registration successful:', data);
+    onSuccess: () => {
     },
-    onError: error => {
-      console.error('Student registration failed:', error);
+    onError: () => {
     },
   });
 };
@@ -35,11 +33,9 @@ export const useRegisterProfessor = () => {
     mutationFn: (registrationData: ProfessorRegistrationRequest) =>
       authService.registerProfessor(registrationData),
     retry: false,
-    onSuccess: data => {
-      console.log('Professor registration successful:', data);
+    onSuccess: () => {
     },
-    onError: error => {
-      console.error('Professor registration failed:', error);
+    onError: () => {
     },
   });
 };

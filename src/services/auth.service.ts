@@ -51,7 +51,6 @@ class AuthService {
   }
 
   async refreshToken(): Promise<AuthTokens> {
-    console.log('Refresh token method called but is disabled');
     throw new Error('Token refresh is disabled');
   }
 
