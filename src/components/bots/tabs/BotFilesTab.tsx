@@ -41,13 +41,10 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
   // Enable polling when there are processing files
   useEffect(() => {
     const hasProcessingFiles = filesData?.files?.some(file => file.status === FileStatus.PROCESSING) || false;
-    console.log('[BotFilesTab] Has processing files:', hasProcessingFiles, 'Current polling enabled:', enablePolling);
     
     if (hasProcessingFiles && !enablePolling) {
-      console.log('[BotFilesTab] Enabling polling for processing files');
       setEnablePolling(true);
     } else if (!hasProcessingFiles && enablePolling) {
-      console.log('[BotFilesTab] Disabling polling - all files completed');
       setEnablePolling(false);
     }
   }, [filesData?.files, enablePolling]);
@@ -79,7 +76,6 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
 
   const handleFilesSelected = useCallback(
     (fileList: FileList) => {
-      // Prevent duplicate uploads if already uploading
       if (uploadMutation.isPending) {
         console.warn('Upload already in progress, ignoring duplicate request');
         return;
@@ -112,13 +108,11 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
             },
           },
           {
-            onSuccess: (response) => {
-              console.log('[BotFilesTab] Upload successful:', response);
+            onSuccess: () => {
               setUploadingFiles([]);
               if (fileInputRef.current) {
                 fileInputRef.current.value = '';
               }
-              // Files will be automatically refetched and polling will start if needed
             },
             onError: (error) => {
               console.error('Upload failed:', error);

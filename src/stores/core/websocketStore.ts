@@ -52,19 +52,16 @@ export const useWebSocketStore = create<WebSocketStore>()(
     connect: async (socketUrl: string) => {
       const { isConnecting, isConnected } = get();
       if (isConnecting || isConnected) {
-        console.log('WebSocket already connecting or connected, skipping...');
         return;
       }
 
       return new Promise<void>((resolve, reject) => {
         try {
-          console.log('Connecting to WebSocket:', socketUrl);
           set({ isConnecting: true, error: null });
 
           const socket = new WebSocket(socketUrl);
 
           socket.onopen = () => {
-            console.log('WebSocket connected successfully');
             set({ 
               isConnected: true, 
               isConnecting: false, 
@@ -77,9 +74,6 @@ export const useWebSocketStore = create<WebSocketStore>()(
           socket.onmessage = (event) => {
             try {
               const data = JSON.parse(event.data);
-              console.log('WebSocket message received:', data.type, data);
-              
-              // Handle different message types and update appropriate stores
               get().handleWebSocketMessage(data);
             } catch (error) {
               console.error('Error parsing WebSocket message:', error);
@@ -96,17 +90,13 @@ export const useWebSocketStore = create<WebSocketStore>()(
             reject(new Error('WebSocket connection error'));
           };
 
-          socket.onclose = (event) => {
-            console.log('WebSocket closed:', event.code, event.reason);
+          socket.onclose = () => {
             set({ 
               isConnected: false, 
               isConnecting: false,
               socket: null
             });
           };
-
-          // Note: onmessage will be handled by the conversation store
-          // which will subscribe to WebSocket events and route them appropriately
 
         } catch (error) {
           console.error('Error connecting WebSocket:', error);
@@ -138,26 +128,16 @@ export const useWebSocketStore = create<WebSocketStore>()(
         
         switch (data.type) {
           case 'conversation_history':
-            console.log('Processing conversation_history:', data.conversationHistory?.length, 'messages');
-            console.log('Raw conversation history data:', data.conversationHistory);
             if (data.conversationHistory) {
               const mappedMessages = data.conversationHistory.map((msg: any) => ({
                 ...msg,
                 senderType: msg.senderType === 1 ? 'USER' : 'ASSISTANT'
               }));
-              console.log('Mapped messages for conversation history:', mappedMessages);
               conversationStore.setConversationHistory(mappedMessages);
-              
-              // Also verify the state was updated
-              setTimeout(() => {
-                const currentMessages = useConversationStore.getState().messages;
-                console.log('Messages in store after setConversationHistory:', currentMessages.length);
-              }, 100);
             }
             break;
             
           case 'message':
-            console.log('Processing message:', data.id, 'streaming:', data.streaming);
             const senderType = data.senderType === 1 ? 'USER' : 'ASSISTANT';
             
             if (data.regenerate) {
@@ -194,7 +174,6 @@ export const useWebSocketStore = create<WebSocketStore>()(
             break;
             
           case 'ai_stream':
-            console.log('Processing ai_stream for message:', data.id, 'streaming:', data.streaming);
             const assistantSenderType = data.senderType === 1 ? 'USER' : 'ASSISTANT';
             
             if (data.regenerate) {
@@ -247,8 +226,6 @@ export const useWebSocketStore = create<WebSocketStore>()(
             break;
             
           case 'stream_chunk':
-            console.log('Processing stream_chunk for message:', data.messageId, 'chunk:', data.chunk);
-            // Find current message and append the chunk
             const currentMessage = conversationStore.messages.find(m => m.id === data.messageId);
             if (currentMessage) {
               conversationStore.updateMessage(data.messageId, { 
@@ -259,7 +236,6 @@ export const useWebSocketStore = create<WebSocketStore>()(
             break;
             
           case 'stream_end':
-            console.log('Processing stream_end for message:', data.messageId);
             conversationStore.updateMessage(data.messageId, { 
               streaming: false 
             });
@@ -268,18 +244,25 @@ export const useWebSocketStore = create<WebSocketStore>()(
             break;
             
           case 'progress_start':
-            console.log('Progress streaming started');
             set({ isProgressStreaming: true });
             get().clearProgressTokens();
             break;
             
           case 'progress_token':
-            console.log('Progress token received:', data.token);
+            // Clear previous progress tokens when a new stream starts
+            const tokensLength = get().progressTokens.length;
+            if (tokensLength > 0 && !get().isProgressStreaming) {
+              get().clearProgressTokens();
+            }
             get().addProgressToken(data.token);
             break;
             
           case 'progress_stream':
-            console.log('Processing progress_stream:', data.chunk);
+            // Clear previous progress tokens when a new stream starts
+            const currentTokens = get().progressTokens;
+            if (currentTokens.length > 0 && !get().isProgressStreaming) {
+              get().clearProgressTokens();
+            }
             set({ isProgressStreaming: true });
             if (data.chunk) {
               get().addProgressToken(data.chunk);
@@ -287,23 +270,18 @@ export const useWebSocketStore = create<WebSocketStore>()(
             break;
 
           case 'progress_complete':
-            console.log('Processing progress_complete');
             set({ isProgressStreaming: false });
             break;
 
           case 'progress_error':
-            console.log('Processing progress_error:', data.message);
             set({ isProgressStreaming: false });
             break;
             
           case 'progress_end':
-            console.log('Progress streaming ended');
             set({ isProgressStreaming: false });
             break;
 
           case 'latest_progress':
-            console.log('Processing latest_progress assessment:', data.assessment);
-            // Handle assessment data by setting it as progress content
             if (data.assessment && data.assessment.content) {
               set({ 
                 progressContent: data.assessment.content,
@@ -312,9 +290,6 @@ export const useWebSocketStore = create<WebSocketStore>()(
               });
             }
             break;
-            
-          default:
-            console.log('Unknown WebSocket message type:', data.type);
         }
       }).catch(error => {
         console.error('Error handling WebSocket message:', error);

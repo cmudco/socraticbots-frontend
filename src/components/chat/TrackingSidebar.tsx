@@ -23,15 +23,6 @@ const TrackingSidebar: React.FC = () => {
   const isProgressStreaming = useIsProgressStreaming();
   const progressTokens = useProgressTokens();
 
-  console.log('TrackingSidebar debug:', {
-    currentBotId,
-    currentBot: currentBot?.title,
-    dareConversationId,
-    learningGoals: currentBot?.prompts?.learningGoals ? 'present' : 'missing',
-    progressTokensCount: progressTokens.length,
-    isProgressStreaming
-  });
-
   if (!currentBotId || !dareConversationId) {
     return (
       <div className="flex h-full flex-col bg-gradient-to-br from-slate-50 via-white to-violet-50/30">

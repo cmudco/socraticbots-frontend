@@ -80,7 +80,6 @@ export const useConversationStore = create<ConversationStore>()(
     setActiveBot: async (bot: Bot) => {
       try {
         const botId = bot.id;
-        console.log('Setting active bot:', botId, bot.title);
         
         // Set the bot directly
         set({ 
@@ -92,25 +91,19 @@ export const useConversationStore = create<ConversationStore>()(
           lastMessageId: null
         });
         
-        // Get or create conversation
-        console.log('Getting or creating conversation for bot:', botId);
         const conversation = await conversationService.getOrCreateBotConversation(botId);
-        console.log('Conversation created/retrieved:', conversation.dareConversationId);
         set({ activeConversation: conversation });
         
-        // Connect WebSocket through WebSocket store
         const websocketStore = useWebSocketStore.getState();
         const authToken = localStorage.getItem('access_token');
         if (!authToken) {
           throw new Error('No authentication token found');
         }
 
-        const DARE_WEBSOCKET_URL = 'ws://localhost:8000';
-        const socketUrl = `${DARE_WEBSOCKET_URL}/ws/conversations/${conversation.dareConversationId}/?jwt_key=${encodeURIComponent(authToken)}`;
+        const DARE_WEBSOCKET_URL = import.meta.env.VITE_DARE_WEBSOCKET_URL;
+        const socketUrl = `${DARE_WEBSOCKET_URL}/conversations/${conversation.dareConversationId}/?jwt_key=${encodeURIComponent(authToken)}`;
         
-        console.log('Connecting to WebSocket:', socketUrl);
         await websocketStore.connect(socketUrl);
-        console.log('WebSocket connected successfully');
         
       } catch (error) {
         console.error('Error setting active bot:', error);
@@ -145,17 +138,12 @@ export const useConversationStore = create<ConversationStore>()(
       const { activeConversation, currentBot } = get();
       const websocketStore = useWebSocketStore.getState();
       
-      console.log('Sending message:', message);
-      console.log('Active conversation:', activeConversation?.dareConversationId);
-      console.log('WebSocket connected:', websocketStore.isConnected);
-      
       if (!activeConversation || !websocketStore.isConnected) {
         console.error('Cannot send message: no active conversation or WebSocket connection');
         return;
       }
 
       try {
-        // Clear input and set typing state atomically
         set({ inputMessage: '', isTyping: true });
 
         const payload: any = {
@@ -164,14 +152,6 @@ export const useConversationStore = create<ConversationStore>()(
         };
 
         if (currentBot) {
-          console.log('Adding bot configuration to payload:', {
-            llm_id: currentBot.modelPreference?.chatModelDareId,
-            file_ids: currentBot.dareFileIds,
-            tracking_prompt: currentBot.prompts?.trackingPrompt ? 'present' : 'missing',
-            learning_goals: currentBot.prompts?.learningGoals ? 'present' : 'missing',
-            progress_llm_id: currentBot.modelPreference?.trackingModelDareId,
-          });
-          
           payload.llm_id = currentBot.modelPreference?.chatModelDareId;
           payload.file_ids = currentBot.dareFileIds || [];
           payload.tracking_prompt = currentBot.prompts?.trackingPrompt;
@@ -184,12 +164,9 @@ export const useConversationStore = create<ConversationStore>()(
           };
         }
 
-        console.log('Sending WebSocket payload:', payload);
         websocketStore.sendMessage(payload);
 
       } catch (error) {
-        console.error('Error sending message:', error);
-        // Ensure typing state is cleared on error
         set({ isTyping: false });
       }
     },
@@ -235,15 +212,12 @@ export const useConversationStore = create<ConversationStore>()(
     },
 
     setConversationHistory: (messages: DareMessage[]) => {
-      console.log('Setting conversation history:', messages.length, 'messages');
-      console.log('First few messages:', messages.slice(0, 3));
       set({ 
         conversationHistory: messages,
         messages: messages,
         messageCount: messages.length,
         lastMessageId: messages.length > 0 ? messages[messages.length - 1].id : null
       });
-      console.log('Conversation history set. Current state messages count:', get().messages.length);
     },
 
     updateConversationStats: () => {
@@ -280,14 +254,9 @@ export const useConversationStore = create<ConversationStore>()(
       }
 
       try {
-        console.log('Deleting conversation:', activeConversation.dareConversationId);
-        
-        // Call the backend to delete the conversation from DARE
         const result = await conversationService.deleteConversation(activeConversation.dareConversationId);
         
         if (result.success) {
-          console.log('Conversation deleted successfully:', result.message);
-          
           // Clear the current conversation state
           set({
             activeConversation: null,

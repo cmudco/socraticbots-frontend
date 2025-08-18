@@ -15,21 +15,21 @@ export interface DareLLMModel {
 class DareLLMModelsService {
   async getDareLLMModels(): Promise<DareLLMModel[]> {
     return baseRequest<DareLLMModel[]>({
-      url: 'models/dare-llms/',
+      url: 'bots/dare-llms/',
       method: METHOD.GET,
     });
   }
 
   async getDareLLMModel(id: number): Promise<DareLLMModel> {
     return baseRequest<DareLLMModel>({
-      url: `models/dare-llms/${id}/`,
+      url: `bots/dare-llms/${id}/`,
       method: METHOD.GET,
     });
   }
 
   async searchDareLLMModels(query: string): Promise<DareLLMModel[]> {
     return baseRequest<DareLLMModel[]>({
-      url: 'models/dare-llms/',
+      url: 'bots/dare-llms/',
       method: METHOD.GET,
       params: { search: query },
     });
@@ -37,7 +37,7 @@ class DareLLMModelsService {
 
   async getDareLLMModelsByProvider(provider: string): Promise<DareLLMModel[]> {
     return baseRequest<DareLLMModel[]>({
-      url: 'models/dare-llms/',
+      url: 'bots/dare-llms/',
       method: METHOD.GET,
       params: { provider },
     });

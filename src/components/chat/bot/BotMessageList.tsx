@@ -16,23 +16,10 @@ const BotMessageList: React.FC<BotMessageListProps> = ({
 }) => {
   const messages = useMessages();
   const isStreaming = useIsTyping();
-  const { isLoadingMessages, currentBotId, activeConversation } = useConversationStore();
+  const { isLoadingMessages, } = useConversationStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('BotMessageList debug:', {
-      messagesCount: messages.length,
-      isStreaming,
-      isLoadingMessages,
-      currentBotId,
-      activeConversation: activeConversation?.dareConversationId,
-      messages: messages.map(m => ({ id: m.id, senderType: m.senderType, message: m.message?.substring(0, 50) + '...' }))
-    });
-  }, [messages, isStreaming, isLoadingMessages, currentBotId, activeConversation]);
-
-  // Enhanced auto-scroll logic - scroll on message changes AND during streaming
   useEffect(() => {
     const scrollToBottom = () => {
       if (messagesEndRef.current) {
@@ -44,13 +31,11 @@ const BotMessageList: React.FC<BotMessageListProps> = ({
       }
     };
 
-    // Always scroll when messages change or during streaming
     if (messages.length > 0) {
       scrollToBottom();
     }
   }, [messages, isStreaming]);
 
-  // Subscribe to scroll manager for real-time streaming updates
   useEffect(() => {
     const scrollToBottom = () => {
       if (messagesEndRef.current) {
@@ -66,7 +51,6 @@ const BotMessageList: React.FC<BotMessageListProps> = ({
     return unsubscribe;
   }, []);
 
-  // Track last message content to detect updates during streaming
   const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
   const lastMessageContent = lastMessage?.message || '';
   
@@ -80,14 +64,12 @@ const BotMessageList: React.FC<BotMessageListProps> = ({
     }
   }, [lastMessageContent, isStreaming]);
 
-  // Additional safety net - periodic scroll during active streaming
   useEffect(() => {
     if (isStreaming && messages.length > 0) {
       const interval = setInterval(() => {
         if (messagesEndRef.current) {
           const container = containerRef.current;
           if (container) {
-            // Check if user has scrolled up manually
             const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
             if (isNearBottom) {
               messagesEndRef.current.scrollIntoView({ 

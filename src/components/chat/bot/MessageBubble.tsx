@@ -185,8 +185,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               {new Date(message.date).toLocaleTimeString()}
             </span>
             
-            {message.cost && (
-              <span className={`text-xs ${isUser ? 'text-blue-200' : 'text-slate-400'}`}>
+            {message.cost && !isUser && (
+              <span className={`text-xs text-slate-400`}>
                 ${message.cost} • {message.inputTokens}/{message.outputTokens} tokens
               </span>
             )}

@@ -32,8 +32,6 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
   };
 
   const handleStopStreaming = () => {
-    // TODO: Implement stop streaming functionality
-    console.log('Stop streaming requested');
   };
 
   const isConnected = isWebSocketConnected;

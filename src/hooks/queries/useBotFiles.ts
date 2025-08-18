@@ -13,34 +13,23 @@ export const useBotFiles = (
   const query = useQuery({
     queryKey: ['bot-files', botGroupId, botId],
     queryFn: async () => {
-      console.log('[useBotFiles] Fetching bot files...');
       const result = await botFileService.getBotFiles(botGroupId, botId);
-      console.log('[useBotFiles] Got files:', result);
       return result;
     },
     refetchInterval: enablePolling ? (query) => {
-      console.log('[useBotFiles] Checking if should continue polling...');
-      
-      // Always poll if no data yet
       if (!query.state.data) {
-        console.log('[useBotFiles] No data yet, continuing polling...');
         return 5000;
       }
       
-      // If no data yet, start polling anyway (data will be available on first fetch)
       if (!query.state.data || !query.state.data.files) {
-        console.log('[useBotFiles] No data yet, starting polling...');
         return 5000;
       }
       
       const hasProcessingFiles = query.state.data.files.some((file: any) => file.status === FileStatus.PROCESSING);
-      console.log('[useBotFiles] Polling enabled, has processing files:', hasProcessingFiles);
       
       if (hasProcessingFiles) {
-        console.log('[useBotFiles] Continuing to poll every 5 seconds...');
         return 5000; // Poll every 5 seconds when files are processing
       } else {
-        console.log('[useBotFiles] No processing files, stopping polling');
         return false; // Stop polling when no files are processing
       }
     } : false,
