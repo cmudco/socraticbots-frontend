@@ -1,22 +1,43 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
+import { useChatBots } from '@/hooks/queries/useChat';
 import { useUserInfo } from '@/hooks/queries/useUser';
+
 import { useConversationStore } from '@/stores/core/conversationStore';
-import BotChatInterface from '@/components/chat/bot/BotChatInterface';
+
 import ChatHeader from '@/components/chat/ChatHeader';
-import NotesSidebar from '@/components/chat/notes/NotesSidebar';
 import TrackingSidebar from '@/components/chat/TrackingSidebar';
+import BotChatInterface from '@/components/chat/bot/BotChatInterface';
+import NotesSidebar from '@/components/chat/notes/NotesSidebar';
 
 const Chat: React.FC = () => {
   const { data: user, isLoading } = useUserInfo();
-  const { currentBotId } = useConversationStore();
+  const { currentBotId, setActiveBot, clearActiveConversation } = useConversationStore();
+  const { botId } = useParams();
+  const { data: bots } = useChatBots();
+
+  useEffect(() => {
+    if (!botId) {
+      if (currentBotId) {
+        clearActiveConversation();
+      }
+      return;
+    }
+
+    if (!bots || bots.length === 0) return;
+    const selected = bots.find(b => b.id.toString() === botId);
+    if (selected && selected.id !== currentBotId) {
+      setActiveBot(selected);
+    }
+  }, [botId, bots, currentBotId, setActiveBot, clearActiveConversation]);
 
   // Show loading while fetching user data
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
           <p className="text-slate-600">Loading...</p>
         </div>
       </div>
@@ -37,22 +58,32 @@ const Chat: React.FC = () => {
         <TrackingSidebar />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden h-full">
+      <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
         {/* Always show the header with bot selector */}
         <div className="flex-shrink-0">
           <ChatHeader />
         </div>
-        
+
         {currentBotId ? (
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-hidden">
             <BotChatInterface className="h-full" />
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30">
-            <div className="text-center max-w-md">
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-purple-400 shadow-sm mx-auto">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.874A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
+          <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30">
+            <div className="max-w-md text-center">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-purple-400 shadow-sm">
+                <svg
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-4.126-.98L3 20l1.98-5.874A8.955 8.955 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z"
+                  />
                 </svg>
               </div>
               <h2 className="mb-3 text-xl font-semibold text-slate-800">Please Select a Bot</h2>

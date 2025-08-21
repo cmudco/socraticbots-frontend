@@ -1,6 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-import { Edit, Eye, Trash } from 'lucide-react';
+import { Edit, Eye, MessageSquare, Trash } from 'lucide-react';
 
 import { useIsProfessor } from '@/hooks/queries/useUser';
 
@@ -13,6 +14,8 @@ interface ItemActionsProps {
   editTitle?: string;
   deleteTitle?: string;
   viewTitle?: string;
+  chatTo?: string;
+  chatTitle?: string;
 }
 
 /**
@@ -26,6 +29,8 @@ const ItemActions: React.FC<ItemActionsProps> = ({
   editTitle = 'Edit',
   deleteTitle = 'Delete',
   viewTitle = 'View details',
+  chatTo,
+  chatTitle = 'Open chat',
 }) => {
   const isProfessor = useIsProfessor();
 
@@ -65,6 +70,18 @@ const ItemActions: React.FC<ItemActionsProps> = ({
   // Student view
   return (
     <>
+      {chatTo && (
+        <Link to={chatTo} title={chatTitle}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`${buttonClass} hover:bg-violet-100 hover:text-violet-700`}
+          >
+            <MessageSquare size={14} className="mr-1" />
+            Open Chat
+          </Button>
+        </Link>
+      )}
       {onView && (
         <Button
           onClick={onView}

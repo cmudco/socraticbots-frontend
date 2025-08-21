@@ -16,36 +16,37 @@ import Settings from './pages/Settings';
 const App: React.FC = () => {
   return (
     <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Home />} />
+          <Route path="about" element={<About />} />
           <Route
-            path="/"
+            path="access-codes"
             element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
+              <StudentRoute>
+                <AccessCodes />
+              </StudentRoute>
             }
-          >
-            <Route index element={<Home />} />
-            <Route path="about" element={<About />} />
-            <Route
-              path="access-codes"
-              element={
-                <StudentRoute>
-                  <AccessCodes />
-                </StudentRoute>
-              }
-            />
-            <Route path="settings" element={<Settings />} />
-            <Route path="bot-groups" element={<BotGroups />} />
-            <Route path="chat" element={<Chat />} />
-          </Route>
+          />
+          <Route path="settings" element={<Settings />} />
+          <Route path="bot-groups" element={<BotGroups />} />
+          <Route path="chat" element={<Chat />} />
+          <Route path="chat/:botId" element={<Chat />} />
+        </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 

@@ -1,10 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useChatBots } from '@/hooks/queries/useChat';
 
 import { useConversationStore } from '@/stores/core/conversationStore';
-
-import { Bot } from '@/types/bot';
 
 import {
   Select,
@@ -14,9 +13,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+import { Bot } from '@/types/bot';
+
 const BotSelector: React.FC = () => {
   const { data: bots, isLoading, error } = useChatBots();
   const { setActiveBot, currentBotId, clearActiveConversation } = useConversationStore();
+  const navigate = useNavigate();
 
   const handleBotChange = async (botId: string) => {
     clearActiveConversation();
@@ -26,6 +28,7 @@ const BotSelector: React.FC = () => {
       const selectedBot = bots?.find(bot => bot.id.toString() === botId);
       if (selectedBot) {
         await setActiveBot(selectedBot);
+        navigate(`/chat/${botId}`);
       }
     } catch (error) {
       console.error('Error setting active bot:', error);
@@ -43,7 +46,7 @@ const BotSelector: React.FC = () => {
   if (error) {
     return (
       <div className="w-64">
-        <div className="text-red-500 text-sm">Error loading bots: {error.message}</div>
+        <div className="text-sm text-red-500">Error loading bots: {error.message}</div>
       </div>
     );
   }
