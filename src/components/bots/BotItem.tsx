@@ -42,6 +42,8 @@ const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView }) => {
           editTitle="Edit bot"
           deleteTitle="Delete bot"
           viewTitle="View bot details"
+          chatTo={`/chat/${bot.id}`}
+          chatTitle="Chat with this bot"
         />
       </div>
     </div>
