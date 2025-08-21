@@ -1,20 +1,22 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useUser } from '@/hooks/queries/useUser';
 
 interface StudentRouteProps {
   children: React.ReactNode;
 }
 
 const StudentRoute: React.FC<StudentRouteProps> = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const user = useUser();
 
-  if (!isAuthenticated) {
+  // If no user (not authenticated), redirect to login
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (user?.is_professor) {
+  // If professor, redirect to home (students only route)
+  if (user.isProfessor) {
     return <Navigate to="/" replace />;
   }
 

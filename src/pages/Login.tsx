@@ -5,7 +5,8 @@ import { ErrorMessage, Field, Form, Formik } from 'formik';
 import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import * as Yup from 'yup';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useLogin } from '@/hooks/useLogin';
+import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
 import { getErrorMessage } from '@/utils/errorHandler';
 
@@ -36,14 +37,15 @@ interface LocationState {
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isAuthenticated, isLoading, isLoginPending, loginError } = useAuth();
+  const isAuthenticated = useIsAuthenticated();
+  const loginMutation = useLogin();
 
   const [showPassword, setShowPassword] = useState(false);
 
   const locationState = location.state as LocationState;
   const redirectPath = locationState?.from?.pathname || '/';
 
-  if (isAuthenticated && !isLoading) {
+  if (isAuthenticated) {
     return <Navigate to={redirectPath} replace />;
   }
 
@@ -53,20 +55,14 @@ const Login: React.FC = () => {
   };
 
   const handleSubmit = async (values: FormValues) => {
-    const success = await login(values.email, values.password);
-    if (success) {
+    try {
+      await loginMutation.mutateAsync({ email: values.email, password: values.password });
       navigate(redirectPath, { replace: true });
+    } catch (error) {
+      // Error is handled by the mutation
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Checking authentication...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto mt-10 max-w-md">
@@ -91,7 +87,7 @@ const Login: React.FC = () => {
                     name="email"
                     type="email"
                     placeholder="Enter your email address"
-                    disabled={isSubmitting || isLoginPending}
+                    disabled={isSubmitting || loginMutation.isPending}
                   />
                   <ErrorMessage name="email" component="p" className="text-sm text-red-600" />
                 </div>
@@ -105,14 +101,14 @@ const Login: React.FC = () => {
                       name="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Enter your password"
-                      disabled={isSubmitting || isLoginPending}
+                      disabled={isSubmitting || loginMutation.isPending}
                       className="pr-10"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute top-3 right-3 h-4 w-4 text-gray-400 hover:text-gray-600"
-                      disabled={isSubmitting || isLoginPending}
+                      disabled={isSubmitting || loginMutation.isPending}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -120,8 +116,8 @@ const Login: React.FC = () => {
                   <ErrorMessage name="password" component="p" className="text-sm text-red-600" />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting || isLoginPending}>
-                  {isSubmitting || isLoginPending ? (
+                <Button type="submit" className="w-full" disabled={isSubmitting || loginMutation.isPending}>
+                  {isSubmitting || loginMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Signing in...
@@ -134,10 +130,10 @@ const Login: React.FC = () => {
             )}
           </Formik>
 
-          {loginError && (
+          {loginMutation.error && (
             <Alert variant="destructive" className="mt-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{getErrorMessage(loginError)}</AlertDescription>
+              <AlertDescription>{getErrorMessage(loginMutation.error)}</AlertDescription>
             </Alert>
           )}
 

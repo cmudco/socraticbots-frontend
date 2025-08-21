@@ -13,14 +13,14 @@ import {
   Users,
 } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useUser } from '@/hooks/queries/useUser';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Home: React.FC = () => {
-  const { user } = useAuth();
+  const user = useUser();
   const navigate = useNavigate();
 
   const features = [
@@ -242,7 +242,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* Getting Started Section - Only show to professors */}
-      {user?.is_professor && (
+      {user?.isProfessor && (
         <Card className="border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50">
           <CardContent className="p-8 text-center">
             <div className="mx-auto max-w-3xl space-y-6">

@@ -1,151 +1,76 @@
-import { useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { DEFAULT_NOTE_CONTENT, DEFAULT_NOTE_TITLES } from '@/constants/notes';
+import { notesService, CreateNoteRequest, UpdateNoteRequest } from '@/services/notes.service';
 
-import {
-  useCreateNote,
-  useDeleteNote,
-  useNotes,
-  useTogglePin,
-  useUpdateNote,
-} from '@/hooks/queries/useNotes';
 
-import { useChatStore } from '@/stores/core/chatStore';
-import { notesSelectors, useNotesStore } from '@/stores/core/notesStore';
-import { useModalStore } from '@/stores/ui/modalStore';
+export const useNoteOperations = (selectedBotId: string | null) => {
+  const queryClient = useQueryClient();
+  
+  // Query for notes
+  const { data: notes = [], isLoading } = useQuery({
+    queryKey: ['notes', selectedBotId],
+    queryFn: () => selectedBotId ? notesService.getNotes(selectedBotId) : Promise.resolve([]),
+    enabled: !!selectedBotId,
+  });
 
-import { CreateNoteRequest } from '@/services/notes.service';
+  // Create note mutation
+  const createNoteMutation = useMutation({
+    mutationFn: (noteData: CreateNoteRequest) => notesService.createNote(noteData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', selectedBotId] });
+    },
+  });
 
-import { filterNotes, groupNotesByPinStatus } from '@/utils/notes';
+  // Update note mutation
+  const updateNoteMutation = useMutation({
+    mutationFn: ({ id, noteData }: { id: string; noteData: UpdateNoteRequest }) => 
+      notesService.updateNote(id, noteData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', selectedBotId] });
+    },
+  });
 
-import type { Note } from '@/types/note';
+  // Delete note mutation
+  const deleteNoteMutation = useMutation({
+    mutationFn: (id: string) => notesService.deleteNote(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', selectedBotId] });
+    },
+  });
 
-export const useNoteOperations = () => {
-  const { selectedChapterId } = useChatStore();
-  const createNoteMutation = useCreateNote();
-  const updateNoteMutation = useUpdateNote();
-  const deleteNoteMutation = useDeleteNote();
-  const togglePinMutation = useTogglePin();
-
-  const notesStore = useNotesStore();
-  const { searchTerm, editingId, closeCreateModal, resetEdit, startEditing } = notesStore;
-
-  const showCreateModal = notesSelectors.showCreateModal(notesStore);
-  const createNoteType = notesSelectors.createNoteType(notesStore);
-  const newNoteTitle = notesSelectors.newNoteTitle(notesStore);
-  const newNoteContent = notesSelectors.newNoteContent(notesStore);
-  const editTitle = notesSelectors.editTitle(notesStore);
-  const editContent = notesSelectors.editContent(notesStore);
-
-  const { deleteConfirmationModal, openDeleteConfirmation, closeDeleteConfirmation } =
-    useModalStore();
-
-  const { data: notes = [], isLoading } = useNotes();
-
-  const filteredNotes = useMemo(() => {
-    return filterNotes(notes, searchTerm);
-  }, [notes, searchTerm]);
-
-  const groupedNotes = useMemo(() => {
-    return groupNotesByPinStatus(filteredNotes);
-  }, [filteredNotes]);
-
-  const handleCreateNote = async () => {
-    if (!selectedChapterId) {
-      return;
-    }
-
-    const noteData: CreateNoteRequest = {
-      title: newNoteTitle.trim() || DEFAULT_NOTE_TITLES[createNoteType],
-      content: newNoteContent.trim() || DEFAULT_NOTE_CONTENT,
-      type: createNoteType,
-      isPinned: false,
-      chapter_id: selectedChapterId,
-    };
-
-    try {
-      await createNoteMutation.mutateAsync(noteData);
-      closeCreateModal();
-    } catch {
-      // Handle error silently - no toast notifications
-    }
+  // Simple handlers
+  const handleCreateNote = async (title: string, content: string) => {
+    if (!selectedBotId) return;
+    
+    await createNoteMutation.mutateAsync({
+      title: title.trim(),
+      content: content.trim(),
+      botId: selectedBotId,
+    });
   };
 
-  const handleSaveEdit = async () => {
-    if (!editingId) return;
-
-    try {
-      await updateNoteMutation.mutateAsync({
-        id: editingId,
-        noteData: {
-          title: editTitle.trim(),
-          content: editContent.trim(),
-        },
-      });
-      resetEdit();
-    } catch {
-      // Handle error silently - no toast notifications
-    }
+  const handleUpdateNote = async (noteId: string, title: string, content: string) => {
+    await updateNoteMutation.mutateAsync({
+      id: noteId,
+      noteData: {
+        title: title.trim(),
+        content: content.trim(),
+      },
+    });
   };
 
-  const handleDeleteNote = async (id: string) => {
-    try {
-      await deleteNoteMutation.mutateAsync(id);
-      if (editingId === id) {
-        resetEdit();
-      }
-      closeDeleteConfirmation();
-    } catch {
-      // Handle error silently - no toast notifications
-    }
-  };
-
-  const handleTogglePin = async (id: string) => {
-    try {
-      await togglePinMutation.mutateAsync(id);
-    } catch {
-      // Handle error silently - no toast notifications
-    }
-  };
-
-  const handleStartEditing = (note: Note) => {
-    startEditing(note.id, { title: note.title, content: note.content });
-  };
-
-  const handleOpenDeleteConfirmation = (note: Note) => {
-    openDeleteConfirmation(note.id, note.title, 'note');
-  };
-
-  const handleConfirmDelete = () => {
-    if (deleteConfirmationModal.itemId) {
-      handleDeleteNote(deleteConfirmationModal.itemId);
-    }
+  const handleDeleteNote = async (noteId: string) => {
+    await deleteNoteMutation.mutateAsync(noteId);
   };
 
   return {
     notes,
-    filteredNotes,
-    groupedNotes,
     isLoading,
-    selectedChapterId,
-    createNoteMutation,
-    updateNoteMutation,
-    deleteNoteMutation,
-    togglePinMutation,
     handleCreateNote,
-    handleSaveEdit,
+    handleUpdateNote,
     handleDeleteNote,
-    handleTogglePin,
-    handleStartEditing,
-    handleOpenDeleteConfirmation,
-    handleConfirmDelete,
-    deleteConfirmation: deleteConfirmationModal,
-    editingId,
-    showCreateModal,
-    createNoteType,
-    newNoteTitle,
-    newNoteContent,
-    editTitle,
-    editContent,
+    isCreating: createNoteMutation.isPending,
+    isUpdating: updateNoteMutation.isPending,
+    isDeleting: deleteNoteMutation.isPending,
   };
 };
