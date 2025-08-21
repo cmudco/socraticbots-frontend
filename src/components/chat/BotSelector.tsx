@@ -68,9 +68,7 @@ const BotSelector: React.FC = () => {
               </SelectItem>
             ))
           ) : (
-            <SelectItem value="" disabled>
-              No bots available
-            </SelectItem>
+            <div className="px-2 py-1.5 text-sm text-gray-500">No bots available</div>
           )}
         </SelectContent>
       </Select>
