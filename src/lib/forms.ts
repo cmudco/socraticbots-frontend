@@ -37,17 +37,7 @@ export const bookSchemas = {
       .required('Description is required'),
   }),
 
-  createChapter: Yup.object({
-    title: Yup.string().min(1, 'Title is required').required('Title is required'),
-    subject: Yup.string().min(1, 'Subject is required').required('Subject is required'),
-    topic: Yup.string().min(1, 'Topic is required').required('Topic is required'),
-    greeting: Yup.string().optional(),
-    chat_prompt: Yup.string().optional(),
-    tracking_prompt: Yup.string().optional(),
-    learning_goals: Yup.string().optional(),
-    chat_model_id: Yup.string().optional(),
-    tracking_model_id: Yup.string().optional(),
-  }),
+  // createChapter removed - we use bot-based architecture now
 };
 
 export const bookValidationSchema = Yup.object({
@@ -55,11 +45,12 @@ export const bookValidationSchema = Yup.object({
   description: Yup.string().optional(),
 });
 
-export const chapterValidationSchema = Yup.object({
-  title: Yup.string().required('Title is required').min(1, 'Title cannot be empty'),
-  subject: Yup.string().required('Subject is required').min(1, 'Subject cannot be empty'),
-  topic: Yup.string().required('Topic is required').min(1, 'Topic cannot be empty'),
-});
+// Temporarily disabled - will be rewritten for bots architecture
+// export const chapterValidationSchema = Yup.object({
+//   title: Yup.string().required('Title is required').min(1, 'Title cannot be empty'),
+//   subject: Yup.string().required('Subject is required').min(1, 'Subject cannot be empty'),
+//   topic: Yup.string().required('Topic is required').min(1, 'Topic cannot be empty'),
+// });
 
 export const userProfileValidationSchema = Yup.object({
   first_name: Yup.string().optional(),
@@ -87,12 +78,7 @@ export const learningGoalValidationSchema = Yup.object({
   order: Yup.number().optional(),
 });
 
-export const chapterPromptsValidationSchema = Yup.object({
-  greeting: Yup.string().optional(),
-  chat_prompt: Yup.string().optional(),
-  tracking_prompt: Yup.string().optional(),
-  learning_goals: Yup.string().optional(),
-});
+// All old chapter-based schemas removed - we use bot-based architecture now
 
 export function useCustomForm<T extends FormValues>(
   initialValues: T,

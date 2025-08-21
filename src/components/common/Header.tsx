@@ -4,13 +4,15 @@ import { Link } from 'react-router-dom';
 import logo from '@/assets/logo.png';
 import { BookOpen, GraduationCap, LogOut, User } from 'lucide-react';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useUser, useIsAuthenticated, useLogout } from '@/hooks/queries/useUser';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 const Header: React.FC = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const user = useUser();
+  const isAuthenticated = useIsAuthenticated();
+  const logout = useLogout();
 
   const getUserInitials = (name: string) => {
     return name
@@ -52,12 +54,12 @@ const Header: React.FC = () => {
                       <Badge
                         variant="secondary"
                         className={`text-xs ${
-                          user.is_professor
+                          user.isProfessor
                             ? 'border-violet-200 bg-violet-100 text-violet-700'
                             : 'border-blue-200 bg-blue-100 text-blue-700'
                         }`}
                       >
-                        {user.is_professor ? (
+                        {user.isProfessor ? (
                           <>
                             <GraduationCap className="mr-1 h-3 w-3" />
                             Professor

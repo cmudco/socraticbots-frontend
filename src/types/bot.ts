@@ -1,0 +1,72 @@
+export interface BotModelPreference {
+  id: number;
+  chatModelDareId?: number;
+  trackingModelDareId?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BotPrompt {
+  id: number;
+  greeting: string;
+  chatPrompt: string;
+  trackingPrompt: string;
+  learningGoals: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BotAccessCode {
+  code: string;
+  created_at: string;
+  created_by: string;
+}
+
+export interface Bot {
+  id: number;
+  botGroup: {
+    id: number;
+    title: string;
+    description: string;
+    botsCount: number;
+    collaborators: string[];
+    createdAt: string;
+    updatedAt: string;
+  };
+  title: string;
+  subject: string;
+  topic: string;
+  dareFileIds: number[];
+  filesCount: number;
+  modelPreference?: BotModelPreference;
+  prompts?: BotPrompt;
+  accessCode?: BotAccessCode;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBotRequest {
+  title: string;
+  subject: string;
+  topic: string;
+  accessCode?: string;
+}
+
+export interface UpdateBotRequest {
+  title?: string;
+  subject?: string;
+  topic?: string;
+  accessCode?: string;
+}
+
+export interface BotModelPreferenceRequest {
+  chatModelDareId?: number;
+  trackingModelDareId?: number;
+}
+
+export interface BotPromptRequest {
+  greeting?: string;
+  chatPrompt?: string;
+  trackingPrompt?: string;
+  learningGoals?: string;
+}

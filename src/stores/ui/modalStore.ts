@@ -1,8 +1,16 @@
 import { create } from 'zustand';
 
-import type { Chapter } from '@/services/chapters.service';
+// import type { Chapter } from '@/services/chapters.service'; // Temporarily disabled
 
-import type { Book } from '@/types/book';
+// Temporary interface for backward compatibility
+interface Chapter {
+  id: string;
+  title: string;
+  [key: string]: any;
+}
+
+import type { Bot } from '@/types/bot';
+import type { BotGroup } from '@/types/botGroup';
 
 interface DeleteConfirmationModal {
   isOpen: boolean;
@@ -12,15 +20,31 @@ interface DeleteConfirmationModal {
 }
 
 interface ModalStoreState {
-  bookFormModal: {
+  // Bot Group modals
+  botGroupFormModal: {
     isOpen: boolean;
-    book: Book | null;
+    botGroup: BotGroup | null;
     mode: 'create' | 'edit' | 'view';
   };
-  deleteBookModal: {
+  deleteBotGroupModal: {
     isOpen: boolean;
-    book: Book | null;
+    botGroup: BotGroup | null;
   };
+
+  // Bot modals
+  botFormModal: {
+    isOpen: boolean;
+    bot: Bot | null;
+    botGroupId: number | null;
+    mode: 'create' | 'edit' | 'view';
+  };
+  deleteBotModal: {
+    isOpen: boolean;
+    bot: Bot | null;
+    botGroupId: number | null;
+  };
+
+  // Legacy chapter modals (keeping for backward compatibility)
 
   chapterFormModal: {
     isOpen: boolean;
@@ -40,10 +64,19 @@ interface ModalStoreState {
 
   deleteConfirmationModal: DeleteConfirmationModal;
 
-  openBookFormModal: (book?: Book, viewOnly?: boolean) => void;
-  closeBookFormModal: () => void;
-  openDeleteBookModal: (book: Book) => void;
-  closeDeleteBookModal: () => void;
+  // Bot Group modal methods
+  openBotGroupFormModal: (botGroup?: BotGroup, viewOnly?: boolean) => void;
+  closeBotGroupFormModal: () => void;
+  openDeleteBotGroupModal: (botGroup: BotGroup) => void;
+  closeDeleteBotGroupModal: () => void;
+
+  // Bot modal methods  
+  openBotFormModal: (botGroupId: number, bot?: Bot, viewOnly?: boolean) => void;
+  closeBotFormModal: () => void;
+  openDeleteBotModal: (botGroupId: number, bot: Bot) => void;
+  closeDeleteBotModal: () => void;
+
+  // Legacy methods (keeping for backward compatibility)
 
   openChapterFormModal: (bookId: string, chapter?: Chapter, viewOnly?: boolean) => void;
   closeChapterFormModal: () => void;
@@ -60,15 +93,31 @@ interface ModalStoreState {
 }
 
 export const useModalStore = create<ModalStoreState>(set => ({
-  bookFormModal: {
+  // Bot Group modals
+  botGroupFormModal: {
     isOpen: false,
-    book: null,
+    botGroup: null,
     mode: 'create',
   },
-  deleteBookModal: {
+  deleteBotGroupModal: {
     isOpen: false,
-    book: null,
+    botGroup: null,
   },
+
+  // Bot modals
+  botFormModal: {
+    isOpen: false,
+    bot: null,
+    botGroupId: null,
+    mode: 'create',
+  },
+  deleteBotModal: {
+    isOpen: false,
+    bot: null,
+    botGroupId: null,
+  },
+
+  // Legacy modals
   chapterFormModal: {
     isOpen: false,
     chapter: null,
@@ -90,36 +139,74 @@ export const useModalStore = create<ModalStoreState>(set => ({
     itemType: '',
   },
 
-  openBookFormModal: (book?: Book, viewOnly?: boolean) =>
+  // Bot Group modal methods
+  openBotGroupFormModal: (botGroup?: BotGroup, viewOnly?: boolean) =>
     set({
-      bookFormModal: {
+      botGroupFormModal: {
         isOpen: true,
-        book: book || null,
-        mode: viewOnly ? 'view' : book ? 'edit' : 'create',
+        botGroup: botGroup || null,
+        mode: viewOnly ? 'view' : botGroup ? 'edit' : 'create',
       },
     }),
-  closeBookFormModal: () =>
+  closeBotGroupFormModal: () =>
     set({
-      bookFormModal: {
+      botGroupFormModal: {
         isOpen: false,
-        book: null,
+        botGroup: null,
         mode: 'create',
       },
     }),
-  openDeleteBookModal: (book: Book) =>
+  openDeleteBotGroupModal: (botGroup: BotGroup) =>
     set({
-      deleteBookModal: {
+      deleteBotGroupModal: {
         isOpen: true,
-        book,
+        botGroup,
       },
     }),
-  closeDeleteBookModal: () =>
+  closeDeleteBotGroupModal: () =>
     set({
-      deleteBookModal: {
+      deleteBotGroupModal: {
         isOpen: false,
-        book: null,
+        botGroup: null,
       },
     }),
+
+  // Bot modal methods  
+  openBotFormModal: (botGroupId: number, bot?: Bot, viewOnly?: boolean) =>
+    set({
+      botFormModal: {
+        isOpen: true,
+        bot: bot || null,
+        botGroupId,
+        mode: viewOnly ? 'view' : bot ? 'edit' : 'create',
+      },
+    }),
+  closeBotFormModal: () =>
+    set({
+      botFormModal: {
+        isOpen: false,
+        bot: null,
+        botGroupId: null,
+        mode: 'create',
+      },
+    }),
+  openDeleteBotModal: (botGroupId: number, bot: Bot) =>
+    set({
+      deleteBotModal: {
+        isOpen: true,
+        bot,
+        botGroupId,
+      },
+    }),
+  closeDeleteBotModal: () =>
+    set({
+      deleteBotModal: {
+        isOpen: false,
+        bot: null,
+        botGroupId: null,
+      },
+    }),
+
 
   openChapterFormModal: (bookId: string, chapter?: Chapter, viewOnly?: boolean) =>
     set({
@@ -190,15 +277,29 @@ export const useModalStore = create<ModalStoreState>(set => ({
 
   resetAllModals: () =>
     set({
-      bookFormModal: {
+      // Bot Group modals
+      botGroupFormModal: {
         isOpen: false,
-        book: null,
+        botGroup: null,
         mode: 'create',
       },
-      deleteBookModal: {
+      deleteBotGroupModal: {
         isOpen: false,
-        book: null,
+        botGroup: null,
       },
+      // Bot modals
+      botFormModal: {
+        isOpen: false,
+        bot: null,
+        botGroupId: null,
+        mode: 'create',
+      },
+      deleteBotModal: {
+        isOpen: false,
+        bot: null,
+        botGroupId: null,
+      },
+      // Legacy modals
       chapterFormModal: {
         isOpen: false,
         chapter: null,
