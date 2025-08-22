@@ -142,6 +142,14 @@ class ConversationService {
       method: METHOD.DELETE,
     });
   }
+
+  async exportConversationPdf(conversationId: string): Promise<{ blob: Blob; filename: string }> {
+    return baseRequest({
+      url: `conversations/${conversationId}/export-pdf/`,
+      method: METHOD.GET,
+      responseType: 'blob',
+    });
+  }
 }
 
 export const conversationService = new ConversationService();
