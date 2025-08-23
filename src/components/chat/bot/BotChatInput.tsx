@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { Loader2, Send, Square } from 'lucide-react';
 
@@ -10,7 +10,6 @@ import {
 import { useIsWebSocketConnected } from '@/stores/core/websocketStore';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 interface BotChatInputProps {
   className?: string;
@@ -21,6 +20,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
   const isTyping = useIsTyping();
   const isWebSocketConnected = useIsWebSocketConnected();
   const { sendMessage, setInputMessage, activeConversation, currentBotId } = useConversationStore();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isTyping || !isWebSocketConnected) return;
@@ -31,8 +31,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
     setInputMessage(value);
   };
 
-  const handleStopStreaming = () => {
-  };
+  const handleStopStreaming = () => {};
 
   const isConnected = isWebSocketConnected;
   const disabled = !activeConversation;
@@ -47,12 +46,20 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
   const canSend = !disabled && !isTyping && isConnected && inputMessage.trim().length > 0;
   const inputDisabled = disabled || isTyping || !isConnected;
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && canSend) {
       e.preventDefault();
       handleSendMessage();
     }
   };
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+    }
+  }, [inputMessage]);
 
   return (
     <div className={`border-t border-slate-200/60 bg-white/95 backdrop-blur-sm ${className}`}>
@@ -66,13 +73,18 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
           className="flex gap-3"
         >
           <div className="relative flex-1">
-            <Input
+            <textarea
+              ref={textareaRef}
               value={inputMessage}
-              onChange={e => handleInputChange(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                handleInputChange(e.target.value)
+              }
               onKeyDown={handleKeyDown}
               placeholder={getPlaceholder()}
               disabled={inputDisabled}
-              className={`w-full rounded-2xl border-slate-200/60 bg-white px-4 py-3 text-base transition-all duration-200 placeholder:text-slate-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 ${!isConnected ? 'border-amber-200 bg-amber-50/50' : ''} `}
+              className={`w-full resize-none overflow-y-auto rounded-2xl border-slate-200/60 bg-white px-4 py-3 text-base transition-all duration-200 placeholder:text-slate-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 ${!isConnected ? 'border-amber-200 bg-amber-50/50' : ''}`}
+              style={{ minHeight: '3rem', maxHeight: '10rem' }}
+              rows={1}
               autoComplete="off"
               autoFocus
             />

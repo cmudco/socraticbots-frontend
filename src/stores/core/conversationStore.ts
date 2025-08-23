@@ -1,32 +1,35 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { 
-  DareMessage, 
+
+import {
   BotConversationResponse,
-  conversationService 
+  DareMessage,
+  conversationService,
 } from '@/services/conversation.service';
+
 import type { Bot } from '@/types/bot';
+
 import { useWebSocketStore } from './websocketStore';
 
 export interface ConversationState {
   // Current active conversation
   activeConversation: BotConversationResponse | null;
-  
+
   // Messages
   messages: DareMessage[];
   isLoadingMessages: boolean;
-  
+
   // UI state
   isTyping: boolean;
   inputMessage: string;
-  
+
   // Bot context
   currentBotId: number | null;
   currentBot: Bot | null;
-  
+
   // Available models
-  availableModels: any[];
-  
+  availableModels: unknown[];
+
   // Conversation tracking
   conversationHistory: DareMessage[];
   lastMessageId: string | null;
@@ -37,26 +40,27 @@ export interface ConversationActions {
   // Conversation management
   setActiveBot: (bot: Bot) => Promise<void>;
   clearActiveConversation: () => void;
-  
+
   // Message handling
   sendMessage: (message: string) => Promise<void>;
   addMessage: (message: DareMessage) => void;
   updateMessage: (messageId: string, updates: Partial<DareMessage>) => void;
   setInputMessage: (message: string) => void;
-  
+
   // Conversation tracking
   updateConversationStats: () => void;
   setConversationHistory: (messages: DareMessage[]) => void;
-  
+
   // UI state
   setIsTyping: (isTyping: boolean) => void;
   setLoadingMessages: (loading: boolean) => void;
-  
+
   // Models
   loadAvailableModels: () => Promise<void>;
-  
+
   // Conversation management
   deleteCurrentConversation: () => Promise<void>;
+  deleteMessage: (messageId: string) => Promise<void>;
 }
 
 type ConversationStore = ConversationState & ConversationActions;
@@ -80,20 +84,20 @@ export const useConversationStore = create<ConversationStore>()(
     setActiveBot: async (bot: Bot) => {
       try {
         const botId = bot.id;
-        
+
         // Set the bot directly
-        set({ 
-          currentBotId: botId, 
+        set({
+          currentBotId: botId,
           currentBot: bot,
           messages: [],
           conversationHistory: [],
           messageCount: 0,
-          lastMessageId: null
+          lastMessageId: null,
         });
-        
+
         const conversation = await conversationService.getOrCreateBotConversation(botId);
         set({ activeConversation: conversation });
-        
+
         const websocketStore = useWebSocketStore.getState();
         const authToken = localStorage.getItem('access_token');
         if (!authToken) {
@@ -102,15 +106,14 @@ export const useConversationStore = create<ConversationStore>()(
 
         const DARE_WEBSOCKET_URL = import.meta.env.VITE_DARE_WEBSOCKET_URL;
         const socketUrl = `${DARE_WEBSOCKET_URL}/conversations/${conversation.dareConversationId}/?jwt_key=${encodeURIComponent(authToken)}`;
-        
+
         await websocketStore.connect(socketUrl);
-        
       } catch (error) {
         console.error('Error setting active bot:', error);
-        set({ 
+        set({
           currentBotId: null,
           currentBot: null,
-          activeConversation: null
+          activeConversation: null,
         });
       }
     },
@@ -119,7 +122,7 @@ export const useConversationStore = create<ConversationStore>()(
       // Disconnect WebSocket
       const websocketStore = useWebSocketStore.getState();
       websocketStore.disconnect();
-      
+
       set({
         activeConversation: null,
         messages: [],
@@ -137,7 +140,7 @@ export const useConversationStore = create<ConversationStore>()(
     sendMessage: async (message: string) => {
       const { activeConversation, currentBot } = get();
       const websocketStore = useWebSocketStore.getState();
-      
+
       if (!activeConversation || !websocketStore.isConnected) {
         console.error('Cannot send message: no active conversation or WebSocket connection');
         return;
@@ -146,7 +149,7 @@ export const useConversationStore = create<ConversationStore>()(
       try {
         set({ inputMessage: '', isTyping: true });
 
-        const payload: any = {
+        const payload: Record<string, unknown> = {
           message: message,
           enable_progress: true,
         };
@@ -165,8 +168,7 @@ export const useConversationStore = create<ConversationStore>()(
         }
 
         websocketStore.sendMessage(payload);
-
-      } catch (error) {
+      } catch {
         set({ isTyping: false });
       }
     },
@@ -177,15 +179,15 @@ export const useConversationStore = create<ConversationStore>()(
         if (index !== -1) {
           const newMessages = [...state.messages];
           newMessages[index] = message;
-          return { 
+          return {
             messages: newMessages,
-            lastMessageId: message.id
+            lastMessageId: message.id,
           };
         } else {
-          return { 
+          return {
             messages: [...state.messages, message],
             messageCount: state.messageCount + 1,
-            lastMessageId: message.id
+            lastMessageId: message.id,
           };
         }
       });
@@ -198,9 +200,9 @@ export const useConversationStore = create<ConversationStore>()(
         if (index !== -1) {
           const newMessages = [...state.messages];
           newMessages[index] = { ...newMessages[index], ...updates };
-          return { 
+          return {
             messages: newMessages,
-            lastMessageId: messageId 
+            lastMessageId: messageId,
           };
         }
         return state;
@@ -212,11 +214,11 @@ export const useConversationStore = create<ConversationStore>()(
     },
 
     setConversationHistory: (messages: DareMessage[]) => {
-      set({ 
+      set({
         conversationHistory: messages,
         messages: messages,
         messageCount: messages.length,
-        lastMessageId: messages.length > 0 ? messages[messages.length - 1].id : null
+        lastMessageId: messages.length > 0 ? messages[messages.length - 1].id : null,
       });
     },
 
@@ -224,7 +226,7 @@ export const useConversationStore = create<ConversationStore>()(
       const { messages } = get();
       set({
         messageCount: messages.length,
-        lastMessageId: messages.length > 0 ? messages[messages.length - 1].id : null
+        lastMessageId: messages.length > 0 ? messages[messages.length - 1].id : null,
       });
     },
 
@@ -240,22 +242,24 @@ export const useConversationStore = create<ConversationStore>()(
       try {
         const models = await conversationService.getAvailableModels();
         set({ availableModels: models });
-      } catch (error) {
-        console.error('Error loading available models:', error);
+      } catch {
+        console.error('Error loading available models');
       }
     },
 
     deleteCurrentConversation: async () => {
       const { activeConversation } = get();
-      
+
       if (!activeConversation?.dareConversationId) {
         console.error('No active conversation to delete');
         return;
       }
 
       try {
-        const result = await conversationService.deleteConversation(activeConversation.dareConversationId);
-        
+        const result = await conversationService.deleteConversation(
+          activeConversation.dareConversationId
+        );
+
         if (result.success) {
           // Clear the current conversation state
           set({
@@ -265,19 +269,45 @@ export const useConversationStore = create<ConversationStore>()(
             messageCount: 0,
             lastMessageId: null,
             isLoadingMessages: false,
-            isTyping: false
+            isTyping: false,
           });
-          
+
           // Disconnect WebSocket
           const wsStore = useWebSocketStore.getState();
           wsStore.disconnect();
           wsStore.clearProgressTokens();
-          
         } else {
           console.error('Failed to delete conversation:', result.message);
         }
       } catch (error) {
         console.error('Error deleting conversation:', error);
+        throw error;
+      }
+    },
+
+    deleteMessage: async (messageId: string) => {
+      const { activeConversation } = get();
+
+      if (!activeConversation?.dareConversationId) {
+        console.error('No active conversation to delete message from');
+        return;
+      }
+
+      try {
+        const result = await conversationService.deleteMessage(messageId);
+
+        if (result.success) {
+          set(state => ({
+            messages: state.messages.filter(msg => msg.id !== messageId),
+            messageCount: state.messageCount - 1,
+            lastMessageId:
+              state.messages.length > 1 ? state.messages[state.messages.length - 2]?.id : null,
+          }));
+        } else {
+          console.error('Failed to delete message:', result.message);
+        }
+      } catch (error) {
+        console.error('Error deleting message:', error);
         throw error;
       }
     },
@@ -290,8 +320,9 @@ export const useMessages = () => useConversationStore(state => state.messages);
 export const useIsTyping = () => useConversationStore(state => state.isTyping);
 export const useInputMessage = () => useConversationStore(state => state.inputMessage);
 export const useCurrentBot = () => useConversationStore(state => state.currentBot);
-export const useConversationStats = () => useConversationStore(state => ({
-  messageCount: state.messageCount,
-  lastMessageId: state.lastMessageId,
-  conversationHistory: state.conversationHistory
-}));
+export const useConversationStats = () =>
+  useConversationStore(state => ({
+    messageCount: state.messageCount,
+    lastMessageId: state.lastMessageId,
+    conversationHistory: state.conversationHistory,
+  }));
