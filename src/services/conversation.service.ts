@@ -1,5 +1,7 @@
 import { METHOD } from '@/constants/requests';
+
 import { baseRequest } from '@/utils/baseRequest';
+
 import type { Bot } from '@/types/bot';
 
 // Interface for bot groups response from API
@@ -67,7 +69,6 @@ export interface SendMessageRequest {
  * Service for managing bot conversations through proxy to DARE backend
  */
 class ConversationService {
-  
   /**
    * Get all available bots from bot groups
    */
@@ -77,7 +78,7 @@ class ConversationService {
       url: 'bot-groups/',
       method: METHOD.GET,
     });
-    
+
     // Flatten to get all available bots - no mapping needed, return complete objects!
     const availableBots: Bot[] = [];
     for (const group of botGroups) {
@@ -85,7 +86,7 @@ class ConversationService {
         availableBots.push(...group.bots);
       }
     }
-    
+
     return availableBots;
   }
 
@@ -118,8 +119,8 @@ class ConversationService {
   /**
    * Get available LLM models from DARE
    */
-  async getAvailableModels(): Promise<any[]> {
-    return baseRequest<any[]>({
+  async getAvailableModels(): Promise<unknown[]> {
+    return baseRequest<unknown[]>({
       url: 'conversations/models/',
       method: METHOD.GET,
     });
@@ -128,10 +129,25 @@ class ConversationService {
   /**
    * Delete conversation and all its messages/learning progress from DARE
    */
-  async deleteConversation(conversationId: string): Promise<{success: boolean, message: string}> {
-    return baseRequest<{success: boolean, message: string}>({
+  async deleteConversation(conversationId: string): Promise<{ success: boolean; message: string }> {
+    return baseRequest<{ success: boolean; message: string }>({
       url: `conversations/${conversationId}/delete/`,
       method: METHOD.DELETE,
+    });
+  }
+
+  async deleteMessage(messageId: string): Promise<{ success: boolean; message: string }> {
+    return baseRequest<{ success: boolean; message: string }>({
+      url: `conversations/messages/${messageId}/delete/`,
+      method: METHOD.DELETE,
+    });
+  }
+
+  async exportConversationPdf(conversationId: string): Promise<{ blob: Blob; filename: string }> {
+    return baseRequest({
+      url: `conversations/${conversationId}/export-pdf/`,
+      method: METHOD.GET,
+      responseType: 'blob',
     });
   }
 }

@@ -13,7 +13,7 @@ const Layout: React.FC = () => {
   const { sidebarCollapsed } = useUiStore();
   const location = useLocation();
 
-  const isChatPage = location.pathname === '/chat';
+  const isChatPage = location.pathname.startsWith('/chat');
 
   return (
     <div className="flex min-h-screen flex-col">
