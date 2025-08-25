@@ -116,7 +116,9 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
                 onClick={() => startEditing(note.id, { title: note.title, content: note.content })}
               >
                 <h5 className="text-foreground text-sm font-medium">{note.title}</h5>
-                <p className="text-muted-foreground line-clamp-2 text-xs">{note.content}</p>
+                <div className="text-muted-foreground max-h-[5.5rem] overflow-y-auto text-xs">
+                  <p className="whitespace-pre-wrap">{note.content}</p>
+                </div>
               </div>
             )}
           </div>
