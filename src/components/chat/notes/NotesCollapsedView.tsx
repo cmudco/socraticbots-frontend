@@ -32,7 +32,7 @@ const NotesCollapsedView: React.FC<NotesCollapsedViewProps> = ({
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 w-8 p-0 text-slate-600 hover:bg-slate-100"
+        className="text-muted-foreground hover:bg-accent h-8 w-8 p-0"
         title="Add note"
         onClick={handleAddNoteClick}
         disabled={!selectedBotId}
@@ -41,8 +41,8 @@ const NotesCollapsedView: React.FC<NotesCollapsedViewProps> = ({
       </Button>
 
       <div className="flex flex-col items-center space-y-1">
-        <div className="h-px w-6 bg-slate-300"></div>
-        <Badge variant="secondary" className="bg-slate-100 text-xs text-slate-600">
+        <div className="bg-border h-px w-6"></div>
+        <Badge variant="secondary" className="bg-muted text-muted-foreground text-xs">
           {selectedBotId ? (isLoading ? '...' : notesCount) : '0'}
         </Badge>
       </div>

@@ -17,7 +17,7 @@ interface BotDeploymentTabProps {
   botId: number;
 }
 
-const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId: _botGroupId, botId: _botId }) => {
+const BotDeploymentTab: React.FC<BotDeploymentTabProps> = () => {
   const isProfessor = useIsProfessor();
   const { accessCode, updateAccessCode } = useBotFormStore();
   const [copySuccess, setCopySuccess] = useState(false);
@@ -66,7 +66,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId: _botGro
   // Only show deployment tab for professors
   if (!isProfessor) {
     return (
-      <div className="p-4 text-center text-gray-500">
+      <div className="text-muted-foreground p-4 text-center">
         <p>Deployment features are only available for professors.</p>
       </div>
     );
@@ -91,28 +91,24 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId: _botGro
                 <Input
                   id="custom-code"
                   value={customCode}
-                  onChange={(e) => setCustomCode(e.target.value)}
+                  onChange={e => setCustomCode(e.target.value)}
                   className="font-mono"
                   placeholder="Enter custom code or leave empty for random"
                 />
-                <p className="text-sm text-gray-500">
-                  Leave empty to generate a random code, or enter a custom code that's memorable for your students.
+                <p className="text-muted-foreground text-sm">
+                  Leave empty to generate a random code, or enter a custom code that's memorable for
+                  your students.
                 </p>
               </div>
-              
+
               <div className="flex space-x-2">
-                <Button
-                  onClick={() => generateAccessCode(false)}
-                  variant="outline"
-                >
+                <Button onClick={() => generateAccessCode(false)} variant="outline">
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Generate Random Code
                 </Button>
-                
+
                 {customCode.trim() && (
-                  <Button
-                    onClick={() => generateAccessCode(true)}
-                  >
+                  <Button onClick={() => generateAccessCode(true)}>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Use Custom Code
                   </Button>
@@ -133,15 +129,10 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId: _botGro
                     className="font-mono"
                     placeholder="Enter custom access code"
                   />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleCopyCode}
-                    className="shrink-0"
-                  >
+                  <Button size="sm" variant="outline" onClick={handleCopyCode} className="shrink-0">
                     {copySuccess ? (
                       <>
-                        <CheckCircle className="mr-1 h-4 w-4 text-green-600" />
+                        <CheckCircle className="mr-1 h-4 w-4 text-green-600 dark:text-green-400" />
                         Copied!
                       </>
                     ) : (
@@ -152,25 +143,18 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId: _botGro
                     )}
                   </Button>
                 </div>
-                <p className="text-sm text-gray-500">
-                  You can customize this access code to make it memorable for your students. Click "Update Bot" to save changes.
+                <p className="text-muted-foreground text-sm">
+                  You can customize this access code to make it memorable for your students. Click
+                  "Update Bot" to save changes.
                 </p>
               </div>
 
               <div className="flex space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={regenerateAccessCode}
-                >
+                <Button size="sm" variant="outline" onClick={regenerateAccessCode}>
                   <RefreshCw className="mr-1 h-4 w-4" />
                   Regenerate
                 </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={deleteAccessCode}
-                >
+                <Button size="sm" variant="destructive" onClick={deleteAccessCode}>
                   Delete Code
                 </Button>
               </div>
@@ -193,7 +177,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botGroupId: _botGro
           <CardTitle>How Students Access This Bot</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 text-sm text-gray-600">
+          <div className="text-muted-foreground space-y-2 text-sm">
             <p>1. Students should log into the Socratic Books platform</p>
             <p>2. They can enter the access code to gain access to this bot</p>
             <p>3. Once redeemed, they can start chatting with the bot immediately</p>

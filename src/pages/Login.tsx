@@ -5,8 +5,8 @@ import { ErrorMessage, Field, Form, Formik } from 'formik';
 import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import * as Yup from 'yup';
 
-import { useLogin } from '@/hooks/useLogin';
 import { useIsAuthenticated } from '@/hooks/queries/useUser';
+import { useLogin } from '@/hooks/useLogin';
 
 import { getErrorMessage } from '@/utils/errorHandler';
 
@@ -58,11 +58,10 @@ const Login: React.FC = () => {
     try {
       await loginMutation.mutateAsync({ email: values.email, password: values.password });
       navigate(redirectPath, { replace: true });
-    } catch (error) {
+    } catch {
       // Error is handled by the mutation
     }
   };
-
 
   return (
     <div className="mx-auto mt-10 max-w-md">
@@ -89,7 +88,7 @@ const Login: React.FC = () => {
                     placeholder="Enter your email address"
                     disabled={isSubmitting || loginMutation.isPending}
                   />
-                  <ErrorMessage name="email" component="p" className="text-sm text-red-600" />
+                  <ErrorMessage name="email" component="p" className="text-destructive text-sm" />
                 </div>
 
                 <div className="space-y-2">
@@ -107,16 +106,24 @@ const Login: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute top-3 right-3 h-4 w-4 text-gray-400 hover:text-gray-600"
+                      className="text-muted-foreground hover:text-foreground absolute top-3 right-3 h-4 w-4"
                       disabled={isSubmitting || loginMutation.isPending}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <ErrorMessage name="password" component="p" className="text-sm text-red-600" />
+                  <ErrorMessage
+                    name="password"
+                    component="p"
+                    className="text-destructive text-sm"
+                  />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting || loginMutation.isPending}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting || loginMutation.isPending}
+                >
                   {isSubmitting || loginMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -138,11 +145,11 @@ const Login: React.FC = () => {
           )}
 
           <div className="mt-4 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-muted-foreground text-sm">
               Don't have an account?{' '}
               <button
                 onClick={() => navigate('/register')}
-                className="text-blue-600 hover:underline"
+                className="text-primary hover:underline"
               >
                 Create account
               </button>

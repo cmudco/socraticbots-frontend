@@ -15,23 +15,25 @@ interface BotItemProps {
 
 const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView }) => {
   return (
-    <div className="flex items-center justify-between rounded border bg-white p-3">
+    <div className="bg-background flex items-center justify-between rounded border p-3">
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <h4 className="font-medium">{bot.title}</h4>
+          <h4 className="text-foreground font-medium">{bot.title}</h4>
           {bot.filesCount > 0 && (
-            <div className="flex items-center gap-1 text-xs text-gray-500">
+            <div className="text-muted-foreground flex items-center gap-1 text-xs">
               <FileText size={12} />
               <span>{bot.filesCount} files</span>
             </div>
           )}
         </div>
-        <div className="text-sm text-gray-600">
+        <div className="text-muted-foreground max-w-[50vw] text-sm">
           <span className="mr-3">Subject: {bot.subject}</span>
           <span>Topic: {bot.topic}</span>
         </div>
         {bot.prompts?.greeting && (
-          <p className="mt-1 truncate text-xs text-gray-500">{bot.prompts.greeting}</p>
+          <p className="text-muted-foreground mt-1 max-w-[80vw] text-xs break-words">
+            {bot.prompts.greeting}
+          </p>
         )}
       </div>
       <div className="flex space-x-1">

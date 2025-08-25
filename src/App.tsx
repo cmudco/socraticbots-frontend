@@ -12,41 +12,44 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Settings from './pages/Settings';
+import { ThemeProvider } from './providers/ThemeProvider';
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Home />} />
-          <Route path="about" element={<About />} />
           <Route
-            path="access-codes"
+            path="/"
             element={
-              <StudentRoute>
-                <AccessCodes />
-              </StudentRoute>
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
             }
-          />
-          <Route path="settings" element={<Settings />} />
-          <Route path="bot-groups" element={<BotGroups />} />
-          <Route path="chat" element={<Chat />} />
-          <Route path="chat/:botId" element={<Chat />} />
-        </Route>
+          >
+            <Route index element={<Home />} />
+            <Route path="about" element={<About />} />
+            <Route
+              path="access-codes"
+              element={
+                <StudentRoute>
+                  <AccessCodes />
+                </StudentRoute>
+              }
+            />
+            <Route path="settings" element={<Settings />} />
+            <Route path="bot-groups" element={<BotGroups />} />
+            <Route path="chat" element={<Chat />} />
+            <Route path="chat/:botId" element={<Chat />} />
+          </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 };
 

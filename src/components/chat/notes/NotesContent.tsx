@@ -2,13 +2,14 @@ import React from 'react';
 
 import { Edit3, NotebookPen, Plus, X } from 'lucide-react';
 
-import { useNotesStore } from '@/stores/core/notesStore';
 import { useNoteOperations } from '@/hooks/useNoteOperations';
 
+import { useNotesStore } from '@/stores/core/notesStore';
+
 import { Button } from '@/components/ui/button';
+import ConfirmationModal from '@/components/ui/confirmation-modal';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import ConfirmationModal from '@/components/ui/confirmation-modal';
 
 import type { Note } from '@/types/note';
 
@@ -73,7 +74,7 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
     return (
       <div
         key={note.id}
-        className="group rounded-xl border border-slate-200 bg-white/90 p-3 shadow-sm backdrop-blur-sm transition-all hover:shadow-md"
+        className="group border-border bg-background/90 rounded-xl border p-3 shadow-sm backdrop-blur-sm transition-all hover:shadow-md"
       >
         <div className="flex items-start justify-between">
           <div className="flex-1 space-y-1">
@@ -81,13 +82,17 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
               <div className="space-y-2">
                 <Input
                   value={editingData.title}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditTitle(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setEditTitle(e.target.value)
+                  }
                   className="h-8 text-sm"
                   placeholder="Note title..."
                 />
                 <Textarea
                   value={editingData.content}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditContent(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setEditContent(e.target.value)
+                  }
                   className="min-h-[60px] resize-none text-sm"
                   placeholder="Note content..."
                 />
@@ -99,16 +104,19 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
                     size="sm"
                     onClick={handleUpdateNote}
                     disabled={isUpdating}
-                    className="bg-violet-600 text-white hover:bg-violet-700"
+                    className="bg-primary text-primary-foreground hover:bg-primary/80"
                   >
                     {isUpdating ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="cursor-pointer space-y-1" onClick={() => startEditing(note.id, { title: note.title, content: note.content })}>
-                <h5 className="text-sm font-medium text-slate-800">{note.title}</h5>
-                <p className="line-clamp-2 text-xs text-slate-600">{note.content}</p>
+              <div
+                className="cursor-pointer space-y-1"
+                onClick={() => startEditing(note.id, { title: note.title, content: note.content })}
+              >
+                <h5 className="text-foreground text-sm font-medium">{note.title}</h5>
+                <p className="text-muted-foreground line-clamp-2 text-xs">{note.content}</p>
               </div>
             )}
           </div>
@@ -117,7 +125,7 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 hover:bg-slate-100 hover:text-slate-600"
+                className="hover:bg-accent hover:text-muted-foreground h-6 w-6 p-0"
                 onClick={() => startEditing(note.id, { title: note.title, content: note.content })}
                 title="Edit note"
               >
@@ -126,7 +134,7 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
+                className="hover:bg-destructive/10 hover:text-destructive h-6 w-6 p-0"
                 onClick={() => openDeleteConfirmation(note.id, note.title)}
                 title="Delete note"
               >
@@ -143,14 +151,14 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
     if (!showCreateForm) return null;
 
     return (
-      <div className="rounded-xl border border-slate-200 bg-white/90 p-3 shadow-sm backdrop-blur-sm">
+      <div className="border-border bg-background/90 rounded-xl border p-3 shadow-sm backdrop-blur-sm">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-700">New Note</span>
+            <span className="text-foreground text-sm font-medium">New Note</span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 hover:bg-slate-100"
+              className="hover:bg-accent h-6 w-6 p-0"
               onClick={closeCreateForm}
             >
               <X className="h-3 w-3" />
@@ -163,14 +171,16 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
               placeholder="Note title..."
               value={createForm.title}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateTitle(e.target.value)}
-              className="h-8 border-slate-200 text-sm focus:border-violet-300 focus:ring-violet-200"
+              className="h-8 text-sm"
             />
             <Textarea
               placeholder="Write your note content..."
               value={createForm.content}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCreateContent(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setCreateContent(e.target.value)
+              }
               rows={3}
-              className="min-h-[60px] resize-none border-slate-200 text-sm focus:border-violet-300 focus:ring-violet-200"
+              className="min-h-[60px] resize-none text-sm"
             />
           </div>
 
@@ -182,7 +192,7 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
               onClick={handleCreateNote}
               disabled={isCreating || !createForm.title.trim() || !createForm.content.trim()}
               size="sm"
-              className="bg-violet-600 text-white hover:bg-violet-700"
+              className="bg-primary text-primary-foreground hover:bg-primary/80"
             >
               {isCreating ? 'Creating...' : 'Create Note'}
             </Button>
@@ -200,7 +210,7 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
           {!showCreateForm && selectedBotId && (
             <Button
               onClick={openCreateForm}
-              className="w-full bg-violet-600 text-white hover:bg-violet-700"
+              className="bg-primary text-primary-foreground hover:bg-primary/80 w-full"
               size="sm"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -212,21 +222,21 @@ const NotesContent: React.FC<NotesContentProps> = ({ selectedBotId }) => {
             {renderCreateForm()}
 
             {(!notes || notes.length === 0) && !isLoading ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center">
-                <NotebookPen className="mx-auto h-8 w-8 text-slate-400" />
-                <p className="mt-2 text-sm text-slate-600">
-                  {selectedBotId ? 'No notes yet. Create your first note!' : 'Select a bot to view notes.'}
+              <div className="border-border bg-muted/50 rounded-xl border border-dashed p-6 text-center">
+                <NotebookPen className="text-muted-foreground mx-auto h-8 w-8" />
+                <p className="text-muted-foreground mt-2 text-sm">
+                  {selectedBotId
+                    ? 'No notes yet. Create your first note!'
+                    : 'Select a bot to view notes.'}
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {notes?.map(renderNoteItem)}
-              </div>
+              <div className="space-y-2">{notes?.map(renderNoteItem)}</div>
             )}
           </div>
         </div>
       </div>
-      
+
       <ConfirmationModal
         isOpen={deleteConfirmation.isOpen}
         onClose={closeDeleteConfirmation}

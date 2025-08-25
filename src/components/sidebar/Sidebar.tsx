@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { useUser, useIsAuthenticated } from '@/hooks/queries/useUser';
+import { useIsAuthenticated, useUser } from '@/hooks/queries/useUser';
 
 import { useUiStore } from '@/stores/ui/uiStore';
 
@@ -28,11 +28,11 @@ const Sidebar: React.FC = () => {
 
   return (
     <div
-      className={`fixed top-14 left-0 ${sidebarCollapsed ? 'w-16' : 'w-64'} z-10 h-[calc(100vh-3.5rem)] bg-white shadow-lg transition-all duration-300`}
+      className={`fixed top-14 left-0 ${sidebarCollapsed ? 'w-16' : 'w-64'} bg-sidebar z-10 h-[calc(100vh-3.5rem)] shadow-lg transition-all duration-300`}
     >
       <button
         onClick={toggleSidebar}
-        className="absolute top-4 right-[-12px] z-10 rounded-full bg-white p-2 shadow-md hover:bg-gray-100"
+        className="bg-sidebar hover:bg-sidebar-accent absolute top-4 right-[-12px] z-10 rounded-full p-2 shadow-md"
       >
         {sidebarCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
@@ -52,7 +52,7 @@ const Sidebar: React.FC = () => {
         </div>
 
         {settingsItem && (
-          <div className="mt-4 border-t border-gray-200 pt-4">
+          <div className="border-sidebar-border mt-4 border-t pt-4">
             <SidebarButton
               to={settingsItem.path}
               label={settingsItem.label}
