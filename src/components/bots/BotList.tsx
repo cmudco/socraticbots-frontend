@@ -60,16 +60,16 @@ const BotList: React.FC<BotListProps> = ({ botGroupId, initialBots, onBotDeleted
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-md font-semibold">Bots</h3>
+        <h3 className="text-md text-foreground font-semibold">Bots</h3>
         <CreateButton onClick={handleOpenCreateModal} size="sm" variant="outline">
           Add Bot
         </CreateButton>
       </div>
 
       {loading ? (
-        <p className="py-4 text-center text-gray-500">Loading bots...</p>
+        <p className="text-muted-foreground py-4 text-center">Loading bots...</p>
       ) : error ? (
-        <p className="py-4 text-center text-red-500">Error loading bots: {error.message}</p>
+        <p className="text-destructive py-4 text-center">Error loading bots: {error.message}</p>
       ) : visibleBots.length === 0 ? (
         <EmptyMessage
           professorMessage="No bots yet. Add your first bot!"

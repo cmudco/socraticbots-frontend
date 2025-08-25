@@ -62,7 +62,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
   }, [inputMessage]);
 
   return (
-    <div className={`border-t border-slate-200/60 bg-white/95 backdrop-blur-sm ${className}`}>
+    <div className={`border-border/60 bg-background/95 border-t backdrop-blur-sm ${className}`}>
       <div className="px-6 py-4">
         {/* Input Form */}
         <form
@@ -82,7 +82,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
               onKeyDown={handleKeyDown}
               placeholder={getPlaceholder()}
               disabled={inputDisabled}
-              className={`w-full resize-none overflow-y-auto rounded-2xl border-slate-200/60 bg-white px-4 py-3 text-base transition-all duration-200 placeholder:text-slate-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 ${!isConnected ? 'border-amber-200 bg-amber-50/50' : ''}`}
+              className={`border-border/60 bg-background placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 disabled:bg-muted disabled:text-muted-foreground w-full resize-none overflow-y-auto rounded-2xl px-4 py-3 text-base transition-all duration-200 focus:ring-2 disabled:cursor-not-allowed ${!isConnected ? 'border-destructive/20 bg-destructive/5' : ''}`}
               style={{ minHeight: '3rem', maxHeight: '10rem' }}
               rows={1}
               autoComplete="off"
@@ -91,7 +91,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
 
             {/* Character counter for long messages */}
             {inputMessage.length > 500 && (
-              <div className="absolute -top-6 right-2 text-xs text-slate-400">
+              <div className="text-muted-foreground absolute -top-6 right-2 text-xs">
                 {inputMessage.length}/2000
               </div>
             )}
@@ -104,7 +104,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
               onClick={handleStopStreaming}
               size="lg"
               variant="outline"
-              className="h-12 w-12 rounded-2xl border-red-200 bg-red-50 p-0 text-red-600 hover:border-red-300 hover:bg-red-100"
+              className="border-destructive/20 bg-destructive/10 text-destructive hover:border-destructive/30 hover:bg-destructive/20 h-12 w-12 rounded-2xl p-0"
               aria-label="Stop generating"
             >
               <Square className="h-5 w-5" />
@@ -116,8 +116,8 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
               size="lg"
               className={`h-12 w-12 rounded-2xl p-0 transition-all duration-200 ${
                 canSend
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md hover:from-blue-600 hover:to-blue-700 hover:shadow-lg'
-                  : 'cursor-not-allowed bg-slate-200 text-slate-400'
+                  ? 'from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 bg-gradient-to-r shadow-md hover:shadow-lg'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
               } `}
               aria-label="Send message"
             >
@@ -131,7 +131,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
         </form>
 
         {/* Helper Text */}
-        <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+        <div className="text-muted-foreground mt-2 flex items-center justify-between text-xs">
           <span>
             {isConnected
               ? isTyping
@@ -141,7 +141,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
           </span>
 
           {inputMessage.length > 0 && (
-            <span className={inputMessage.length > 1500 ? 'text-amber-600' : ''}>
+            <span className={inputMessage.length > 1500 ? 'text-destructive' : ''}>
               {inputMessage.length > 0 && `${inputMessage.length} characters`}
             </span>
           )}

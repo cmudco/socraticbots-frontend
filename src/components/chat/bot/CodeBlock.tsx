@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+
+import { Check, Copy } from 'lucide-react';
 
 interface CodeBlockProps {
   className?: string;
   children?: React.ReactNode;
-  props?: any;
+  props?: Record<string, unknown>;
 }
 
 export const CodeBlock: React.FC<CodeBlockProps> = ({ className, children, ...props }) => {
@@ -24,15 +25,13 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ className, children, ...pr
   };
 
   return (
-    <div className="not-prose relative my-4 rounded-lg border border-slate-200 bg-slate-50">
+    <div className="not-prose border-border bg-muted/50 relative my-4 rounded-lg border">
       {language && (
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-100 px-4 py-2">
-          <span className="text-xs font-medium text-slate-600 uppercase">
-            {language}
-          </span>
+        <div className="border-border bg-muted flex items-center justify-between border-b px-4 py-2">
+          <span className="text-muted-foreground text-xs font-medium uppercase">{language}</span>
           <button
             onClick={handleCopy}
-            className="flex items-center space-x-1 rounded bg-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-300 transition-colors"
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 flex items-center space-x-1 rounded px-2 py-1 text-xs transition-colors"
             aria-label="Copy code"
           >
             {copied ? (
@@ -51,10 +50,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ className, children, ...pr
       )}
       <div className="overflow-x-auto">
         <pre className="p-4">
-          <code
-            className={`text-sm ${className} block whitespace-pre-wrap break-words`}
-            {...props}
-          >
+          <code className={`text-sm ${className} block break-words whitespace-pre-wrap`} {...props}>
             {children}
           </code>
         </pre>

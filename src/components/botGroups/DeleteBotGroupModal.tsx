@@ -6,8 +6,6 @@ import { useDeleteBotGroup } from '@/hooks/queries/useBotGroups';
 
 import { useErrorStore } from '@/stores/ui/errorStore';
 
-import { BotGroup } from '@/types/botGroup';
-
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,6 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+
+import { BotGroup } from '@/types/botGroup';
 
 interface DeleteBotGroupModalProps {
   isOpen: boolean;
@@ -65,22 +65,23 @@ const DeleteBotGroupModal: React.FC<DeleteBotGroupModalProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+            <div className="bg-destructive/10 flex h-10 w-10 items-center justify-center rounded-full">
+              <AlertTriangle className="text-destructive h-5 w-5" />
             </div>
             <DialogTitle className="text-lg font-semibold">Delete Bot Group</DialogTitle>
           </div>
-          <DialogDescription className="pt-2 text-slate-600">
+          <DialogDescription className="text-muted-foreground pt-2">
             Are you sure you want to delete "<span className="font-semibold">{botGroup.title}</span>
-            "? This action cannot be undone and will delete all bots in this group along with their data.
+            "? This action cannot be undone and will delete all bots in this group along with their
+            data.
           </DialogDescription>
         </DialogHeader>
 
         {botGroup.botsCount > 0 && (
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
             <div className="flex items-start">
               <svg
-                className="mt-0.5 mr-3 h-5 w-5 text-yellow-400"
+                className="mt-0.5 mr-3 h-5 w-5 text-current"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -93,9 +94,9 @@ const DeleteBotGroupModal: React.FC<DeleteBotGroupModalProps> = ({
                 />
               </svg>
               <div>
-                <h4 className="font-medium text-yellow-800">Warning</h4>
-                <p className="mt-1 text-sm text-yellow-700">
-                  This group contains {botGroup.botsCount} bot{botGroup.botsCount !== 1 ? 's' : ''}. 
+                <h4 className="font-medium text-yellow-800 dark:text-yellow-400">Warning</h4>
+                <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                  This group contains {botGroup.botsCount} bot{botGroup.botsCount !== 1 ? 's' : ''}.
                   All bots and their associated data will be permanently deleted.
                 </p>
               </div>
@@ -104,10 +105,10 @@ const DeleteBotGroupModal: React.FC<DeleteBotGroupModalProps> = ({
         )}
 
         {hasError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <div className="flex items-start">
               <svg
-                className="mt-0.5 mr-3 h-5 w-5 text-red-400"
+                className="mt-0.5 mr-3 h-5 w-5 text-current"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -120,8 +121,8 @@ const DeleteBotGroupModal: React.FC<DeleteBotGroupModalProps> = ({
                 />
               </svg>
               <div>
-                <h4 className="font-medium text-red-800">Error</h4>
-                <p className="mt-1 text-sm text-red-700">
+                <h4 className="font-medium text-red-800 dark:text-red-400">Error</h4>
+                <p className="mt-1 text-sm text-red-700 dark:text-red-300">
                   {contextErrors[0]?.message ||
                     deleteBotGroupMutation.error?.message ||
                     'An error occurred'}
@@ -132,23 +133,13 @@ const DeleteBotGroupModal: React.FC<DeleteBotGroupModalProps> = ({
         )}
 
         <DialogFooter className="flex gap-2 sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isDeleting}
-            className="border-slate-200 text-slate-700 hover:bg-slate-50"
-          >
+          <Button variant="outline" onClick={onClose} disabled={isDeleting}>
             Cancel
           </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="bg-red-600 text-white hover:bg-red-700"
-          >
+          <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
             {isDeleting ? (
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 Deleting...
               </div>
             ) : (

@@ -20,12 +20,15 @@ const AccessCodes: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: studentAccessCodes, isLoading: isLoadingCodes, error: codesError } = useQuery({
+  const {
+    data: studentAccessCodes,
+    isLoading: isLoadingCodes,
+    error: codesError,
+  } = useQuery({
     queryKey: ['student-access-codes'],
     queryFn: () => accessCodeService.getStudentAccessCodes(),
     staleTime: 5 * 60 * 1000,
   });
-
 
   const redeemMutation = useMutation({
     mutationFn: (code: string) => accessCodeService.redeemAccessCode(code),
@@ -65,20 +68,20 @@ const AccessCodes: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="border-border bg-background rounded-lg border p-6 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
-          <Key className="h-6 w-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Access Codes</h1>
+          <Key className="text-primary h-6 w-6" />
+          <h1 className="text-foreground text-2xl font-bold">Access Codes</h1>
         </div>
 
-        <p className="mb-6 text-gray-600">
+        <p className="text-muted-foreground mb-6">
           Enter an access code from your instructor to gain access to additional chatbot groups and
           bots.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="accessCode" className="mb-2 block text-sm font-medium text-gray-700">
+            <label htmlFor="accessCode" className="text-foreground mb-2 block text-sm font-medium">
               Access Code
             </label>
             <input
@@ -87,7 +90,7 @@ const AccessCodes: React.FC = () => {
               value={accessCode}
               onChange={e => setAccessCode(e.target.value)}
               placeholder="Enter your access code (e.g., SB-ABC123XY)"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="border-input focus:ring-ring w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
               disabled={redeemMutation.isPending}
             />
           </div>
@@ -95,7 +98,7 @@ const AccessCodes: React.FC = () => {
           <button
             type="submit"
             disabled={!accessCode.trim() || redeemMutation.isPending}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            className="bg-primary text-primary-foreground hover:bg-primary/80 disabled:bg-muted w-full rounded-md px-4 py-2 transition-colors disabled:cursor-not-allowed"
           >
             {redeemMutation.isPending ? 'Redeeming...' : 'Redeem Access Code'}
           </button>
@@ -105,17 +108,17 @@ const AccessCodes: React.FC = () => {
           <div
             className={`mt-4 rounded-md p-4 ${
               isSuccess
-                ? 'border border-green-200 bg-green-50 text-green-800'
-                : 'border border-red-200 bg-red-50 text-red-800'
+                ? 'border border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400'
+                : 'border border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'
             }`}
           >
             {message}
           </div>
         )}
 
-        <div className="mt-6 rounded-md bg-gray-50 p-4">
-          <h3 className="mb-2 font-semibold text-gray-900">How to use access codes:</h3>
-          <ul className="space-y-1 text-sm text-gray-600">
+        <div className="bg-muted/50 mt-6 rounded-md p-4">
+          <h3 className="text-foreground mb-2 font-semibold">How to use access codes:</h3>
+          <ul className="text-muted-foreground space-y-1 text-sm">
             <li>• Get access codes from your instructors</li>
             <li>• Each code gives you access to specific chatbot groups or bots</li>
             <li>• You can redeem multiple codes to access content from different courses</li>
@@ -124,24 +127,28 @@ const AccessCodes: React.FC = () => {
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="border-border bg-background rounded-lg border p-6 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
-          <CheckCircle className="h-6 w-6 text-green-600" />
-          <h2 className="text-xl font-bold text-gray-900">My Redeemed Access Codes</h2>
+          <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <h2 className="text-foreground text-xl font-bold">My Redeemed Access Codes</h2>
         </div>
 
         {isLoadingCodes ? (
           <div className="py-4 text-center">
-            <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent"></div>
-            <p className="mt-2 text-gray-600">Loading your access codes...</p>
+            <div className="border-primary inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-r-transparent"></div>
+            <p className="text-muted-foreground mt-2">Loading your access codes...</p>
           </div>
         ) : codesError ? (
           <div className="py-4 text-center">
-            <p className="text-red-600">Error loading access codes: {codesError?.message || 'Unknown error'}</p>
+            <p className="text-destructive">
+              Error loading access codes: {codesError?.message || 'Unknown error'}
+            </p>
           </div>
-        ) : studentAccessCodes && studentAccessCodes.redeemedCodes && studentAccessCodes.redeemedCodes.length > 0 ? (
+        ) : studentAccessCodes &&
+          studentAccessCodes.redeemedCodes &&
+          studentAccessCodes.redeemedCodes.length > 0 ? (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-muted-foreground text-sm">
               You have redeemed {studentAccessCodes?.totalCount || 0} access code
               {(studentAccessCodes?.totalCount || 0) !== 1 ? 's' : ''}.
             </p>
@@ -150,19 +157,21 @@ const AccessCodes: React.FC = () => {
               {studentAccessCodes.redeemedCodes?.map((code, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-4"
+                  className="border-border bg-muted/50 flex items-center justify-between rounded-md border p-4"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="rounded bg-blue-100 px-2 py-1 font-mono text-sm text-blue-800">
+                      <span className="bg-primary/10 text-primary-foreground rounded px-2 py-1 font-mono text-sm">
                         {code.code}
                       </span>
-                      <span className="text-sm text-gray-500 capitalize">{code.targetType}</span>
+                      <span className="text-muted-foreground text-sm capitalize">
+                        {code.targetType}
+                      </span>
                     </div>
-                    <p className="mt-1 font-medium text-gray-900">{code.targetName}</p>
+                    <p className="text-foreground mt-1 font-medium">{code.targetName}</p>
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                    <div className="text-muted-foreground flex items-center gap-1 text-sm">
                       <Clock className="h-4 w-4" />
                       <span>Redeemed {formatDate(code.redeemedAt)}</span>
                     </div>
@@ -173,9 +182,9 @@ const AccessCodes: React.FC = () => {
           </div>
         ) : (
           <div className="py-8 text-center">
-            <Key className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-gray-600">No access codes redeemed yet.</p>
-            <p className="text-sm text-gray-500">
+            <Key className="text-muted-foreground mx-auto h-12 w-12" />
+            <p className="text-muted-foreground mt-2">No access codes redeemed yet.</p>
+            <p className="text-muted-foreground/70 text-sm">
               Use the form above to redeem access codes from your instructors.
             </p>
           </div>
