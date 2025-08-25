@@ -25,6 +25,31 @@ const themes: { name: ThemeName; label: string; description: string }[] = [
     label: 'Sunset Horizon',
     description: 'Warm sunset-inspired orange and red tones',
   },
+  {
+    name: 'caffeine',
+    label: 'Caffeine',
+    description: 'A bold, tech-inspired theme with a caffeine-inspired color palette',
+  },
+  {
+    name: 'ocean-breeze',
+    label: 'Ocean Breeze',
+    description: 'A refreshing blue and green theme with a coastal vibe',
+  },
+  {
+    name: 'bubblegum',
+    label: 'Bubblegum',
+    description: 'A soft pink and purple theme with a bubblegum-inspired color palette',
+  },
+  {
+    name: 'twitter',
+    label: 'Twitter',
+    description: 'A modern, tech-inspired theme with a twitter-inspired color palette',
+  },
+  {
+    name: 't3-chat',
+    label: 'T3 Chat',
+    description: 'A modern, tech-inspired theme with a chat-inspired color palette',
+  },
 ];
 
 export function ThemeSelector() {

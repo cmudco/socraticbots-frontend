@@ -9,7 +9,8 @@ export type ThemeName =
   | 'twitter'
   | 'bubblegum'
   | 'caffeine'
-  | 't3-chat';
+  | 't3-chat'
+  | 'ocean-breeze';
 
 export interface ThemeState {
   currentTheme: ThemeName;
