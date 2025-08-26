@@ -1,6 +1,17 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+@import './themes/common.css';
+@import './themes/amber-minimal.css';
+@import './themes/amethyst-haze.css';
+@import './themes/bold-tech.css';
+@import './themes/sunset-horizon.css';
+@import './themes/caffeine.css';
+@import './themes/ocean-breeze.css';
+@import './themes/bubblegum.css';
+@import './themes/twitter.css';
+@import './themes/t3-chat.css';
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

@@ -37,8 +37,8 @@ const Chat: React.FC = () => {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-          <p className="text-slate-600">Loading...</p>
+          <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -47,14 +47,14 @@ const Chat: React.FC = () => {
   if (!user) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-slate-600">Authentication required</p>
+        <p className="text-muted-foreground">Authentication required</p>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-gradient-to-br from-violet-50/50 via-white to-purple-50/50">
-      <div className="w-80 min-w-0 flex-shrink-0 overflow-y-auto border-r border-slate-200/60 bg-white/90 backdrop-blur-sm">
+    <div className="from-primary/5 via-background to-secondary/5 flex h-full w-full overflow-hidden bg-gradient-to-br">
+      <div className="border-border/60 bg-background/90 w-80 min-w-0 flex-shrink-0 overflow-y-auto border-r backdrop-blur-sm">
         <TrackingSidebar />
       </div>
 
@@ -69,11 +69,11 @@ const Chat: React.FC = () => {
             <BotChatInterface className="h-full" />
           </div>
         ) : (
-          <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-violet-50/30 via-white to-purple-50/30">
+          <div className="from-primary/5 via-background to-secondary/5 flex flex-1 items-center justify-center bg-gradient-to-br">
             <div className="max-w-md text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-purple-400 shadow-sm">
+              <div className="from-primary to-primary/80 mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br shadow-sm">
                 <svg
-                  className="h-8 w-8 text-white"
+                  className="text-primary-foreground h-8 w-8"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -86,8 +86,8 @@ const Chat: React.FC = () => {
                   />
                 </svg>
               </div>
-              <h2 className="mb-3 text-xl font-semibold text-slate-800">Please Select a Bot</h2>
-              <p className="leading-relaxed text-slate-600">
+              <h2 className="text-foreground mb-3 text-xl font-semibold">Please Select a Bot</h2>
+              <p className="text-muted-foreground leading-relaxed">
                 Use the dropdown box along the top of the screen to select a bot. Once you select a
                 bot, you can begin chatting.
               </p>

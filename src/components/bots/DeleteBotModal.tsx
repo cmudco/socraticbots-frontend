@@ -6,8 +6,6 @@ import { useDeleteBot } from '@/hooks/queries/useBots';
 
 import { useErrorStore } from '@/stores/ui/errorStore';
 
-import { Bot } from '@/types/bot';
-
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,6 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+
+import { Bot } from '@/types/bot';
 
 interface DeleteBotModalProps {
   isOpen: boolean;
@@ -67,22 +67,22 @@ const DeleteBotModal: React.FC<DeleteBotModalProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+            <div className="bg-destructive/10 flex h-10 w-10 items-center justify-center rounded-full">
+              <AlertTriangle className="text-destructive h-5 w-5" />
             </div>
             <DialogTitle className="text-lg font-semibold">Delete Bot</DialogTitle>
           </div>
-          <DialogDescription className="pt-2 text-slate-600">
+          <DialogDescription className="text-muted-foreground pt-2">
             Are you sure you want to delete "<span className="font-semibold">{bot.title}</span>
             "? This action cannot be undone and all associated data will be permanently deleted.
           </DialogDescription>
         </DialogHeader>
 
         {hasError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <div className="border-destructive/20 bg-destructive/5 rounded-lg border p-4">
             <div className="flex items-start">
               <svg
-                className="mt-0.5 mr-3 h-5 w-5 text-red-400"
+                className="text-destructive mt-0.5 mr-3 h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -95,8 +95,8 @@ const DeleteBotModal: React.FC<DeleteBotModalProps> = ({
                 />
               </svg>
               <div>
-                <h4 className="font-medium text-red-800">Error</h4>
-                <p className="mt-1 text-sm text-red-700">
+                <h4 className="text-destructive font-medium">Error</h4>
+                <p className="text-destructive mt-1 text-sm">
                   {contextErrors[0]?.message ||
                     deleteBotMutation.error?.message ||
                     'An error occurred'}
@@ -107,23 +107,13 @@ const DeleteBotModal: React.FC<DeleteBotModalProps> = ({
         )}
 
         <DialogFooter className="flex gap-2 sm:justify-end">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isDeleting}
-            className="border-slate-200 text-slate-700 hover:bg-slate-50"
-          >
+          <Button variant="outline" onClick={onClose} disabled={isDeleting}>
             Cancel
           </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="bg-red-600 text-white hover:bg-red-700"
-          >
+          <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
             {isDeleting ? (
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 Deleting...
               </div>
             ) : (

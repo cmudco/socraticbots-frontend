@@ -38,7 +38,7 @@ const BotSelector: React.FC = () => {
   if (isLoading) {
     return (
       <div className="w-64">
-        <div className="h-10 animate-pulse rounded-md bg-gray-200"></div>
+        <div className="bg-muted h-10 animate-pulse rounded-md"></div>
       </div>
     );
   }
@@ -46,7 +46,7 @@ const BotSelector: React.FC = () => {
   if (error) {
     return (
       <div className="w-64">
-        <div className="text-sm text-red-500">Error loading bots: {error.message}</div>
+        <div className="text-destructive text-sm">Error loading bots: {error.message}</div>
       </div>
     );
   }
@@ -63,12 +63,12 @@ const BotSelector: React.FC = () => {
               <SelectItem key={bot.id} value={bot.id.toString()}>
                 <div className="flex flex-col">
                   <span className="font-medium">{bot.title}</span>
-                  <span className="text-xs text-gray-500">{bot.subject}</span>
+                  <span className="text-muted-foreground text-xs">{bot.subject}</span>
                 </div>
               </SelectItem>
             ))
           ) : (
-            <div className="px-2 py-1.5 text-sm text-gray-500">No bots available</div>
+            <div className="text-muted-foreground px-2 py-1.5 text-sm">No bots available</div>
           )}
         </SelectContent>
       </Select>

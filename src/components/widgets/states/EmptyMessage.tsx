@@ -14,7 +14,7 @@ interface EmptyMessageProps {
 const EmptyMessage: React.FC<EmptyMessageProps> = ({
   professorMessage,
   studentMessage,
-  className = 'py-4 text-center text-gray-500',
+  className = 'py-4 text-center text-muted-foreground',
 }) => {
   const isProfessor = useIsProfessor();
 

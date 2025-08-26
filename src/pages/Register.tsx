@@ -72,21 +72,23 @@ const Register: React.FC = () => {
       <div className="mx-auto mt-10 max-w-md">
         <Card>
           <CardHeader className="text-center">
-            <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />
-            <CardTitle className="text-green-700">Registration Successful!</CardTitle>
+            <CheckCircle2 className="mx-auto h-16 w-16 text-green-600 dark:text-green-400" />
+            <CardTitle className="text-green-700 dark:text-green-400">
+              Registration Successful!
+            </CardTitle>
             <CardDescription>Welcome to Socratic Bots</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {registerMutation.data && (
               <div>
-                <p className="text-center text-gray-600">{registerMutation.data.message}</p>
+                <p className="text-muted-foreground text-center">{registerMutation.data.message}</p>
                 {registerMutation.data.next_steps && (
                   <div className="mt-4">
-                    <h4 className="font-medium text-gray-700">Next Steps:</h4>
-                    <ul className="mt-2 space-y-1 text-sm text-gray-600">
+                    <h4 className="text-foreground font-medium">Next Steps:</h4>
+                    <ul className="text-muted-foreground mt-2 space-y-1 text-sm">
                       {registerMutation.data.next_steps.map((step, index) => (
                         <li key={index} className="flex items-start">
-                          <span className="mt-1.5 mr-2 h-1.5 w-1.5 rounded-full bg-gray-400"></span>
+                          <span className="bg-muted-foreground mt-1.5 mr-2 h-1.5 w-1.5 rounded-full"></span>
                           {step}
                         </li>
                       ))}
@@ -143,7 +145,7 @@ const Register: React.FC = () => {
                     placeholder="Enter your full name"
                     disabled={isSubmitting}
                   />
-                  <ErrorMessage name="name" component="p" className="text-sm text-red-600" />
+                  <ErrorMessage name="name" component="p" className="text-destructive text-sm" />
                 </div>
 
                 <div className="space-y-2">
@@ -156,7 +158,7 @@ const Register: React.FC = () => {
                     placeholder="Enter your email address"
                     disabled={isSubmitting}
                   />
-                  <ErrorMessage name="email" component="p" className="text-sm text-red-600" />
+                  <ErrorMessage name="email" component="p" className="text-destructive text-sm" />
                 </div>
 
                 <div className="space-y-2">
@@ -174,13 +176,17 @@ const Register: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute top-3 right-3 h-4 w-4 text-gray-400 hover:text-gray-600"
+                      className="text-muted-foreground hover:text-foreground absolute top-3 right-3 h-4 w-4"
                       disabled={isSubmitting}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <ErrorMessage name="password" component="p" className="text-sm text-red-600" />
+                  <ErrorMessage
+                    name="password"
+                    component="p"
+                    className="text-destructive text-sm"
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -198,7 +204,7 @@ const Register: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute top-3 right-3 h-4 w-4 text-gray-400 hover:text-gray-600"
+                      className="text-muted-foreground hover:text-foreground absolute top-3 right-3 h-4 w-4"
                       disabled={isSubmitting}
                     >
                       {showConfirmPassword ? (
@@ -211,14 +217,14 @@ const Register: React.FC = () => {
                   <ErrorMessage
                     name="confirm_password"
                     component="p"
-                    className="text-sm text-red-600"
+                    className="text-destructive text-sm"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="access_code">
                     Access Code
-                    <span className="text-sm font-normal text-gray-500"> (Required)</span>
+                    <span className="text-muted-foreground text-sm font-normal"> (Required)</span>
                   </Label>
                   <Field
                     as={Input}
@@ -229,18 +235,22 @@ const Register: React.FC = () => {
                     disabled={isSubmitting}
                   />
 
-                  <div className="rounded-md bg-blue-50 p-3">
-                    <p className="text-sm text-blue-700">
+                  <div className="bg-primary/10 rounded-md p-3">
+                    <p className="text-primary-foreground text-sm">
                       Enter the access code provided by your instructor to join their course and
                       access chapter content.
                     </p>
-                    <p className="mt-1 text-sm text-blue-700">
+                    <p className="text-primary-foreground mt-1 text-sm">
                       <strong>Instructors:</strong> If you need to create an account as an
                       instructor, please contact support.
                     </p>
                   </div>
 
-                  <ErrorMessage name="access_code" component="p" className="text-sm text-red-600" />
+                  <ErrorMessage
+                    name="access_code"
+                    component="p"
+                    className="text-destructive text-sm"
+                  />
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -265,9 +275,9 @@ const Register: React.FC = () => {
           )}
 
           <div className="mt-4 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-muted-foreground text-sm">
               Already have an account?{' '}
-              <button onClick={() => navigate('/login')} className="text-blue-600 hover:underline">
+              <button onClick={() => navigate('/login')} className="text-primary hover:underline">
                 Sign in
               </button>
             </p>
