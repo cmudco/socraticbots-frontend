@@ -38,7 +38,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
   return (
     <div className="mb-4 overflow-hidden rounded-lg border">
       <div
-        className="group flex cursor-pointer items-center justify-between p-4 hover:bg-gray-50"
+        className="group hover:bg-accent flex cursor-pointer items-center justify-between p-4"
         onClick={toggleExpand}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
@@ -47,16 +47,16 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
           <div className="flex items-center gap-3">
             <h3 className="text-lg font-bold">{botGroup.title}</h3>
             {botGroup.collaborators && botGroup.collaborators.length > 0 && (
-              <div className="flex items-center gap-1 text-sm text-gray-500">
+              <div className="text-muted-foreground flex items-center gap-1 text-sm">
                 <Users size={14} />
                 <span>{botGroup.collaborators.length}</span>
               </div>
             )}
           </div>
           {botGroup.description && (
-            <p className="text-sm text-gray-600">{botGroup.description}</p>
+            <p className="text-muted-foreground text-sm">{botGroup.description}</p>
           )}
-          <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
+          <div className="text-muted-foreground mt-1 flex items-center gap-4 text-xs">
             <span>{botGroup.botsCount} bots</span>
             <span>Created {new Date(botGroup.createdAt).toLocaleDateString()}</span>
           </div>
@@ -75,7 +75,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
                   }}
                   variant="ghost"
                   size="sm"
-                  className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
+                  className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-auto px-2 py-1 text-xs"
                   title="Edit bot group"
                 >
                   <Edit size={14} className="mr-1" />
@@ -88,7 +88,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
                   }}
                   variant="ghost"
                   size="sm"
-                  className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-red-100 hover:text-red-700"
+                  className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive h-auto px-2 py-1 text-xs"
                   title="Delete bot group"
                 >
                   <Trash size={14} className="mr-1" />
@@ -104,7 +104,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
                   }}
                   variant="ghost"
                   size="sm"
-                  className="h-auto px-2 py-1 text-xs text-gray-600 hover:bg-blue-100 hover:text-blue-700"
+                  className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-auto px-2 py-1 text-xs"
                   title="View bot group details"
                 >
                   <Eye size={14} className="mr-1" />
@@ -116,21 +116,17 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
 
           <div className="flex items-center">
             {expanded ? (
-              <ChevronUp size={20} className="text-gray-400" />
+              <ChevronUp size={20} className="text-muted-foreground" />
             ) : (
-              <ChevronDown size={20} className="text-gray-400" />
+              <ChevronDown size={20} className="text-muted-foreground" />
             )}
           </div>
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t bg-gray-50 p-4">
-          <BotList 
-            botGroupId={botGroup.id} 
-            initialBots={[]} 
-            onBotDeleted={() => {}} 
-          />
+        <div className="bg-muted/50 border-t p-4">
+          <BotList botGroupId={botGroup.id} initialBots={[]} onBotDeleted={() => {}} />
         </div>
       )}
     </div>

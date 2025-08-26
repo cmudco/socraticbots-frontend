@@ -1,11 +1,14 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Upload, File, Trash2, Download, AlertCircle, Clock } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useBotFiles, useUploadBotFiles, useRemoveBotFile } from '@/hooks/queries/useBotFiles';
+import { AlertCircle, Clock, Download, File, Trash2, Upload } from 'lucide-react';
+
+import { useBotFiles, useRemoveBotFile, useUploadBotFiles } from '@/hooks/queries/useBotFiles';
+
 import { BotFile } from '@/services/botFiles.service';
-import { FileStatusBadge } from '@/components/FileStatusBadge';
+
 import { FileStatus } from '@/utils/fileStatus';
 
+import { FileStatusBadge } from '@/components/FileStatusBadge';
 import { Button } from '@/components/ui/button';
 
 interface BotFilesTabProps {
@@ -16,17 +19,16 @@ interface BotFilesTabProps {
 const getFileIcon = (fileType: string) => {
   switch (fileType.toLowerCase()) {
     case 'pdf':
-      return <File className="h-8 w-8 text-red-500" />;
+      return <File className="h-8 w-8 text-red-500 dark:text-red-400" />;
     case 'doc':
     case 'docx':
-      return <File className="h-8 w-8 text-blue-500" />;
+      return <File className="h-8 w-8 text-blue-500 dark:text-blue-400" />;
     case 'txt':
-      return <File className="h-8 w-8 text-gray-500" />;
+      return <File className="text-muted-foreground h-8 w-8" />;
     default:
-      return <File className="h-8 w-8 text-gray-500" />;
+      return <File className="text-muted-foreground h-8 w-8" />;
   }
 };
-
 
 const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
@@ -40,8 +42,9 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
 
   // Enable polling when there are processing files
   useEffect(() => {
-    const hasProcessingFiles = filesData?.files?.some(file => file.status === FileStatus.PROCESSING) || false;
-    
+    const hasProcessingFiles =
+      filesData?.files?.some(file => file.status === FileStatus.PROCESSING) || false;
+
     if (hasProcessingFiles && !enablePolling) {
       setEnablePolling(true);
     } else if (!hasProcessingFiles && enablePolling) {
@@ -93,12 +96,12 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
 
       if (validFiles.length > 0) {
         setUploadingFiles(validFiles);
-        
+
         // Create a proper FileList from validFiles
         const dataTransfer = new DataTransfer();
         validFiles.forEach(file => dataTransfer.items.add(file));
         const properFileList = dataTransfer.files;
-        
+
         uploadMutation.mutate(
           {
             botGroupId,
@@ -114,7 +117,7 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
                 fileInputRef.current.value = '';
               }
             },
-            onError: (error) => {
+            onError: error => {
               console.error('Upload failed:', error);
               setUploadingFiles([]);
               alert('Upload failed. Please try again.');
@@ -172,10 +175,10 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="text-center py-8">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load files</h3>
-          <p className="text-gray-500">
+        <div className="py-8 text-center">
+          <AlertCircle className="text-destructive mx-auto mb-4 h-12 w-12" />
+          <h3 className="text-foreground mb-2 text-lg font-medium">Failed to load files</h3>
+          <p className="text-muted-foreground">
             There was an error loading the files for this bot. Please try refreshing the page.
           </p>
         </div>
@@ -188,19 +191,19 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
       {/* Upload Area */}
       <div
         className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
-          dragActive ? 'border-violet-500 bg-violet-50' : 'border-gray-300 hover:border-gray-400'
+          dragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-border/80'
         } ${uploadMutation.isPending ? 'cursor-not-allowed opacity-50' : ''}`}
         onDragEnter={handleDragIn}
         onDragLeave={handleDragOut}
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        <Upload className="mx-auto h-10 w-10 text-gray-400" />
+        <Upload className="text-muted-foreground mx-auto h-10 w-10" />
         <div className="mt-3">
-          <p className="font-medium text-gray-900">
+          <p className="text-foreground font-medium">
             {dragActive ? 'Drop files here' : 'Drag and drop files here'}
           </p>
-          <p className="mt-1 text-sm text-gray-500">or</p>
+          <p className="text-muted-foreground mt-1 text-sm">or</p>
           <Button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -210,7 +213,7 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
           >
             Choose files
           </Button>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="text-muted-foreground mt-1 text-xs">
             Supports PDF, DOC, DOCX, TXT files (Max 10MB each)
           </p>
         </div>
@@ -228,17 +231,20 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
       {/* Upload Progress */}
       {uploadingFiles.length > 0 && (
         <div className="space-y-2">
-          <h4 className="font-medium text-gray-900">Uploading files...</h4>
+          <h4 className="text-foreground font-medium">Uploading files...</h4>
           {uploadingFiles.map((file, index) => (
-            <div key={index} className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+            <div
+              key={index}
+              className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-800 dark:bg-yellow-900/20"
+            >
               {getFileIcon(file.name.split('.').pop() || '')}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 truncate">{file.name}</p>
-                <p className="text-sm text-gray-500">
+              <div className="min-w-0 flex-1">
+                <p className="text-foreground truncate font-medium">{file.name}</p>
+                <p className="text-muted-foreground text-sm">
                   {file.size > 0 ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : 'Size unknown'}
                 </p>
               </div>
-              <Clock className="h-5 w-5 text-yellow-600 animate-spin" />
+              <Clock className="h-5 w-5 animate-spin text-yellow-600 dark:text-yellow-400" />
             </div>
           ))}
         </div>
@@ -246,43 +252,41 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
 
       {/* Files List */}
       {isLoading ? (
-        <div className="text-center py-8">
-          <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2 animate-spin" />
-          <p className="text-gray-500">Loading files...</p>
+        <div className="py-8 text-center">
+          <Clock className="text-muted-foreground mx-auto mb-2 h-8 w-8 animate-spin" />
+          <p className="text-muted-foreground">Loading files...</p>
         </div>
       ) : filesData && filesData.files.length > 0 ? (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-gray-900">
-              Files ({filesData.count})
-            </h4>
+            <h4 className="text-foreground font-medium">Files ({filesData.count})</h4>
           </div>
-          
+
           <div className="space-y-2">
-            {filesData.files.map((file) => (
+            {filesData.files.map(file => (
               <div
                 key={file.id}
                 className={`rounded-lg border p-3 transition-all ${
                   file.status === FileStatus.PROCESSING
-                    ? 'border-yellow-200 bg-yellow-50'
+                    ? 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20'
                     : file.status === FileStatus.PROCESSED
-                      ? 'border-green-200 bg-green-50 hover:bg-green-100'
+                      ? 'border-green-200 bg-green-50 hover:bg-green-100 dark:border-green-800 dark:bg-green-900/20 dark:hover:bg-green-900/30'
                       : file.status === FileStatus.FAILED
-                        ? 'border-red-200 bg-red-50'
-                        : 'border-gray-200 bg-white hover:bg-gray-50'
+                        ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                        : 'border-border bg-background hover:bg-muted/50'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {getFileIcon(file.fileType)}
-                    <div className="flex-1 min-w-0">
-                      <h5 className="font-medium text-gray-900 truncate">{file.name}</h5>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        {file.wordCount && (
-                          <span>{file.wordCount.toLocaleString()} words</span>
-                        )}
+                    <div className="min-w-0 flex-1">
+                      <h5 className="text-foreground truncate font-medium">{file.name}</h5>
+                      <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                        {file.wordCount && <span>{file.wordCount.toLocaleString()} words</span>}
                         {file.wordCount && <span>•</span>}
-                        {file.uploadedAt && <span>{new Date(file.uploadedAt).toLocaleDateString()}</span>}
+                        {file.uploadedAt && (
+                          <span>{new Date(file.uploadedAt).toLocaleDateString()}</span>
+                        )}
                         {file.size > 0 && (
                           <>
                             <span>•</span>
@@ -291,20 +295,17 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
                         )}
                       </div>
                       {file.errorMessage && (
-                        <p className="text-sm text-red-600 mt-1">{file.errorMessage}</p>
+                        <p className="text-destructive mt-1 text-sm">{file.errorMessage}</p>
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     {/* Status indicator */}
                     <div className="flex items-center gap-1">
-                      <FileStatusBadge 
-                        status={file.status} 
-                        errorMessage={file.errorMessage} 
-                      />
+                      <FileStatusBadge status={file.status} errorMessage={file.errorMessage} />
                     </div>
-                    
+
                     {/* Actions */}
                     <div className="flex items-center gap-1">
                       {file.status === FileStatus.PROCESSED && (
@@ -318,13 +319,13 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
                           <Download className="h-4 w-4" />
                         </Button>
                       )}
-                      
+
                       <Button
                         onClick={() => handleRemoveFile(file.id, file.name)}
                         disabled={removeMutation.isPending}
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-900 hover:bg-red-100"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                         title="Remove file"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -337,10 +338,9 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
           </div>
         </div>
       ) : (
-        <div className="text-center py-8">
-          <File className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No files uploaded</h3>
-          <p className="text-gray-500">
+        <div className="py-8 text-center">
+          <h3 className="text-foreground mb-2 text-lg font-medium">No files uploaded</h3>
+          <p className="text-muted-foreground">
             Upload files to help your AI bot provide more accurate and contextual responses.
           </p>
         </div>

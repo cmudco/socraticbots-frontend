@@ -44,12 +44,12 @@ const BotGroups: React.FC = () => {
 
   const renderContent = () => {
     if (loading) {
-      return <div className="p-4 text-center">Loading chatbot groups...</div>;
+      return <div className="text-muted-foreground p-4 text-center">Loading chatbot groups...</div>;
     }
 
     if (isError) {
       return (
-        <div className="p-4 text-center text-red-500">
+        <div className="text-destructive p-4 text-center">
           {error?.message || 'Could not load chatbot groups. Please try again later.'}
         </div>
       );
@@ -84,7 +84,7 @@ const BotGroups: React.FC = () => {
         <h1 className="text-2xl font-bold">Chatbot groups</h1>
         <CreateButton
           onClick={handleOpenCreateModal}
-          className="bg-violet-600 text-white hover:bg-violet-700"
+          className="bg-primary text-primary-foreground hover:bg-primary/80"
         >
           Create New Chatbot Group
         </CreateButton>

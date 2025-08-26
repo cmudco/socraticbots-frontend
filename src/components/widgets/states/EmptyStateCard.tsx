@@ -27,19 +27,24 @@ const EmptyStateCard: React.FC<EmptyStateCardProps> = ({
   studentMessage,
   actionText,
   onAction,
-  className = 'rounded-lg bg-gray-50 p-6 text-center',
+  className = 'rounded-lg bg-muted/50 p-6 text-center',
 }) => {
   const isProfessor = useIsProfessor();
 
   return (
     <div className={className}>
-      <h3 className="text-lg font-medium text-gray-600">
+      <h3 className="text-muted-foreground text-lg font-medium">
         {isProfessor ? professorTitle : studentTitle}
       </h3>
-      <p className="mt-1 text-gray-500">{isProfessor ? professorMessage : studentMessage}</p>
+      <p className="text-muted-foreground mt-1">
+        {isProfessor ? professorMessage : studentMessage}
+      </p>
 
       {isProfessor && actionText && onAction && (
-        <Button onClick={onAction} className="mt-4 bg-violet-600 text-white hover:bg-violet-700">
+        <Button
+          onClick={onAction}
+          className="bg-primary text-primary-foreground hover:bg-primary/80 mt-4"
+        >
           <Plus size={16} />
           {actionText}
         </Button>

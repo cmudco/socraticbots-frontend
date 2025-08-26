@@ -34,7 +34,7 @@ const ItemActions: React.FC<ItemActionsProps> = ({
 }) => {
   const isProfessor = useIsProfessor();
 
-  const buttonClass = 'h-auto px-2 py-1 text-xs text-gray-600';
+  const buttonClass = 'h-auto px-2 py-1 text-xs text-muted-foreground';
 
   if (isProfessor) {
     return (
@@ -44,7 +44,7 @@ const ItemActions: React.FC<ItemActionsProps> = ({
             onClick={onEdit}
             variant="ghost"
             size="sm"
-            className={`${buttonClass} hover:bg-blue-100 hover:text-blue-700`}
+            className={`${buttonClass} hover:bg-accent hover:text-accent-foreground`}
             title={editTitle}
           >
             <Edit size={14} className="mr-1" />
@@ -56,7 +56,7 @@ const ItemActions: React.FC<ItemActionsProps> = ({
             onClick={onDelete}
             variant="ghost"
             size="sm"
-            className={`${buttonClass} hover:bg-red-100 hover:text-red-700`}
+            className={`${buttonClass} hover:bg-destructive/10 hover:text-destructive`}
             title={deleteTitle}
           >
             <Trash size={14} className="mr-1" />
@@ -75,7 +75,7 @@ const ItemActions: React.FC<ItemActionsProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            className={`${buttonClass} hover:bg-violet-100 hover:text-violet-700`}
+            className={`${buttonClass} hover:bg-primary/10 hover:text-primary`}
           >
             <MessageSquare size={14} className="mr-1" />
             Open Chat
@@ -87,7 +87,7 @@ const ItemActions: React.FC<ItemActionsProps> = ({
           onClick={onView}
           variant="ghost"
           size="sm"
-          className={`${buttonClass} hover:bg-blue-100 hover:text-blue-700`}
+          className={`${buttonClass} hover:bg-accent hover:text-accent-foreground`}
           title={viewTitle}
         >
           <Eye size={14} className="mr-1" />

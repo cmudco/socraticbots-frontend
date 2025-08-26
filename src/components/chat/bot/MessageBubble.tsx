@@ -48,8 +48,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming = fa
       <div
         className={`max-w-[80%] rounded-2xl px-4 py-3 ${
           isUser
-            ? 'ml-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
-            : 'mr-4 border border-slate-200 bg-white text-slate-800 shadow-sm'
+            ? 'from-primary to-primary/80 text-primary-foreground ml-4 bg-gradient-to-r shadow-md'
+            : 'border-border bg-background text-foreground mr-4 border shadow-sm'
         }`}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
@@ -57,11 +57,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming = fa
         <div className="flex flex-col">
           {!isUser && (
             <div className="mb-2 flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-purple-500">
-                <span className="text-xs font-semibold text-white">AI</span>
+              <div className="from-secondary to-secondary/80 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br">
+                <span className="text-secondary-foreground text-xs font-semibold">AI</span>
               </div>
-              <span className="text-xs font-medium text-slate-600">Assistant</span>
-              {isStreaming && <Loader2 className="h-3 w-3 animate-spin text-blue-500" />}
+              <span className="text-muted-foreground text-xs font-medium">Assistant</span>
+              {isStreaming && <Loader2 className="text-primary h-3 w-3 animate-spin" />}
             </div>
           )}
 
@@ -111,7 +111,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming = fa
                   return (
                     <a
                       href={href}
-                      className="break-all text-blue-600 hover:text-blue-800"
+                      className="text-primary hover:text-primary/80 break-all"
                       style={{
                         wordBreak: 'break-all',
                         overflowWrap: 'break-word',
@@ -134,7 +134,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming = fa
                   }
                   return (
                     <code
-                      className="not-prose rounded border border-slate-300 bg-slate-100 px-1 py-0.5 text-sm break-all text-slate-800"
+                      className="not-prose border-border bg-muted text-foreground rounded border px-1 py-0.5 text-sm break-all"
                       style={{
                         wordBreak: 'break-all',
                         overflowWrap: 'break-word',
@@ -148,21 +148,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming = fa
                 // Handle headers
                 h1({ children, ...props }) {
                   return (
-                    <h1 className="mb-2 text-lg font-bold text-slate-800" {...props}>
+                    <h1 className="text-foreground mb-2 text-lg font-bold" {...props}>
                       {children}
                     </h1>
                   );
                 },
                 h2({ children, ...props }) {
                   return (
-                    <h2 className="mb-2 text-base font-semibold text-slate-800" {...props}>
+                    <h2 className="text-foreground mb-2 text-base font-semibold" {...props}>
                       {children}
                     </h2>
                   );
                 },
                 h3({ children, ...props }) {
                   return (
-                    <h3 className="mb-1 text-sm font-medium text-slate-800" {...props}>
+                    <h3 className="text-foreground mb-1 text-sm font-medium" {...props}>
                       {children}
                     </h3>
                   );
@@ -193,7 +193,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming = fa
                 blockquote({ children, ...props }) {
                   return (
                     <blockquote
-                      className="my-2 border-l-4 border-slate-300 pl-4 text-slate-600 italic"
+                      className="border-border text-muted-foreground my-2 border-l-4 pl-4 italic"
                       {...props}
                     >
                       {children}
@@ -207,13 +207,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming = fa
           </div>
 
           <div className="mt-2 flex items-center justify-between">
-            <span className={`text-xs ${isUser ? 'text-blue-100' : 'text-slate-500'}`}>
+            <span
+              className={`text-xs ${isUser ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}
+            >
               {new Date(message.date).toLocaleTimeString()}
             </span>
 
             <div className="flex items-center gap-2">
               {message.cost && !isUser && (
-                <span className={`text-xs text-slate-400`}>
+                <span className={`text-muted-foreground/70 text-xs`}>
                   ${message.cost} • {message.inputTokens}/{message.outputTokens} tokens
                 </span>
               )}
@@ -226,7 +228,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming = fa
                   disabled={isDeleting}
                   variant="ghost"
                   size="sm"
-                  className={`h-6 w-6 p-0 ${isUser ? 'text-blue-100 hover:bg-blue-400/20 hover:text-white' : 'text-slate-400 hover:bg-red-50 hover:text-red-500'}`}
+                  className={`h-6 w-6 p-0 ${isUser ? 'text-primary-foreground/80 hover:bg-primary-foreground/20 hover:text-primary-foreground' : 'text-muted-foreground hover:bg-destructive/10 hover:text-destructive'}`}
                   title="Delete message"
                 >
                   {isDeleting ? (

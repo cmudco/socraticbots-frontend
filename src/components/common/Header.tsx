@@ -4,8 +4,9 @@ import { Link } from 'react-router-dom';
 import logo from '@/assets/logo.png';
 import { BookOpen, GraduationCap, LogOut, User } from 'lucide-react';
 
-import { useUser, useIsAuthenticated, useLogout } from '@/hooks/queries/useUser';
+import { useIsAuthenticated, useLogout, useUser } from '@/hooks/queries/useUser';
 
+import { ThemeSelector } from '@/components/ThemeSelector';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -24,7 +25,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-20 h-14 border-b border-slate-200 bg-white shadow-sm">
+    <header className="border-border bg-background fixed top-0 right-0 left-0 z-20 h-14 border-b shadow-sm">
       <div className="flex h-full items-center justify-between px-4">
         {/* Logo Section */}
         <div className="flex items-center space-x-3">
@@ -32,31 +33,33 @@ const Header: React.FC = () => {
           <div className="flex flex-col">
             <Link
               to="/"
-              className="text-xl leading-tight font-bold text-slate-700 transition-colors hover:text-violet-600"
+              className="text-foreground hover:text-primary text-xl leading-tight font-bold transition-colors"
             >
               Socratic Bots
             </Link>
-            <span className="-mt-1 text-xs text-slate-500">Agent + Helper Framework</span>
+            <span className="text-muted-foreground -mt-1 text-xs">Agent + Helper Framework</span>
           </div>
         </div>
 
         <nav className="flex items-center space-x-3">
           {isAuthenticated && user ? (
             <div className="flex items-center space-x-3">
+              <ThemeSelector />
+
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-sm font-medium text-violet-600">
+                  <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
                     {getUserInitials(user.name)}
                   </div>
                   <div className="hidden flex-col sm:flex">
-                    <span className="text-sm font-medium text-slate-700">{user.name}</span>
+                    <span className="text-foreground text-sm font-medium">{user.name}</span>
                     <div className="flex items-center space-x-1">
                       <Badge
                         variant="secondary"
                         className={`text-xs ${
                           user.isProfessor
-                            ? 'border-violet-200 bg-violet-100 text-violet-700'
-                            : 'border-blue-200 bg-blue-100 text-blue-700'
+                            ? 'border-primary/20 bg-primary/10 text-primary'
+                            : 'border-secondary/20 bg-secondary/10 text-secondary-foreground'
                         }`}
                       >
                         {user.isProfessor ? (
@@ -81,7 +84,7 @@ const Header: React.FC = () => {
                 onClick={logout}
                 variant="outline"
                 size="sm"
-                className="border-slate-200 text-slate-600 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700"
+                className="border-border text-foreground hover:border-primary hover:bg-primary/10 hover:text-primary transition-colors"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Logout</span>
@@ -95,10 +98,10 @@ const Header: React.FC = () => {
               asChild
               variant="outline"
               size="sm"
-              className="border-violet-200 text-violet-600 hover:border-violet-300 hover:bg-violet-50"
+              className="border-primary/20 text-primary hover:border-primary hover:bg-primary/10"
             >
               <Link to="/login">
-                <User className="mr-2 h-4 w-4" />
+                <User className="mr-1 h-4 w-4" />
                 Login
               </Link>
             </Button>

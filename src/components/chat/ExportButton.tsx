@@ -39,11 +39,11 @@ const ExportButton: React.FC = () => {
       variant="ghost"
       size="sm"
       onClick={handleExportConversation}
-      className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-200 dark:hover:bg-white/10"
+      className="hover:bg-accent flex items-center gap-2 px-3 py-2 text-sm"
       title="Export conversation as PDF"
     >
-      <Download className="text-muted-foreground group-hover:text-foreground dark:text-muted-foreground h-4 w-4 transition-colors dark:group-hover:text-white" />
-      <span className="text-muted-foreground group-hover:text-foreground dark:text-muted-foreground text-sm font-medium transition-colors dark:group-hover:text-white">
+      <Download className="text-muted-foreground group-hover:text-foreground h-4 w-4 transition-colors" />
+      <span className="text-muted-foreground group-hover:text-foreground text-sm font-medium transition-colors">
         Export
       </span>
     </Button>
