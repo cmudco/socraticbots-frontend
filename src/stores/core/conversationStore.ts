@@ -164,6 +164,8 @@ export const useConversationStore = create<ConversationStore>()(
             title: currentBot.title,
             subject: currentBot.subject,
             topic: currentBot.topic,
+            learning_goals: currentBot.prompts?.learningGoals,
+            chat_prompt: currentBot.prompts?.chatPrompt,
           };
         }
 
