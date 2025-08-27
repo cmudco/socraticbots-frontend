@@ -22,6 +22,7 @@ export interface ConversationState {
   // UI state
   isTyping: boolean;
   inputMessage: string;
+  isLoadingBot: boolean;
 
   // Bot context
   currentBotId: number | null;
@@ -73,6 +74,7 @@ export const useConversationStore = create<ConversationStore>()(
     isLoadingMessages: false,
     isTyping: false,
     inputMessage: '',
+    isLoadingBot: false,
     currentBotId: null,
     currentBot: null,
     availableModels: [],
@@ -84,6 +86,8 @@ export const useConversationStore = create<ConversationStore>()(
     setActiveBot: async (bot: Bot) => {
       try {
         const botId = bot.id;
+
+        set({ isLoadingBot: true });
 
         // Set the bot directly
         set({
@@ -115,6 +119,8 @@ export const useConversationStore = create<ConversationStore>()(
           currentBot: null,
           activeConversation: null,
         });
+      } finally {
+        set({ isLoadingBot: false });
       }
     },
 
@@ -321,6 +327,7 @@ export const useActiveConversation = () => useConversationStore(state => state.a
 export const useMessages = () => useConversationStore(state => state.messages);
 export const useIsTyping = () => useConversationStore(state => state.isTyping);
 export const useInputMessage = () => useConversationStore(state => state.inputMessage);
+export const useIsLoadingBot = () => useConversationStore(state => state.isLoadingBot);
 export const useCurrentBot = () => useConversationStore(state => state.currentBot);
 export const useConversationStats = () =>
   useConversationStore(state => ({
