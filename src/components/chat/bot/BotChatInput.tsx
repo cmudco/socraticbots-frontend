@@ -61,6 +61,16 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
     }
   }, [inputMessage]);
 
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea && inputMessage === '' && !isTyping && isConnected && !disabled) {
+      const timeoutId = setTimeout(() => {
+        textarea.focus();
+      }, 0);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [inputMessage, isTyping, isConnected, disabled]);
+
   return (
     <div className={`border-border/60 bg-background/95 border-t backdrop-blur-sm ${className}`}>
       <div className="px-6 py-4">

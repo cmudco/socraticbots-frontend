@@ -1,8 +1,8 @@
-import { useState } from 'react';
-
 import { Moon, Palette, Sun } from 'lucide-react';
 
 import { type ThemeName, useThemeStore } from '@/stores/ui/themeStore';
+
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const themes: { name: ThemeName; label: string; description: string }[] = [
   {
@@ -54,68 +54,60 @@ const themes: { name: ThemeName; label: string; description: string }[] = [
 
 export function ThemeSelector() {
   const { currentTheme, isDarkMode, setTheme, toggleDarkMode } = useThemeStore();
-  const [isOpen, setIsOpen] = useState(false);
 
   const handleThemeChange = (theme: ThemeName) => {
     setTheme(theme);
-    setIsOpen(false);
   };
 
   const currentThemeInfo = themes.find(t => t.name === currentTheme);
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="text-foreground bg-background border-border hover:bg-accent hover:text-accent-foreground flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors"
-      >
-        <Palette className="h-4 w-4" />
-        <span>{currentThemeInfo?.label}</span>
-      </button>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="text-foreground bg-background border-border hover:bg-accent hover:text-accent-foreground flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors">
+          <Palette className="h-4 w-4" />
+          <span>{currentThemeInfo?.label}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="max-h-[50vh] w-64 overflow-y-auto" align="end">
+        <h3 className="text-popover-foreground mb-3 text-sm font-medium">Choose Theme</h3>
 
-      {isOpen && (
-        <div className="bg-popover border-border absolute right-0 z-50 mt-2 w-64 rounded-md border shadow-lg">
-          <div className="p-4">
-            <h3 className="text-popover-foreground mb-3 text-sm font-medium">Choose Theme</h3>
-
-            <div className="space-y-2">
-              {themes.map(theme => (
-                <button
-                  key={theme.name}
-                  onClick={() => handleThemeChange(theme.name)}
-                  className={`w-full rounded-md p-3 text-left transition-colors ${
-                    currentTheme === theme.name
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                >
-                  <div className="font-medium">{theme.label}</div>
-                  <div className="text-xs opacity-80">{theme.description}</div>
-                </button>
-              ))}
-            </div>
-
-            <div className="border-border mt-4 border-t pt-4">
-              <button
-                onClick={toggleDarkMode}
-                className="hover:bg-accent hover:text-accent-foreground flex w-full items-center gap-2 rounded-md p-3 transition-colors"
-              >
-                {isDarkMode ? (
-                  <>
-                    <Sun className="h-4 w-4" />
-                    <span>Light Mode</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="h-4 w-4" />
-                    <span>Dark Mode</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+        <div className="space-y-2">
+          {themes.map(theme => (
+            <button
+              key={theme.name}
+              onClick={() => handleThemeChange(theme.name)}
+              className={`w-full rounded-md p-3 text-left transition-colors ${
+                currentTheme === theme.name
+                  ? 'bg-primary text-primary-foreground'
+                  : 'hover:bg-accent hover:text-accent-foreground'
+              }`}
+            >
+              <div className="font-medium">{theme.label}</div>
+              <div className="text-xs opacity-80">{theme.description}</div>
+            </button>
+          ))}
         </div>
-      )}
-    </div>
+
+        <div className="border-border mt-4 border-t pt-4">
+          <button
+            onClick={toggleDarkMode}
+            className="hover:bg-accent hover:text-accent-foreground flex w-full items-center gap-2 rounded-md p-3 transition-colors"
+          >
+            {isDarkMode ? (
+              <>
+                <Sun className="h-4 w-4" />
+                <span>Light Mode</span>
+              </>
+            ) : (
+              <>
+                <Moon className="h-4 w-4" />
+                <span>Dark Mode</span>
+              </>
+            )}
+          </button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

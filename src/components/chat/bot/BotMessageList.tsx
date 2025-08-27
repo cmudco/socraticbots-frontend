@@ -2,7 +2,12 @@ import React, { useEffect, useRef } from 'react';
 
 import { Loader2 } from 'lucide-react';
 
-import { useConversationStore, useIsTyping, useMessages } from '@/stores/core/conversationStore';
+import {
+  useConversationStore,
+  useIsLoadingBot,
+  useIsTyping,
+  useMessages,
+} from '@/stores/core/conversationStore';
 
 import { scrollManager } from '@/utils/scrollManager';
 
@@ -17,6 +22,7 @@ interface BotMessageListProps {
 const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
   const messages = useMessages();
   const isStreaming = useIsTyping();
+  const isLoadingBot = useIsLoadingBot();
   const { isLoadingMessages } = useConversationStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -87,6 +93,17 @@ const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
       return () => clearInterval(interval);
     }
   }, [isStreaming, messages.length]);
+
+  if (isLoadingBot) {
+    return (
+      <div className={`flex h-full items-center justify-center ${className}`}>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          <span className="text-muted-foreground">Connecting to bot...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoadingMessages) {
     return (

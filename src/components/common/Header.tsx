@@ -65,7 +65,7 @@ const Header: React.FC = () => {
                         {user.isProfessor ? (
                           <>
                             <GraduationCap className="mr-1 h-3 w-3" />
-                            Professor
+                            Creator
                           </>
                         ) : (
                           <>
