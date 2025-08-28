@@ -6,7 +6,6 @@ import { BookOpen, GraduationCap, LogOut, User } from 'lucide-react';
 
 import { useIsAuthenticated, useLogout, useUser } from '@/hooks/queries/useUser';
 
-import { ThemeSelector } from '@/components/ThemeSelector';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -44,8 +43,6 @@ const Header: React.FC = () => {
         <nav className="flex items-center space-x-3">
           {isAuthenticated && user ? (
             <div className="flex items-center space-x-3">
-              <ThemeSelector />
-
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2">
                   <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">

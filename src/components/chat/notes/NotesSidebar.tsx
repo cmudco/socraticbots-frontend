@@ -47,9 +47,9 @@ const NotesSidebar: React.FC<NotesSidebarProps> = ({ onCollapseChange }) => {
         title={isCollapsed ? 'Expand notes' : 'Collapse notes'}
       >
         {isCollapsed ? (
-          <ChevronRight className="text-muted-foreground h-4 w-4" />
-        ) : (
           <ChevronLeft className="text-muted-foreground h-4 w-4" />
+        ) : (
+          <ChevronRight className="text-muted-foreground h-4 w-4" />
         )}
       </Button>
 

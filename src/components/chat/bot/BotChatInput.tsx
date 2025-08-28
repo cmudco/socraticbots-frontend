@@ -19,7 +19,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
   const inputMessage = useInputMessage();
   const isTyping = useIsTyping();
   const isWebSocketConnected = useIsWebSocketConnected();
-  const { sendMessage, setInputMessage, activeConversation, currentBotId } = useConversationStore();
+  const { sendMessage, setInputMessage, activeConversation, currentBot } = useConversationStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSendMessage = async () => {
@@ -35,7 +35,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
 
   const isConnected = isWebSocketConnected;
   const disabled = !activeConversation;
-  const placeholder = `Chat with Bot ${currentBotId}...`;
+  const placeholder = currentBot?.title ? `Chat with ${currentBot.title}...` : '';
   const getPlaceholder = () => {
     if (!isConnected) return 'Connecting to bot...';
     if (isTyping) return 'Bot is responding...';

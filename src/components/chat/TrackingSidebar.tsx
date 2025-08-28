@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 
 const TrackingSidebar: React.FC = () => {
   // Use the conversation store for bot and conversation context
-  const { activeConversation, currentBotId, currentBot } = useConversationStore();
+  const { activeConversation, currentBotId } = useConversationStore();
   const dareConversationId = activeConversation?.dareConversationId;
 
   // Use individual WebSocket selectors to avoid re-render loops
@@ -50,42 +50,6 @@ const TrackingSidebar: React.FC = () => {
   return (
     <div className="from-muted/30 via-background to-primary/5 flex h-full flex-col bg-gradient-to-br">
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-        {/* Learning Goals Section */}
-        {currentBot?.prompts?.learningGoals && (
-          <div className="border-border bg-background/90 rounded-2xl border shadow-sm backdrop-blur-sm">
-            <div className="border-border/60 border-b px-4 py-3">
-              <div className="flex items-center space-x-2">
-                <div className="from-primary to-primary/80 flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br">
-                  <BookOpen className="text-primary-foreground h-3 w-3" />
-                </div>
-                <h3 className="text-foreground text-sm font-semibold">Learning Goals</h3>
-              </div>
-            </div>
-            <div className="px-4 py-3">
-              <div className="prose prose-sm prose-slate max-w-none">
-                <ReactMarkdown
-                  components={{
-                    p: ({ children }) => (
-                      <p className="text-muted-foreground mb-2 text-sm leading-relaxed">
-                        {children}
-                      </p>
-                    ),
-                    ul: ({ children }) => <ul className="mb-2 space-y-1">{children}</ul>,
-                    li: ({ children }) => (
-                      <li className="text-muted-foreground flex items-start space-x-2 text-sm">
-                        <div className="bg-primary mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full"></div>
-                        <span>{children}</span>
-                      </li>
-                    ),
-                  }}
-                >
-                  {currentBot.prompts.learningGoals}
-                </ReactMarkdown>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Progress Assessment Section */}
         <div className="border-border bg-background/90 rounded-2xl border shadow-sm backdrop-blur-sm">
           <div className="border-border/60 border-b px-4 py-3">

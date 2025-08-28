@@ -22,7 +22,6 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     path: '/access-codes',
     label: 'Access Codes',
     icon: Key,
-    roles: ['student'],
   },
   {
     path: '/bot-groups',

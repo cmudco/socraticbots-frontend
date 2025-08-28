@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import StudentRoute from './components/auth/StudentRoute';
 import Layout from './components/layout/Layout';
 import About from './pages/About';
 import AccessCodes from './pages/AccessCodes';
@@ -33,14 +32,7 @@ const App: React.FC = () => {
           >
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />
-            <Route
-              path="access-codes"
-              element={
-                <StudentRoute>
-                  <AccessCodes />
-                </StudentRoute>
-              }
-            />
+            <Route path="access-codes" element={<AccessCodes />} />
             <Route path="settings" element={<Settings />} />
             <Route path="bot-groups" element={<BotGroups />} />
             <Route path="bot-access" element={<BotAccess />} />
