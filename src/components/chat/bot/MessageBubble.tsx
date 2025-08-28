@@ -46,7 +46,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming = fa
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} group relative mb-6`}>
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+        className={`${isUser ? 'max-w-[80%]' : 'w-full'} rounded-2xl px-4 py-3 ${
           isUser
             ? 'from-primary to-primary/80 text-primary-foreground ml-4 bg-gradient-to-r shadow-md'
             : 'border-border bg-background text-foreground mr-4 border shadow-sm'
@@ -214,12 +214,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming = fa
             </span>
 
             <div className="flex items-center gap-2">
-              {message.cost && !isUser && (
-                <span className={`text-muted-foreground/70 text-xs`}>
-                  ${message.cost} • {message.inputTokens}/{message.outputTokens} tokens
-                </span>
-              )}
-
               <div
                 className={`transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}
               >
