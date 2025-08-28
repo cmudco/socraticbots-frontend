@@ -19,7 +19,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
   const inputMessage = useInputMessage();
   const isTyping = useIsTyping();
   const isWebSocketConnected = useIsWebSocketConnected();
-  const { sendMessage, setInputMessage, activeConversation, currentBotId } = useConversationStore();
+  const { sendMessage, setInputMessage, activeConversation, currentBot } = useConversationStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSendMessage = async () => {
@@ -35,7 +35,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
 
   const isConnected = isWebSocketConnected;
   const disabled = !activeConversation;
-  const placeholder = `Chat with Bot ${currentBotId}...`;
+  const placeholder = currentBot?.title ? `Chat with ${currentBot.title}...` : '';
   const getPlaceholder = () => {
     if (!isConnected) return 'Connecting to bot...';
     if (isTyping) return 'Bot is responding...';
@@ -60,6 +60,16 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
       textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
     }
   }, [inputMessage]);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea && inputMessage === '' && !isTyping && isConnected && !disabled) {
+      const timeoutId = setTimeout(() => {
+        textarea.focus();
+      }, 0);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [inputMessage, isTyping, isConnected, disabled]);
 
   return (
     <div className={`border-border/60 bg-background/95 border-t backdrop-blur-sm ${className}`}>
