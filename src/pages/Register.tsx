@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ErrorMessage, Field, Form, Formik } from 'formik';
-import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, Mail } from 'lucide-react';
 import * as Yup from 'yup';
 
 import { useRegister } from '@/hooks/queries/useRegistration';
@@ -39,6 +39,7 @@ interface FormValues {
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
@@ -59,6 +60,7 @@ const Register: React.FC = () => {
     try {
       await registerMutation.mutateAsync(values);
       setShowSuccess(true);
+      setRegisteredEmail(values.email);
     } catch (error: unknown) {
       console.error('Registration failed:', error);
       const errorMessage =
@@ -97,6 +99,24 @@ const Register: React.FC = () => {
                 )}
               </div>
             )}
+            <div className="border-primary/20 bg-primary/5 mt-2 rounded-md border p-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-primary/10 rounded-full p-2">
+                  <Mail className="text-primary h-5 w-5" />
+                </div>
+                <div className="text-foreground text-sm">
+                  {registeredEmail ? (
+                    <>
+                      We sent a verification link to{' '}
+                      <span className="font-medium">{registeredEmail}</span>. Please verify your
+                      email before logging in.
+                    </>
+                  ) : (
+                    <>Please verify your email address before logging in.</>
+                  )}
+                </div>
+              </div>
+            </div>
             <div className="flex space-x-3">
               <Button onClick={() => navigate('/login')} className="flex-1">
                 Go to Login

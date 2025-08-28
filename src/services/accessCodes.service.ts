@@ -21,7 +21,7 @@ export interface RedeemedAccessCode {
   accessCodeCreatedAt: string;
 }
 
-export interface StudentAccessCodesResponse {
+export interface MyAccessCodesResponse {
   redeemedCodes: RedeemedAccessCode[];
   totalCount: number;
 }
@@ -35,9 +35,9 @@ class AccessCodeService {
     });
   }
 
-  async getStudentAccessCodes(): Promise<StudentAccessCodesResponse> {
-    return baseRequest<StudentAccessCodesResponse>({
-      url: 'access-codes/student-list/',
+  async getMyAccessCodes(): Promise<MyAccessCodesResponse> {
+    return baseRequest<MyAccessCodesResponse>({
+      url: 'access-codes/my-list/',
       method: METHOD.GET,
     });
   }

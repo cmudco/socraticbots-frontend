@@ -21,12 +21,12 @@ const AccessCodes: React.FC = () => {
   const queryClient = useQueryClient();
 
   const {
-    data: studentAccessCodes,
+    data: myAccessCodes,
     isLoading: isLoadingCodes,
     error: codesError,
   } = useQuery({
-    queryKey: ['student-access-codes'],
-    queryFn: () => accessCodeService.getStudentAccessCodes(),
+    queryKey: ['my-access-codes'],
+    queryFn: () => accessCodeService.getMyAccessCodes(),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -37,7 +37,7 @@ const AccessCodes: React.FC = () => {
       setIsSuccess(true);
       setAccessCode('');
       queryClient.invalidateQueries({ queryKey: ['bot-groups'] });
-      queryClient.invalidateQueries({ queryKey: ['student-access-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['my-access-codes'] });
     },
     onError: (error: ApiError) => {
       const errorMessage =
@@ -75,8 +75,7 @@ const AccessCodes: React.FC = () => {
         </div>
 
         <p className="text-muted-foreground mb-6">
-          Enter an access code from your instructor to gain access to additional chatbot groups and
-          bots.
+          Enter an access code to gain access to additional chatbot groups and bots.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -144,24 +143,24 @@ const AccessCodes: React.FC = () => {
               Error loading access codes: {codesError?.message || 'Unknown error'}
             </p>
           </div>
-        ) : studentAccessCodes &&
-          studentAccessCodes.redeemedCodes &&
-          studentAccessCodes.redeemedCodes.length > 0 ? (
+        ) : myAccessCodes &&
+          myAccessCodes.redeemedCodes &&
+          myAccessCodes.redeemedCodes.length > 0 ? (
           <div className="space-y-4">
             <p className="text-muted-foreground text-sm">
-              You have redeemed {studentAccessCodes?.totalCount || 0} access code
-              {(studentAccessCodes?.totalCount || 0) !== 1 ? 's' : ''}.
+              You have redeemed {myAccessCodes?.totalCount || 0} access code
+              {(myAccessCodes?.totalCount || 0) !== 1 ? 's' : ''}.
             </p>
 
             <div className="space-y-3">
-              {studentAccessCodes.redeemedCodes?.map((code, index) => (
+              {myAccessCodes.redeemedCodes?.map((code, index) => (
                 <div
                   key={index}
                   className="border-border bg-muted/50 flex items-center justify-between rounded-md border p-4"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="bg-primary/10 text-primary-foreground rounded px-2 py-1 font-mono text-sm">
+                      <span className="bg-primary text-primary-foreground rounded px-2 py-1 font-mono text-sm">
                         {code.code}
                       </span>
                       <span className="text-muted-foreground text-sm capitalize">

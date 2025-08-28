@@ -17,8 +17,13 @@ interface BotChatInterfaceProps {
 
 const BotChatInterface: React.FC<BotChatInterfaceProps> = ({ className = '' }) => {
   const { data: user } = useUserInfo();
-  const { currentBotId, activeConversation, isLoadingMessages, clearActiveConversation } =
-    useConversationStore();
+  const {
+    currentBotId,
+    currentBot,
+    activeConversation,
+    isLoadingMessages,
+    clearActiveConversation,
+  } = useConversationStore();
 
   // Cleanup on unmount
   useEffect(() => {
@@ -45,7 +50,7 @@ const BotChatInterface: React.FC<BotChatInterfaceProps> = ({ className = '' }) =
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="text-primary h-8 w-8 animate-spin" />
             <span className="text-muted-foreground">
-              Initializing chat with Bot {currentBotId}...
+              Initializing chat with {currentBot?.title ?? ``}...
             </span>
           </div>
         </div>
