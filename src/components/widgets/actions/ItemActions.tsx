@@ -16,6 +16,7 @@ interface ItemActionsProps {
   viewTitle?: string;
   chatTo?: string;
   chatTitle?: string;
+  canManage?: boolean;
 }
 
 /**
@@ -31,12 +32,13 @@ const ItemActions: React.FC<ItemActionsProps> = ({
   viewTitle = 'View details',
   chatTo,
   chatTitle = 'Open chat',
+  canManage = true,
 }) => {
   const isProfessor = useIsProfessor();
 
   const buttonClass = 'h-auto px-2 py-1 text-xs text-muted-foreground';
 
-  if (isProfessor) {
+  if (isProfessor && canManage) {
     return (
       <>
         {onEdit && (

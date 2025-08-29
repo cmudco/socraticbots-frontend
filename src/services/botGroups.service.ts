@@ -1,5 +1,7 @@
 import { METHOD } from '@/constants/requests';
+
 import { baseRequest } from '@/utils/baseRequest';
+
 import { BotGroup, BotGroupDetail } from '@/types/botGroup';
 
 export interface CreateBotGroupRequest {
@@ -17,10 +19,17 @@ export interface AddCollaboratorRequest {
 }
 
 class BotGroupService {
-  async getBotGroups(): Promise<BotGroupDetail[]> {
+  async getBotGroups(options?: {
+    ownedOnly?: boolean;
+    search?: string;
+  }): Promise<BotGroupDetail[]> {
+    const params: Record<string, unknown> = {};
+    if (options?.ownedOnly) params.owned_only = true;
+    if (options?.search) params.search = options.search;
     return baseRequest<BotGroupDetail[]>({
       url: 'bot-groups/',
       method: METHOD.GET,
+      params,
     });
   }
 

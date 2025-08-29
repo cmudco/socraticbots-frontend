@@ -41,6 +41,8 @@ export interface Bot {
   modelPreference?: BotModelPreference;
   prompts?: BotPrompt;
   accessCode?: BotAccessCode;
+  createdById: number;
+  redeemed?: boolean;
   createdAt: string;
   updatedAt: string;
 }

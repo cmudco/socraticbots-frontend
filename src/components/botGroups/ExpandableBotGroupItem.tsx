@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 
 import { ChevronDown, ChevronUp, Edit, Eye, Trash, Users } from 'lucide-react';
 
-import { useIsProfessor } from '@/hooks/queries/useUser';
+import { useIsProfessor, useUser } from '@/hooks/queries/useUser';
 
 import { useUiStore } from '@/stores/ui/uiStore';
 
 import BotList from '@/components/bots/BotList';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 import { BotGroup } from '@/types/botGroup';
@@ -25,6 +26,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
   onView,
 }) => {
   const isProfessor = useIsProfessor();
+  const user = useUser();
 
   const { expandedBotGroups, toggleBotGroupExpansion } = useUiStore();
   const expanded = expandedBotGroups.has(botGroup.id);
@@ -52,6 +54,18 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
                 <span>{botGroup.collaborators.length}</span>
               </div>
             )}
+            <div className="ml-1 flex items-center gap-2">
+              {user?.id === botGroup.ownerId && (
+                <Badge variant="default" className="h-4 px-1.5 py-0 text-[10px]">
+                  Creator
+                </Badge>
+              )}
+              {botGroup.redeemed && (
+                <Badge variant="green" className="h-4 px-1.5 py-0 text-[10px]">
+                  Redeemed
+                </Badge>
+              )}
+            </div>
           </div>
           {botGroup.description && (
             <p className="text-muted-foreground text-sm">{botGroup.description}</p>
@@ -66,52 +80,59 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
           <div
             className={`flex space-x-1 transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}
           >
-            {isProfessor ? (
-              <>
-                <Button
-                  onClick={e => {
-                    e.stopPropagation();
-                    onEdit(botGroup);
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-auto px-2 py-1 text-xs"
-                  title="Edit bot group"
-                >
-                  <Edit size={14} className="mr-1" />
-                  Edit Group
-                </Button>
-                <Button
-                  onClick={e => {
-                    e.stopPropagation();
-                    onDelete(botGroup);
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive h-auto px-2 py-1 text-xs"
-                  title="Delete bot group"
-                >
-                  <Trash size={14} className="mr-1" />
-                  Delete
-                </Button>
-              </>
-            ) : (
-              onView && (
-                <Button
-                  onClick={e => {
-                    e.stopPropagation();
-                    onView(botGroup);
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-auto px-2 py-1 text-xs"
-                  title="View bot group details"
-                >
-                  <Eye size={14} className="mr-1" />
-                  View Details
-                </Button>
-              )
-            )}
+            {(() => {
+              const isOwner = user?.id === botGroup.ownerId;
+              if (isProfessor && isOwner) {
+                return (
+                  <>
+                    <Button
+                      onClick={e => {
+                        e.stopPropagation();
+                        onEdit(botGroup);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-auto px-2 py-1 text-xs"
+                      title="Edit bot group"
+                    >
+                      <Edit size={14} className="mr-1" />
+                      Edit Group
+                    </Button>
+                    <Button
+                      onClick={e => {
+                        e.stopPropagation();
+                        onDelete(botGroup);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive h-auto px-2 py-1 text-xs"
+                      title="Delete bot group"
+                    >
+                      <Trash size={14} className="mr-1" />
+                      Delete
+                    </Button>
+                  </>
+                );
+              }
+              // Non-owner (student or professor): show View Details if available
+              return (
+                onView && (
+                  <Button
+                    onClick={e => {
+                      e.stopPropagation();
+                      onView(botGroup);
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-auto px-2 py-1 text-xs"
+                    title="View bot group details"
+                  >
+                    <Eye size={14} className="mr-1" />
+                    View Details
+                  </Button>
+                )
+              );
+            })()}
           </div>
 
           <div className="flex items-center">
@@ -126,7 +147,12 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
 
       {expanded && (
         <div className="bg-muted/50 border-t p-4">
-          <BotList botGroupId={botGroup.id} initialBots={[]} onBotDeleted={() => {}} />
+          <BotList
+            botGroupId={botGroup.id}
+            initialBots={[]}
+            onBotDeleted={() => {}}
+            canAddBot={isProfessor && user?.id === botGroup.ownerId}
+          />
         </div>
       )}
     </div>
