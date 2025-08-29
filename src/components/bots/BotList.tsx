@@ -18,9 +18,15 @@ interface BotListProps {
   botGroupId: number;
   initialBots: Bot[];
   onBotDeleted?: (botId: number) => void;
+  canAddBot?: boolean; // only group creator can add
 }
 
-const BotList: React.FC<BotListProps> = ({ botGroupId, initialBots, onBotDeleted }) => {
+const BotList: React.FC<BotListProps> = ({
+  botGroupId,
+  initialBots,
+  onBotDeleted,
+  canAddBot = true,
+}) => {
   const { data: bots = initialBots || [], isLoading: loading, error } = useBots(botGroupId);
 
   const {
@@ -61,9 +67,11 @@ const BotList: React.FC<BotListProps> = ({ botGroupId, initialBots, onBotDeleted
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-md text-foreground font-semibold">Bots</h3>
-        <CreateButton onClick={handleOpenCreateModal} size="sm" variant="outline">
-          Add Bot
-        </CreateButton>
+        {canAddBot && (
+          <CreateButton onClick={handleOpenCreateModal} size="sm" variant="outline">
+            Add Bot
+          </CreateButton>
+        )}
       </div>
 
       {loading ? (
