@@ -2,6 +2,8 @@ import React from 'react';
 
 import { FileText } from 'lucide-react';
 
+import { useIsProfessor, useUser } from '@/hooks/queries/useUser';
+
 import ItemActions from '@/components/widgets/actions/ItemActions';
 
 import { Bot } from '@/types/bot';
@@ -14,6 +16,9 @@ interface BotItemProps {
 }
 
 const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView }) => {
+  const user = useUser();
+  const isProfessor = useIsProfessor();
+  const canManage = isProfessor && user?.id === bot.createdById;
   return (
     <div className="bg-background flex items-center justify-between rounded border p-3">
       <div className="flex-1">
@@ -46,6 +51,7 @@ const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView }) => {
           viewTitle="View bot details"
           chatTo={`/chat/${bot.id}`}
           chatTitle="Chat with this bot"
+          canManage={canManage}
         />
       </div>
     </div>

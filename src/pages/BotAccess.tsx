@@ -56,7 +56,7 @@ const BotAccess: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const groups = await botGroupService.getBotGroups();
+        const groups = await botGroupService.getBotGroups({ ownedOnly: true });
         setBotGroups(groups);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load bot groups';

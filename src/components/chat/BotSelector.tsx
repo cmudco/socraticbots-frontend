@@ -2,9 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useChatBots } from '@/hooks/queries/useChat';
+import { useUser } from '@/hooks/queries/useUser';
 
 import { useConversationStore } from '@/stores/core/conversationStore';
 
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -18,6 +20,7 @@ import { Bot } from '@/types/bot';
 const BotSelector: React.FC = () => {
   const { data: bots, isLoading, error } = useChatBots();
   const { setActiveBot, currentBotId, clearActiveConversation } = useConversationStore();
+  const user = useUser();
   const navigate = useNavigate();
 
   const handleBotChange = async (botId: string) => {
@@ -59,14 +62,30 @@ const BotSelector: React.FC = () => {
         </SelectTrigger>
         <SelectContent>
           {bots && bots.length > 0 ? (
-            bots.map((bot: Bot) => (
-              <SelectItem key={bot.id} value={bot.id.toString()}>
-                <div className="flex flex-col">
-                  <span className="font-medium">{bot.title}</span>
-                  <span className="text-muted-foreground text-xs">{bot.subject}</span>
-                </div>
-              </SelectItem>
-            ))
+            bots.map((bot: Bot) => {
+              const isCreator = user?.id === bot.createdById;
+              const redeemed = !!bot.redeemed;
+              return (
+                <SelectItem key={bot.id} value={bot.id.toString()}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{bot.title}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground text-xs">{bot.subject}</span>
+                      {isCreator && (
+                        <Badge variant="default" className="h-4 px-1.5 py-0 text-[10px]">
+                          Creator
+                        </Badge>
+                      )}
+                      {redeemed && (
+                        <Badge variant="green" className="h-4 px-1.5 py-0 text-[10px]">
+                          Redeemed
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </SelectItem>
+              );
+            })
           ) : (
             <div className="text-muted-foreground px-2 py-1.5 text-sm">No bots available</div>
           )}
