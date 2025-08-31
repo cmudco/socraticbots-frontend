@@ -19,13 +19,11 @@ import { Bot } from '@/types/bot';
 
 const BotSelector: React.FC = () => {
   const { data: bots, isLoading, error } = useChatBots();
-  const { setActiveBot, currentBotId, clearActiveConversation } = useConversationStore();
+  const { setActiveBot, currentBotId } = useConversationStore();
   const user = useUser();
   const navigate = useNavigate();
 
   const handleBotChange = async (botId: string) => {
-    clearActiveConversation();
-
     try {
       // Find the full bot object and set it directly
       const selectedBot = bots?.find(bot => bot.id.toString() === botId);

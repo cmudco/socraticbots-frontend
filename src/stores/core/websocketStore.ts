@@ -17,7 +17,7 @@ export interface WebSocketState {
 export interface WebSocketActions {
   // Connection management
   connect: (socketUrl: string) => Promise<void>;
-  disconnect: () => void;
+  disconnect: () => Promise<void>;
   setError: (error: string | null) => void;
   
   // Message handling
@@ -51,8 +51,12 @@ export const useWebSocketStore = create<WebSocketStore>()(
 
     connect: async (socketUrl: string) => {
       const { isConnecting, isConnected } = get();
-      if (isConnecting || isConnected) {
+      if (isConnecting) {
         return;
+      }
+      
+      if (isConnected) {
+        await get().disconnect();
       }
 
       return new Promise<void>((resolve, reject) => {
@@ -110,11 +114,25 @@ export const useWebSocketStore = create<WebSocketStore>()(
     },
 
     disconnect: () => {
-      const { socket } = get();
-      if (socket) {
-        socket.close();
-      }
-      set(initialState);
+      return new Promise<void>((resolve) => {
+        const { socket } = get();
+        if (socket) {
+          try {
+            if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+              socket.close(1000, 'Switching conversations');
+            }
+          } catch (error) {
+            console.warn('Error closing WebSocket:', error);
+          }
+          
+          set(initialState);
+          
+          setTimeout(resolve, 50);
+        } else {
+          set(initialState);
+          resolve();
+        }
+      });
     },
 
     setError: (error: string | null) => {
