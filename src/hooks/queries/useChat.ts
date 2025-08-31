@@ -13,8 +13,10 @@ export const useChatBots = () =>
   useQuery({
     queryKey: [...chatKeys.all, 'bots'],
     queryFn: conversationService.getAvailableBots,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
 // All other functionality (messages, progress, streaming) is now handled via WebSocket
