@@ -23,6 +23,7 @@ export interface ConversationState {
   isTyping: boolean;
   inputMessage: string;
   isLoadingBot: boolean;
+  isAdvancedPrompt: boolean;
 
   // Bot context
   currentBotId: number | null;
@@ -55,6 +56,7 @@ export interface ConversationActions {
   // UI state
   setIsTyping: (isTyping: boolean) => void;
   setLoadingMessages: (loading: boolean) => void;
+  setIsAdvancedPrompt: (isAdvanced: boolean) => void;
 
   // Models
   loadAvailableModels: () => Promise<void>;
@@ -75,6 +77,7 @@ export const useConversationStore = create<ConversationStore>()(
     isTyping: false,
     inputMessage: '',
     isLoadingBot: false,
+    isAdvancedPrompt: false,
     currentBotId: null,
     currentBot: null,
     availableModels: [],
@@ -144,7 +147,7 @@ export const useConversationStore = create<ConversationStore>()(
     },
 
     sendMessage: async (message: string) => {
-      const { activeConversation, currentBot } = get();
+      const { activeConversation, currentBot, isAdvancedPrompt } = get();
       const websocketStore = useWebSocketStore.getState();
 
       if (!activeConversation || !websocketStore.isConnected) {
@@ -158,6 +161,7 @@ export const useConversationStore = create<ConversationStore>()(
         const payload: Record<string, unknown> = {
           message: message,
           enable_progress: true,
+          is_advanced: isAdvancedPrompt,
         };
 
         if (currentBot) {
@@ -244,6 +248,10 @@ export const useConversationStore = create<ConversationStore>()(
 
     setLoadingMessages: (loading: boolean) => {
       set({ isLoadingMessages: loading });
+    },
+
+    setIsAdvancedPrompt: (isAdvanced: boolean) => {
+      set({ isAdvancedPrompt: isAdvanced });
     },
 
     loadAvailableModels: async () => {
