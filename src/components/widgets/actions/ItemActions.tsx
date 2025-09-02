@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { Edit, Eye, MessageSquare, Trash } from 'lucide-react';
+import { Edit, MessageSquare, Trash } from 'lucide-react';
 
 import { useIsProfessor } from '@/hooks/queries/useUser';
 
@@ -26,10 +26,10 @@ interface ItemActionsProps {
 const ItemActions: React.FC<ItemActionsProps> = ({
   onEdit,
   onDelete,
-  onView,
+  // onView,
   editTitle = 'Edit',
   deleteTitle = 'Delete',
-  viewTitle = 'View details',
+  // viewTitle = 'View details',
   chatTo,
   chatTitle = 'Open chat',
   canManage = true,
@@ -84,7 +84,7 @@ const ItemActions: React.FC<ItemActionsProps> = ({
           </Button>
         </Link>
       )}
-      {onView && (
+      {/* {onView && (
         <Button
           onClick={onView}
           variant="ghost"
@@ -95,7 +95,7 @@ const ItemActions: React.FC<ItemActionsProps> = ({
           <Eye size={14} className="mr-1" />
           View
         </Button>
-      )}
+      )} */}
     </>
   );
 };
