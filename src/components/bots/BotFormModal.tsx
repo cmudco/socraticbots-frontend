@@ -61,6 +61,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     chatPrompt,
     trackingPrompt,
     learningGoals,
+    isAdvanced,
     chatModelDareId,
     trackingModelDareId,
     accessCode,
@@ -123,6 +124,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         ...(chatPrompt && { chatPrompt }),
         ...(trackingPrompt && { trackingPrompt }),
         ...(learningGoals && { learningGoals }),
+        isAdvanced,
       };
 
       if (isEdit && bot) {
@@ -156,6 +158,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     chatModelDareId,
     trackingModelDareId,
     accessCode,
+    isAdvanced,
     isEdit,
     bot,
     updateBotMutation,

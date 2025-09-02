@@ -2,15 +2,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
+import { botService } from '@/services/bots.service';
+
 import {
   Bot,
-  CreateBotRequest,
-  UpdateBotRequest,
   BotModelPreferenceRequest,
   BotPromptRequest,
+  CreateBotRequest,
+  UpdateBotRequest,
 } from '@/types/bot';
 
-import { botService } from '@/services/bots.service';
 import { botGroupKeys } from './useBotGroups';
 
 export const botKeys = {
@@ -18,8 +19,7 @@ export const botKeys = {
   lists: () => [...botKeys.all, 'list'] as const,
   list: (botGroupId: number) => [...botKeys.lists(), botGroupId] as const,
   details: () => [...botKeys.all, 'detail'] as const,
-  detail: (botGroupId: number, botId: number) =>
-    [...botKeys.details(), botGroupId, botId] as const,
+  detail: (botGroupId: number, botId: number) => [...botKeys.details(), botGroupId, botId] as const,
 };
 
 /**
@@ -128,9 +128,7 @@ export const useUpdateBot = () => {
 
       // Update the bot in the list
       queryClient.setQueryData<Bot[]>(botKeys.list(botGroupId), oldBots => {
-        return oldBots
-          ? oldBots.map(bot => (bot.id === botId ? updatedBot : bot))
-          : [updatedBot];
+        return oldBots ? oldBots.map(bot => (bot.id === botId ? updatedBot : bot)) : [updatedBot];
       });
     },
     onError: error => {
@@ -174,10 +172,14 @@ export const useAttachFiles = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ botGroupId, botId, fileIds }: { 
-      botGroupId: number; 
-      botId: number; 
-      fileIds: number[] 
+    mutationFn: ({
+      botGroupId,
+      botId,
+      fileIds,
+    }: {
+      botGroupId: number;
+      botId: number;
+      fileIds: number[];
     }) => botService.attachFiles(botGroupId, botId, fileIds),
     onSuccess: (_, { botGroupId, botId }) => {
       // Refetch the bot to get updated file information
@@ -197,10 +199,14 @@ export const useDetachFiles = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ botGroupId, botId, fileIds }: { 
-      botGroupId: number; 
-      botId: number; 
-      fileIds: number[] 
+    mutationFn: ({
+      botGroupId,
+      botId,
+      fileIds,
+    }: {
+      botGroupId: number;
+      botId: number;
+      fileIds: number[];
     }) => botService.detachFiles(botGroupId, botId, fileIds),
     onSuccess: (_, { botGroupId, botId }) => {
       // Refetch the bot to get updated file information
@@ -209,6 +215,30 @@ export const useDetachFiles = () => {
     },
     onError: error => {
       console.error('Failed to detach files:', error);
+    },
+  });
+};
+
+/**
+ * Clone a bot
+ */
+export const useCloneBot = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ botGroupId, botId }: { botGroupId: number; botId: number }) =>
+      botService.cloneBot(botGroupId, botId),
+    onSuccess: (clonedBot: Bot, { botGroupId }) => {
+      // Append to list
+      queryClient.setQueryData<Bot[]>(botKeys.list(botGroupId), oldBots => {
+        return oldBots ? [...oldBots, clonedBot] : [clonedBot];
+      });
+      // Invalidate counts on group
+      queryClient.invalidateQueries({ queryKey: botGroupKeys.detail(botGroupId) });
+      queryClient.invalidateQueries({ queryKey: botGroupKeys.lists() });
+    },
+    onError: error => {
+      console.error('Failed to clone bot:', error);
     },
   });
 };

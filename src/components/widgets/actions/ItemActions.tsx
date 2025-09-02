@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { Edit, MessageSquare, Trash } from 'lucide-react';
+import { Copy, Edit, MessageSquare, Trash } from 'lucide-react';
 
 import { useIsProfessor } from '@/hooks/queries/useUser';
 
@@ -10,9 +10,11 @@ import { Button } from '@/components/ui/button';
 interface ItemActionsProps {
   onEdit?: () => void;
   onDelete?: () => void;
+  onClone?: () => void;
   onView?: () => void;
   editTitle?: string;
   deleteTitle?: string;
+  cloneTitle?: string;
   viewTitle?: string;
   chatTo?: string;
   chatTitle?: string;
@@ -26,10 +28,10 @@ interface ItemActionsProps {
 const ItemActions: React.FC<ItemActionsProps> = ({
   onEdit,
   onDelete,
-  // onView,
+  onClone,
   editTitle = 'Edit',
   deleteTitle = 'Delete',
-  // viewTitle = 'View details',
+  cloneTitle = 'Clone',
   chatTo,
   chatTitle = 'Open chat',
   canManage = true,
@@ -51,6 +53,18 @@ const ItemActions: React.FC<ItemActionsProps> = ({
           >
             <Edit size={14} className="mr-1" />
             Edit
+          </Button>
+        )}
+        {onClone && (
+          <Button
+            onClick={onClone}
+            variant="ghost"
+            size="sm"
+            className={`${buttonClass} hover:bg-accent hover:text-accent-foreground`}
+            title={cloneTitle}
+          >
+            <Copy size={14} className="mr-1" />
+            Clone
           </Button>
         )}
         {onDelete && (
