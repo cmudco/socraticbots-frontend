@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useBots } from '@/hooks/queries/useBots';
+import { useBots , useCloneBot } from '@/hooks/queries/useBots';
 
 import { useModalStore } from '@/stores/ui/modalStore';
 import { useUiStore } from '@/stores/ui/uiStore';
@@ -28,6 +28,7 @@ const BotList: React.FC<BotListProps> = ({
   canAddBot = true,
 }) => {
   const { data: bots = initialBots || [], isLoading: loading, error } = useBots(botGroupId);
+  const cloneBotMutation = useCloneBot();
 
   const {
     botFormModal,
@@ -54,6 +55,10 @@ const BotList: React.FC<BotListProps> = ({
 
   const handleDeleteBot = (bot: Bot) => {
     openDeleteBotModal(botGroupId, bot);
+  };
+
+  const handleCloneBot = (bot: Bot) => {
+    cloneBotMutation.mutate({ botGroupId, botId: bot.id });
   };
 
   const handleConfirmDelete = (botId: number) => {
@@ -92,6 +97,7 @@ const BotList: React.FC<BotListProps> = ({
               onEdit={() => handleOpenEditModal(bot)}
               onDelete={() => handleDeleteBot(bot)}
               onView={() => handleOpenViewModal(bot)}
+              onClone={() => handleCloneBot(bot)}
             />
           ))}
         </div>
