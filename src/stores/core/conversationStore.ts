@@ -41,7 +41,7 @@ export interface ConversationState {
 export interface ConversationActions {
   // Conversation management
   setActiveBot: (bot: Bot) => Promise<void>;
-  clearActiveConversation: () => void;
+  clearActiveConversation: () => Promise<void>;
 
   // Message handling
   sendMessage: (message: string) => Promise<void>;
@@ -87,12 +87,19 @@ export const useConversationStore = create<ConversationStore>()(
 
     // Actions
     setActiveBot: async (bot: Bot) => {
+      const { isLoadingBot } = get();
+      
+      if (isLoadingBot) {
+        return;
+      }
+
       try {
         const botId = bot.id;
-
         set({ isLoadingBot: true });
 
-        // Set the bot directly
+        const websocketStore = useWebSocketStore.getState();
+        await websocketStore.disconnect();
+
         set({
           currentBotId: botId,
           currentBot: bot,
@@ -105,7 +112,6 @@ export const useConversationStore = create<ConversationStore>()(
         const conversation = await conversationService.getOrCreateBotConversation(botId);
         set({ activeConversation: conversation });
 
-        const websocketStore = useWebSocketStore.getState();
         const authToken = localStorage.getItem('access_token');
         if (!authToken) {
           throw new Error('No authentication token found');
@@ -127,10 +133,10 @@ export const useConversationStore = create<ConversationStore>()(
       }
     },
 
-    clearActiveConversation: () => {
+    clearActiveConversation: async () => {
       // Disconnect WebSocket
       const websocketStore = useWebSocketStore.getState();
-      websocketStore.disconnect();
+      await websocketStore.disconnect();
 
       set({
         activeConversation: null,
