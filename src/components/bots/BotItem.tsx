@@ -13,9 +13,10 @@ interface BotItemProps {
   onEdit: () => void;
   onDelete: () => void;
   onView?: () => void;
+  onClone?: () => void;
 }
 
-const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView }) => {
+const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView, onClone }) => {
   const user = useUser();
   const isProfessor = useIsProfessor();
   const canManage = isProfessor && user?.id === bot.createdById;
@@ -46,6 +47,7 @@ const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView }) => {
           onEdit={onEdit}
           onDelete={onDelete}
           onView={onView}
+          onClone={onClone}
           editTitle="Edit bot"
           deleteTitle="Delete bot"
           viewTitle="View bot details"

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { AlertTriangle, BookOpen, Clock, Info, Loader2, Trash2 } from 'lucide-react';
+import { AlertTriangle, BookOpen, Clock, Loader2, Trash2 } from 'lucide-react';
 
 import { useConversationStore, useMessages } from '@/stores/core/conversationStore';
 
@@ -14,8 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
 
 import BotSelector from './BotSelector';
 import ExportButton from './ExportButton';
@@ -23,8 +21,6 @@ import ExportButton from './ExportButton';
 const ChatHeader: React.FC = () => {
   const { currentBotId, currentBot, setActiveBot, activeConversation, deleteCurrentConversation } =
     useConversationStore();
-  const isAdvancedPrompt = useConversationStore(s => s.isAdvancedPrompt);
-  const setIsAdvancedPrompt = useConversationStore(s => s.setIsAdvancedPrompt);
   const messages = useMessages();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -86,48 +82,18 @@ const ChatHeader: React.FC = () => {
               </div>
             </div>
 
-            {/* Advanced Prompt toggle + actions */}
-            <div className="flex items-center gap-3">
+            {messages.length > 0 && (
               <div className="flex items-center gap-2">
-                <Switch
-                  id="advanced-prompt-toggle"
-                  checked={isAdvancedPrompt}
-                  onCheckedChange={setIsAdvancedPrompt}
-                />
-                <label
-                  htmlFor="advanced-prompt-toggle"
-                  className="text-foreground/80 text-sm select-none"
+                <ExportButton />
+                <button
+                  onClick={() => setIsConfirmOpen(true)}
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors"
+                  title="Reset conversation and learning progress"
                 >
-                  Advanced Prompt
-                </label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                      aria-label="What is Advanced Prompt?"
-                    >
-                      <Info className="h-4 w-4" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72 text-sm" align="end">
-                    Please use default settings unless you understand advanced prompt construction.
-                  </PopoverContent>
-                </Popover>
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
-
-              {messages.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <ExportButton />
-                  <button
-                    onClick={() => setIsConfirmOpen(true)}
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors"
-                    title="Reset conversation and learning progress"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </header>
