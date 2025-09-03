@@ -1,10 +1,8 @@
 import { METHOD } from '@/constants/requests';
+
 import { baseRequest } from '@/utils/baseRequest';
-import {
-  Bot,
-  CreateBotRequest,
-  UpdateBotRequest
-} from '@/types/bot';
+
+import { Bot, CreateBotRequest, UpdateBotRequest } from '@/types/bot';
 
 class BotService {
   async getBots(botGroupId: number): Promise<Bot[]> {
@@ -30,35 +28,25 @@ class BotService {
       chatPrompt?: string;
       trackingPrompt?: string;
       learningGoals?: string;
+      isAdvanced?: boolean;
     }
   ): Promise<Bot> {
     try {
-      // Transform frontend field names to backend field names
-      const requestData = {
-        ...botData,
-        // Access code handling
-        ...(botData.accessCode !== undefined && { access_code: botData.accessCode }),
-        // Model preferences inline
-        ...(botData.chatModelDareId !== undefined && { chat_model_dare_id: botData.chatModelDareId }),
-        ...(botData.trackingModelDareId !== undefined && { tracking_model_dare_id: botData.trackingModelDareId }),
-        // Prompts inline (already have correct names)
-        ...(botData.greeting !== undefined && { greeting: botData.greeting }),
-        ...(botData.chatPrompt !== undefined && { chat_prompt: botData.chatPrompt }),
-        ...(botData.trackingPrompt !== undefined && { tracking_prompt: botData.trackingPrompt }),
-        ...(botData.learningGoals !== undefined && { learning_goals: botData.learningGoals }),
-      };
-
       const newBot = await baseRequest<Bot>({
         url: `bot-groups/${botGroupId}/bots/`,
         method: METHOD.POST,
-        data: requestData,
+        data: botData,
       });
 
       // If we have nested data, refetch to get the complete bot with relationships
-      const hasNestedData = botData.chatModelDareId || botData.trackingModelDareId || 
-                           botData.greeting || botData.chatPrompt || 
-                           botData.trackingPrompt || botData.learningGoals;
-      
+      const hasNestedData =
+        botData.chatModelDareId ||
+        botData.trackingModelDareId ||
+        botData.greeting ||
+        botData.chatPrompt ||
+        botData.trackingPrompt ||
+        botData.learningGoals;
+
       if (hasNestedData) {
         return await this.getBot(botGroupId, newBot.id);
       }
@@ -80,28 +68,14 @@ class BotService {
       chatPrompt?: string;
       trackingPrompt?: string;
       learningGoals?: string;
+      isAdvanced?: boolean;
     }
   ): Promise<Bot> {
     try {
-      // Transform frontend field names to backend field names
-      const requestData = {
-        ...botData,
-        // Access code handling
-        ...(botData.accessCode !== undefined && { access_code: botData.accessCode }),
-        // Model preferences inline
-        ...(botData.chatModelDareId !== undefined && { chat_model_dare_id: botData.chatModelDareId }),
-        ...(botData.trackingModelDareId !== undefined && { tracking_model_dare_id: botData.trackingModelDareId }),
-        // Prompts inline (already have correct names)
-        ...(botData.greeting !== undefined && { greeting: botData.greeting }),
-        ...(botData.chatPrompt !== undefined && { chat_prompt: botData.chatPrompt }),
-        ...(botData.trackingPrompt !== undefined && { tracking_prompt: botData.trackingPrompt }),
-        ...(botData.learningGoals !== undefined && { learning_goals: botData.learningGoals }),
-      };
-
       const updatedBot = await baseRequest<Bot>({
         url: `bot-groups/${botGroupId}/bots/${botId}/`,
         method: METHOD.PATCH,
-        data: requestData,
+        data: botData,
       });
 
       return updatedBot;
@@ -118,6 +92,12 @@ class BotService {
     });
   }
 
+  async cloneBot(botGroupId: number, botId: number): Promise<Bot> {
+    return baseRequest<Bot>({
+      url: `bot-groups/${botGroupId}/bots/${botId}/clone/`,
+      method: METHOD.POST,
+    });
+  }
 
   async attachFiles(botGroupId: number, botId: number, fileIds: number[]): Promise<void> {
     return baseRequest<void>({
@@ -134,7 +114,6 @@ class BotService {
       data: { file_ids: fileIds },
     });
   }
-
 }
 
 export const botService = new BotService();

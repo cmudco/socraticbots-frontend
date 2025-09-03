@@ -17,6 +17,7 @@ interface BotFormState {
   chatPrompt: string;
   trackingPrompt: string;
   learningGoals: string;
+  isAdvanced: boolean;
   chatModelDareId: number | null;
   trackingModelDareId: number | null;
   accessCode: string;
@@ -31,6 +32,7 @@ interface BotFormState {
   initEditBot: (bot: Bot) => void;
   setSubmitting: (submitting: boolean) => void;
   updateField: (field: string, value: string) => void;
+  setIsAdvanced: (value: boolean) => void;
   updateModelField: (field: string, value: number | null) => void;
   updateAccessCode: (code: string) => void;
   setFieldTouched: (field: string, touched: boolean) => void;
@@ -48,6 +50,7 @@ const initialFormState = {
   chatPrompt: '',
   trackingPrompt: '',
   learningGoals: '',
+  isAdvanced: false,
   chatModelDareId: null,
   trackingModelDareId: null,
   accessCode: '',
@@ -115,6 +118,7 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       chatPrompt: bot.prompts?.chatPrompt || '',
       trackingPrompt: bot.prompts?.trackingPrompt || '',
       learningGoals: bot.prompts?.learningGoals || '',
+      isAdvanced: !!bot.isAdvanced,
       chatModelDareId: bot.modelPreference?.chatModelDareId || null,
       trackingModelDareId: bot.modelPreference?.trackingModelDareId || null,
       accessCode: bot.accessCode?.code || '',
@@ -133,6 +137,8 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       },
     }));
   },
+
+  setIsAdvanced: (value: boolean) => set({ isAdvanced: value }),
 
   updateModelField: (field: string, value: number | null) => {
     set({

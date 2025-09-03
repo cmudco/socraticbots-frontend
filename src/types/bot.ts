@@ -24,6 +24,7 @@ export interface BotAccessCode {
 
 export interface Bot {
   id: number;
+  isAdvanced?: boolean;
   botGroup: {
     id: number;
     title: string;
