@@ -21,6 +21,8 @@ interface BotFormState {
   chatModelDareId: number | null;
   trackingModelDareId: number | null;
   accessCode: string;
+  accessCodeLimit: number;
+  accessCodeUsed: number;
 
   touched: Record<string, boolean>;
   errors: Record<string, string>;
@@ -35,6 +37,8 @@ interface BotFormState {
   setIsAdvanced: (value: boolean) => void;
   updateModelField: (field: string, value: number | null) => void;
   updateAccessCode: (code: string) => void;
+  updateAccessCodeLimit: (limit: number) => void;
+  updateAccessCodeUsed: (used: number) => void;
   setFieldTouched: (field: string, touched: boolean) => void;
   validateField: (field: string, value: string) => void;
   validateForm: () => boolean;
@@ -54,6 +58,8 @@ const initialFormState = {
   chatModelDareId: null,
   trackingModelDareId: null,
   accessCode: '',
+  accessCodeLimit: 0,
+  accessCodeUsed: 0,
 };
 
 const initialValidationState = {
@@ -122,6 +128,8 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       chatModelDareId: bot.modelPreference?.chatModelDareId || null,
       trackingModelDareId: bot.modelPreference?.trackingModelDareId || null,
       accessCode: bot.accessCode?.code || '',
+      accessCodeLimit: bot.accessCode?.limit ?? 0,
+      accessCodeUsed: bot.accessCode?.used ?? 0,
       ...initialValidationState,
     }),
 
@@ -148,6 +156,16 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
 
   updateAccessCode: (code: string) => {
     set({ accessCode: code });
+  },
+
+  updateAccessCodeLimit: (limit: number) => {
+    const normalized = Number.isFinite(limit) && limit >= 0 ? Math.floor(limit) : 0;
+    set({ accessCodeLimit: normalized });
+  },
+
+  updateAccessCodeUsed: (used: number) => {
+    const normalized = Number.isFinite(used) && used >= 0 ? Math.floor(used) : 0;
+    set({ accessCodeUsed: normalized });
   },
 
   setFieldTouched: (field: string, touched: boolean) => {
