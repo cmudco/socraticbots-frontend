@@ -25,6 +25,8 @@ export interface BotAccessCode {
 export interface Bot {
   id: number;
   isAdvanced?: boolean;
+  maxContextSnippets?: number;
+  documentSimilarityThreshold?: number;
   botGroup: {
     id: number;
     title: string;
@@ -53,6 +55,8 @@ export interface CreateBotRequest {
   subject: string;
   topic: string;
   accessCode?: string;
+  maxContextSnippets?: number;
+  documentSimilarityThreshold?: number;
 }
 
 export interface UpdateBotRequest {
@@ -60,6 +64,8 @@ export interface UpdateBotRequest {
   subject?: string;
   topic?: string;
   accessCode?: string;
+  maxContextSnippets?: number;
+  documentSimilarityThreshold?: number;
 }
 
 export interface BotModelPreferenceRequest {
