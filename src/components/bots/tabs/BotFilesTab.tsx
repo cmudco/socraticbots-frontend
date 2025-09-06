@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AlertCircle, Clock, Download, File, Settings, Trash2, Upload } from 'lucide-react';
+import { AlertCircle, Clock, Download, File, Info, Settings, Trash2, Upload } from 'lucide-react';
 
 import { useBotFiles, useRemoveBotFile, useUploadBotFiles } from '@/hooks/queries/useBotFiles';
 import { useBot, useUpdateBot } from '@/hooks/queries/useBots';
+import { useUpdateChunkSettings } from '@/hooks/queries/useChunkSettings';
+import { useUser } from '@/hooks/queries/useUser';
 
 import { BotFile } from '@/services/botFiles.service';
 
@@ -43,6 +45,19 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
   const { data: filesData, isLoading, error } = useBotFiles(botGroupId, botId, { enablePolling });
   const uploadMutation = useUploadBotFiles();
   const removeMutation = useRemoveBotFile();
+  const updateChunkSettings = useUpdateChunkSettings();
+  const user = useUser();
+  const [chunkSize, setChunkSize] = useState<number>(1000);
+  const [overlapSize, setOverlapSize] = useState<number>(100);
+  const [chunkPopoverOpen, setChunkPopoverOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      if (typeof user.chunkSize === 'number') setChunkSize(user.chunkSize);
+      if (typeof user.overlapSize === 'number') setOverlapSize(user.overlapSize);
+    }
+  }, [user]);
 
   const updateBot = useUpdateBot();
   const { data: botData } = useBot(botGroupId, botId, true);
@@ -143,12 +158,19 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
         validFiles.forEach(file => dataTransfer.items.add(file));
         const properFileList = dataTransfer.files;
 
+        const effectiveChunkSize =
+          user && typeof user.chunkSize === 'number' ? user.chunkSize : chunkSize;
+        const effectiveOverlapSize =
+          user && typeof user.overlapSize === 'number' ? user.overlapSize : overlapSize;
+
         uploadMutation.mutate(
           {
             botGroupId,
             botId,
             uploadData: {
               files: properFileList,
+              chunkSize: effectiveChunkSize,
+              overlapSize: effectiveOverlapSize,
             },
           },
           {
@@ -167,7 +189,7 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
         );
       }
     },
-    [botGroupId, botId, uploadMutation]
+    [botGroupId, botId, uploadMutation, user, chunkSize, overlapSize]
   );
 
   const handleDrop = useCallback(
@@ -185,6 +207,19 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       handleFilesSelected(e.target.files);
+    }
+  };
+
+  const handleSaveChunkSettings = async () => {
+    setFormError(null);
+    try {
+      await updateChunkSettings.mutateAsync({ chunkSize, overlapSize });
+      setChunkPopoverOpen(false);
+      alert('Chunk settings saved.');
+    } catch (error) {
+      console.error('Failed to update chunk settings', error);
+      setFormError('Failed to update settings. Please try again.');
+      alert('Failed to update chunk settings.');
     }
   };
 
@@ -239,6 +274,75 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
+        <div className="flex items-center justify-end">
+          <Popover
+            open={chunkPopoverOpen}
+            onOpenChange={open => {
+              setChunkPopoverOpen(open);
+              if (open && user) {
+                if (typeof user.chunkSize === 'number') setChunkSize(user.chunkSize);
+                if (typeof user.overlapSize === 'number') setOverlapSize(user.overlapSize);
+              }
+            }}
+            modal
+          >
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Chunk settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              side="bottom"
+              sideOffset={8}
+              className="w-[24rem]"
+              onOpenAutoFocus={e => e.preventDefault()}
+              onCloseAutoFocus={e => e.preventDefault()}
+            >
+              <div className="mb-2">
+                <h3 className="text-foreground text-sm font-semibold">Chunk Settings</h3>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-foreground block text-sm font-medium">Chunk Size</label>
+                  <div className="text-muted-foreground mb-2 text-xs">Recommended: 1000</div>
+                  <Input
+                    type="number"
+                    value={chunkSize}
+                    onChange={e => setChunkSize(parseInt(e.target.value || '0', 10))}
+                    className="h-9 w-full"
+                  />
+                </div>
+                <div>
+                  <label className="text-foreground block text-sm font-medium">Overlap Size</label>
+                  <div className="text-muted-foreground mb-2 text-xs">Recommended: 100</div>
+                  <Input
+                    type="number"
+                    value={overlapSize}
+                    onChange={e => setOverlapSize(parseInt(e.target.value || '0', 10))}
+                    className="h-9 w-full"
+                  />
+                </div>
+              </div>
+              {formError && <div className="text-destructive mt-2 text-xs">{formError}</div>}
+              <div className="mt-3 flex gap-2">
+                <Button
+                  type="button"
+                  onClick={handleSaveChunkSettings}
+                  disabled={updateChunkSettings.isPending}
+                >
+                  {updateChunkSettings.isPending ? 'Saving...' : 'Save Settings'}
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
         <Upload className="text-muted-foreground mx-auto h-10 w-10" />
         <div className="mt-3">
           <p className="text-foreground font-medium">
@@ -257,6 +361,39 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
           <p className="text-muted-foreground mt-1 text-xs">
             Supports PDF, DOC, DOCX, TXT files (Max 10MB each)
           </p>
+          <div className="text-muted-foreground mt-2 inline-flex items-center justify-center gap-1 text-xs">
+            <span>
+              Chunk settings: size {user?.chunkSize ?? chunkSize}, overlap{' '}
+              {user?.overlapSize ?? overlapSize}
+            </span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="hover:text-foreground"
+                  aria-label="Chunking details"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 text-xs" align="center">
+                <div className="space-y-2">
+                  <p>Files are split into overlapping chunks for improved search and retrieval.</p>
+                  <ul className="list-disc space-y-1 pl-4">
+                    <li>
+                      <span className="font-medium">Chunk Size:</span> characters per piece (larger
+                      keeps more context).
+                    </li>
+                    <li>
+                      <span className="font-medium">Overlap:</span> characters carried to the next
+                      chunk (helps continuity).
+                    </li>
+                  </ul>
+                  <p>Adjust via the gear icon to fit your content.</p>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
 
