@@ -85,7 +85,7 @@ export const useConversationStore = create<ConversationStore>()(
     // Actions
     setActiveBot: async (bot: Bot) => {
       const { isLoadingBot } = get();
-      
+
       if (isLoadingBot) {
         return;
       }
@@ -173,6 +173,12 @@ export const useConversationStore = create<ConversationStore>()(
           payload.tracking_prompt = currentBot.prompts?.trackingPrompt;
           payload.learning_goals = currentBot.prompts?.learningGoals;
           payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
+          if (currentBot.maxContextSnippets !== undefined) {
+            payload.max_context_snippets = currentBot.maxContextSnippets;
+          }
+          if (currentBot.documentSimilarityThreshold !== undefined) {
+            payload.document_similarity_threshold = currentBot.documentSimilarityThreshold;
+          }
           payload.bot_meta = {
             title: currentBot.title,
             subject: currentBot.subject,

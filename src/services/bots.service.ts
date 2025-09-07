@@ -29,6 +29,8 @@ class BotService {
       trackingPrompt?: string;
       learningGoals?: string;
       isAdvanced?: boolean;
+      maxContextSnippets?: number;
+      documentSimilarityThreshold?: number;
     }
   ): Promise<Bot> {
     try {
@@ -45,7 +47,9 @@ class BotService {
         botData.greeting ||
         botData.chatPrompt ||
         botData.trackingPrompt ||
-        botData.learningGoals;
+        botData.learningGoals ||
+        botData.maxContextSnippets !== undefined ||
+        botData.documentSimilarityThreshold !== undefined;
 
       if (hasNestedData) {
         return await this.getBot(botGroupId, newBot.id);
@@ -69,6 +73,8 @@ class BotService {
       trackingPrompt?: string;
       learningGoals?: string;
       isAdvanced?: boolean;
+      maxContextSnippets?: number;
+      documentSimilarityThreshold?: number;
     }
   ): Promise<Bot> {
     try {

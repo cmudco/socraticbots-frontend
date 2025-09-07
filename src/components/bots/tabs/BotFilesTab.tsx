@@ -1,15 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AlertCircle, Clock, Download, File, Trash2, Upload } from 'lucide-react';
+import { AlertCircle, Clock, Download, File, Settings, Trash2, Upload } from 'lucide-react';
 
 import { useBotFiles, useRemoveBotFile, useUploadBotFiles } from '@/hooks/queries/useBotFiles';
+import { useBot, useUpdateBot } from '@/hooks/queries/useBots';
 
 import { BotFile } from '@/services/botFiles.service';
 
 import { FileStatus } from '@/utils/fileStatus';
+import { toast } from '@/utils/toast';
 
 import { FileStatusBadge } from '@/components/FileStatusBadge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface BotFilesTabProps {
   botGroupId: number;
@@ -39,6 +43,43 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
   const { data: filesData, isLoading, error } = useBotFiles(botGroupId, botId, { enablePolling });
   const uploadMutation = useUploadBotFiles();
   const removeMutation = useRemoveBotFile();
+
+  const updateBot = useUpdateBot();
+  const { data: botData } = useBot(botGroupId, botId, true);
+  const DEFAULT_MAX_SNIPPETS = 12;
+  const DEFAULT_SIMILARITY = 0;
+
+  const [maxSnippets, setMaxSnippets] = useState<string>(String(DEFAULT_MAX_SNIPPETS));
+  const [similarity, setSimilarity] = useState<string>(String(DEFAULT_SIMILARITY));
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    if (botData) {
+      setMaxSnippets(String(botData.maxContextSnippets ?? DEFAULT_MAX_SNIPPETS));
+      setSimilarity(String(botData.documentSimilarityThreshold ?? DEFAULT_SIMILARITY));
+    }
+  }, [botData]);
+
+  const handleSaveVectorSettings = useCallback(() => {
+    const parsedMax = parseInt(maxSnippets, 10);
+    const parsedThreshold = parseFloat(similarity);
+
+    const botData: Record<string, number> = {
+      ...(Number.isNaN(parsedMax) ? {} : { maxContextSnippets: parsedMax }),
+      ...(Number.isNaN(parsedThreshold) ? {} : { documentSimilarityThreshold: parsedThreshold }),
+    };
+
+    updateBot.mutate(
+      { botGroupId, botId, botData },
+      {
+        onSuccess: () => {
+          toast.success('Vector settings saved.');
+          setSettingsOpen(false);
+        },
+        onError: () => toast.error('Failed to save settings.'),
+      }
+    );
+  }, [botGroupId, botId, maxSnippets, similarity, updateBot]);
 
   // Enable polling when there are processing files
   useEffect(() => {
@@ -217,6 +258,73 @@ const BotFilesTab: React.FC<BotFilesTabProps> = ({ botGroupId, botId }) => {
             Supports PDF, DOC, DOCX, TXT files (Max 10MB each)
           </p>
         </div>
+      </div>
+
+      {/* Inline tools: Vector DB settings trigger on right */}
+      <div className="flex items-center justify-end">
+        <Popover open={settingsOpen} onOpenChange={setSettingsOpen} modal>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 px-2">
+              <Settings className="h-4 w-4" />
+              <span className="ml-2 hidden sm:inline">Vector Database Settings</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            side="bottom"
+            sideOffset={8}
+            className="w-[28rem]"
+            onOpenAutoFocus={e => e.preventDefault()}
+            onCloseAutoFocus={e => e.preventDefault()}
+          >
+            <div className="mb-2">
+              <h3 className="text-foreground text-sm font-semibold">Vector Database Settings</h3>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="text-foreground block text-sm font-medium">
+                  Max Context Snippets
+                </label>
+                <div className="text-muted-foreground mb-2 text-xs">
+                  Recommended: {DEFAULT_MAX_SNIPPETS}
+                </div>
+                <Input
+                  type="number"
+                  min={1}
+                  value={maxSnippets}
+                  onChange={e => setMaxSnippets(e.target.value.replace(/[^0-9]/g, ''))}
+                  className="h-9 w-full"
+                />
+              </div>
+              <div>
+                <label className="text-foreground block text-sm font-medium">
+                  Document Similarity Threshold
+                </label>
+                <div className="text-muted-foreground mb-2 text-xs">
+                  Recommended: {DEFAULT_SIMILARITY}
+                </div>
+                <Input
+                  type="number"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={similarity}
+                  onChange={e => setSimilarity(e.target.value.replace(/[^0-9.]/g, ''))}
+                  className="h-9 w-full"
+                />
+              </div>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <Button
+                type="button"
+                onClick={handleSaveVectorSettings}
+                disabled={updateBot.isPending}
+              >
+                Save Settings
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <input
