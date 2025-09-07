@@ -40,7 +40,12 @@ export const useBots = (botGroupId: number, enabled: boolean = true) => {
 /**
  * Get a single bot by ID
  */
-export const useBot = (botGroupId: number, botId: number, enabled: boolean = true) => {
+export const useBot = (
+  botGroupId: number,
+  botId: number,
+  enabled: boolean = true,
+  refetchInterval?: number
+) => {
   const isAuthenticated = useIsAuthenticated();
 
   return useQuery({
@@ -49,6 +54,7 @@ export const useBot = (botGroupId: number, botId: number, enabled: boolean = tru
     enabled: enabled && !!botGroupId && !!botId && isAuthenticated,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    refetchInterval,
   });
 };
 

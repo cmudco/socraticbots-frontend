@@ -19,7 +19,14 @@ interface BotDeploymentTabProps {
 
 const BotDeploymentTab: React.FC<BotDeploymentTabProps> = () => {
   const isProfessor = useIsProfessor();
-  const { accessCode, updateAccessCode } = useBotFormStore();
+  const {
+    accessCode,
+    accessCodeLimit,
+    accessCodeUsed,
+    updateAccessCode,
+    updateAccessCodeLimit,
+    updateAccessCodeUsed,
+  } = useBotFormStore();
   const [copySuccess, setCopySuccess] = useState(false);
   const [customCode, setCustomCode] = useState('');
 
@@ -45,6 +52,8 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = () => {
 
   const deleteAccessCode = () => {
     updateAccessCode('');
+    updateAccessCodeLimit(0);
+    updateAccessCodeUsed(0);
   };
 
   const handleCopyCode = async () => {
@@ -61,6 +70,14 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = () => {
 
   const handleAccessCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateAccessCode(e.target.value);
+  };
+
+  const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const num = val === '' ? 0 : Number(val);
+    if (!Number.isNaN(num)) {
+      updateAccessCodeLimit(num);
+    }
   };
 
   // Only show deployment tab for professors
@@ -146,6 +163,33 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = () => {
                 <p className="text-muted-foreground text-sm">
                   You can customize this access code to make it memorable for your students. Click
                   "Update Bot" to save changes.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <Label>Redemptions</Label>
+                <div className="text-sm">
+                  <span className="font-mono">
+                    {accessCodeUsed || 0} / {accessCodeLimit}
+                  </span>
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  Number of students who have redeemed this code.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="access-limit">Redemption Limit</Label>
+                <Input
+                  id="access-limit"
+                  type="number"
+                  min={0}
+                  value={accessCodeLimit}
+                  onChange={handleLimitChange}
+                  placeholder="0"
+                />
+                <p className="text-muted-foreground text-sm">
+                  Set how many students can redeem this code. 0 means no redemptions allowed.
                 </p>
               </div>
 

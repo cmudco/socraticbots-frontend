@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { FormikProps } from 'formik';
 import { Bot, Info } from 'lucide-react';
 
-import { useCreateBot, useUpdateBot } from '@/hooks/queries/useBots';
+import { useBot, useCreateBot, useUpdateBot } from '@/hooks/queries/useBots';
 import { useIsProfessor } from '@/hooks/queries/useUser';
 
 import { useBotFormStore } from '@/stores/forms/botFormStore';
@@ -65,6 +65,10 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     chatModelDareId,
     trackingModelDareId,
     accessCode,
+    accessCodeLimit,
+    updateAccessCode,
+    updateAccessCodeLimit,
+    updateAccessCodeUsed,
     setActiveTab,
     closeForm,
     setSubmitting,
@@ -76,6 +80,12 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
   const updateBotMutation = useUpdateBot();
 
   const isEdit = !!bot;
+  const { data: latestBot, refetch: refetchLatestBot } = useBot(
+    botGroupId,
+    bot?.id || 0,
+    isOpen && isEdit
+  );
+  const hasSyncedAccessRef = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -86,6 +96,57 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
       }
     }
   }, [isOpen, bot, initEditBot, initNewBot]);
+
+  // On modal open (edit), refetch first then sync access code values once
+  useEffect(() => {
+    if (!isOpen || !isEdit || hasSyncedAccessRef.current) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await refetchLatestBot();
+        const botData = result?.data || latestBot;
+        if (!cancelled && botData) {
+          const serverAccess = botData.accessCode;
+          if (serverAccess) {
+            if (serverAccess.code) updateAccessCode(serverAccess.code);
+            updateAccessCodeLimit(serverAccess.limit ?? 0);
+            updateAccessCodeUsed(serverAccess.used ?? 0);
+          }
+          hasSyncedAccessRef.current = true;
+        }
+      } catch {
+        // Fallback to current latestBot if refetch fails
+        if (!cancelled && latestBot) {
+          const serverAccess = latestBot.accessCode;
+          if (serverAccess) {
+            if (serverAccess.code) updateAccessCode(serverAccess.code);
+            updateAccessCodeLimit(serverAccess.limit ?? 0);
+            updateAccessCodeUsed(serverAccess.used ?? 0);
+          }
+          hasSyncedAccessRef.current = true;
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isOpen,
+    isEdit,
+    refetchLatestBot,
+    latestBot,
+    updateAccessCode,
+    updateAccessCodeLimit,
+    updateAccessCodeUsed,
+  ]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      hasSyncedAccessRef.current = false;
+    }
+  }, [isOpen]);
 
   const handleClose = useCallback(() => {
     if (!isSubmitting) {
@@ -115,7 +176,8 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         subject,
         topic,
         // Access code
-        ...(accessCode && { accessCode }),
+        ...(accessCode !== undefined && { accessCode }),
+        accessCodeLimit,
         // Model preferences
         ...(chatModelDareId && { chatModelDareId }),
         ...(trackingModelDareId && { trackingModelDareId }),
@@ -158,6 +220,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     chatModelDareId,
     trackingModelDareId,
     accessCode,
+    accessCodeLimit,
     isAdvanced,
     isEdit,
     bot,
