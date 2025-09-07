@@ -255,7 +255,7 @@ const Register: React.FC = () => {
                     disabled={isSubmitting}
                   />
 
-                  <div className="bg-primary/10 rounded-md p-3">
+                  <div className="bg-primary/60 rounded-md p-3">
                     <p className="text-primary-foreground text-sm">
                       Enter the access code provided by your instructor to join their course and
                       access chapter content.

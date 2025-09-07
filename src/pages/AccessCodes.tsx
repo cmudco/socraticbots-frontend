@@ -5,15 +5,6 @@ import { CheckCircle, Clock, Key } from 'lucide-react';
 
 import { accessCodeService } from '@/services/accessCodes.service';
 
-interface ApiError {
-  response?: {
-    data?: {
-      access_code?: string[];
-      error?: string;
-    };
-  };
-}
-
 const AccessCodes: React.FC = () => {
   const [accessCode, setAccessCode] = useState('');
   const [message, setMessage] = useState('');
@@ -39,12 +30,8 @@ const AccessCodes: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['bot-groups'] });
       queryClient.invalidateQueries({ queryKey: ['my-access-codes'] });
     },
-    onError: (error: ApiError) => {
-      const errorMessage =
-        error.response?.data?.access_code?.[0] ||
-        error.response?.data?.error ||
-        'Failed to redeem access code';
-      setMessage(errorMessage);
+    onError: (error: unknown) => {
+      setMessage(error instanceof Error ? error.message : 'Failed to redeem access code');
       setIsSuccess(false);
     },
   });

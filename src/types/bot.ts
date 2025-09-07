@@ -18,6 +18,8 @@ export interface BotPrompt {
 
 export interface BotAccessCode {
   code: string;
+  limit?: number;
+  used?: number;
   created_at: string;
   created_by: string;
 }
@@ -57,6 +59,7 @@ export interface CreateBotRequest {
   accessCode?: string;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
+  accessCodeLimit?: number;
 }
 
 export interface UpdateBotRequest {
@@ -66,6 +69,7 @@ export interface UpdateBotRequest {
   accessCode?: string;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
+  accessCodeLimit?: number;
 }
 
 export interface BotModelPreferenceRequest {
