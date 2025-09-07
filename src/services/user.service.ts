@@ -1,4 +1,5 @@
 import { METHOD } from '@/constants/requests';
+
 import { baseRequest } from '@/utils/baseRequest';
 
 export interface User {
@@ -10,6 +11,8 @@ export interface User {
   isActive: boolean;
   dateJoined: string;
   platform: string;
+  chunkSize?: number;
+  overlapSize?: number;
 }
 
 class UserService {
@@ -24,7 +27,7 @@ class UserService {
     // Clear tokens from localStorage
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
-    
+
     // Redirect to login
     window.location.href = '/login';
   }

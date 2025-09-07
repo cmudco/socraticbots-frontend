@@ -1,4 +1,5 @@
 import { METHOD } from '@/constants/requests';
+
 import { baseRequest } from '@/utils/baseRequest';
 
 export interface BotFile {
@@ -21,6 +22,8 @@ export interface BotFileUploadRequest {
   files: FileList;
   names?: string[];
   tags?: string[];
+  chunkSize?: number;
+  overlapSize?: number;
 }
 
 export interface BotFileListResponse {
@@ -48,25 +51,33 @@ class BotFileService {
     uploadData: BotFileUploadRequest
   ): Promise<BotFileListResponse> {
     const formData = new FormData();
-    
+
     // Add files and names to FormData (following DARE pattern)
-    Array.from(uploadData.files).forEach((file) => {
+    Array.from(uploadData.files).forEach(file => {
       formData.append('files', file);
       formData.append('names', file.name); // Always send the file name
     });
-    
+
     // Add additional custom names if provided (optional override)
     if (uploadData.names) {
       uploadData.names.forEach(name => {
         formData.append('names', name);
       });
     }
-    
+
     // Add optional tags
     if (uploadData.tags) {
       uploadData.tags.forEach(tag => {
         formData.append('tags', tag);
       });
+    }
+
+    // Include chunking settings if provided
+    if (typeof uploadData.chunkSize === 'number') {
+      formData.append('chunk_size', String(uploadData.chunkSize));
+    }
+    if (typeof uploadData.overlapSize === 'number') {
+      formData.append('overlap_size', String(uploadData.overlapSize));
     }
 
     return baseRequest<BotFileListResponse>({
@@ -89,7 +100,7 @@ class BotFileService {
     deleteFromDare = false
   ): Promise<void> {
     const params = deleteFromDare ? '?delete_from_dare=true' : '';
-    
+
     return baseRequest<void>({
       url: `files/bots/${botId}/${fileId}/${params}`,
       method: METHOD.DELETE,
