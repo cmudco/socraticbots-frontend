@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
+import ToastContainer from './components/ui/ToastContainer';
 import About from './pages/About';
 import AccessCodes from './pages/AccessCodes';
 import BotAccess from './pages/BotAccess';
@@ -18,6 +19,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <BrowserRouter>
+        <ToastContainer />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
