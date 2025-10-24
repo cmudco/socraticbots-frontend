@@ -23,6 +23,8 @@ export interface ConversationState {
   isTyping: boolean;
   inputMessage: string;
   isLoadingBot: boolean;
+  isProgressSidebarVisible: boolean;
+  isProgressCollapsed: boolean;
 
   // Bot context
   currentBotId: number | null;
@@ -55,6 +57,8 @@ export interface ConversationActions {
   // UI state
   setIsTyping: (isTyping: boolean) => void;
   setLoadingMessages: (loading: boolean) => void;
+  setProgressSidebarVisible: (visible: boolean) => void;
+  setProgressCollapsed: (collapsed: boolean) => void;
 
   // Models
   loadAvailableModels: () => Promise<void>;
@@ -75,6 +79,8 @@ export const useConversationStore = create<ConversationStore>()(
     isTyping: false,
     inputMessage: '',
     isLoadingBot: false,
+    isProgressSidebarVisible: true,
+    isProgressCollapsed: false,
     currentBotId: null,
     currentBot: null,
     availableModels: [],
@@ -173,6 +179,7 @@ export const useConversationStore = create<ConversationStore>()(
           payload.tracking_prompt = currentBot.prompts?.trackingPrompt;
           payload.learning_goals = currentBot.prompts?.learningGoals;
           payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
+          payload.web_search_enabled = Boolean(currentBot.webSearchEnabled || false);
           if (currentBot.maxContextSnippets !== undefined) {
             payload.max_context_snippets = currentBot.maxContextSnippets;
           }
@@ -257,6 +264,14 @@ export const useConversationStore = create<ConversationStore>()(
 
     setLoadingMessages: (loading: boolean) => {
       set({ isLoadingMessages: loading });
+    },
+
+    setProgressSidebarVisible: (visible: boolean) => {
+      set({ isProgressSidebarVisible: visible });
+    },
+
+    setProgressCollapsed: (collapsed: boolean) => {
+      set({ isProgressCollapsed: collapsed });
     },
 
     loadAvailableModels: async () => {
