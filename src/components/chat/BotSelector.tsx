@@ -27,7 +27,8 @@ const BotSelector: React.FC = () => {
     try {
       // Find the full bot object and set it directly
       const selectedBot = bots?.find(bot => bot.id.toString() === botId);
-      if (selectedBot) {
+      if (selectedBot && selectedBot.isActive !== false) {
+        // Only allow selection of active bots
         await setActiveBot(selectedBot);
         navigate(`/chat/${botId}`);
       }
@@ -63,10 +64,18 @@ const BotSelector: React.FC = () => {
             bots.map((bot: Bot) => {
               const isCreator = user?.id === bot.createdById;
               const redeemed = !!bot.redeemed;
+              const isInactive = bot.isActive === false;
               return (
-                <SelectItem key={bot.id} value={bot.id.toString()}>
+                <SelectItem
+                  key={bot.id}
+                  value={bot.id.toString()}
+                  disabled={isInactive}
+                  className={isInactive ? 'cursor-not-allowed opacity-50' : ''}
+                >
                   <div className="flex flex-col">
-                    <span className="font-medium">{bot.title}</span>
+                    <span className={`font-medium ${isInactive ? 'text-muted-foreground' : ''}`}>
+                      {bot.title}
+                    </span>
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-xs">{bot.subject}</span>
                       {isCreator && (
@@ -77,6 +86,11 @@ const BotSelector: React.FC = () => {
                       {redeemed && (
                         <Badge variant="green" className="h-4 px-1.5 py-0 text-[10px]">
                           Redeemed
+                        </Badge>
+                      )}
+                      {isInactive && (
+                        <Badge variant="destructive" className="h-4 px-1.5 py-0 text-[10px]">
+                          Inactive
                         </Badge>
                       )}
                     </div>
