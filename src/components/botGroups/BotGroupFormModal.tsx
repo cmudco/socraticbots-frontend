@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect } from 'react';
 
 import { Info, Users } from 'lucide-react';
 
@@ -40,7 +40,7 @@ const BotGroupFormModal: React.FC<BotGroupFormModalProps> = ({
 
   const isEditMode = !!botGroup;
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       if (botGroup) {
         initEditBotGroup(botGroup);
