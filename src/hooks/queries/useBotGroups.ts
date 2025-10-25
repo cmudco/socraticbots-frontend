@@ -2,14 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
-import { 
-  CreateBotGroupRequest, 
-  UpdateBotGroupRequest, 
-  AddCollaboratorRequest,
-  botGroupService 
-} from '@/services/botGroups.service';
+import { AddCollaboratorRequest, botGroupService } from '@/services/botGroups.service';
 
-import { BotGroup, BotGroupDetail } from '@/types/botGroup';
+import {
+  BotGroup,
+  BotGroupDetail,
+  CreateBotGroupRequest,
+  UpdateBotGroupRequest,
+} from '@/types/botGroup';
 
 export const botGroupKeys = {
   all: ['botGroups'] as const,
@@ -72,7 +72,7 @@ export const useCreateBotGroup = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (botGroupData: CreateBotGroupRequest) => 
+    mutationFn: (botGroupData: CreateBotGroupRequest) =>
       botGroupService.createBotGroup(botGroupData),
     onSuccess: (newBotGroup: BotGroup) => {
       // Optimistically update the list
@@ -100,9 +100,8 @@ export const useUpdateBotGroup = () => {
       botGroupService.updateBotGroup(id, botGroupData),
     onSuccess: (updatedBotGroup: BotGroup) => {
       // Update the specific bot group detail
-      queryClient.setQueryData<BotGroupDetail>(
-        botGroupKeys.detail(updatedBotGroup.id), 
-        oldData => oldData ? { ...oldData, ...updatedBotGroup } : undefined
+      queryClient.setQueryData<BotGroupDetail>(botGroupKeys.detail(updatedBotGroup.id), oldData =>
+        oldData ? { ...oldData, ...updatedBotGroup } : undefined
       );
 
       // Update the bot group in the list
@@ -154,8 +153,13 @@ export const useAddCollaborator = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, collaboratorData }: { id: number; collaboratorData: AddCollaboratorRequest }) =>
-      botGroupService.addCollaborator(id, collaboratorData),
+    mutationFn: ({
+      id,
+      collaboratorData,
+    }: {
+      id: number;
+      collaboratorData: AddCollaboratorRequest;
+    }) => botGroupService.addCollaborator(id, collaboratorData),
     onSuccess: (_, { id }) => {
       // Refetch the bot group details to get updated collaborators
       queryClient.invalidateQueries({ queryKey: botGroupKeys.detail(id) });
@@ -174,8 +178,13 @@ export const useRemoveCollaborator = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, collaboratorData }: { id: number; collaboratorData: AddCollaboratorRequest }) =>
-      botGroupService.removeCollaborator(id, collaboratorData),
+    mutationFn: ({
+      id,
+      collaboratorData,
+    }: {
+      id: number;
+      collaboratorData: AddCollaboratorRequest;
+    }) => botGroupService.removeCollaborator(id, collaboratorData),
     onSuccess: (_, { id }) => {
       // Refetch the bot group details to get updated collaborators
       queryClient.invalidateQueries({ queryKey: botGroupKeys.detail(id) });
@@ -183,6 +192,27 @@ export const useRemoveCollaborator = () => {
     },
     onError: error => {
       console.error('Failed to remove collaborator:', error);
+    },
+  });
+};
+
+/**
+ * Update bot group access code
+ */
+export const useUpdateBotGroupAccessCode = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      accessCodeData,
+    }: {
+      id: number;
+      accessCodeData: { accessCode?: string; accessCodeLimit?: number };
+    }) => botGroupService.updateBotGroupAccessCode(id, accessCodeData),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: botGroupKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: botGroupKeys.lists() });
     },
   });
 };

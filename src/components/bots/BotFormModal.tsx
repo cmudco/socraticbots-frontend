@@ -181,8 +181,8 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         ...(accessCode !== undefined && { accessCode }),
         accessCodeLimit,
         // Model preferences
-        ...(chatModelDareId && { chatModelDareId }),
-        ...(trackingModelDareId && { trackingModelDareId }),
+        ...(chatModelDareId !== undefined && { chatModelDareId }),
+        ...(trackingModelDareId !== undefined && { trackingModelDareId }),
         // Prompts
         ...(greeting && { greeting }),
         ...(chatPrompt && { chatPrompt }),
