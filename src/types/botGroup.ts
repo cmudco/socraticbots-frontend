@@ -8,6 +8,14 @@ export interface User {
   isProfessor: boolean;
 }
 
+export interface BotGroupAccessCode {
+  code: string;
+  limit?: number;
+  used?: number;
+  createdAt: string;
+  createdBy: string;
+}
+
 export interface BotGroup {
   id: number;
   title: string;
@@ -16,10 +24,25 @@ export interface BotGroup {
   collaborators: string[]; // List of collaborator names/emails
   ownerId: number;
   redeemed?: boolean;
+  accessCode?: BotGroupAccessCode;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface BotGroupDetail extends BotGroup {
   bots: Bot[]; // API returns full Bot-like objects
+}
+
+export interface CreateBotGroupRequest {
+  title: string;
+  description: string;
+  accessCode?: string;
+  accessCodeLimit?: number;
+}
+
+export interface UpdateBotGroupRequest {
+  title?: string;
+  description?: string;
+  accessCode?: string;
+  accessCodeLimit?: number;
 }

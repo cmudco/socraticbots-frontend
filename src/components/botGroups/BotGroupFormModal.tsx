@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect } from 'react';
+import React from 'react';
 
-import { Users } from 'lucide-react';
+import { Info, Users } from 'lucide-react';
 
-import { useCreateBotGroup, useUpdateBotGroup } from '@/hooks/queries/useBotGroups';
+import { useIsProfessor } from '@/hooks/queries/useUser';
+
+import { useBotGroupFormStore } from '@/stores/forms/botGroupFormStore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +17,9 @@ import {
 } from '@/components/ui/dialog';
 
 import { BotGroup } from '@/types/botGroup';
+
+import BotGroupBasicInfoTab from './tabs/BotGroupBasicInfoTab';
+import BotGroupDeploymentTab from './tabs/BotGroupDeploymentTab';
 
 interface BotGroupFormModalProps {
   isOpen: boolean;
@@ -29,77 +34,47 @@ const BotGroupFormModal: React.FC<BotGroupFormModalProps> = ({
   botGroup,
   viewOnly = false,
 }) => {
-  const [title, setTitle] = React.useState('');
-  const [description, setDescription] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const isProfessor = useIsProfessor();
+  const { activeTab, setActiveTab, initEditBotGroup, initNewBotGroup, closeForm } =
+    useBotGroupFormStore();
 
-  const createBotGroupMutation = useCreateBotGroup();
-  const updateBotGroupMutation = useUpdateBotGroup();
+  const isEditMode = !!botGroup;
 
-  const isEdit = !!botGroup;
-
-  useEffect(() => {
+  React.useEffect(() => {
     if (isOpen) {
       if (botGroup) {
-        setTitle(botGroup.title || '');
-        setDescription(botGroup.description || '');
+        initEditBotGroup(botGroup);
       } else {
-        setTitle('');
-        setDescription('');
+        initNewBotGroup();
       }
     }
-  }, [isOpen, botGroup]);
+  }, [isOpen, botGroup, initEditBotGroup, initNewBotGroup]);
 
-  const handleClose = useCallback(() => {
-    if (!isSubmitting) {
-      setTitle('');
-      setDescription('');
-      onClose();
+  const handleClose = () => {
+    closeForm();
+    onClose();
+  };
+
+  const tabs = [
+    { id: 'basic', label: 'Basic Info' },
+    ...(isEditMode && isProfessor ? [{ id: 'deployment', label: 'Deployment' }] : []),
+  ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'basic':
+        return <BotGroupBasicInfoTab botGroupId={botGroup?.id} onClose={handleClose} />;
+      case 'deployment':
+        return <BotGroupDeploymentTab botGroupId={botGroup?.id || 0} />;
+      default:
+        return <BotGroupBasicInfoTab botGroupId={botGroup?.id} onClose={handleClose} />;
     }
-  }, [isSubmitting, onClose]);
-
-  const handleSubmit = useCallback(async () => {
-    if (!title.trim()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const botGroupData = {
-        title: title.trim(),
-        description: description.trim(),
-      };
-
-      if (isEdit && botGroup) {
-        await updateBotGroupMutation.mutateAsync({
-          id: botGroup.id,
-          botGroupData,
-        });
-      } else {
-        await createBotGroupMutation.mutateAsync(botGroupData);
-      }
-
-      handleClose();
-    } catch (error) {
-      console.error('Error saving bot group:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    title,
-    description,
-    isEdit,
-    botGroup,
-    updateBotGroupMutation,
-    createBotGroupMutation,
-    handleClose,
-  ]);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden p-0 sm:max-w-4xl">
+        <DialogHeader className="border-b px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
               <Users className="text-primary h-5 w-5" />
@@ -108,14 +83,14 @@ const BotGroupFormModal: React.FC<BotGroupFormModalProps> = ({
               <DialogTitle className="text-lg font-semibold">
                 {viewOnly
                   ? 'Bot Group Details'
-                  : isEdit
+                  : isEditMode
                     ? 'Edit Bot Group'
                     : 'Create New Bot Group'}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground">
                 {viewOnly
                   ? 'View bot group information below.'
-                  : isEdit
+                  : isEditMode
                     ? 'Update the bot group details below.'
                     : 'Create a new group to organize your bots.'}
               </DialogDescription>
@@ -123,80 +98,52 @@ const BotGroupFormModal: React.FC<BotGroupFormModalProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="title" className="text-foreground mb-1 block text-sm font-medium">
-              Group Title *
-            </label>
-            <input
-              id="title"
-              type="text"
-              disabled={viewOnly}
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              className="border-input focus:border-ring focus:ring-ring disabled:bg-muted w-full rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed"
-              placeholder="Enter bot group title"
-            />
+        {!isEditMode && isProfessor && (
+          <div className="border-primary/20 bg-primary/5 mx-6 mt-4 rounded-lg border p-4">
+            <div className="flex items-start gap-3">
+              <Info size={20} className="text-primary mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="text-foreground font-medium">
+                  Additional Features Available After Creation
+                </p>
+                <p className="text-muted-foreground mt-1">
+                  Once your bot group is created, you'll be able to generate group-wide deployment
+                  codes in the Deployment tab.
+                </p>
+              </div>
+            </div>
           </div>
+        )}
 
-          <div>
-            <label htmlFor="description" className="text-foreground mb-1 block text-sm font-medium">
-              Description
-            </label>
-            <textarea
-              id="description"
-              disabled={viewOnly}
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              className="border-input focus:border-ring focus:ring-ring disabled:bg-muted w-full rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed"
-              rows={3}
-              placeholder="Describe the purpose of this bot group..."
-            />
-          </div>
-
-          {botGroup && (
-            <div className="text-muted-foreground text-sm">
-              <p>Bots: {botGroup.botsCount}</p>
-              <p>Created: {new Date(botGroup.createdAt).toLocaleDateString()}</p>
-              {botGroup.collaborators && botGroup.collaborators.length > 0 && (
-                <p>Collaborators: {botGroup.collaborators.length}</p>
-              )}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {tabs.length > 1 && (
+            <div className="flex-shrink-0 border-b px-6">
+              <div className="bg-muted flex rounded-md p-1">
+                {tabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 rounded-sm px-3 py-2 text-sm font-medium transition-all ${
+                      activeTab === tab.id
+                        ? 'bg-background text-primary shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
+
+          <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
         </div>
 
-        <DialogFooter className="flex items-center justify-end space-x-3">
-          {viewOnly ? (
-            <Button
-              onClick={handleClose}
-              className="bg-primary text-primary-foreground hover:bg-primary/80"
-            >
-              Close
-            </Button>
-          ) : (
-            <>
-              <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting || !title.trim()}
-                className="bg-primary text-primary-foreground hover:bg-primary/80"
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Saving...
-                  </div>
-                ) : isEdit ? (
-                  'Update Group'
-                ) : (
-                  'Create Group'
-                )}
-              </Button>
-            </>
-          )}
-        </DialogFooter>
+        {viewOnly && (
+          <DialogFooter className="flex items-center justify-end space-x-3 border-t p-6">
+            <Button onClick={handleClose}>Close</Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

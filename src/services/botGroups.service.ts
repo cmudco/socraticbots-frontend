@@ -2,17 +2,12 @@ import { METHOD } from '@/constants/requests';
 
 import { baseRequest } from '@/utils/baseRequest';
 
-import { BotGroup, BotGroupDetail } from '@/types/botGroup';
-
-export interface CreateBotGroupRequest {
-  title: string;
-  description?: string;
-}
-
-export interface UpdateBotGroupRequest {
-  title?: string;
-  description?: string;
-}
+import {
+  BotGroup,
+  BotGroupDetail,
+  CreateBotGroupRequest,
+  UpdateBotGroupRequest,
+} from '@/types/botGroup';
 
 export interface AddCollaboratorRequest {
   user_id: number;
@@ -53,6 +48,20 @@ class BotGroupService {
       url: `bot-groups/${id}/`,
       method: METHOD.PATCH,
       data: botGroupData,
+    });
+  }
+
+  async updateBotGroupAccessCode(
+    id: number,
+    accessCodeData: { accessCode?: string; accessCodeLimit?: number }
+  ): Promise<BotGroup> {
+    return baseRequest<BotGroup>({
+      url: `bot-groups/${id}/`,
+      method: METHOD.PATCH,
+      data: {
+        access_code: accessCodeData.accessCode,
+        access_code_limit: accessCodeData.accessCodeLimit,
+      },
     });
   }
 
