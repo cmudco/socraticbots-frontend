@@ -62,8 +62,10 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     trackingPrompt,
     learningGoals,
     isAdvanced,
+    isActive,
     chatModelDareId,
     trackingModelDareId,
+    webSearchEnabled,
     accessCode,
     accessCodeLimit,
     updateAccessCode,
@@ -179,14 +181,16 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         ...(accessCode !== undefined && { accessCode }),
         accessCodeLimit,
         // Model preferences
-        ...(chatModelDareId && { chatModelDareId }),
-        ...(trackingModelDareId && { trackingModelDareId }),
+        ...(chatModelDareId !== undefined && { chatModelDareId }),
+        ...(trackingModelDareId !== undefined && { trackingModelDareId }),
         // Prompts
         ...(greeting && { greeting }),
         ...(chatPrompt && { chatPrompt }),
         ...(trackingPrompt && { trackingPrompt }),
         ...(learningGoals && { learningGoals }),
         isAdvanced,
+        isActive,
+        webSearchEnabled,
       };
 
       if (isEdit && bot) {
@@ -219,9 +223,11 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     learningGoals,
     chatModelDareId,
     trackingModelDareId,
+    isAdvanced,
+    isActive,
+    webSearchEnabled,
     accessCode,
     accessCodeLimit,
-    isAdvanced,
     isEdit,
     bot,
     updateBotMutation,

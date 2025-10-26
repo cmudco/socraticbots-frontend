@@ -17,10 +17,13 @@ const BotPromptsTab: React.FC<BotPromptsTabProps> = ({ viewOnly = false }) => {
     chatPrompt,
     trackingPrompt,
     learningGoals,
+    trackingModelDareId,
     updateField,
     isAdvanced,
     setIsAdvanced,
   } = useBotFormStore();
+
+  const isTrackingEnabled = trackingModelDareId !== null && trackingModelDareId !== undefined;
 
   return (
     <div className="space-y-6">
@@ -49,26 +52,48 @@ const BotPromptsTab: React.FC<BotPromptsTabProps> = ({ viewOnly = false }) => {
       </div>
 
       <div>
-        <label className="text-foreground mb-1 block text-sm font-medium">Tracking Prompt</label>
+        <label className="text-foreground mb-1 block text-sm font-medium">
+          Tracking Prompt
+          {!isTrackingEnabled && (
+            <span className="text-muted-foreground ml-2 text-xs font-normal">
+              (Requires Progress Tracker to be selected)
+            </span>
+          )}
+        </label>
         <textarea
-          disabled={viewOnly}
+          disabled={viewOnly || !isTrackingEnabled}
           value={trackingPrompt}
           onChange={e => updateField('trackingPrompt', e.target.value)}
           className="border-input focus:border-ring focus:ring-ring disabled:bg-muted w-full rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed"
           rows={4}
-          placeholder="Enter the prompt for tracking student progress..."
+          placeholder={
+            isTrackingEnabled
+              ? 'Enter the prompt for tracking student progress...'
+              : 'Select a Progress Tracker in Basic Info to enable this field'
+          }
         />
       </div>
 
       <div>
-        <label className="text-foreground mb-1 block text-sm font-medium">Learning Goals</label>
+        <label className="text-foreground mb-1 block text-sm font-medium">
+          Learning Goals
+          {!isTrackingEnabled && (
+            <span className="text-muted-foreground ml-2 text-xs font-normal">
+              (Requires Progress Tracker to be selected)
+            </span>
+          )}
+        </label>
         <textarea
-          disabled={viewOnly}
+          disabled={viewOnly || !isTrackingEnabled}
           value={learningGoals}
           onChange={e => updateField('learningGoals', e.target.value)}
           className="border-input focus:border-ring focus:ring-ring disabled:bg-muted w-full rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed"
           rows={4}
-          placeholder="Define the learning objectives and goals for this bot..."
+          placeholder={
+            isTrackingEnabled
+              ? 'Define the learning objectives and goals for this bot...'
+              : 'Select a Progress Tracker in Basic Info to enable this field'
+          }
         />
       </div>
 
