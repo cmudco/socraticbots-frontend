@@ -27,6 +27,8 @@ export interface BotAccessCode {
 export interface Bot {
   id: number;
   isAdvanced?: boolean;
+  isActive?: boolean;
+  webSearchEnabled?: boolean;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
   botGroup: {
@@ -57,6 +59,8 @@ export interface CreateBotRequest {
   subject: string;
   topic: string;
   accessCode?: string;
+  isActive?: boolean;
+  webSearchEnabled?: boolean;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
   accessCodeLimit?: number;
@@ -67,6 +71,8 @@ export interface UpdateBotRequest {
   subject?: string;
   topic?: string;
   accessCode?: string;
+  isActive?: boolean;
+  webSearchEnabled?: boolean;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
   accessCodeLimit?: number;

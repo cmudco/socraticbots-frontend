@@ -18,8 +18,10 @@ interface BotFormState {
   trackingPrompt: string;
   learningGoals: string;
   isAdvanced: boolean;
+  isActive: boolean;
   chatModelDareId: number | null;
   trackingModelDareId: number | null;
+  webSearchEnabled: boolean;
   accessCode: string;
   accessCodeLimit: number;
   accessCodeUsed: number;
@@ -35,7 +37,9 @@ interface BotFormState {
   setSubmitting: (submitting: boolean) => void;
   updateField: (field: string, value: string) => void;
   setIsAdvanced: (value: boolean) => void;
+  setIsActive: (value: boolean) => void;
   updateModelField: (field: string, value: number | null) => void;
+  setWebSearchEnabled: (value: boolean) => void;
   updateAccessCode: (code: string) => void;
   updateAccessCodeLimit: (limit: number) => void;
   updateAccessCodeUsed: (used: number) => void;
@@ -55,8 +59,10 @@ const initialFormState = {
   trackingPrompt: '',
   learningGoals: '',
   isAdvanced: false,
+  isActive: true,
   chatModelDareId: null,
   trackingModelDareId: null,
+  webSearchEnabled: false,
   accessCode: '',
   accessCodeLimit: 0,
   accessCodeUsed: 0,
@@ -125,8 +131,10 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       trackingPrompt: bot.prompts?.trackingPrompt || '',
       learningGoals: bot.prompts?.learningGoals || '',
       isAdvanced: !!bot.isAdvanced,
+      isActive: bot.isActive !== undefined ? bot.isActive : true,
       chatModelDareId: bot.modelPreference?.chatModelDareId || null,
       trackingModelDareId: bot.modelPreference?.trackingModelDareId || null,
+      webSearchEnabled: !!bot.webSearchEnabled,
       accessCode: bot.accessCode?.code || '',
       accessCodeLimit: bot.accessCode?.limit ?? 0,
       accessCodeUsed: bot.accessCode?.used ?? 0,
@@ -148,11 +156,15 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
 
   setIsAdvanced: (value: boolean) => set({ isAdvanced: value }),
 
+  setIsActive: (value: boolean) => set({ isActive: value }),
+
   updateModelField: (field: string, value: number | null) => {
     set({
       [field]: value,
     });
   },
+
+  setWebSearchEnabled: (value: boolean) => set({ webSearchEnabled: value }),
 
   updateAccessCode: (code: string) => {
     set({ accessCode: code });

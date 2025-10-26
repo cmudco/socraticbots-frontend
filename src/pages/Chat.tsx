@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 import { useChatBots } from '@/hooks/queries/useChat';
 import { useUserInfo } from '@/hooks/queries/useUser';
 
@@ -13,9 +15,19 @@ import NotesSidebar from '@/components/chat/notes/NotesSidebar';
 
 const Chat: React.FC = () => {
   const { data: user, isLoading } = useUserInfo();
-  const { currentBotId, setActiveBot, clearActiveConversation } = useConversationStore();
+  const {
+    currentBotId,
+    currentBot,
+    setActiveBot,
+    clearActiveConversation,
+    isProgressSidebarVisible,
+    setProgressSidebarVisible,
+  } = useConversationStore();
   const { botId } = useParams();
   const { data: bots } = useChatBots();
+
+  // Check if tracking is enabled for the current bot
+  const isTrackingEnabled = currentBot?.modelPreference?.trackingModelDareId != null;
 
   useEffect(() => {
     if (!botId) {
@@ -54,9 +66,29 @@ const Chat: React.FC = () => {
 
   return (
     <div className="from-primary/5 via-background to-secondary/5 flex h-full w-full overflow-hidden bg-gradient-to-br">
-      <div className="border-border/60 bg-background/90 w-80 min-w-0 flex-shrink-0 overflow-y-auto border-r backdrop-blur-sm">
-        <TrackingSidebar />
-      </div>
+      {/* Tracking Sidebar with toggle */}
+      {isTrackingEnabled && (
+        <div className="relative">
+          {isProgressSidebarVisible && (
+            <div className="border-border/60 bg-background/90 w-80 min-w-0 flex-shrink-0 overflow-y-auto border-r backdrop-blur-sm">
+              <TrackingSidebar />
+            </div>
+          )}
+
+          {/* Toggle button - positioned to avoid overlap with Progress Assessment collapse */}
+          <button
+            onClick={() => setProgressSidebarVisible(!isProgressSidebarVisible)}
+            className="bg-background hover:bg-muted border-border/60 absolute top-24 right-0 z-50 flex h-6 w-6 translate-x-1/2 items-center justify-center rounded-full border shadow-md transition-colors"
+            aria-label={isProgressSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+          >
+            {isProgressSidebarVisible ? (
+              <ChevronLeft className="h-3 w-3" />
+            ) : (
+              <ChevronRight className="h-3 w-3" />
+            )}
+          </button>
+        </div>
+      )}
 
       <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
         {/* Always show the header with bot selector */}
