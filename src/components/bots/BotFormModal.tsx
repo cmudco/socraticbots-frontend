@@ -68,6 +68,8 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     webSearchEnabled,
     accessCode,
     accessCodeLimit,
+    isPubliclyDeployed,
+    budget,
     updateAccessCode,
     updateAccessCodeLimit,
     updateAccessCodeUsed,
@@ -191,6 +193,9 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         isAdvanced,
         isActive,
         webSearchEnabled,
+        // Public deployment
+        isPubliclyDeployed,
+        ...(budget && { budget: parseFloat(budget) || 0 }),
       };
 
       if (isEdit && bot) {
@@ -228,6 +233,8 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     webSearchEnabled,
     accessCode,
     accessCodeLimit,
+    budget,
+    isPubliclyDeployed,
     isEdit,
     bot,
     updateBotMutation,

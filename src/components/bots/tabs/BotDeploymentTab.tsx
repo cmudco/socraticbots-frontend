@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { CheckCircle, Copy, RefreshCw } from 'lucide-react';
+import { CheckCircle, Copy, ExternalLink, Globe, RefreshCw } from 'lucide-react';
 
 import { useIsProfessor } from '@/hooks/queries/useUser';
 
@@ -11,13 +11,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 interface BotDeploymentTabProps {
   botGroupId: number;
   botId: number;
 }
 
-const BotDeploymentTab: React.FC<BotDeploymentTabProps> = () => {
+const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
   const isProfessor = useIsProfessor();
   const {
     accessCode,
@@ -26,8 +27,14 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = () => {
     updateAccessCode,
     updateAccessCodeLimit,
     updateAccessCodeUsed,
+    isPubliclyDeployed,
+    budget,
+    budgetUsed,
+    setIsPubliclyDeployed,
+    updateBudget,
   } = useBotFormStore();
   const [copySuccess, setCopySuccess] = useState(false);
+  const [copyUrlSuccess, setCopyUrlSuccess] = useState(false);
   const [customCode, setCustomCode] = useState('');
 
   const generateRandomCode = () => {
@@ -80,6 +87,24 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = () => {
     }
   };
 
+  const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateBudget(e.target.value);
+  };
+
+  const getPublicBotUrl = () => {
+    return `${window.location.origin}/public/bot/${botId}`;
+  };
+
+  const handleCopyPublicUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(getPublicBotUrl());
+      setCopyUrlSuccess(true);
+      setTimeout(() => setCopyUrlSuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy public URL:', err);
+    }
+  };
+
   // Only show deployment tab for professors
   if (!isProfessor) {
     return (
@@ -89,8 +114,127 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = () => {
     );
   }
 
+  const budgetUsedNum = Number(budgetUsed) || 0;
+  const budgetRemaining = budget ? parseFloat(budget) - budgetUsedNum : 0;
+  const budgetPercent =
+    budget && parseFloat(budget) > 0 ? (budgetUsedNum / parseFloat(budget)) * 100 : 0;
+
   return (
     <div className="space-y-6">
+      {/* Public Deployment Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Public Deployment
+          </CardTitle>
+          <CardDescription>
+            Make this bot publicly accessible without requiring user authentication
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="public-deploy">Public Access</Label>
+              <p className="text-muted-foreground text-sm">
+                Allow anyone with the link to chat with this bot
+              </p>
+            </div>
+            <Switch
+              id="public-deploy"
+              checked={isPubliclyDeployed}
+              onCheckedChange={setIsPubliclyDeployed}
+            />
+          </div>
+
+          {isPubliclyDeployed && (
+            <div className="space-y-4 border-t pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="budget">Budget (USD)</Label>
+                <Input
+                  id="budget"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={budget}
+                  onChange={handleBudgetChange}
+                  placeholder="10.00"
+                />
+                <p className="text-muted-foreground text-sm">
+                  Set a budget limit for public usage. Leave empty for unlimited.
+                </p>
+              </div>
+
+              {budget && parseFloat(budget) > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Budget Used</span>
+                    <span className="font-mono">
+                      ${budgetUsedNum.toFixed(2)} / ${parseFloat(budget).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="bg-secondary h-2 overflow-hidden rounded-full">
+                    <div
+                      className={`h-full transition-all ${
+                        budgetPercent >= 90
+                          ? 'bg-destructive'
+                          : budgetPercent >= 70
+                            ? 'bg-yellow-500'
+                            : 'bg-primary'
+                      }`}
+                      style={{ width: `${Math.min(budgetPercent, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    ${budgetRemaining.toFixed(2)} remaining
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Public URL</Label>
+                <div className="flex gap-2">
+                  <Input value={getPublicBotUrl()} readOnly className="font-mono text-sm" />
+                  <Button size="sm" variant="outline" onClick={handleCopyPublicUrl}>
+                    {copyUrlSuccess ? (
+                      <>
+                        <CheckCircle className="mr-1 h-4 w-4 text-green-600 dark:text-green-400" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="mr-1 h-4 w-4" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(getPublicBotUrl(), '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-muted-foreground text-sm">
+                  Share this URL to allow anonymous access to this bot. Users won't need to log in.
+                </p>
+              </div>
+
+              {copyUrlSuccess && (
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Public URL copied to clipboard! Anyone with this link can access the bot.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Access Code Section */}
       <Card>
         <CardHeader>
           <CardTitle>{accessCode ? 'Bot Access Code' : 'Generate Access Code'}</CardTitle>

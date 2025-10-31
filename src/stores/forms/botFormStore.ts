@@ -25,6 +25,9 @@ interface BotFormState {
   accessCode: string;
   accessCodeLimit: number;
   accessCodeUsed: number;
+  isPubliclyDeployed: boolean;
+  budget: string;
+  budgetUsed: number;
 
   touched: Record<string, boolean>;
   errors: Record<string, string>;
@@ -43,6 +46,8 @@ interface BotFormState {
   updateAccessCode: (code: string) => void;
   updateAccessCodeLimit: (limit: number) => void;
   updateAccessCodeUsed: (used: number) => void;
+  setIsPubliclyDeployed: (value: boolean) => void;
+  updateBudget: (budget: string) => void;
   setFieldTouched: (field: string, touched: boolean) => void;
   validateField: (field: string, value: string) => void;
   validateForm: () => boolean;
@@ -66,6 +71,9 @@ const initialFormState = {
   accessCode: '',
   accessCodeLimit: 0,
   accessCodeUsed: 0,
+  isPubliclyDeployed: false,
+  budget: '',
+  budgetUsed: 0,
 };
 
 const initialValidationState = {
@@ -138,6 +146,9 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       accessCode: bot.accessCode?.code || '',
       accessCodeLimit: bot.accessCode?.limit ?? 0,
       accessCodeUsed: bot.accessCode?.used ?? 0,
+      isPubliclyDeployed: !!bot.isPubliclyDeployed,
+      budget: bot.budget ? String(bot.budget) : '',
+      budgetUsed: bot.budgetUsed ?? 0,
       ...initialValidationState,
     }),
 
@@ -178,6 +189,12 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
   updateAccessCodeUsed: (used: number) => {
     const normalized = Number.isFinite(used) && used >= 0 ? Math.floor(used) : 0;
     set({ accessCodeUsed: normalized });
+  },
+
+  setIsPubliclyDeployed: (value: boolean) => set({ isPubliclyDeployed: value }),
+
+  updateBudget: (budget: string) => {
+    set({ budget });
   },
 
   setFieldTouched: (field: string, touched: boolean) => {
