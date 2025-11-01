@@ -23,7 +23,7 @@ const App: React.FC = () => {
         <ToastContainer />
         <Routes>
           {/* Public routes (no auth required) */}
-          <Route path="/public/bot/:botId" element={<PublicBotChat />} />
+          <Route path="/public-deployment/bot/:botId" element={<PublicBotChat />} />
 
           {/* Auth routes */}
           <Route path="/login" element={<Login />} />
