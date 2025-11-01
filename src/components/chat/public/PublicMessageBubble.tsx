@@ -17,21 +17,23 @@ import type { PublicBotMessage } from '@/types/publicBot';
 interface PublicMessageBubbleProps {
   message: PublicBotMessage;
   isStreaming?: boolean;
+  roundedClass?: string;
 }
 
 const PublicMessageBubble: React.FC<PublicMessageBubbleProps> = ({
   message,
   isStreaming = false,
+  roundedClass = 'rounded-2xl',
 }) => {
   const isUser = message.senderType === 'USER';
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6`}>
       <div
-        className={`${isUser ? 'max-w-[80%]' : 'w-full'} rounded-2xl px-4 py-3 ${
+        className={`${isUser ? 'max-w-[80%]' : 'w-full'} px-4 py-3 ${roundedClass} ${
           isUser
-            ? 'from-primary to-primary/80 text-primary-foreground ml-4 bg-gradient-to-r shadow-md'
-            : 'border-border bg-background text-foreground mr-4 border shadow-sm'
+            ? 'bg-bot-primary ml-4 text-white shadow-md'
+            : 'bg-bot-accent text-bot-fg border-bot-accent mr-4 border shadow-sm'
         }`}
       >
         <div className="flex flex-col">
@@ -45,7 +47,7 @@ const PublicMessageBubble: React.FC<PublicMessageBubbleProps> = ({
             </div>
           )}
 
-          <div className={`prose prose-sm max-w-none ${isStreaming ? 'animate-pulse' : ''}`}>
+          <div className={`prose max-w-none ${isStreaming ? 'animate-pulse' : ''}`}>
             <ReactMarkdown
               remarkPlugins={[remarkGfm, remarkMath]}
               rehypePlugins={[rehypeKatex, rehypeHighlight, rehypeRaw]}
@@ -72,7 +74,7 @@ const PublicMessageBubble: React.FC<PublicMessageBubbleProps> = ({
                 p({ children, ...props }) {
                   return (
                     <p
-                      className="m-0 text-sm leading-relaxed break-words whitespace-pre-wrap"
+                      className="m-0 leading-relaxed break-words whitespace-pre-wrap"
                       style={{
                         wordBreak: 'break-word',
                         overflowWrap: 'break-word',

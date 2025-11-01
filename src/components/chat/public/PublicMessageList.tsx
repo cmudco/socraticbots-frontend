@@ -14,9 +14,13 @@ import PublicMessageBubble from './PublicMessageBubble';
 
 interface PublicMessageListProps {
   className?: string;
+  roundedClass?: string;
 }
 
-const PublicMessageList: React.FC<PublicMessageListProps> = ({ className = '' }) => {
+const PublicMessageList: React.FC<PublicMessageListProps> = ({
+  className = '',
+  roundedClass = 'rounded-2xl',
+}) => {
   const messages = usePublicMessages();
   const isStreaming = usePublicIsTyping();
   const { isLoadingBot, botInfo } = usePublicBotStore();
@@ -143,13 +147,16 @@ const PublicMessageList: React.FC<PublicMessageListProps> = ({ className = '' })
               key={message.id}
               message={message}
               isStreaming={message.streaming}
+              roundedClass={roundedClass}
             />
           );
         })}
 
         {isStreaming && messages[messages.length - 1]?.senderType !== 'ASSISTANT' && (
           <div className="mb-6 flex justify-start">
-            <div className="border-border bg-background text-foreground mr-4 rounded-2xl border px-4 py-3 shadow-sm">
+            <div
+              className={`border-border bg-background text-foreground mr-4 border px-4 py-3 shadow-sm ${roundedClass}`}
+            >
               <div className="flex items-center gap-2">
                 <div className="from-secondary to-secondary/80 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br">
                   <span className="text-secondary-foreground text-xs font-semibold">AI</span>

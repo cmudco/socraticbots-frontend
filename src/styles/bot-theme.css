@@ -1,0 +1,77 @@
+/**
+ * Bot-specific theme utilities
+ * These use scoped CSS variables that are set per-bot-chat-container
+ */
+
+/* Bot theme colors - scoped to container with id="bot-chat-root" */
+#bot-chat-root {
+  /* Default values - will be overridden by useBotTheme hook */
+  --bot-primary: #8b5cf6;
+  --bot-accent: #a78bfa;
+  --bot-bg: #ffffff;
+  --bot-fg: #0f172a;
+}
+
+/* Background utilities */
+.bg-bot-primary {
+  background-color: var(--bot-primary);
+}
+
+.bg-bot-accent {
+  background-color: var(--bot-accent);
+}
+
+.bg-bot-bg {
+  background-color: var(--bot-bg);
+}
+
+/* Text color utilities */
+.text-bot-primary {
+  color: var(--bot-primary);
+}
+
+.text-bot-accent {
+  color: var(--bot-accent);
+}
+
+.text-bot-fg {
+  color: var(--bot-fg);
+}
+
+/* Border utilities */
+.border-bot-primary {
+  border-color: var(--bot-primary);
+}
+
+.border-bot-accent {
+  border-color: var(--bot-accent);
+}
+
+/* Ring utilities for focus states */
+.ring-bot-primary {
+  --tw-ring-color: var(--bot-primary);
+}
+
+.focus\:ring-bot-primary:focus {
+  --tw-ring-color: var(--bot-primary);
+}
+
+/* Hover utilities */
+.hover\:bg-bot-primary:hover {
+  background-color: var(--bot-primary);
+}
+
+.hover\:bg-bot-accent:hover {
+  background-color: var(--bot-accent);
+}
+
+/* Shadow with bot primary color */
+.shadow-bot-primary {
+  --tw-shadow-color: var(--bot-primary);
+  --tw-shadow: var(--tw-shadow-colored);
+}
+
+/* Divide utilities for lists */
+.divide-bot-accent > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--bot-accent);
+}
