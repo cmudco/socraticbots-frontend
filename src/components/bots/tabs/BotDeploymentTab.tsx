@@ -92,7 +92,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
   };
 
   const getPublicBotUrl = () => {
-    return `${window.location.origin}/public/bot/${botId}`;
+    return `${window.location.origin}/public-deployment/bot/${botId}`;
   };
 
   const handleCopyPublicUrl = async () => {
