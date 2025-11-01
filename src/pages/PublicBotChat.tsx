@@ -159,6 +159,16 @@ const PublicBotChat: React.FC = () => {
       if (botInfo.dareFileIds) {
         payload.file_ids = botInfo.dareFileIds;
       }
+      // Add progress tracking fields
+      if (botInfo.prompts?.trackingPrompt) {
+        payload.tracking_prompt = botInfo.prompts.trackingPrompt;
+      }
+      if (botInfo.prompts?.learningGoals) {
+        payload.learning_goals = botInfo.prompts.learningGoals;
+      }
+      if (botInfo.modelPreference?.trackingModelDareId) {
+        payload.progress_llm_id = botInfo.modelPreference.trackingModelDareId;
+      }
       if (botInfo.webSearchEnabled !== undefined) {
         payload.web_search_enabled = Boolean(botInfo.webSearchEnabled);
       }
