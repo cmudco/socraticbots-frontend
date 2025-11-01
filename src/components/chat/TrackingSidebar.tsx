@@ -107,7 +107,7 @@ const TrackingSidebar: React.FC = () => {
             </div>
           </div>
           {!isProgressCollapsed && (
-            <div className="px-4 py-3">
+            <div className="max-h-[70vh] overflow-y-auto px-4 py-3">
               {!progressTokens.length && !isProgressStreaming ? (
                 <div className="py-8 text-center">
                   <div className="bg-muted mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
