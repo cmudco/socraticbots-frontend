@@ -1,17 +1,28 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { AlertCircle, Bot as BotIcon, Loader2 } from 'lucide-react';
+import {
+  AlertCircle,
+  Bot as BotIcon,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Moon,
+  Sun,
+} from 'lucide-react';
 
 import { useGetOrCreateConversation, usePublicBotInfo } from '@/hooks/queries/usePublicBot';
+import { useBotTheme } from '@/hooks/useBotTheme';
 
 import { usePublicBotStore } from '@/stores/core/publicBotStore';
 import { usePublicWebSocketStore } from '@/stores/core/publicWebSocketStore';
+import { useThemeStore } from '@/stores/ui/themeStore';
 
 import { getOrCreateAnonymousSession } from '@/lib/anonymousSession';
 
 import PublicChatInput from '@/components/chat/public/PublicChatInput';
 import PublicMessageList from '@/components/chat/public/PublicMessageList';
+import PublicTrackingSidebar from '@/components/chat/public/PublicTrackingSidebar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -19,6 +30,7 @@ import type { PublicBotConversation } from '@/types/publicBot';
 
 const PublicBotChat: React.FC = () => {
   const { botId } = useParams<{ botId: string }>();
+  const [isProgressSidebarVisible, setProgressSidebarVisible] = useState(true);
 
   // Zustand stores
   const {
@@ -30,6 +42,18 @@ const PublicBotChat: React.FC = () => {
     botInfo,
     activeConversation,
   } = usePublicBotStore();
+
+  // Theme store for dark/light mode
+  const { isDarkMode, toggleDarkMode } = useThemeStore();
+
+  // Apply bot theme dynamically
+  const { fontClass, textSizeClass, roundedClass, spacingClass } = useBotTheme(
+    botInfo?.theme,
+    'bot-chat-root'
+  );
+
+  // Check if tracking is enabled for the current bot
+  const isTrackingEnabled = botInfo?.modelPreference?.trackingModelDareId != null;
 
   const {
     connect: connectWebSocket,
@@ -124,7 +148,7 @@ const PublicBotChat: React.FC = () => {
       const payload: Record<string, unknown> = {
         message: message,
         sender_type: 1, // USER
-        enable_progress: false, // No progress tracking for public bots
+        enable_progress: true, // Enable progress tracking for public bots
         is_advanced: Boolean(botInfo.isAdvanced || false),
       };
 
@@ -201,7 +225,7 @@ const PublicBotChat: React.FC = () => {
 
   return (
     <div className="from-background to-secondary/20 flex h-screen flex-col bg-gradient-to-br">
-      {/* Header */}
+      {/* Header - Uses global theme */}
       <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 flex-shrink-0 border-b backdrop-blur">
         <div className="container mx-auto flex h-16 items-center gap-4 px-4">
           <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
@@ -224,26 +248,72 @@ const PublicBotChat: React.FC = () => {
               <div className="text-xs">Budget Remaining</div>
             </div>
           )}
+
+          {/* Dark/Light Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="bg-background/80 hover:bg-background border-border/60 flex h-10 w-10 items-center justify-center rounded-lg border shadow-sm transition-colors"
+            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDarkMode ? (
+              <Sun className="text-foreground h-5 w-5" />
+            ) : (
+              <Moon className="text-foreground h-5 w-5" />
+            )}
+          </button>
         </div>
       </header>
 
-      {/* Chat Interface */}
-      <main className="container mx-auto flex flex-1 flex-col overflow-hidden p-4">
-        <Card className="flex h-full flex-col overflow-hidden">
-          <CardContent className="flex h-full flex-col overflow-hidden p-0">
-            {/* Messages - Takes remaining space and scrolls */}
-            <PublicMessageList className="min-h-0 flex-1" />
+      {/* Main Content - Sidebar + Chat */}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* Tracking Sidebar on LEFT - Only show if tracking is enabled */}
+        {isTrackingEnabled && isProgressSidebarVisible && (
+          <div className="border-border/60 bg-background/90 w-80 min-w-0 flex-shrink-0 overflow-y-auto border-r backdrop-blur-sm">
+            <PublicTrackingSidebar />
+          </div>
+        )}
 
-            {/* Input - Fixed at bottom */}
-            <PublicChatInput onSendMessage={handleSendMessage} className="flex-shrink-0" />
-          </CardContent>
-        </Card>
-      </main>
+        {/* Chat Interface - Uses bot theme */}
+        <main
+          id="bot-chat-root"
+          className={`relative container mx-auto flex flex-1 flex-col overflow-hidden p-4 ${fontClass} ${textSizeClass}`}
+        >
+          {/* Drawer Toggle Button - Top Left of Chat - Only show if tracking is enabled */}
+          {isTrackingEnabled && (
+            <button
+              onClick={() => setProgressSidebarVisible(!isProgressSidebarVisible)}
+              className="bg-background hover:bg-muted border-border/60 absolute top-6 left-6 z-50 flex h-8 w-8 items-center justify-center rounded-lg border shadow-md transition-colors"
+              aria-label={isProgressSidebarVisible ? 'Hide progress' : 'Show progress'}
+              title={isProgressSidebarVisible ? 'Hide Learning Progress' : 'Show Learning Progress'}
+            >
+              {isProgressSidebarVisible ? (
+                <ChevronLeft className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+          )}
 
-      {/* Footer */}
+          <Card className="flex h-full flex-col overflow-hidden">
+            <CardContent className="flex h-full flex-col overflow-hidden !p-0">
+              {/* Messages - Takes remaining space and scrolls */}
+              <PublicMessageList
+                className={`min-h-0 flex-1 ${spacingClass}`}
+                roundedClass={roundedClass}
+              />
+
+              {/* Input - Fixed at bottom */}
+              <PublicChatInput onSendMessage={handleSendMessage} roundedClass={roundedClass} />
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+
+      {/* Footer - Uses global theme */}
       <footer className="bg-background/95 supports-[backdrop-filter]:bg-background/60 flex-shrink-0 border-t backdrop-blur">
         <div className="text-muted-foreground container mx-auto px-4 py-3 text-center text-xs">
-          Powered by Socratic Books • Public Bot Chat
+          Powered by Socratic Bots • Public Bot Chat
         </div>
       </footer>
     </div>

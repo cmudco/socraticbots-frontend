@@ -13,10 +13,13 @@ import { Button } from '@/components/ui/button';
 
 interface PublicChatInputProps {
   onSendMessage: (message: string) => void;
-  className?: string;
+  roundedClass?: string;
 }
 
-const PublicChatInput: React.FC<PublicChatInputProps> = ({ onSendMessage, className = '' }) => {
+const PublicChatInput: React.FC<PublicChatInputProps> = ({
+  onSendMessage,
+  roundedClass = 'rounded-2xl',
+}) => {
   const inputMessage = usePublicInputMessage();
   const isTyping = usePublicIsTyping();
   const isWebSocketConnected = useIsPublicWebSocketConnected();
@@ -26,6 +29,7 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({ onSendMessage, classN
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isTyping || !isWebSocketConnected) return;
     onSendMessage(inputMessage.trim());
+    setInputMessage(''); // Clear input after sending
   };
 
   const handleInputChange = (value: string) => {
@@ -72,7 +76,7 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({ onSendMessage, classN
   }, [inputMessage, isTyping, isConnected, disabled]);
 
   return (
-    <div className={`border-border/60 bg-background/95 border-t backdrop-blur-sm ${className}`}>
+    <div className="border-border/60 bg-background/95 border-t backdrop-blur-sm">
       <div className="px-6 py-4">
         {/* Input Form */}
         <form
@@ -92,7 +96,7 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({ onSendMessage, classN
               onKeyDown={handleKeyDown}
               placeholder={getPlaceholder()}
               disabled={inputDisabled}
-              className={`border-border/60 bg-background placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 disabled:bg-muted disabled:text-muted-foreground w-full resize-none overflow-y-auto rounded-2xl px-4 py-3 text-base transition-all duration-200 focus:ring-2 disabled:cursor-not-allowed ${!isConnected ? 'border-destructive/20 bg-destructive/5' : ''}`}
+              className={`border-border/60 bg-background placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 disabled:bg-muted disabled:text-muted-foreground w-full resize-none overflow-y-auto px-4 py-3 text-base transition-all duration-200 focus:ring-2 disabled:cursor-not-allowed ${roundedClass} ${!isConnected ? 'border-destructive/20 bg-destructive/5' : ''}`}
               style={{ minHeight: '3rem', maxHeight: '10rem' }}
               rows={1}
               autoComplete="off"
@@ -112,7 +116,7 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({ onSendMessage, classN
             type="submit"
             disabled={!canSend}
             size="lg"
-            className={`h-12 w-12 rounded-2xl p-0 transition-all duration-200 ${
+            className={`h-12 w-12 p-0 transition-all duration-200 ${roundedClass} ${
               canSend
                 ? 'from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 bg-gradient-to-r shadow-md hover:shadow-lg'
                 : 'bg-muted text-muted-foreground cursor-not-allowed'

@@ -11,6 +11,7 @@
 @import './themes/bubblegum.css';
 @import './themes/twitter.css';
 @import './themes/t3-chat.css';
+@import './styles/bot-theme.css';
 
 @custom-variant dark (&:is(.dark *));
 

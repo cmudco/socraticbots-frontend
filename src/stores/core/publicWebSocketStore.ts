@@ -25,6 +25,13 @@ interface BaseWebSocketMessage {
   regenerate?: boolean;
   messageId?: string;
   chunk?: string;
+  token?: string;
+  assessment?: {
+    content: string;
+    learningGoals?: string;
+    createdAt?: string;
+    metadata?: Record<string, unknown>;
+  };
   conversationHistory?: Array<{
     id: string;
     message: string;
@@ -50,6 +57,11 @@ export interface PublicWebSocketState {
   isConnecting: boolean;
   error: string | null;
   socket: WebSocket | null;
+
+  // Progress streaming state
+  isProgressStreaming: boolean;
+  progressTokens: string[];
+  progressContent: string;
 }
 
 export interface PublicWebSocketActions {
@@ -60,6 +72,12 @@ export interface PublicWebSocketActions {
 
   // Message handling
   handleWebSocketMessage: (data: BaseWebSocketMessage) => void;
+
+  // Progress streaming actions
+  setProgressStreaming: (streaming: boolean) => void;
+  addProgressToken: (token: string) => void;
+  clearProgressTokens: () => void;
+  setProgressContent: (content: string) => void;
 
   // Message sending
   sendMessage: (payload: Record<string, unknown>) => void;
@@ -72,6 +90,9 @@ const initialState: PublicWebSocketState = {
   isConnecting: false,
   error: null,
   socket: null,
+  isProgressStreaming: false,
+  progressTokens: [],
+  progressContent: '',
 };
 
 export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
@@ -98,12 +119,9 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
           const DARE_WEBSOCKET_URL = import.meta.env.VITE_DARE_WEBSOCKET_URL;
           const socketUrl = `${DARE_WEBSOCKET_URL}/public/conversations/${conversationId}/?session_id=${encodeURIComponent(sessionId)}`;
 
-          console.log('Connecting to public WebSocket:', socketUrl);
-
           const socket = new WebSocket(socketUrl);
 
           socket.onopen = () => {
-            console.log('Public WebSocket connected');
             set({
               isConnected: true,
               isConnecting: false,
@@ -133,7 +151,6 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
           };
 
           socket.onclose = () => {
-            console.log('Public WebSocket disconnected');
             set({
               isConnected: false,
               isConnecting: false,
@@ -231,6 +248,17 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
                   originalMessage: data.originalMessage,
                 });
               } else {
+                // New message being added
+                // If this is a new ASSISTANT message that is NOT streaming (completed), clear old progress and show loading
+                if (senderType === 'ASSISTANT' && !data.streaming) {
+                  // Clear tokens and set streaming to show loading spinner
+                  set({
+                    progressTokens: [],
+                    progressContent: '',
+                    isProgressStreaming: true,
+                  });
+                }
+
                 publicBotStore.addMessage({
                   id: data.id!,
                   message: data.message || '',
@@ -277,7 +305,10 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
                     streaming: data.streaming,
                   });
                 } else {
-                  // Create new message
+                  // Create new message - this is a NEW AI response starting
+                  // Clear old progress to prepare for new assessment
+                  get().clearProgressTokens();
+
                   publicBotStore.addMessage({
                     id: data.id!,
                     message: data.message || '',
@@ -330,6 +361,63 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
               publicBotStore.setIsTyping(false);
               break;
             }
+
+            case 'progress_start': {
+              set({ isProgressStreaming: true });
+              get().clearProgressTokens();
+              break;
+            }
+
+            case 'progress_token': {
+              // Clear previous progress tokens when a new stream starts
+              const tokensLength = get().progressTokens.length;
+              if (tokensLength > 0 && !get().isProgressStreaming) {
+                get().clearProgressTokens();
+              }
+              if (data.token) {
+                get().addProgressToken(data.token);
+              }
+              break;
+            }
+
+            case 'progress_stream': {
+              // Clear previous progress tokens when a new stream starts
+              const currentTokens = get().progressTokens;
+              if (currentTokens.length > 0 && !get().isProgressStreaming) {
+                get().clearProgressTokens();
+              }
+              set({ isProgressStreaming: true });
+              if (data.chunk) {
+                get().addProgressToken(data.chunk);
+              }
+              break;
+            }
+
+            case 'progress_complete': {
+              set({ isProgressStreaming: false });
+              break;
+            }
+
+            case 'progress_error': {
+              set({ isProgressStreaming: false });
+              break;
+            }
+
+            case 'progress_end': {
+              set({ isProgressStreaming: false });
+              break;
+            }
+
+            case 'latest_progress': {
+              if (data.assessment && data.assessment.content) {
+                set({
+                  progressContent: data.assessment.content,
+                  isProgressStreaming: false,
+                  progressTokens: [data.assessment.content],
+                });
+              }
+              break;
+            }
           }
         })
         .catch(error => {
@@ -351,6 +439,33 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
         set({ error: 'Failed to send message' });
       }
     },
+
+    setProgressStreaming: (streaming: boolean) => {
+      set({ isProgressStreaming: streaming });
+      if (!streaming) {
+        // Compile final content from tokens when streaming ends
+        const { progressTokens } = get();
+        set({ progressContent: progressTokens.join('') });
+      }
+    },
+
+    addProgressToken: (token: string) => {
+      set(state => ({
+        progressTokens: [...state.progressTokens, token],
+      }));
+    },
+
+    clearProgressTokens: () => {
+      set({
+        progressTokens: [],
+        progressContent: '',
+        isProgressStreaming: false,
+      });
+    },
+
+    setProgressContent: (content: string) => {
+      set({ progressContent: content });
+    },
   }))
 );
 
@@ -360,3 +475,9 @@ export const useIsPublicWebSocketConnected = () =>
 export const useIsPublicWebSocketConnecting = () =>
   usePublicWebSocketStore(state => state.isConnecting);
 export const usePublicWebSocketError = () => usePublicWebSocketStore(state => state.error);
+
+export const useIsPublicProgressStreaming = () =>
+  usePublicWebSocketStore(state => state.isProgressStreaming);
+export const usePublicProgressTokens = () => usePublicWebSocketStore(state => state.progressTokens);
+export const usePublicProgressContent = () =>
+  usePublicWebSocketStore(state => state.progressContent);

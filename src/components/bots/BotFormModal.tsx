@@ -24,6 +24,7 @@ import BotBasicInfoTab from './tabs/BotBasicInfoTab';
 import BotDeploymentTab from './tabs/BotDeploymentTab';
 import BotFilesTab from './tabs/BotFilesTab';
 import BotPromptsTab from './tabs/BotPromptsTab';
+import BotThemeTab from './tabs/BotThemeTab';
 
 interface BotFormModalProps {
   isOpen: boolean;
@@ -70,6 +71,14 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     accessCodeLimit,
     isPubliclyDeployed,
     budget,
+    primaryColor,
+    accentColor,
+    backgroundColor,
+    foregroundColor,
+    fontFamily,
+    fontSize,
+    borderRadius,
+    messageSpacing,
     updateAccessCode,
     updateAccessCodeLimit,
     updateAccessCodeUsed,
@@ -196,6 +205,17 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         // Public deployment
         isPubliclyDeployed,
         ...(budget && { budget: parseFloat(budget) || 0 }),
+        // Theme
+        theme: {
+          primaryColor,
+          accentColor,
+          backgroundColor,
+          foregroundColor,
+          fontFamily,
+          fontSize,
+          borderRadius,
+          messageSpacing,
+        },
       };
 
       if (isEdit && bot) {
@@ -218,6 +238,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     } finally {
       setSubmitting(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Theme fields are managed by Zustand store, including them would cause unnecessary re-renders
   }, [
     title,
     subject,
@@ -265,6 +286,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
   const tabs = [
     { id: 'basic', label: 'Basic Info' },
     { id: 'prompts', label: 'Prompts' },
+    { id: 'theme', label: 'Theme' },
     ...(isEdit && isProfessor ? [{ id: 'files', label: 'Files' }] : []),
     ...(isEdit && isProfessor ? [{ id: 'deployment', label: 'Deployment' }] : []),
   ];
@@ -281,6 +303,8 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         return <BotBasicInfoTab ref={formRef} viewOnly={viewOnly} />;
       case 'prompts':
         return <BotPromptsTab viewOnly={viewOnly} />;
+      case 'theme':
+        return <BotThemeTab viewOnly={viewOnly} />;
       case 'files':
         return <BotFilesTab botGroupId={botGroupId} botId={bot?.id || 0} />;
       case 'deployment':

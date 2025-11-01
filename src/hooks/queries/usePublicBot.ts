@@ -14,11 +14,12 @@ export const publicBotKeys = {
 
 // Fetch public bot info
 const fetchPublicBotInfo = async (botId: string): Promise<PublicBotInfo> => {
-  return baseRequest<PublicBotInfo>({
+  const result = await baseRequest<PublicBotInfo>({
     url: `conversations/public/bots/${botId}/info/`,
     method: METHOD.GET,
     includeAuthToken: false,
   });
+  return result;
 };
 
 // Get or create public bot conversation
