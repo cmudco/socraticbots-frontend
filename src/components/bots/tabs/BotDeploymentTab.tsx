@@ -91,6 +91,17 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
     updateBudget(e.target.value);
   };
 
+  const handleBudgetBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const numValue = parseFloat(value);
+
+    if (value === '' || isNaN(numValue) || numValue < 1) {
+      updateBudget('1');
+    } else if (numValue > 20) {
+      updateBudget('20');
+    }
+  };
+
   const getPublicBotUrl = () => {
     return `${window.location.origin}/public-deployment/bot/${botId}`;
   };
@@ -154,14 +165,17 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
                 <Input
                   id="budget"
                   type="number"
-                  min="0"
+                  min="1"
+                  max="20"
                   step="0.01"
-                  value={budget}
+                  value={budget || ''}
                   onChange={handleBudgetChange}
-                  placeholder="10.00"
+                  onBlur={handleBudgetBlur}
+                  placeholder="1.00"
+                  required
                 />
                 <p className="text-muted-foreground text-sm">
-                  Set a budget limit for public usage. Leave empty for unlimited.
+                  Set a budget limit for public usage (minimum $1, maximum $20).
                 </p>
               </div>
 
