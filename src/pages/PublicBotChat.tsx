@@ -157,7 +157,7 @@ const PublicBotChat: React.FC = () => {
         payload.llm_id = botInfo.modelPreference.chatModelDareId;
       }
       if (botInfo.dareFileIds) {
-        payload.file_ids = botInfo.dareFileIds;
+        payload.embedding_ids = botInfo.dareFileIds;
       }
       // Add progress tracking fields
       if (botInfo.prompts?.trackingPrompt) {
