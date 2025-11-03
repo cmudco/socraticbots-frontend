@@ -25,6 +25,19 @@ interface BotFormState {
   accessCode: string;
   accessCodeLimit: number;
   accessCodeUsed: number;
+  isPubliclyDeployed: boolean;
+  budget: string;
+  budgetUsed: number;
+
+  // Theme fields
+  primaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  foregroundColor: string;
+  fontFamily: 'sans' | 'serif' | 'mono';
+  fontSize: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
+  borderRadius: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  messageSpacing: 'compact' | 'normal' | 'relaxed';
 
   touched: Record<string, boolean>;
   errors: Record<string, string>;
@@ -43,6 +56,9 @@ interface BotFormState {
   updateAccessCode: (code: string) => void;
   updateAccessCodeLimit: (limit: number) => void;
   updateAccessCodeUsed: (used: number) => void;
+  setIsPubliclyDeployed: (value: boolean) => void;
+  updateBudget: (budget: string) => void;
+  updateThemeField: (field: string, value: string) => void;
   setFieldTouched: (field: string, touched: boolean) => void;
   validateField: (field: string, value: string) => void;
   validateForm: () => boolean;
@@ -66,6 +82,18 @@ const initialFormState = {
   accessCode: '',
   accessCodeLimit: 0,
   accessCodeUsed: 0,
+  isPubliclyDeployed: false,
+  budget: '',
+  budgetUsed: 0,
+  // Theme defaults
+  primaryColor: '#8b5cf6',
+  accentColor: '#a78bfa',
+  backgroundColor: '#ffffff',
+  foregroundColor: '#0f172a',
+  fontFamily: 'sans' as const,
+  fontSize: 'base' as const,
+  borderRadius: 'md' as const,
+  messageSpacing: 'normal' as const,
 };
 
 const initialValidationState = {
@@ -138,6 +166,18 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       accessCode: bot.accessCode?.code || '',
       accessCodeLimit: bot.accessCode?.limit ?? 0,
       accessCodeUsed: bot.accessCode?.used ?? 0,
+      isPubliclyDeployed: !!bot.isPubliclyDeployed,
+      budget: bot.budget ? String(bot.budget) : '',
+      budgetUsed: bot.budgetUsed ?? 0,
+      // Theme fields
+      primaryColor: bot.theme?.primaryColor || '#8b5cf6',
+      accentColor: bot.theme?.accentColor || '#a78bfa',
+      backgroundColor: bot.theme?.backgroundColor || '#ffffff',
+      foregroundColor: bot.theme?.foregroundColor || '#0f172a',
+      fontFamily: bot.theme?.fontFamily || 'sans',
+      fontSize: bot.theme?.fontSize || 'base',
+      borderRadius: bot.theme?.borderRadius || 'md',
+      messageSpacing: bot.theme?.messageSpacing || 'normal',
       ...initialValidationState,
     }),
 
@@ -178,6 +218,16 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
   updateAccessCodeUsed: (used: number) => {
     const normalized = Number.isFinite(used) && used >= 0 ? Math.floor(used) : 0;
     set({ accessCodeUsed: normalized });
+  },
+
+  setIsPubliclyDeployed: (value: boolean) => set({ isPubliclyDeployed: value }),
+
+  updateBudget: (budget: string) => {
+    set({ budget });
+  },
+
+  updateThemeField: (field: string, value: string) => {
+    set({ [field]: value });
   },
 
   setFieldTouched: (field: string, touched: boolean) => {
