@@ -24,6 +24,20 @@ export interface BotAccessCode {
   created_by: string;
 }
 
+export interface BotTheme {
+  id: number;
+  primaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  foregroundColor?: string;
+  fontFamily?: 'sans' | 'serif' | 'mono';
+  fontSize?: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
+  borderRadius?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  messageSpacing?: 'compact' | 'normal' | 'relaxed';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Bot {
   id: number;
   isAdvanced?: boolean;
@@ -31,6 +45,9 @@ export interface Bot {
   webSearchEnabled?: boolean;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
+  isPubliclyDeployed?: boolean;
+  budget?: number;
+  budgetUsed?: number;
   botGroup: {
     id: number;
     title: string;
@@ -48,6 +65,7 @@ export interface Bot {
   modelPreference?: BotModelPreference;
   prompts?: BotPrompt;
   accessCode?: BotAccessCode;
+  theme?: BotTheme;
   createdById: number;
   redeemed?: boolean;
   createdAt: string;
@@ -76,6 +94,8 @@ export interface UpdateBotRequest {
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
   accessCodeLimit?: number;
+  isPubliclyDeployed?: boolean;
+  budget?: number;
 }
 
 export interface BotModelPreferenceRequest {
@@ -88,4 +108,15 @@ export interface BotPromptRequest {
   chatPrompt?: string;
   trackingPrompt?: string;
   learningGoals?: string;
+}
+
+export interface BotThemeRequest {
+  primaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  foregroundColor?: string;
+  fontFamily?: 'sans' | 'serif' | 'mono';
+  fontSize?: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
+  borderRadius?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  messageSpacing?: 'compact' | 'normal' | 'relaxed';
 }

@@ -11,6 +11,7 @@ import BotGroups from './pages/BotGroups';
 import Chat from './pages/Chat';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import PublicBotChat from './pages/PublicBotChat';
 import Register from './pages/Register';
 import Settings from './pages/Settings';
 import { ThemeProvider } from './providers/ThemeProvider';
@@ -21,9 +22,14 @@ const App: React.FC = () => {
       <BrowserRouter>
         <ToastContainer />
         <Routes>
+          {/* Public routes (no auth required) */}
+          <Route path="/public-deployment/bot/:botId" element={<PublicBotChat />} />
+
+          {/* Auth routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
+          {/* Protected routes */}
           <Route
             path="/"
             element={

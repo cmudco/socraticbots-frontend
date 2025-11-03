@@ -75,10 +75,10 @@ const Chat: React.FC = () => {
             </div>
           )}
 
-          {/* Toggle button - positioned to avoid overlap with Progress Assessment collapse */}
+          {/* Toggle button - positioned slightly inward from border */}
           <button
             onClick={() => setProgressSidebarVisible(!isProgressSidebarVisible)}
-            className="bg-background hover:bg-muted border-border/60 absolute top-24 right-0 z-50 flex h-6 w-6 translate-x-1/2 items-center justify-center rounded-full border shadow-md transition-colors"
+            className="bg-background hover:bg-muted border-border/60 absolute top-[70px] -right-6 z-50 flex h-6 w-6 items-center justify-center rounded-lg border shadow-md transition-colors"
             aria-label={isProgressSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
           >
             {isProgressSidebarVisible ? (
