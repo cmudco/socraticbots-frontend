@@ -7,6 +7,7 @@ import { useUiStore } from '@/stores/ui/uiStore';
 
 import Header from '@/components/common/Header';
 import Sidebar from '@/components/sidebar/Sidebar';
+import SystemBanner from '@/components/ui/SystemBanner';
 
 const Layout: React.FC = () => {
   const isAuthenticated = useIsAuthenticated();
@@ -20,13 +21,19 @@ const Layout: React.FC = () => {
       <Header />
 
       <div className="flex flex-1 pt-14">
-        {' '}
         {isAuthenticated && <Sidebar />}
-        <main
-          className={`flex-1 transition-all duration-300 ${isChatPage ? 'h-[calc(100vh-3.5rem)] overflow-hidden' : 'p-6'} ${isAuthenticated ? (sidebarCollapsed ? 'ml-16' : 'ml-64') : 'ml-0'} `}
+        <div
+          className={`flex flex-1 flex-col transition-all duration-300 ${isAuthenticated ? (sidebarCollapsed ? 'ml-16' : 'ml-64') : 'ml-0'}`}
         >
-          <Outlet />
-        </main>
+          {/* System Banner - shows at top of content area */}
+          {isAuthenticated && <SystemBanner />}
+
+          <main
+            className={`flex-1 ${isChatPage ? 'h-[calc(100vh-3.5rem)] overflow-hidden' : 'p-6'}`}
+          >
+            <Outlet />
+          </main>
+        </div>
       </div>
     </div>
   );
