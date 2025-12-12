@@ -38,6 +38,15 @@ export interface BotTheme {
   updatedAt: string;
 }
 
+export interface BotQuickPrompt {
+  id: number;
+  title: string;
+  prompt: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Bot {
   id: number;
   isAdvanced?: boolean;
@@ -66,6 +75,7 @@ export interface Bot {
   prompts?: BotPrompt;
   accessCode?: BotAccessCode;
   theme?: BotTheme;
+  quickPrompts?: BotQuickPrompt[];
   createdById: number;
   redeemed?: boolean;
   createdAt: string;

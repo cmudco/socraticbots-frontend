@@ -2,6 +2,14 @@ import { create } from 'zustand';
 
 import type { Bot } from '@/types/bot';
 
+// Local type for quick prompt form state (without DB fields)
+export interface QuickPromptFormItem {
+  id?: number;
+  title: string;
+  prompt: string;
+  order: number;
+}
+
 interface BotFormState {
   isOpen: boolean;
   isEdit: boolean;
@@ -39,6 +47,9 @@ interface BotFormState {
   borderRadius: 'none' | 'sm' | 'md' | 'lg' | 'xl';
   messageSpacing: 'compact' | 'normal' | 'relaxed';
 
+  // Quick prompts
+  quickPrompts: QuickPromptFormItem[];
+
   touched: Record<string, boolean>;
   errors: Record<string, string>;
 
@@ -59,6 +70,16 @@ interface BotFormState {
   setIsPubliclyDeployed: (value: boolean) => void;
   updateBudget: (budget: string) => void;
   updateThemeField: (field: string, value: string) => void;
+  // Quick prompts actions
+  setQuickPrompts: (prompts: QuickPromptFormItem[]) => void;
+  addQuickPrompt: () => void;
+  updateQuickPrompt: (
+    index: number,
+    field: keyof QuickPromptFormItem,
+    value: string | number
+  ) => void;
+  removeQuickPrompt: (index: number) => void;
+  reorderQuickPrompts: (fromIndex: number, toIndex: number) => void;
   setFieldTouched: (field: string, touched: boolean) => void;
   validateField: (field: string, value: string) => void;
   validateForm: () => boolean;
@@ -94,6 +115,8 @@ const initialFormState = {
   fontSize: 'base' as const,
   borderRadius: 'md' as const,
   messageSpacing: 'normal' as const,
+  // Quick prompts
+  quickPrompts: [] as QuickPromptFormItem[],
 };
 
 const initialValidationState = {
@@ -178,6 +201,13 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       fontSize: bot.theme?.fontSize || 'base',
       borderRadius: bot.theme?.borderRadius || 'md',
       messageSpacing: bot.theme?.messageSpacing || 'normal',
+      // Quick prompts
+      quickPrompts: (bot.quickPrompts || []).map((qp, i) => ({
+        id: qp.id,
+        title: qp.title,
+        prompt: qp.prompt,
+        order: qp.order ?? i,
+      })),
       ...initialValidationState,
     }),
 
@@ -228,6 +258,48 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
 
   updateThemeField: (field: string, value: string) => {
     set({ [field]: value });
+  },
+
+  setQuickPrompts: (prompts: QuickPromptFormItem[]) => {
+    set({ quickPrompts: prompts });
+  },
+
+  addQuickPrompt: () => {
+    set(state => ({
+      quickPrompts: [
+        ...state.quickPrompts,
+        { title: '', prompt: '', order: state.quickPrompts.length },
+      ],
+    }));
+  },
+
+  updateQuickPrompt: (index: number, field: keyof QuickPromptFormItem, value: string | number) => {
+    set(state => {
+      const newPrompts = [...state.quickPrompts];
+      if (newPrompts[index]) {
+        newPrompts[index] = { ...newPrompts[index], [field]: value };
+      }
+      return { quickPrompts: newPrompts };
+    });
+  },
+
+  removeQuickPrompt: (index: number) => {
+    set(state => ({
+      quickPrompts: state.quickPrompts
+        .filter((_, i) => i !== index)
+        .map((qp, i) => ({ ...qp, order: i })),
+    }));
+  },
+
+  reorderQuickPrompts: (fromIndex: number, toIndex: number) => {
+    set(state => {
+      const newPrompts = [...state.quickPrompts];
+      const [removed] = newPrompts.splice(fromIndex, 1);
+      newPrompts.splice(toIndex, 0, removed);
+      return {
+        quickPrompts: newPrompts.map((qp, i) => ({ ...qp, order: i })),
+      };
+    });
   },
 
   setFieldTouched: (field: string, touched: boolean) => {
