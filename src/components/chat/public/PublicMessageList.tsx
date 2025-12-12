@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Bot as BotIcon, Loader2 } from 'lucide-react';
 
@@ -22,77 +22,109 @@ const PublicMessageList: React.FC<PublicMessageListProps> = ({
   roundedClass = 'rounded-2xl',
 }) => {
   const messages = usePublicMessages();
-  const isStreaming = usePublicIsTyping();
+  const isTyping = usePublicIsTyping();
   const { isLoadingBot, botInfo } = usePublicBotStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = useRef<number>(0);
+  const hasInitialScrolledRef = useRef<boolean>(false);
+  const userScrolledUpRef = useRef<boolean>(false);
+  const touchStartYRef = useRef<number | null>(null);
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'end',
-          inline: 'nearest',
-        });
-      }
-    };
-
-    if (messages.length > 0) {
-      scrollToBottom();
-    }
-  }, [messages, isStreaming]);
-
-  useEffect(() => {
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'end',
-          inline: 'nearest',
-        });
-      }
-    };
-
-    const unsubscribe = scrollManager.subscribe(scrollToBottom);
-    return unsubscribe;
+  // Callback ref - will be called when the container element mounts
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    setContainerEl(node);
   }, []);
 
-  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-  const lastMessageContent = lastMessage?.message || '';
+  // Force scroll to bottom
+  const forceScrollToBottom = useCallback(() => {
+    const anchor = messagesEndRef.current;
+    if (!anchor) return;
+    userScrolledUpRef.current = false;
+    anchor.scrollIntoView({ behavior: 'auto' });
+  }, []);
 
+  // Smart scroll - respects user's scroll position
+  const scrollToBottom = useCallback(() => {
+    if (userScrolledUpRef.current) return;
+
+    const anchor = messagesEndRef.current;
+    if (!anchor) return;
+    anchor.scrollIntoView({ behavior: 'auto' });
+  }, []);
+
+  // Attach wheel listeners when container element is available
   useEffect(() => {
-    if (isStreaming && lastMessage && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
-        inline: 'nearest',
-      });
-    }
-  }, [lastMessageContent, isStreaming, lastMessage]);
+    if (!containerEl) return;
 
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0) {
+        userScrolledUpRef.current = true;
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartYRef.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const startY = touchStartYRef.current;
+      if (startY === null) return;
+
+      const currentY = e.touches[0].clientY;
+      if (currentY > startY) {
+        userScrolledUpRef.current = true;
+      }
+    };
+
+    containerEl.addEventListener('wheel', handleWheel, { passive: true });
+    containerEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+    containerEl.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    return () => {
+      containerEl.removeEventListener('wheel', handleWheel);
+      containerEl.removeEventListener('touchstart', handleTouchStart);
+      containerEl.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [containerEl]);
+
+  // Initial load - force scroll to bottom
   useEffect(() => {
-    if (isStreaming && messages.length > 0) {
-      const interval = setInterval(() => {
-        if (messagesEndRef.current) {
-          const container = containerRef.current;
-          if (container) {
-            const isNearBottom =
-              container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-            if (isNearBottom) {
-              messagesEndRef.current.scrollIntoView({
-                behavior: 'smooth',
-                block: 'end',
-                inline: 'nearest',
-              });
-            }
-          }
-        }
-      }, 300);
-
-      return () => clearInterval(interval);
+    if (messages.length > 0 && !hasInitialScrolledRef.current && !isLoadingBot) {
+      setTimeout(() => {
+        forceScrollToBottom();
+        hasInitialScrolledRef.current = true;
+      }, 50);
     }
-  }, [isStreaming, messages.length]);
+  }, [messages.length, isLoadingBot, forceScrollToBottom]);
+
+  // Reset when bot changes
+  useEffect(() => {
+    if (isLoadingBot) {
+      hasInitialScrolledRef.current = false;
+      userScrolledUpRef.current = false;
+    }
+  }, [isLoadingBot]);
+
+  // Handle new messages vs streaming content updates
+  useEffect(() => {
+    const messageCount = messages.length;
+    const prevCount = prevMessageCountRef.current;
+
+    if (messageCount > prevCount) {
+      forceScrollToBottom();
+    } else {
+      scrollToBottom();
+    }
+
+    prevMessageCountRef.current = messageCount;
+  }, [messages, scrollToBottom, forceScrollToBottom]);
+
+  // Subscribe to external scroll manager
+  useEffect(() => {
+    const unsubscribe = scrollManager.subscribe(scrollToBottom);
+    return unsubscribe;
+  }, [scrollToBottom]);
 
   if (isLoadingBot) {
     return (
@@ -105,7 +137,7 @@ const PublicMessageList: React.FC<PublicMessageListProps> = ({
     );
   }
 
-  if (messages.length === 0 && !isStreaming) {
+  if (messages.length === 0 && !isTyping) {
     return (
       <div className={`flex h-full items-center justify-center ${className}`}>
         <div className="flex max-w-md flex-col items-center gap-6 text-center">
@@ -152,7 +184,7 @@ const PublicMessageList: React.FC<PublicMessageListProps> = ({
           );
         })}
 
-        {isStreaming && messages[messages.length - 1]?.senderType !== 'ASSISTANT' && (
+        {isTyping && messages[messages.length - 1]?.senderType !== 'ASSISTANT' && (
           <div className="mb-6 flex justify-start">
             <div
               className={`border-border bg-background text-foreground mr-4 border px-4 py-3 shadow-sm ${roundedClass}`}

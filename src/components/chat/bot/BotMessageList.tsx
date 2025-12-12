@@ -1,11 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Loader2 } from 'lucide-react';
 
 import {
   useConversationStore,
   useIsLoadingBot,
-  useIsTyping,
   useMessages,
 } from '@/stores/core/conversationStore';
 
@@ -21,78 +20,114 @@ interface BotMessageListProps {
 
 const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
   const messages = useMessages();
-  const isStreaming = useIsTyping();
   const isLoadingBot = useIsLoadingBot();
-  const { isLoadingMessages } = useConversationStore();
+  const { isLoadingMessages, isTyping } = useConversationStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = useRef<number>(0);
+  const hasInitialScrolledRef = useRef<boolean>(false);
+  const userScrolledUpRef = useRef<boolean>(false);
+  const touchStartYRef = useRef<number | null>(null);
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'end',
-          inline: 'nearest',
-        });
-      }
-    };
-
-    if (messages.length > 0) {
-      scrollToBottom();
-    }
-  }, [messages, isStreaming]);
-
-  useEffect(() => {
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'end',
-          inline: 'nearest',
-        });
-      }
-    };
-
-    const unsubscribe = scrollManager.subscribe(scrollToBottom);
-    return unsubscribe;
+  // Callback ref - will be called when the container element mounts
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    setContainerEl(node);
   }, []);
 
-  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-  const lastMessageContent = lastMessage?.message || '';
-
-  useEffect(() => {
-    if (isStreaming && lastMessage && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
-        inline: 'nearest',
-      });
+  // Force scroll to bottom (used for new messages only)
+  const forceScrollToBottom = useCallback((shouldResetFlag = true) => {
+    const anchor = messagesEndRef.current;
+    if (!anchor) return;
+    if (shouldResetFlag) {
+      userScrolledUpRef.current = false;
     }
-  }, [lastMessageContent, isStreaming, lastMessage]);
+    anchor.scrollIntoView({ behavior: 'auto' });
+  }, []);
 
+  // Smart scroll - respects user's scroll position
+  const scrollToBottom = useCallback(() => {
+    if (userScrolledUpRef.current) return;
+
+    const anchor = messagesEndRef.current;
+    if (!anchor) return;
+    anchor.scrollIntoView({ behavior: 'auto' });
+  }, []);
+
+  // Attach wheel listeners when container element is available
   useEffect(() => {
-    if (isStreaming && messages.length > 0) {
-      const interval = setInterval(() => {
-        if (messagesEndRef.current) {
-          const container = containerRef.current;
-          if (container) {
-            const isNearBottom =
-              container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-            if (isNearBottom) {
-              messagesEndRef.current.scrollIntoView({
-                behavior: 'smooth',
-                block: 'end',
-                inline: 'nearest',
-              });
-            }
-          }
-        }
-      }, 300); // More frequent updates during streaming
+    if (!containerEl) return;
 
-      return () => clearInterval(interval);
+    const handleWheel = (e: WheelEvent) => {
+      // deltaY < 0 = scrolling UP
+      if (e.deltaY < 0) {
+        userScrolledUpRef.current = true;
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartYRef.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const startY = touchStartYRef.current;
+      if (startY === null) return;
+
+      const currentY = e.touches[0].clientY;
+      if (currentY > startY) {
+        userScrolledUpRef.current = true;
+      }
+    };
+
+    containerEl.addEventListener('wheel', handleWheel, { passive: true });
+    containerEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+    containerEl.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    return () => {
+      containerEl.removeEventListener('wheel', handleWheel);
+      containerEl.removeEventListener('touchstart', handleTouchStart);
+      containerEl.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [containerEl]);
+
+  // Initial load - force scroll to bottom
+  useEffect(() => {
+    if (messages.length > 0 && !hasInitialScrolledRef.current && !isLoadingMessages) {
+      setTimeout(() => {
+        forceScrollToBottom(true);
+        hasInitialScrolledRef.current = true;
+      }, 50);
     }
-  }, [isStreaming, messages.length]);
+  }, [messages.length, isLoadingMessages, forceScrollToBottom]);
+
+  // Reset when conversation changes
+  useEffect(() => {
+    if (isLoadingMessages) {
+      hasInitialScrolledRef.current = false;
+      userScrolledUpRef.current = false;
+    }
+  }, [isLoadingMessages]);
+
+  // Handle new messages vs streaming content updates
+  useEffect(() => {
+    const messageCount = messages.length;
+    const prevCount = prevMessageCountRef.current;
+
+    // NEW message added = force scroll (user sent a message or got a new response)
+    if (messageCount > prevCount) {
+      forceScrollToBottom(true);
+    } else {
+      // Same message count = content update (streaming) - respect user scroll
+      scrollToBottom();
+    }
+
+    prevMessageCountRef.current = messageCount;
+  }, [messages, scrollToBottom, forceScrollToBottom]);
+
+  // Subscribe to external scroll manager
+  useEffect(() => {
+    const unsubscribe = scrollManager.subscribe(scrollToBottom);
+    return unsubscribe;
+  }, [scrollToBottom]);
 
   if (isLoadingBot) {
     return (
@@ -116,7 +151,7 @@ const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
     );
   }
 
-  if (messages.length === 0 && !isStreaming) {
+  if (messages.length === 0 && !isTyping) {
     return (
       <div className={className}>
         <EmptyState />
@@ -136,7 +171,7 @@ const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
           );
         })}
 
-        {isStreaming && messages[messages.length - 1]?.senderType !== 'ASSISTANT' && (
+        {isTyping && messages[messages.length - 1]?.senderType !== 'ASSISTANT' && (
           <TypingIndicator />
         )}
 
