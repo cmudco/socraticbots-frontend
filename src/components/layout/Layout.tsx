@@ -17,20 +17,18 @@ const Layout: React.FC = () => {
   const isChatPage = location.pathname.startsWith('/chat');
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen flex-col overflow-hidden">
       <Header />
 
-      <div className="flex flex-1 pt-14">
+      <div className="flex min-h-0 flex-1 pt-14">
         {isAuthenticated && <Sidebar />}
         <div
-          className={`flex flex-1 flex-col transition-all duration-300 ${isAuthenticated ? (sidebarCollapsed ? 'ml-16' : 'ml-64') : 'ml-0'}`}
+          className={`relative min-h-0 flex-1 transition-all duration-300 ${isAuthenticated ? (sidebarCollapsed ? 'ml-16' : 'ml-64') : 'ml-0'}`}
         >
-          {/* System Banner - shows at top of content area */}
-          {isAuthenticated && <SystemBanner />}
+          {/* System Banner - absolute positioned overlay at top of content area */}
+          {isAuthenticated && <SystemBanner className="absolute top-0 right-0 left-0 z-40" />}
 
-          <main
-            className={`flex-1 ${isChatPage ? 'h-[calc(100vh-3.5rem)] overflow-hidden' : 'p-6'}`}
-          >
+          <main className={`h-full ${isChatPage ? 'overflow-hidden' : 'overflow-auto p-6'}`}>
             <Outlet />
           </main>
         </div>
