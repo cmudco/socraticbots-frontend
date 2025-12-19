@@ -1,22 +1,22 @@
 /**
  * WebSocket Store for Public/Anonymous Users
  *
- * Manages raw WebSocket connection to DARE backend for public bot conversations.
- * Uses the publicWebSocketService singleton for connection management.
+ * Manages Socket.IO connection to DARE backend for public bot conversations.
+ * Uses the publicSocketService singleton for connection management.
  *
  * Key Features:
- * - Session-based authentication (no JWT)
+ * - Session-based authentication (sessionId + conversationId)
  * - One connection per conversation (connects when conversation is available)
  * - Learning progress tracking (Socratic Books specific)
- * - Automatic reconnection with exponential backoff
+ * - Automatic reconnection via Socket.IO
  *
- * Note: DARE backend uses Django Channels WebSocket for public bots,
- * NOT Socket.IO (which only supports JWT authentication).
+ * Note: Public bots are auto-subscribed on connect by the backend,
+ * so no separate subscription call is needed.
  */
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
-import { publicWebSocketService } from '@/services/publicWebSocket.service';
+import { publicSocketService } from '@/services/socket.service';
 
 import { scrollManager } from '@/utils/scrollManager';
 
@@ -105,11 +105,11 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
       set({ isConnecting: true, error: null, sessionId, currentConversationId: conversationId });
 
       // Set up event handlers
-      publicWebSocketService.onMessage(data => {
+      publicSocketService.onMessage(data => {
         get().handleSocketMessage(data);
       });
 
-      publicWebSocketService.onConnectionChange(connected => {
+      publicSocketService.onConnectionChange(connected => {
         set({
           isConnected: connected,
           isConnecting: false,
@@ -117,7 +117,7 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
         });
       });
 
-      publicWebSocketService.onError(error => {
+      publicSocketService.onError(error => {
         set({
           error,
           isConnecting: false,
@@ -125,13 +125,13 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
         });
       });
 
-      // Connect to conversation with session ID
-      publicWebSocketService.connect(conversationId, sessionId);
+      // Connect to conversation with session ID (auto-subscribes on backend)
+      publicSocketService.connectWithSession(sessionId, conversationId);
     },
 
     disconnect: () => {
-      publicWebSocketService.disconnect();
-      publicWebSocketService.clearHandlers();
+      publicSocketService.disconnect();
+      publicSocketService.clearHandlers();
       set(initialState);
     },
 
@@ -418,7 +418,7 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
       }
 
       // Send message (fire-and-forget with error callback)
-      publicWebSocketService.sendMessage(payload, error => set({ error }));
+      publicSocketService.sendMessage(payload, error => set({ error }));
     },
   }))
 );

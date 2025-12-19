@@ -1,11 +1,24 @@
 /**
- * Socket.IO Configuration for Socratic Books (Authenticated Users Only)
+ * Socket.IO Configuration for Socratic Books
  *
  * Configures connection to DARE backend Socket.IO server.
  *
- * NOTE: Public bots use raw WebSocket (Django Channels) instead of Socket.IO
- * because DARE backend's Socket.IO /chat namespace only supports JWT auth.
+ * Supports two authentication modes:
+ * - JWT Token (authenticated users): { token: 'jwt_token' }
+ * - Session ID (public bots): { sessionId: 'uuid', conversationId: 'uuid' }
  */
+
+// ════════════════════════════════════════════════════════════════════════════
+// Types
+// ════════════════════════════════════════════════════════════════════════════
+
+export type SocketAuthJWT = { token: string };
+export type SocketAuthSession = { sessionId: string; conversationId: string };
+export type SocketAuth = SocketAuthJWT | SocketAuthSession;
+
+// ════════════════════════════════════════════════════════════════════════════
+// Configuration
+// ════════════════════════════════════════════════════════════════════════════
 
 /**
  * Socket.IO connection configuration
@@ -47,10 +60,11 @@ export const socketConfig = {
   reconnectionDelayMax: 30000,
 
   /**
-   * Platform identifier for subscription events
+   * Platform identifiers for subscription events
    */
   platforms: {
     authenticated: 'SOCRATIC_BOOKS',
+    public: 'SOCRATIC_BOOKS',
   } as const,
 } as const;
 
@@ -62,9 +76,10 @@ export function getSocketUrl(): string {
 }
 
 /**
- * Get Socket.IO connection options for authenticated users
+ * Get Socket.IO connection options
+ * Works with both JWT and session-based auth
  */
-export function getSocketOptions(auth: { token: string }) {
+export function getSocketOptions(auth: SocketAuth) {
   return {
     path: socketConfig.path,
     auth,
