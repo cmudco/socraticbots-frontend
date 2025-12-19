@@ -56,11 +56,7 @@ const PublicBotChat: React.FC = () => {
   const isTrackingEnabled = botInfo?.modelPreference?.trackingModelDareId != null;
 
   // Public WebSocket store - raw WebSocket (not Socket.IO)
-  const {
-    connect: connectWebSocket,
-    disconnect: disconnectWebSocket,
-    sendMessage: sendWebSocketMessage,
-  } = usePublicWebSocketStore();
+  const { sendMessage: sendWebSocketMessage } = usePublicWebSocketStore();
 
   // React Query hooks
   const {
@@ -124,19 +120,22 @@ const PublicBotChat: React.FC = () => {
       return;
     }
 
-    // Connect to the specific conversation with session ID
-    connectWebSocket(activeConversation.dareConversationId, anonymousSessionId);
+    // Get actions from store state to avoid dependency issues
+    const { connect, isConnected, isConnecting } = usePublicWebSocketStore.getState();
+
+    // Only connect if not already connected or connecting
+    if (!isConnected && !isConnecting) {
+      connect(activeConversation.dareConversationId, anonymousSessionId);
+    }
 
     // Cleanup on unmount
     return () => {
-      disconnectWebSocket();
+      const { isConnected: stillConnected, disconnect: disc } = usePublicWebSocketStore.getState();
+      if (stillConnected) {
+        disc();
+      }
     };
-  }, [
-    anonymousSessionId,
-    activeConversation?.dareConversationId,
-    connectWebSocket,
-    disconnectWebSocket,
-  ]);
+  }, [anonymousSessionId, activeConversation?.dareConversationId]);
 
   // Handle sending messages
   const handleSendMessage = useCallback(
