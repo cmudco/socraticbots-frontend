@@ -55,6 +55,7 @@ const PublicBotChat: React.FC = () => {
   // Check if tracking is enabled for the current bot
   const isTrackingEnabled = botInfo?.modelPreference?.trackingModelDareId != null;
 
+  // Public WebSocket store - raw WebSocket (not Socket.IO)
   const {
     connect: connectWebSocket,
     disconnect: disconnectWebSocket,
@@ -116,23 +117,23 @@ const PublicBotChat: React.FC = () => {
     setActiveConversation,
   ]);
 
-  // Connect WebSocket when we have conversation ID and session ID
+  // Connect WebSocket when we have both session ID and conversation ID
+  // Public bots use raw WebSocket (not Socket.IO) - one connection per conversation
   useEffect(() => {
-    if (!activeConversation?.dareConversationId || !anonymousSessionId) {
+    if (!anonymousSessionId || !activeConversation?.dareConversationId) {
       return;
     }
 
-    connectWebSocket(activeConversation.dareConversationId, anonymousSessionId).catch(error => {
-      console.error('Failed to connect WebSocket:', error);
-    });
+    // Connect to the specific conversation with session ID
+    connectWebSocket(activeConversation.dareConversationId, anonymousSessionId);
 
     // Cleanup on unmount
     return () => {
       disconnectWebSocket();
     };
   }, [
-    activeConversation?.dareConversationId,
     anonymousSessionId,
+    activeConversation?.dareConversationId,
     connectWebSocket,
     disconnectWebSocket,
   ]);

@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useUserInfo } from '@/hooks/queries/useUser';
+import { useSocketConnection } from '@/hooks/useSocketConnection';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,6 +11,10 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { data: user, isLoading, isError } = useUserInfo();
   const location = useLocation();
+
+  // Initialize Socket.IO connection when user is authenticated
+  // This ensures socket connects on login and stays connected across protected routes
+  useSocketConnection();
 
   // Show loading spinner while fetching user data
   if (isLoading) {
