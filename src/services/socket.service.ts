@@ -1,18 +1,24 @@
 /**
- * Socket.IO Service for Socratic Books (Authenticated Users Only)
+ * Socket.IO Service for Socratic Books
  *
- * Provides Socket.IO connection management for authenticated bot conversations.
+ * Provides Socket.IO connection management for bot conversations.
  * This service is designed to be used by Zustand stores, adapting DARE's Redux middleware pattern.
  *
  * Architecture:
- * - Single connection per user session (connects on login via ProtectedRoute)
+ * - Single connection per user session (authenticated) or per conversation (public)
  * - Room-based conversation subscriptions
  * - Fire-and-forget pattern with optional callbacks (no Promises)
  *
- * NOTE: Public bots use raw WebSocket via publicWebSocket.service.ts
- * because DARE backend's Socket.IO namespace only supports JWT authentication.
+ * Authentication Modes:
+ * - JWT Token (authenticated users): connectWithToken(token)
+ * - Session ID (public bots): connectWithSession(sessionId, conversationId)
  */
-import { getSocketOptions, getSocketUrl, socketConfig } from '@/config/socket.config';
+import {
+  type SocketAuth,
+  getSocketOptions,
+  getSocketUrl,
+  socketConfig,
+} from '@/config/socket.config';
 import { Socket, io } from 'socket.io-client';
 
 import type {
@@ -65,9 +71,18 @@ class SocketService {
   }
 
   /**
-   * Internal connection setup
+   * Connect with session ID (for public/anonymous users)
+   * Public bots are auto-subscribed on connect, no separate subscribe needed.
    */
-  private connect(auth: { token: string }): void {
+  connectWithSession(sessionId: string, conversationId: string): void {
+    this.connect({ sessionId, conversationId });
+  }
+
+  /**
+   * Internal connection setup
+   * Supports both JWT and session-based auth
+   */
+  private connect(auth: SocketAuth): void {
     // Already connected
     if (this.socket?.connected) {
       console.log(`[SocketService] Already connected for ${this.platform}`);
@@ -92,10 +107,13 @@ class SocketService {
       console.log(`[SocketService] Connected for ${this.platform}`);
       this.connectionHandler?.(true);
 
-      // Re-subscribe to all tracked conversations on reconnect
-      this.subscriptions.forEach(convId => {
-        this.subscribeInternal(convId);
-      });
+      // Re-subscribe to all tracked conversations on reconnect (only for JWT auth)
+      // Public bots are auto-subscribed on connect, so they don't need this
+      if ('token' in auth) {
+        this.subscriptions.forEach(convId => {
+          this.subscribeInternal(convId);
+        });
+      }
     });
 
     this.socket.on('disconnect', reason => {
@@ -321,14 +339,20 @@ class SocketService {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// Singleton Instance
+// Singleton Instances
 // ════════════════════════════════════════════════════════════════════════════
 
 /**
  * Socket service for authenticated users (uses JWT)
- * Public bots use raw WebSocket via publicWebSocket.service.ts
+ * Connects on login via useSocketConnection hook
  */
 export const authenticatedSocketService = new SocketService(socketConfig.platforms.authenticated);
+
+/**
+ * Socket service for public/anonymous users (uses session ID)
+ * Connects when conversation is available via PublicBotChat
+ */
+export const publicSocketService = new SocketService(socketConfig.platforms.public);
 
 export { SocketService };
 export default authenticatedSocketService;

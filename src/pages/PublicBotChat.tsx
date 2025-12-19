@@ -55,7 +55,7 @@ const PublicBotChat: React.FC = () => {
   // Check if tracking is enabled for the current bot
   const isTrackingEnabled = botInfo?.modelPreference?.trackingModelDareId != null;
 
-  // Public WebSocket store - raw WebSocket (not Socket.IO)
+  // Public WebSocket store - Socket.IO (session-based auth)
   const { sendMessage: sendWebSocketMessage } = usePublicWebSocketStore();
 
   // React Query hooks
@@ -113,8 +113,8 @@ const PublicBotChat: React.FC = () => {
     setActiveConversation,
   ]);
 
-  // Connect WebSocket when we have both session ID and conversation ID
-  // Public bots use raw WebSocket (not Socket.IO) - one connection per conversation
+  // Connect Socket.IO when we have both session ID and conversation ID
+  // Public bots use Socket.IO with session auth - one connection per conversation
   useEffect(() => {
     if (!anonymousSessionId || !activeConversation?.dareConversationId) {
       return;
@@ -145,7 +145,9 @@ const PublicBotChat: React.FC = () => {
       setIsTyping(true);
 
       // Build payload exactly like authenticated bot chat
+      // conversationId is REQUIRED - backend uses it to route the message
       const payload: Record<string, unknown> = {
+        conversationId: activeConversation.dareConversationId,
         message: message,
         sender_type: 1, // USER
         enable_progress: true, // Enable progress tracking for public bots
