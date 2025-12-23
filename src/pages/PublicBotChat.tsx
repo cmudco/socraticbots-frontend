@@ -55,11 +55,8 @@ const PublicBotChat: React.FC = () => {
   // Check if tracking is enabled for the current bot
   const isTrackingEnabled = botInfo?.modelPreference?.trackingModelDareId != null;
 
-  const {
-    connect: connectWebSocket,
-    disconnect: disconnectWebSocket,
-    sendMessage: sendWebSocketMessage,
-  } = usePublicWebSocketStore();
+  // Public WebSocket store - Socket.IO (session-based auth)
+  const { sendMessage: sendWebSocketMessage } = usePublicWebSocketStore();
 
   // React Query hooks
   const {
@@ -116,26 +113,29 @@ const PublicBotChat: React.FC = () => {
     setActiveConversation,
   ]);
 
-  // Connect WebSocket when we have conversation ID and session ID
+  // Connect Socket.IO when we have both session ID and conversation ID
+  // Public bots use Socket.IO with session auth - one connection per conversation
   useEffect(() => {
-    if (!activeConversation?.dareConversationId || !anonymousSessionId) {
+    if (!anonymousSessionId || !activeConversation?.dareConversationId) {
       return;
     }
 
-    connectWebSocket(activeConversation.dareConversationId, anonymousSessionId).catch(error => {
-      console.error('Failed to connect WebSocket:', error);
-    });
+    // Get actions from store state to avoid dependency issues
+    const { connect, isConnected, isConnecting } = usePublicWebSocketStore.getState();
+
+    // Only connect if not already connected or connecting
+    if (!isConnected && !isConnecting) {
+      connect(activeConversation.dareConversationId, anonymousSessionId);
+    }
 
     // Cleanup on unmount
     return () => {
-      disconnectWebSocket();
+      const { isConnected: stillConnected, disconnect: disc } = usePublicWebSocketStore.getState();
+      if (stillConnected) {
+        disc();
+      }
     };
-  }, [
-    activeConversation?.dareConversationId,
-    anonymousSessionId,
-    connectWebSocket,
-    disconnectWebSocket,
-  ]);
+  }, [anonymousSessionId, activeConversation?.dareConversationId]);
 
   // Handle sending messages
   const handleSendMessage = useCallback(
@@ -145,7 +145,9 @@ const PublicBotChat: React.FC = () => {
       setIsTyping(true);
 
       // Build payload exactly like authenticated bot chat
+      // conversationId is REQUIRED - backend uses it to route the message
       const payload: Record<string, unknown> = {
+        conversationId: activeConversation.dareConversationId,
         message: message,
         sender_type: 1, // USER
         enable_progress: true, // Enable progress tracking for public bots

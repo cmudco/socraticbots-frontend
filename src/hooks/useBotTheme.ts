@@ -117,10 +117,11 @@ export function useBotTheme(theme?: BotTheme, containerId = 'bot-chat-root') {
 
   // Strategy 1: Try immediate synchronous application (useLayoutEffect)
   // This runs before browser paint, ensuring no flash of unstyled content
+  // Always re-apply when resolvedTheme changes (not gated by appliedRef)
   useLayoutEffect(() => {
     const container = document.getElementById(containerId);
 
-    if (container && !appliedRef.current) {
+    if (container) {
       applyThemeToContainer(container, resolvedTheme);
     }
   }, [containerId, resolvedTheme, applyThemeToContainer]);

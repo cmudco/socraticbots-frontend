@@ -9,6 +9,7 @@ import {
 } from '@/stores/core/conversationStore';
 import { useIsWebSocketConnected } from '@/stores/core/websocketStore';
 
+import QuickPromptPills from '@/components/chat/QuickPromptPills';
 import { Button } from '@/components/ui/button';
 
 interface BotChatInputProps {
@@ -74,6 +75,15 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
   return (
     <div className={`border-border/60 bg-background/95 border-t backdrop-blur-sm ${className}`}>
       <div className="px-6 py-4">
+        {/* Quick Prompt Pills */}
+        {currentBot?.quickPrompts && currentBot.quickPrompts.length > 0 && (
+          <QuickPromptPills
+            quickPrompts={currentBot.quickPrompts}
+            onPromptClick={promptText => setInputMessage(promptText)}
+            disabled={inputDisabled}
+          />
+        )}
+
         {/* Input Form */}
         <form
           onSubmit={e => {
