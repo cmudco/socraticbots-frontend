@@ -24,6 +24,7 @@ import BotBasicInfoTab from './tabs/BotBasicInfoTab';
 import BotDeploymentTab from './tabs/BotDeploymentTab';
 import BotFilesTab from './tabs/BotFilesTab';
 import BotPromptsTab from './tabs/BotPromptsTab';
+import BotQuickPromptsTab from './tabs/BotQuickPromptsTab';
 import BotThemeTab from './tabs/BotThemeTab';
 
 interface BotFormModalProps {
@@ -79,6 +80,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     fontSize,
     borderRadius,
     messageSpacing,
+    quickPrompts,
     updateAccessCode,
     updateAccessCodeLimit,
     updateAccessCodeUsed,
@@ -216,6 +218,14 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
           borderRadius,
           messageSpacing,
         },
+        // Quick prompts
+        quickPromptsData: quickPrompts
+          .filter(qp => qp.title.trim() && qp.prompt.trim())
+          .map((qp, i) => ({
+            title: qp.title,
+            prompt: qp.prompt,
+            order: qp.order ?? i,
+          })),
       };
 
       if (isEdit && bot) {
@@ -286,6 +296,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
   const tabs = [
     { id: 'basic', label: 'Basic Info' },
     { id: 'prompts', label: 'Prompts' },
+    { id: 'quick-prompts', label: 'Quick Prompts' },
     { id: 'theme', label: 'Theme' },
     ...(isEdit && isProfessor ? [{ id: 'files', label: 'Files' }] : []),
     ...(isEdit && isProfessor ? [{ id: 'deployment', label: 'Deployment' }] : []),
@@ -303,6 +314,8 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         return <BotBasicInfoTab ref={formRef} viewOnly={viewOnly} />;
       case 'prompts':
         return <BotPromptsTab viewOnly={viewOnly} />;
+      case 'quick-prompts':
+        return <BotQuickPromptsTab viewOnly={viewOnly} />;
       case 'theme':
         return <BotThemeTab viewOnly={viewOnly} />;
       case 'files':

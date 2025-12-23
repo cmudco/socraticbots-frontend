@@ -6,6 +6,7 @@ import { BookOpen, GraduationCap, LogOut, User } from 'lucide-react';
 
 import { useIsAuthenticated, useLogout, useUser } from '@/hooks/queries/useUser';
 
+import NotificationPopover from '@/components/ui/NotificationPopover';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -75,6 +76,9 @@ const Header: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Notification Bell */}
+              <NotificationPopover />
 
               {/* Logout Button */}
               <Button

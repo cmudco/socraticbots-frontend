@@ -9,6 +9,7 @@ import {
 } from '@/stores/core/publicBotStore';
 import { useIsPublicWebSocketConnected } from '@/stores/core/publicWebSocketStore';
 
+import QuickPromptPills from '@/components/chat/QuickPromptPills';
 import { Button } from '@/components/ui/button';
 
 interface PublicChatInputProps {
@@ -78,6 +79,15 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({
   return (
     <div className="border-border/60 bg-background/95 border-t backdrop-blur-sm">
       <div className="px-6 py-4">
+        {/* Quick Prompt Pills */}
+        {botInfo?.quickPrompts && botInfo.quickPrompts.length > 0 && (
+          <QuickPromptPills
+            quickPrompts={botInfo.quickPrompts}
+            onPromptClick={promptText => setInputMessage(promptText)}
+            disabled={inputDisabled}
+          />
+        )}
+
         {/* Input Form */}
         <form
           onSubmit={e => {

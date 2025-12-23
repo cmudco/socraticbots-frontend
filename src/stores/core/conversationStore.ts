@@ -42,7 +42,7 @@ export interface ConversationState {
 export interface ConversationActions {
   // Conversation management
   setActiveBot: (bot: Bot) => Promise<void>;
-  clearActiveConversation: () => Promise<void>;
+  clearActiveConversation: () => void;
 
   // Message handling
   sendMessage: (message: string) => Promise<void>;
@@ -101,7 +101,12 @@ export const useConversationStore = create<ConversationStore>()(
         set({ isLoadingBot: true });
 
         const websocketStore = useWebSocketStore.getState();
-        await websocketStore.disconnect();
+
+        // Unsubscribe from previous conversation (if any) but keep connection alive
+        const { currentConversationId } = websocketStore;
+        if (currentConversationId) {
+          websocketStore.unsubscribeFromConversation(currentConversationId);
+        }
 
         set({
           currentBotId: botId,
@@ -115,15 +120,9 @@ export const useConversationStore = create<ConversationStore>()(
         const conversation = await conversationService.getOrCreateBotConversation(botId);
         set({ activeConversation: conversation });
 
-        const authToken = localStorage.getItem('access_token');
-        if (!authToken) {
-          throw new Error('No authentication token found');
-        }
-
-        const DARE_WEBSOCKET_URL = import.meta.env.VITE_DARE_WEBSOCKET_URL;
-        const socketUrl = `${DARE_WEBSOCKET_URL}/conversations/${conversation.dareConversationId}/?jwt_key=${encodeURIComponent(authToken)}`;
-
-        await websocketStore.connect(socketUrl);
+        // Socket connection is now handled by ProtectedRoute via useSocketConnection hook
+        // Here we only subscribe to the conversation room
+        websocketStore.subscribeToConversation(conversation.dareConversationId);
       } catch (error) {
         console.error('Error setting active bot:', error);
         set({
@@ -136,10 +135,17 @@ export const useConversationStore = create<ConversationStore>()(
       }
     },
 
-    clearActiveConversation: async () => {
-      // Disconnect WebSocket
+    clearActiveConversation: () => {
       const websocketStore = useWebSocketStore.getState();
-      await websocketStore.disconnect();
+
+      // Unsubscribe from current conversation (but keep socket connection alive)
+      const { currentConversationId } = websocketStore;
+      if (currentConversationId) {
+        websocketStore.unsubscribeFromConversation(currentConversationId);
+      }
+
+      // Clear progress tokens
+      websocketStore.clearProgressTokens();
 
       set({
         activeConversation: null,

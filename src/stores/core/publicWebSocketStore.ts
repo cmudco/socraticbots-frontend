@@ -1,77 +1,55 @@
+/**
+ * WebSocket Store for Public/Anonymous Users
+ *
+ * Manages Socket.IO connection to DARE backend for public bot conversations.
+ * Uses the publicSocketService singleton for connection management.
+ *
+ * Key Features:
+ * - Session-based authentication (sessionId + conversationId)
+ * - One connection per conversation (connects when conversation is available)
+ * - Learning progress tracking (Socratic Books specific)
+ * - Automatic reconnection via Socket.IO
+ *
+ * Note: Public bots are auto-subscribed on connect by the backend,
+ * so no separate subscription call is needed.
+ */
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
+import { publicSocketService } from '@/services/socket.service';
+
 import { scrollManager } from '@/utils/scrollManager';
 
-// WebSocket message types
-interface BaseWebSocketMessage {
-  type: string;
-  id?: string;
-  message?: string;
-  senderType?: number;
-  senderName?: string;
-  isSender?: boolean;
-  date?: string;
-  streaming?: boolean;
-  llmId?: number;
-  cost?: number;
-  inputTokens?: number;
-  outputTokens?: number;
-  feedbackType?: number | null;
-  feedbackText?: string | null;
-  isEdited?: boolean;
-  isRegenerated?: boolean;
-  originalMessage?: string | null;
-  regenerate?: boolean;
-  messageId?: string;
-  chunk?: string;
-  token?: string;
-  assessment?: {
-    content: string;
-    learningGoals?: string;
-    createdAt?: string;
-    metadata?: Record<string, unknown>;
-  };
-  conversationHistory?: Array<{
-    id: string;
-    message: string;
-    senderType: number;
-    senderName?: string;
-    isSender?: boolean;
-    date?: string;
-    streaming?: boolean;
-    llmId?: number;
-    cost?: number;
-    inputTokens?: number;
-    outputTokens?: number;
-    feedbackType?: number | null;
-    feedbackText?: string | null;
-    isEdited?: boolean;
-    isRegenerated?: boolean;
-    originalMessage?: string | null;
-  }>;
-}
+import type { SocketMessage } from '@/types/socket';
+
+// ════════════════════════════════════════════════════════════════════════════
+// Types
+// ════════════════════════════════════════════════════════════════════════════
 
 export interface PublicWebSocketState {
+  // Connection state
   isConnected: boolean;
   isConnecting: boolean;
   error: string | null;
-  socket: WebSocket | null;
 
-  // Progress streaming state
+  // Session tracking
+  sessionId: string | null;
+  currentConversationId: string | null;
+
+  // Progress streaming state (Socratic Books specific)
   isProgressStreaming: boolean;
   progressTokens: string[];
   progressContent: string;
 }
 
 export interface PublicWebSocketActions {
-  // Connection management
-  connect: (conversationId: string, sessionId: string) => Promise<void>;
-  disconnect: () => Promise<void>;
+  // Connection management (connects to specific conversation)
+  connect: (conversationId: string, sessionId: string) => void;
+  disconnect: () => void;
   setError: (error: string | null) => void;
 
   // Message handling
-  handleWebSocketMessage: (data: BaseWebSocketMessage) => void;
+  handleSocketMessage: (data: SocketMessage) => void;
 
   // Progress streaming actions
   setProgressStreaming: (streaming: boolean) => void;
@@ -85,119 +63,87 @@ export interface PublicWebSocketActions {
 
 type PublicWebSocketStore = PublicWebSocketState & PublicWebSocketActions;
 
+// ════════════════════════════════════════════════════════════════════════════
+// Initial State
+// ════════════════════════════════════════════════════════════════════════════
+
 const initialState: PublicWebSocketState = {
   isConnected: false,
   isConnecting: false,
   error: null,
-  socket: null,
+  sessionId: null,
+  currentConversationId: null,
   isProgressStreaming: false,
   progressTokens: [],
   progressContent: '',
 };
 
+// ════════════════════════════════════════════════════════════════════════════
+// Store
+// ════════════════════════════════════════════════════════════════════════════
+
 export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
   subscribeWithSelector((set, get) => ({
     ...initialState,
 
-    connect: async (conversationId: string, sessionId: string) => {
-      const { isConnecting, isConnected } = get();
+    // ──────────────────────────────────────────────────────────────────────
+    // Connection Management
+    // ──────────────────────────────────────────────────────────────────────
+
+    connect: (conversationId: string, sessionId: string) => {
+      const { isConnecting, isConnected, currentConversationId } = get();
+
+      // Already connected to this conversation
+      if (isConnected && currentConversationId === conversationId) {
+        return;
+      }
 
       if (isConnecting) {
         return;
       }
 
-      if (isConnected) {
-        await get().disconnect();
-      }
+      set({ isConnecting: true, error: null, sessionId, currentConversationId: conversationId });
 
-      return new Promise<void>((resolve, reject) => {
-        try {
-          set({ isConnecting: true, error: null });
-
-          // Build WebSocket URL for anonymous connection to DARE backend
-          // Use the public bot WebSocket endpoint
-          const DARE_WEBSOCKET_URL = import.meta.env.VITE_DARE_WEBSOCKET_URL;
-          const socketUrl = `${DARE_WEBSOCKET_URL}/public/conversations/${conversationId}/?session_id=${encodeURIComponent(sessionId)}`;
-
-          const socket = new WebSocket(socketUrl);
-
-          socket.onopen = () => {
-            set({
-              isConnected: true,
-              isConnecting: false,
-              socket,
-              error: null,
-            });
-            resolve();
-          };
-
-          socket.onmessage = event => {
-            try {
-              const data = JSON.parse(event.data);
-              get().handleWebSocketMessage(data);
-            } catch (error) {
-              console.error('Error parsing WebSocket message:', error);
-            }
-          };
-
-          socket.onerror = error => {
-            console.error('Public WebSocket error:', error);
-            set({
-              error: 'WebSocket connection error',
-              isConnecting: false,
-              isConnected: false,
-            });
-            reject(new Error('WebSocket connection error'));
-          };
-
-          socket.onclose = () => {
-            set({
-              isConnected: false,
-              isConnecting: false,
-              socket: null,
-            });
-          };
-        } catch (error) {
-          console.error('Error connecting WebSocket:', error);
-          set({
-            error: error instanceof Error ? error.message : 'Unknown error',
-            isConnecting: false,
-          });
-          reject(error);
-        }
+      // Set up event handlers
+      publicSocketService.onMessage(data => {
+        get().handleSocketMessage(data);
       });
+
+      publicSocketService.onConnectionChange(connected => {
+        set({
+          isConnected: connected,
+          isConnecting: false,
+          error: connected ? null : get().error,
+        });
+      });
+
+      publicSocketService.onError(error => {
+        set({
+          error,
+          isConnecting: false,
+          isConnected: false,
+        });
+      });
+
+      // Connect to conversation with session ID (auto-subscribes on backend)
+      publicSocketService.connectWithSession(sessionId, conversationId);
     },
 
     disconnect: () => {
-      return new Promise<void>(resolve => {
-        const { socket } = get();
-        if (socket) {
-          try {
-            if (
-              socket.readyState === WebSocket.OPEN ||
-              socket.readyState === WebSocket.CONNECTING
-            ) {
-              socket.close(1000, 'User disconnected');
-            }
-          } catch (error) {
-            console.warn('Error closing WebSocket:', error);
-          }
-
-          set(initialState);
-
-          setTimeout(resolve, 50);
-        } else {
-          set(initialState);
-          resolve();
-        }
-      });
+      publicSocketService.disconnect();
+      publicSocketService.clearHandlers();
+      set(initialState);
     },
 
     setError: (error: string | null) => {
       set({ error });
     },
 
-    handleWebSocketMessage: (data: BaseWebSocketMessage) => {
+    // ──────────────────────────────────────────────────────────────────────
+    // Message Handling
+    // ──────────────────────────────────────────────────────────────────────
+
+    handleSocketMessage: (data: SocketMessage) => {
       // Import the public bot store dynamically to avoid circular imports
       import('./publicBotStore')
         .then(({ usePublicBotStore }) => {
@@ -251,7 +197,6 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
                 // New message being added
                 // If this is a new ASSISTANT message that is NOT streaming (completed), clear old progress and show loading
                 if (senderType === 'ASSISTANT' && !data.streaming) {
-                  // Clear tokens and set streaming to show loading spinner
                   set({
                     progressTokens: [],
                     progressContent: '',
@@ -362,6 +307,10 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
               break;
             }
 
+            // ────────────────────────────────────────────────────────────────
+            // Learning Progress Events (Socratic Books Specific)
+            // ────────────────────────────────────────────────────────────────
+
             case 'progress_start': {
               set({ isProgressStreaming: true });
               get().clearProgressTokens();
@@ -421,24 +370,13 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
           }
         })
         .catch(error => {
-          console.error('Error handling WebSocket message:', error);
+          console.error('Error handling Socket message:', error);
         });
     },
 
-    sendMessage: (payload: Record<string, unknown>) => {
-      const { socket, isConnected } = get();
-      if (!socket || !isConnected) {
-        console.error('Cannot send message: WebSocket not connected');
-        return;
-      }
-
-      try {
-        socket.send(JSON.stringify(payload));
-      } catch (error) {
-        console.error('Error sending WebSocket message:', error);
-        set({ error: 'Failed to send message' });
-      }
-    },
+    // ──────────────────────────────────────────────────────────────────────
+    // Progress Streaming Actions
+    // ──────────────────────────────────────────────────────────────────────
 
     setProgressStreaming: (streaming: boolean) => {
       set({ isProgressStreaming: streaming });
@@ -466,18 +404,43 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
     setProgressContent: (content: string) => {
       set({ progressContent: content });
     },
+
+    // ──────────────────────────────────────────────────────────────────────
+    // Message Sending
+    // ──────────────────────────────────────────────────────────────────────
+
+    sendMessage: (payload: Record<string, unknown>) => {
+      const { isConnected } = get();
+
+      if (!isConnected) {
+        console.error('Cannot send message: WebSocket not connected');
+        return;
+      }
+
+      // Send message (fire-and-forget with error callback)
+      publicSocketService.sendMessage(payload, error => set({ error }));
+    },
   }))
 );
 
-// Selector hooks for better performance
+// ════════════════════════════════════════════════════════════════════════════
+// Selector Hooks
+// ════════════════════════════════════════════════════════════════════════════
+
+// Connection state selectors
 export const useIsPublicWebSocketConnected = () =>
   usePublicWebSocketStore(state => state.isConnected);
 export const useIsPublicWebSocketConnecting = () =>
   usePublicWebSocketStore(state => state.isConnecting);
 export const usePublicWebSocketError = () => usePublicWebSocketStore(state => state.error);
 
+// Progress state selectors
 export const useIsPublicProgressStreaming = () =>
   usePublicWebSocketStore(state => state.isProgressStreaming);
 export const usePublicProgressTokens = () => usePublicWebSocketStore(state => state.progressTokens);
 export const usePublicProgressContent = () =>
   usePublicWebSocketStore(state => state.progressContent);
+
+// Subscription state selectors
+export const usePublicCurrentConversationId = () =>
+  usePublicWebSocketStore(state => state.currentConversationId);
