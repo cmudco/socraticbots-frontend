@@ -1,16 +1,14 @@
 import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { Bug, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { useChatBots } from '@/hooks/queries/useChat';
 import { useUserInfo } from '@/hooks/queries/useUser';
 
 import { useConversationStore } from '@/stores/core/conversationStore';
-import { useDebugInfo } from '@/stores/core/websocketStore';
 
 import ChatHeader from '@/components/chat/ChatHeader';
-import DebugPanel from '@/components/chat/DebugPanel';
 import TrackingSidebar from '@/components/chat/TrackingSidebar';
 import BotChatInterface from '@/components/chat/bot/BotChatInterface';
 import NotesSidebar from '@/components/chat/notes/NotesSidebar';
@@ -24,10 +22,7 @@ const Chat: React.FC = () => {
     clearActiveConversation,
     isProgressSidebarVisible,
     setProgressSidebarVisible,
-    isDebugPanelVisible,
-    setDebugPanelVisible,
   } = useConversationStore();
-  const debugInfo = useDebugInfo();
   const { botId } = useParams();
   const { data: bots } = useChatBots();
 
@@ -136,23 +131,6 @@ const Chat: React.FC = () => {
       <div className="min-w-0 flex-shrink-0">
         <NotesSidebar />
       </div>
-
-      {/* Debug Panel Sheet */}
-      <DebugPanel open={isDebugPanelVisible} onOpenChange={setDebugPanelVisible} />
-
-      {/* Debug toggle button - fixed position */}
-      <button
-        onClick={() => setDebugPanelVisible(!isDebugPanelVisible)}
-        className={`fixed top-[70px] right-4 z-40 flex h-8 w-8 items-center justify-center rounded-lg border shadow-md transition-all ${
-          debugInfo
-            ? 'border-orange-600 bg-orange-500 hover:bg-orange-600'
-            : 'bg-background border-border/60 hover:bg-muted'
-        }`}
-        aria-label={isDebugPanelVisible ? 'Hide debug panel' : 'Show debug panel'}
-        title="Debug Inspector"
-      >
-        <Bug className={`h-4 w-4 ${debugInfo ? 'text-white' : 'text-muted-foreground'}`} />
-      </button>
     </div>
   );
 };
