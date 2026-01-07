@@ -78,6 +78,9 @@ export function getSocketUrl(): string {
 /**
  * Get Socket.IO connection options
  * Works with both JWT and session-based auth
+ *
+ * Note: Platform detection (DARE vs SocraticBots) is handled automatically
+ * by the DARE backend using the Origin/Referer headers from the request.
  */
 export function getSocketOptions(auth: SocketAuth) {
   return {

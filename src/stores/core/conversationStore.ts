@@ -25,6 +25,7 @@ export interface ConversationState {
   isLoadingBot: boolean;
   isProgressSidebarVisible: boolean;
   isProgressCollapsed: boolean;
+  isDebugPanelVisible: boolean;
 
   // Bot context
   currentBotId: number | null;
@@ -59,6 +60,7 @@ export interface ConversationActions {
   setLoadingMessages: (loading: boolean) => void;
   setProgressSidebarVisible: (visible: boolean) => void;
   setProgressCollapsed: (collapsed: boolean) => void;
+  setDebugPanelVisible: (visible: boolean) => void;
 
   // Models
   loadAvailableModels: () => Promise<void>;
@@ -81,6 +83,7 @@ export const useConversationStore = create<ConversationStore>()(
     isLoadingBot: false,
     isProgressSidebarVisible: true,
     isProgressCollapsed: false,
+    isDebugPanelVisible: false,
     currentBotId: null,
     currentBot: null,
     availableModels: [],
@@ -173,6 +176,12 @@ export const useConversationStore = create<ConversationStore>()(
       try {
         set({ inputMessage: '', isTyping: true });
 
+        // DEBUG: Log currentBot to verify prompts data is present
+        console.log('[sendMessage] currentBot:', currentBot);
+        console.log('[sendMessage] currentBot.prompts:', currentBot?.prompts);
+        console.log('[sendMessage] chatPrompt value:', currentBot?.prompts?.chatPrompt);
+        console.log('[sendMessage] chatPrompt length:', currentBot?.prompts?.chatPrompt?.length);
+
         const payload: Record<string, unknown> = {
           message: message,
           enable_progress: true,
@@ -182,7 +191,7 @@ export const useConversationStore = create<ConversationStore>()(
         if (currentBot) {
           payload.llm_id = currentBot.modelPreference?.chatModelDareId;
           payload.embedding_ids = currentBot.dareFileIds || [];
-          payload.file_owner_id = currentBot.createdById; // Bot creator's DARE user ID for shared access
+          payload.file_owner_id = currentBot.createdByDareId; // Bot creator's DARE user ID for shared access
           payload.tracking_prompt = currentBot.prompts?.trackingPrompt;
           payload.learning_goals = currentBot.prompts?.learningGoals;
           payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
@@ -200,6 +209,9 @@ export const useConversationStore = create<ConversationStore>()(
             learning_goals: currentBot.prompts?.learningGoals,
             chat_prompt: currentBot.prompts?.chatPrompt,
           };
+
+          // DEBUG: Log the final bot_meta
+          console.log('[sendMessage] bot_meta being sent:', payload.bot_meta);
         }
 
         websocketStore.sendMessage(payload);
@@ -279,6 +291,10 @@ export const useConversationStore = create<ConversationStore>()(
 
     setProgressCollapsed: (collapsed: boolean) => {
       set({ isProgressCollapsed: collapsed });
+    },
+
+    setDebugPanelVisible: (visible: boolean) => {
+      set({ isDebugPanelVisible: visible });
     },
 
     loadAvailableModels: async () => {
