@@ -58,14 +58,6 @@ export const socketConfig = {
   reconnectionAttempts: Infinity,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 30000,
-
-  /**
-   * Platform identifiers for subscription events
-   */
-  platforms: {
-    authenticated: 'SOCRATIC_BOOKS',
-    public: 'SOCRATIC_BOOKS',
-  } as const,
 } as const;
 
 /**

@@ -176,12 +176,6 @@ export const useConversationStore = create<ConversationStore>()(
       try {
         set({ inputMessage: '', isTyping: true });
 
-        // DEBUG: Log currentBot to verify prompts data is present
-        console.log('[sendMessage] currentBot:', currentBot);
-        console.log('[sendMessage] currentBot.prompts:', currentBot?.prompts);
-        console.log('[sendMessage] chatPrompt value:', currentBot?.prompts?.chatPrompt);
-        console.log('[sendMessage] chatPrompt length:', currentBot?.prompts?.chatPrompt?.length);
-
         const payload: Record<string, unknown> = {
           message: message,
           enable_progress: true,
@@ -189,29 +183,29 @@ export const useConversationStore = create<ConversationStore>()(
         };
 
         if (currentBot) {
+          // LLM and context settings
           payload.llm_id = currentBot.modelPreference?.chatModelDareId;
           payload.embedding_ids = currentBot.dareFileIds || [];
-          payload.file_owner_id = currentBot.createdByDareId; // Bot creator's DARE user ID for shared access
-          payload.tracking_prompt = currentBot.prompts?.trackingPrompt;
-          payload.learning_goals = currentBot.prompts?.learningGoals;
+          payload.file_owner_id = currentBot.createdByDareId;
           payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
           payload.web_search_enabled = Boolean(currentBot.webSearchEnabled || false);
+
           if (currentBot.maxContextSnippets !== undefined) {
             payload.max_context_snippets = currentBot.maxContextSnippets;
           }
           if (currentBot.documentSimilarityThreshold !== undefined) {
             payload.document_similarity_threshold = currentBot.documentSimilarityThreshold;
           }
+
+          // All Socratic bot data goes in bot_meta (single source of truth)
           payload.bot_meta = {
             title: currentBot.title,
             subject: currentBot.subject,
             topic: currentBot.topic,
-            learning_goals: currentBot.prompts?.learningGoals,
             chat_prompt: currentBot.prompts?.chatPrompt,
+            tracking_prompt: currentBot.prompts?.trackingPrompt,
+            learning_goals: currentBot.prompts?.learningGoals,
           };
-
-          // DEBUG: Log the final bot_meta
-          console.log('[sendMessage] bot_meta being sent:', payload.bot_meta);
         }
 
         websocketStore.sendMessage(payload);
