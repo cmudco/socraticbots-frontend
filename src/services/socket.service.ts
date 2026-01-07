@@ -13,20 +13,10 @@
  * - JWT Token (authenticated users): connectWithToken(token)
  * - Session ID (public bots): connectWithSession(sessionId, conversationId)
  */
-import {
-  type SocketAuth,
-  getSocketOptions,
-  getSocketUrl,
-  socketConfig,
-} from '@/config/socket.config';
+import { type SocketAuth, getSocketOptions, getSocketUrl } from '@/config/socket.config';
 import { Socket, io } from 'socket.io-client';
 
-import type {
-  ClientToServerEvents,
-  ServerToClientEvents,
-  SocketMessage,
-  SocketPlatform,
-} from '@/types/socket';
+import type { ClientToServerEvents, ServerToClientEvents, SocketMessage } from '@/types/socket';
 
 // ════════════════════════════════════════════════════════════════════════════
 // Types
@@ -44,20 +34,18 @@ export type ErrorHandler = (error: string) => void;
 
 /**
  * Socket.IO service class for managing real-time connections
+ *
+ * Platform detection (DARE vs SocraticBots) is handled automatically
+ * by the DARE backend using Origin header at connection time.
  */
 class SocketService {
   private socket: TypedSocket | null = null;
   private subscriptions = new Set<string>();
-  private platform: SocketPlatform;
 
   // Event handlers set by Zustand stores
   private messageHandler: MessageHandler | null = null;
   private connectionHandler: ConnectionHandler | null = null;
   private errorHandler: ErrorHandler | null = null;
-
-  constructor(platform: SocketPlatform) {
-    this.platform = platform;
-  }
 
   // ──────────────────────────────────────────────────────────────────────────
   // Connection Methods
@@ -85,7 +73,7 @@ class SocketService {
   private connect(auth: SocketAuth): void {
     // Already connected
     if (this.socket?.connected) {
-      console.log(`[SocketService] Already connected for ${this.platform}`);
+      console.log('[SocketService] Already connected');
       return;
     }
 
@@ -98,13 +86,13 @@ class SocketService {
     const socketUrl = getSocketUrl();
     const options = getSocketOptions(auth);
 
-    console.log(`[SocketService] Connecting to ${socketUrl} for ${this.platform}`);
+    console.log(`[SocketService] Connecting to ${socketUrl}`);
 
     this.socket = io(socketUrl, options) as TypedSocket;
 
     // Set up event listeners
     this.socket.on('connect', () => {
-      console.log(`[SocketService] Connected for ${this.platform}`);
+      console.log('[SocketService] Connected');
       this.connectionHandler?.(true);
 
       // Re-subscribe to all tracked conversations on reconnect (only for JWT auth)
@@ -117,12 +105,12 @@ class SocketService {
     });
 
     this.socket.on('disconnect', reason => {
-      console.log(`[SocketService] Disconnected for ${this.platform}:`, reason);
+      console.log(`[SocketService] Disconnected: ${reason}`);
       this.connectionHandler?.(false);
     });
 
     this.socket.on('connect_error', error => {
-      console.error(`[SocketService] Connection error for ${this.platform}:`, error.message);
+      console.error(`[SocketService] Connection error: ${error.message}`);
       this.errorHandler?.(error.message);
     });
 
@@ -137,7 +125,7 @@ class SocketService {
    */
   disconnect(): void {
     if (this.socket) {
-      console.log(`[SocketService] Disconnecting for ${this.platform}`);
+      console.log('[SocketService] Disconnecting');
       this.socket.disconnect();
       this.socket = null;
     }
@@ -166,20 +154,17 @@ class SocketService {
     // Track subscription optimistically
     this.subscriptions.add(conversationId);
 
-    this.socket.emit(
-      'subscribe_conversation',
-      { conversationId, platform: this.platform },
-      response => {
-        if (response.success) {
-          console.log(`[SocketService] Subscribed to ${conversationId}`);
-          onSuccess?.();
-        } else {
-          console.error(`[SocketService] Subscribe failed:`, response.error);
-          this.subscriptions.delete(conversationId);
-          onError?.(response.error || 'Subscribe failed');
-        }
+    // Platform is detected by backend via Origin header - not sent from client
+    this.socket.emit('subscribe_conversation', { conversationId }, response => {
+      if (response.success) {
+        console.log(`[SocketService] Subscribed to ${conversationId}`);
+        onSuccess?.();
+      } else {
+        console.error(`[SocketService] Subscribe failed:`, response.error);
+        this.subscriptions.delete(conversationId);
+        onError?.(response.error || 'Subscribe failed');
       }
-    );
+    });
   }
 
   /**
@@ -188,18 +173,12 @@ class SocketService {
   private subscribeInternal(conversationId: string): void {
     if (!this.socket?.connected) return;
 
-    this.socket.emit(
-      'subscribe_conversation',
-      { conversationId, platform: this.platform },
-      response => {
-        if (!response.success) {
-          console.error(
-            `[SocketService] Re-subscribe failed for ${conversationId}:`,
-            response.error
-          );
-        }
+    // Platform is detected by backend via Origin header - not sent from client
+    this.socket.emit('subscribe_conversation', { conversationId }, response => {
+      if (!response.success) {
+        console.error(`[SocketService] Re-subscribe failed for ${conversationId}:`, response.error);
       }
-    );
+    });
   }
 
   /**
@@ -346,13 +325,13 @@ class SocketService {
  * Socket service for authenticated users (uses JWT)
  * Connects on login via useSocketConnection hook
  */
-export const authenticatedSocketService = new SocketService(socketConfig.platforms.authenticated);
+export const authenticatedSocketService = new SocketService();
 
 /**
  * Socket service for public/anonymous users (uses session ID)
  * Connects when conversation is available via PublicBotChat
  */
-export const publicSocketService = new SocketService(socketConfig.platforms.public);
+export const publicSocketService = new SocketService();
 
 export { SocketService };
 export default authenticatedSocketService;

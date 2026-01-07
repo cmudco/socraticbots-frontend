@@ -22,7 +22,7 @@ export interface ServerToClientEvents {
 
 export interface ClientToServerEvents {
   subscribe_conversation: (
-    data: { conversationId: string; platform?: string },
+    data: { conversationId: string },
     callback: (response: SocketResponse) => void
   ) => void;
   unsubscribe_conversation: (
@@ -249,11 +249,6 @@ export interface RegeneratePayload {
 export type SocketAuth =
   | { token: string } // JWT for authenticated users
   | { session_id: string }; // Session ID for public/anonymous users
-
-/**
- * Platform identifier for subscriptions
- */
-export type SocketPlatform = 'SOCRATIC_BOOKS' | 'SOCRATIC_BOOKS_PUBLIC' | 'DARE';
 
 /**
  * Connection status
