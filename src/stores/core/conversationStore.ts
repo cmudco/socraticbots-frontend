@@ -182,6 +182,7 @@ export const useConversationStore = create<ConversationStore>()(
         if (currentBot) {
           payload.llm_id = currentBot.modelPreference?.chatModelDareId;
           payload.embedding_ids = currentBot.dareFileIds || [];
+          payload.file_owner_id = currentBot.createdById; // Bot creator's DARE user ID for shared access
           payload.tracking_prompt = currentBot.prompts?.trackingPrompt;
           payload.learning_goals = currentBot.prompts?.learningGoals;
           payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
