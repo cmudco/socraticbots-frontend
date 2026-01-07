@@ -161,6 +161,10 @@ const PublicBotChat: React.FC = () => {
       if (botInfo.dareFileIds) {
         payload.embedding_ids = botInfo.dareFileIds;
       }
+      // Bot creator's DARE user ID for shared document access
+      if (botInfo.createdById) {
+        payload.file_owner_id = botInfo.createdById;
+      }
       // Add progress tracking fields
       if (botInfo.prompts?.trackingPrompt) {
         payload.tracking_prompt = botInfo.prompts.trackingPrompt;
