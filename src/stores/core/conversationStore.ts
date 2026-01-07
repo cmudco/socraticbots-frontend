@@ -25,7 +25,6 @@ export interface ConversationState {
   isLoadingBot: boolean;
   isProgressSidebarVisible: boolean;
   isProgressCollapsed: boolean;
-  isDebugPanelVisible: boolean;
 
   // Bot context
   currentBotId: number | null;
@@ -60,7 +59,6 @@ export interface ConversationActions {
   setLoadingMessages: (loading: boolean) => void;
   setProgressSidebarVisible: (visible: boolean) => void;
   setProgressCollapsed: (collapsed: boolean) => void;
-  setDebugPanelVisible: (visible: boolean) => void;
 
   // Models
   loadAvailableModels: () => Promise<void>;
@@ -83,7 +81,6 @@ export const useConversationStore = create<ConversationStore>()(
     isLoadingBot: false,
     isProgressSidebarVisible: true,
     isProgressCollapsed: false,
-    isDebugPanelVisible: false,
     currentBotId: null,
     currentBot: null,
     availableModels: [],
@@ -285,10 +282,6 @@ export const useConversationStore = create<ConversationStore>()(
 
     setProgressCollapsed: (collapsed: boolean) => {
       set({ isProgressCollapsed: collapsed });
-    },
-
-    setDebugPanelVisible: (visible: boolean) => {
-      set({ isDebugPanelVisible: visible });
     },
 
     loadAvailableModels: async () => {

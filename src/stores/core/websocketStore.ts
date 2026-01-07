@@ -23,31 +23,6 @@ import type { SocketMessage } from '@/types/socket';
 // Types
 // ════════════════════════════════════════════════════════════════════════════
 
-// Message structure (matches backend camelCase)
-export interface DebugMessage {
-  role: string;
-  content: string;
-  fullLength: number;
-}
-
-// Debug info structure from DARE backend (matches backend camelCase)
-export interface LLMDebugInfo {
-  messageId: number;
-  llmName: string;
-  llmIdentifier: string;
-  fileOwnerId: number | null;
-  userId: number | null;
-  vectorUserId: number | null;
-  embeddingFileIds: number[];
-  embeddingFileNames: string[];
-  messages: DebugMessage[];
-  isSocraticMode: boolean;
-  isAdvancedMode: boolean;
-  maxContextSnippets: number;
-  similarityThreshold: number;
-  webSearchEnabled: boolean;
-}
-
 export interface WebSocketState {
   // Connection state
   isConnected: boolean;
@@ -61,9 +36,6 @@ export interface WebSocketState {
   isProgressStreaming: boolean;
   progressTokens: string[];
   progressContent: string;
-
-  // Debug info (Socratic mode only)
-  debugInfo: LLMDebugInfo | null;
 }
 
 export interface WebSocketActions {
@@ -85,10 +57,6 @@ export interface WebSocketActions {
   clearProgressTokens: () => void;
   setProgressContent: (content: string) => void;
 
-  // Debug info actions
-  setDebugInfo: (info: LLMDebugInfo | null) => void;
-  clearDebugInfo: () => void;
-
   // Message sending
   sendMessage: (payload: Record<string, unknown>) => void;
 }
@@ -107,7 +75,6 @@ const initialState: WebSocketState = {
   isProgressStreaming: false,
   progressTokens: [],
   progressContent: '',
-  debugInfo: null,
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -385,17 +352,6 @@ export const useWebSocketStore = create<WebSocketStore>()(
                 });
               }
               break;
-
-            // ────────────────────────────────────────────────────────────────
-            // Debug Info Event (Socratic Mode)
-            // ────────────────────────────────────────────────────────────────
-
-            case 'debug_info':
-              // Store debug info for display in debug panel
-              set({
-                debugInfo: data as unknown as LLMDebugInfo,
-              });
-              break;
           }
         })
         .catch(error => {
@@ -432,18 +388,6 @@ export const useWebSocketStore = create<WebSocketStore>()(
 
     setProgressContent: (content: string) => {
       set({ progressContent: content });
-    },
-
-    // ──────────────────────────────────────────────────────────────────────
-    // Debug Info Actions
-    // ──────────────────────────────────────────────────────────────────────
-
-    setDebugInfo: (info: LLMDebugInfo | null) => {
-      set({ debugInfo: info });
-    },
-
-    clearDebugInfo: () => {
-      set({ debugInfo: null });
     },
 
     // ──────────────────────────────────────────────────────────────────────
@@ -489,6 +433,3 @@ export const useProgressContent = () => useWebSocketStore(state => state.progres
 // Subscription state selectors
 export const useCurrentConversationId = () =>
   useWebSocketStore(state => state.currentConversationId);
-
-// Debug info selectors
-export const useDebugInfo = () => useWebSocketStore(state => state.debugInfo);
