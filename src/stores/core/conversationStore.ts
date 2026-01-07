@@ -314,7 +314,7 @@ export const useConversationStore = create<ConversationStore>()(
         );
 
         if (result.success) {
-          // Clear the current conversation state
+          // Clear the current conversation state (keep socket connected)
           set({
             activeConversation: null,
             messages: [],
@@ -325,9 +325,8 @@ export const useConversationStore = create<ConversationStore>()(
             isTyping: false,
           });
 
-          // Disconnect WebSocket
+          // Just clear progress tokens, don't disconnect the socket
           const wsStore = useWebSocketStore.getState();
-          wsStore.disconnect();
           wsStore.clearProgressTokens();
         } else {
           console.error('Failed to delete conversation:', result.message);
