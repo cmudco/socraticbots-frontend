@@ -311,7 +311,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'basic':
-        return <BotBasicInfoTab ref={formRef} viewOnly={viewOnly} />;
+        return <BotBasicInfoTab ref={formRef} viewOnly={viewOnly} isEdit={isEdit} />;
       case 'prompts':
         return <BotPromptsTab viewOnly={viewOnly} />;
       case 'quick-prompts':
@@ -323,7 +323,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
       case 'deployment':
         return <BotDeploymentTab botGroupId={botGroupId} botId={bot?.id || 0} />;
       default:
-        return <BotBasicInfoTab ref={formRef} viewOnly={viewOnly} />;
+        return <BotBasicInfoTab ref={formRef} viewOnly={viewOnly} isEdit={isEdit} />;
     }
   };
 

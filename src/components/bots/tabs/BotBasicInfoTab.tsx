@@ -26,18 +26,22 @@ interface FormValues {
 
 interface BotBasicInfoTabProps {
   viewOnly?: boolean;
+  isEdit?: boolean;
 }
 
-const validationSchema = Yup.object().shape({
-  title: Yup.string().required('Title is required'),
-  subject: Yup.string().required('Subject is required'),
-  topic: Yup.string().required('Topic is required'),
-  chatModelDareId: Yup.number().nullable().required('Chat model is required'),
-  trackingModelDareId: Yup.number().nullable(),
-});
+const getValidationSchema = (isEdit: boolean) =>
+  Yup.object().shape({
+    title: Yup.string().required('Title is required'),
+    subject: Yup.string().required('Subject is required'),
+    topic: Yup.string().required('Topic is required'),
+    chatModelDareId: isEdit
+      ? Yup.number().nullable().required('Chat model is required')
+      : Yup.number().nullable(),
+    trackingModelDareId: Yup.number().nullable(),
+  });
 
 const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps>(
-  ({ viewOnly = false }, ref) => {
+  ({ viewOnly = false, isEdit = false }, ref) => {
     const {
       title,
       subject,
@@ -71,7 +75,7 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
         <Formik
           innerRef={ref}
           initialValues={initialValues}
-          validationSchema={validationSchema}
+          validationSchema={getValidationSchema(isEdit)}
           enableReinitialize
           onSubmit={() => {}} // Handled by parent
         >
@@ -143,95 +147,97 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                 )}
               </div>
 
-              {/* Chat Model Selection */}
-              <div>
-                <label
-                  htmlFor="chatModelDareId"
-                  className="text-foreground mb-1 block text-sm font-medium"
-                >
-                  Agent *
-                </label>
-                {modelsError ? (
-                  <div className="text-destructive text-sm">
-                    Failed to load models. Please try again later.
-                  </div>
-                ) : (
-                  <Select
-                    disabled={viewOnly || modelsLoading}
-                    value={values.chatModelDareId?.toString() || ''}
-                    onValueChange={value => {
-                      const modelId = value ? parseInt(value, 10) : null;
-                      updateModelField('chatModelDareId', modelId);
-                    }}
+              {/* Chat Model Selection - Only show when editing */}
+              {isEdit && (
+                <div>
+                  <label
+                    htmlFor="chatModelDareId"
+                    className="text-foreground mb-1 block text-sm font-medium"
                   >
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder={modelsLoading ? 'Loading models...' : 'Select a chat model'}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {dareLLMModels?.map(model => (
-                        <SelectItem key={model.id} value={model.id.toString()}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{model.name}</span>
-                            {/* <span className="text-xs text-gray-500 capitalize">{model.provider}</span> */}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                {errors.chatModelDareId && touched.chatModelDareId && (
-                  <p className="text-destructive mt-1 text-sm">{errors.chatModelDareId}</p>
-                )}
-              </div>
+                    Agent *
+                  </label>
+                  {modelsError ? (
+                    <div className="text-destructive text-sm">
+                      Failed to load models. Please try again later.
+                    </div>
+                  ) : (
+                    <Select
+                      disabled={viewOnly || modelsLoading}
+                      value={values.chatModelDareId?.toString() || ''}
+                      onValueChange={value => {
+                        const modelId = value ? parseInt(value, 10) : null;
+                        updateModelField('chatModelDareId', modelId);
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          placeholder={modelsLoading ? 'Loading models...' : 'Select a chat model'}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dareLLMModels?.map(model => (
+                          <SelectItem key={model.id} value={model.id.toString()}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{model.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {errors.chatModelDareId && touched.chatModelDareId && (
+                    <p className="text-destructive mt-1 text-sm">{errors.chatModelDareId}</p>
+                  )}
+                </div>
+              )}
 
-              {/* Tracking Model Selection */}
-              <div>
-                <label
-                  htmlFor="trackingModelDareId"
-                  className="text-foreground mb-1 block text-sm font-medium"
-                >
-                  Progress Tracker
-                </label>
-                <p className="text-muted-foreground mb-2 text-xs">
-                  Optional: Enable to track student progress and learning goals
-                </p>
-                {modelsError ? (
-                  <div className="text-destructive text-sm">
-                    Failed to load models. Please try again later.
-                  </div>
-                ) : (
-                  <Select
-                    disabled={viewOnly || modelsLoading}
-                    value={values.trackingModelDareId?.toString() || 'none'}
-                    onValueChange={value => {
-                      const modelId = value === 'none' ? null : parseInt(value, 10);
-                      updateModelField('trackingModelDareId', modelId);
-                    }}
+              {/* Tracking Model Selection - Only show when editing */}
+              {isEdit && (
+                <div>
+                  <label
+                    htmlFor="trackingModelDareId"
+                    className="text-foreground mb-1 block text-sm font-medium"
                   >
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder={modelsLoading ? 'Loading models...' : 'None (Optional)'}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {dareLLMModels?.map(model => (
-                        <SelectItem key={model.id} value={model.id.toString()}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{model.name}</span>
-                            {/* <span className="text-xs text-gray-500 capitalize">{model.provider}</span> */}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                {errors.trackingModelDareId && touched.trackingModelDareId && (
-                  <p className="text-destructive mt-1 text-sm">{errors.trackingModelDareId}</p>
-                )}
-              </div>
+                    Progress Tracker
+                  </label>
+                  <p className="text-muted-foreground mb-2 text-xs">
+                    Optional: Enable to track student progress and learning goals
+                  </p>
+                  {modelsError ? (
+                    <div className="text-destructive text-sm">
+                      Failed to load models. Please try again later.
+                    </div>
+                  ) : (
+                    <Select
+                      disabled={viewOnly || modelsLoading}
+                      value={values.trackingModelDareId?.toString() || 'none'}
+                      onValueChange={value => {
+                        const modelId = value === 'none' ? null : parseInt(value, 10);
+                        updateModelField('trackingModelDareId', modelId);
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          placeholder={modelsLoading ? 'Loading models...' : 'None (Optional)'}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {dareLLMModels?.map(model => (
+                          <SelectItem key={model.id} value={model.id.toString()}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{model.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {errors.trackingModelDareId && touched.trackingModelDareId && (
+                    <p className="text-destructive mt-1 text-sm">{errors.trackingModelDareId}</p>
+                  )}
+                </div>
+              )}
 
               {/* Bot Status Toggle */}
               <div className="border-t pt-4">

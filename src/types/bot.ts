@@ -77,6 +77,7 @@ export interface Bot {
   theme?: BotTheme;
   quickPrompts?: BotQuickPrompt[];
   createdById: number;
+  createdByDareId?: number;
   redeemed?: boolean;
   createdAt: string;
   updatedAt: string;
