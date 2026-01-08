@@ -180,24 +180,28 @@ export const useConversationStore = create<ConversationStore>()(
         };
 
         if (currentBot) {
+          // LLM and context settings
           payload.llm_id = currentBot.modelPreference?.chatModelDareId;
           payload.embedding_ids = currentBot.dareFileIds || [];
-          payload.tracking_prompt = currentBot.prompts?.trackingPrompt;
-          payload.learning_goals = currentBot.prompts?.learningGoals;
+          payload.file_owner_id = currentBot.createdByDareId;
           payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
           payload.web_search_enabled = Boolean(currentBot.webSearchEnabled || false);
+
           if (currentBot.maxContextSnippets !== undefined) {
             payload.max_context_snippets = currentBot.maxContextSnippets;
           }
           if (currentBot.documentSimilarityThreshold !== undefined) {
             payload.document_similarity_threshold = currentBot.documentSimilarityThreshold;
           }
+
+          // All Socratic bot data goes in bot_meta (single source of truth)
           payload.bot_meta = {
             title: currentBot.title,
             subject: currentBot.subject,
             topic: currentBot.topic,
-            learning_goals: currentBot.prompts?.learningGoals,
             chat_prompt: currentBot.prompts?.chatPrompt,
+            tracking_prompt: currentBot.prompts?.trackingPrompt,
+            learning_goals: currentBot.prompts?.learningGoals,
           };
         }
 
@@ -303,7 +307,7 @@ export const useConversationStore = create<ConversationStore>()(
         );
 
         if (result.success) {
-          // Clear the current conversation state
+          // Clear the current conversation state (keep socket connected)
           set({
             activeConversation: null,
             messages: [],
@@ -314,9 +318,8 @@ export const useConversationStore = create<ConversationStore>()(
             isTyping: false,
           });
 
-          // Disconnect WebSocket
+          // Just clear progress tokens, don't disconnect the socket
           const wsStore = useWebSocketStore.getState();
-          wsStore.disconnect();
           wsStore.clearProgressTokens();
         } else {
           console.error('Failed to delete conversation:', result.message);

@@ -58,14 +58,6 @@ export const socketConfig = {
   reconnectionAttempts: Infinity,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 30000,
-
-  /**
-   * Platform identifiers for subscription events
-   */
-  platforms: {
-    authenticated: 'SOCRATIC_BOOKS',
-    public: 'SOCRATIC_BOOKS',
-  } as const,
 } as const;
 
 /**
@@ -78,6 +70,9 @@ export function getSocketUrl(): string {
 /**
  * Get Socket.IO connection options
  * Works with both JWT and session-based auth
+ *
+ * Note: Platform detection (DARE vs SocraticBots) is handled automatically
+ * by the DARE backend using the Origin/Referer headers from the request.
  */
 export function getSocketOptions(auth: SocketAuth) {
   return {
