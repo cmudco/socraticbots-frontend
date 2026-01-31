@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useBots , useCloneBot } from '@/hooks/queries/useBots';
+import { useBots, useCloneBot } from '@/hooks/queries/useBots';
 
 import { useModalStore } from '@/stores/ui/modalStore';
 import { useUiStore } from '@/stores/ui/uiStore';
@@ -85,7 +85,7 @@ const BotList: React.FC<BotListProps> = ({
         <p className="text-destructive py-4 text-center">Error loading bots: {error.message}</p>
       ) : visibleBots.length === 0 ? (
         <EmptyMessage
-          professorMessage="No bots yet. Add your first bot!"
+          creatorMessage="No bots yet. Add your first bot!"
           studentMessage="No bots available."
         />
       ) : (

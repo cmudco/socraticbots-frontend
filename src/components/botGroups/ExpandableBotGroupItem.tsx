@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { ChevronDown, ChevronUp, Edit, Eye, Trash, Users } from 'lucide-react';
 
-import { useIsProfessor, useUser } from '@/hooks/queries/useUser';
+import { useIsCreator, useUser } from '@/hooks/queries/useUser';
 
 import { useUiStore } from '@/stores/ui/uiStore';
 
@@ -25,7 +25,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
   onDelete,
   onView,
 }) => {
-  const isProfessor = useIsProfessor();
+  const isCreator = useIsCreator();
   const user = useUser();
 
   const { expandedBotGroups, toggleBotGroupExpansion } = useUiStore();
@@ -82,7 +82,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
           >
             {(() => {
               const isOwner = user?.id === botGroup.ownerId;
-              if (isProfessor && isOwner) {
+              if (isCreator && isOwner) {
                 return (
                   <>
                     <Button
@@ -114,7 +114,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
                   </>
                 );
               }
-              // Non-owner (student or professor): show View Details if available
+              // Non-owner (student or creator): show View Details if available
               return (
                 onView && (
                   <Button
@@ -151,7 +151,7 @@ const ExpandableBotGroupItem: React.FC<ExpandableBotGroupItemProps> = ({
             botGroupId={botGroup.id}
             initialBots={[]}
             onBotDeleted={() => {}}
-            canAddBot={isProfessor && user?.id === botGroup.ownerId}
+            canAddBot={isCreator && user?.id === botGroup.ownerId}
           />
         </div>
       )}

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { CheckCircle, Copy, RefreshCw } from 'lucide-react';
 
 import { useUpdateBotGroupAccessCode } from '@/hooks/queries/useBotGroups';
-import { useIsProfessor } from '@/hooks/queries/useUser';
+import { useIsCreator } from '@/hooks/queries/useUser';
 
 import { useBotGroupFormStore } from '@/stores/forms/botGroupFormStore';
 
@@ -18,7 +18,7 @@ interface BotGroupDeploymentTabProps {
 }
 
 const BotGroupDeploymentTab: React.FC<BotGroupDeploymentTabProps> = ({ botGroupId }) => {
-  const isProfessor = useIsProfessor();
+  const isCreator = useIsCreator();
   const { accessCode, accessCodeLimit, updateAccessCode, updateAccessCodeLimit } =
     useBotGroupFormStore();
 
@@ -83,10 +83,10 @@ const BotGroupDeploymentTab: React.FC<BotGroupDeploymentTabProps> = ({ botGroupI
     }
   };
 
-  if (!isProfessor) {
+  if (!isCreator) {
     return (
       <div className="text-muted-foreground p-4 text-center">
-        Deployment features are only available for professors.
+        Deployment features are only available for creators.
       </div>
     );
   }

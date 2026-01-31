@@ -2,7 +2,7 @@ import React from 'react';
 
 import { FileText } from 'lucide-react';
 
-import { useIsProfessor, useUser } from '@/hooks/queries/useUser';
+import { useIsCreator, useUser } from '@/hooks/queries/useUser';
 
 import ItemActions from '@/components/widgets/actions/ItemActions';
 
@@ -18,8 +18,8 @@ interface BotItemProps {
 
 const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView, onClone }) => {
   const user = useUser();
-  const isProfessor = useIsProfessor();
-  const canManage = isProfessor && user?.id === bot.createdById;
+  const isCreator = useIsCreator();
+  const canManage = isCreator && user?.id === bot.createdById;
   return (
     <div className="bg-background flex items-center justify-between rounded border p-3">
       <div className="flex-1">

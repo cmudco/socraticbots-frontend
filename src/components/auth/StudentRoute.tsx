@@ -15,8 +15,8 @@ const StudentRoute: React.FC<StudentRouteProps> = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // If professor, redirect to home (students only route)
-  if (user.isProfessor) {
+  // If creator, redirect to home (students only route)
+  if (user.isCreator) {
     return <Navigate to="/" replace />;
   }
 

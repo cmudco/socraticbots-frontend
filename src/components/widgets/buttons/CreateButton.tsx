@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Plus } from 'lucide-react';
 
-import { useIsProfessor } from '@/hooks/queries/useUser';
+import { useIsCreator } from '@/hooks/queries/useUser';
 
 import { Button } from '@/components/ui/button';
 
@@ -15,7 +15,7 @@ interface CreateButtonProps {
 }
 
 /**
- * A button that only shows for professors
+ * A button that only shows for creators
  * Common pattern across the app for create actions
  */
 const CreateButton: React.FC<CreateButtonProps> = ({
@@ -25,9 +25,9 @@ const CreateButton: React.FC<CreateButtonProps> = ({
   size = 'default',
   variant = 'default',
 }) => {
-  const isProfessor = useIsProfessor();
+  const isCreator = useIsCreator();
 
-  if (!isProfessor) return null;
+  if (!isCreator) return null;
 
   return (
     <Button onClick={onClick} className={className} size={size} variant={variant}>
