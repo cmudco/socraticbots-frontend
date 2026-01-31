@@ -1,4 +1,4 @@
-export type PlatformRole = 'SUPERADMIN' | 'RESEARCHER' | 'CREATOR' | 'USER';
+export type PlatformRole = 'SUPERADMIN' | 'RESEARCHER' | 'USER' | 'CREATOR' | 'SB_USER';
 
 export interface User {
   id: number;
