@@ -4,7 +4,7 @@ import { FormikProps } from 'formik';
 import { Bot, Info } from 'lucide-react';
 
 import { useBot, useCreateBot, useUpdateBot } from '@/hooks/queries/useBots';
-import { useIsProfessor } from '@/hooks/queries/useUser';
+import { useIsCreator } from '@/hooks/queries/useUser';
 
 import { useBotFormStore } from '@/stores/forms/botFormStore';
 
@@ -51,7 +51,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
   viewOnly = false,
 }) => {
   const formRef = useRef<FormikProps<FormValues>>(null);
-  const isProfessor = useIsProfessor();
+  const isCreator = useIsCreator();
 
   const {
     activeTab,
@@ -298,15 +298,15 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     { id: 'prompts', label: 'Prompts' },
     { id: 'quick-prompts', label: 'Quick Prompts' },
     { id: 'theme', label: 'Theme' },
-    ...(isEdit && isProfessor ? [{ id: 'files', label: 'Files' }] : []),
-    ...(isEdit && isProfessor ? [{ id: 'deployment', label: 'Deployment' }] : []),
+    ...(isEdit && isCreator ? [{ id: 'files', label: 'Files' }] : []),
+    ...(isEdit && isCreator ? [{ id: 'deployment', label: 'Deployment' }] : []),
   ];
 
   useEffect(() => {
-    if ((!isEdit || !isProfessor) && (activeTab === 'files' || activeTab === 'deployment')) {
+    if ((!isEdit || !isCreator) && (activeTab === 'files' || activeTab === 'deployment')) {
       setActiveTab('basic');
     }
-  }, [isEdit, isProfessor, activeTab, setActiveTab]);
+  }, [isEdit, isCreator, activeTab, setActiveTab]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -360,9 +360,9 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
                 </p>
                 <p className="text-muted-foreground mt-1">
                   Once your bot is created,{' '}
-                  {isProfessor
+                  {isCreator
                     ? "you'll be able to upload files and generate deployment codes in the Files and Deployment tabs when editing the bot."
-                    : 'professors will be able to upload files and manage deployment settings in additional tabs when editing the bot.'}
+                    : 'creators will be able to upload files and manage deployment settings in additional tabs when editing the bot.'}
                 </p>
               </div>
             </div>

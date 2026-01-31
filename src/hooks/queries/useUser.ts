@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { userService, User } from '@/services/user.service';
+
+import { User, userService } from '@/services/user.service';
 
 export const useUserInfo = () => {
   return useQuery({
     queryKey: ['userInfo'],
     queryFn: () => userService.getUserInfo(),
     staleTime: 5 * 60 * 1000, // 5 minutes - user data doesn't change often
-    gcTime: 30 * 60 * 1000,   // 30 minutes - keep in cache longer
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache longer
     retry: () => {
       return false;
     },
@@ -26,10 +27,10 @@ export const useIsAuthenticated = (): boolean => {
   return isSuccess && !!data;
 };
 
-// Convenience hook for professor checks
-export const useIsProfessor = (): boolean => {
+// Convenience hook for creator checks
+export const useIsCreator = (): boolean => {
   const user = useUser();
-  return user?.isProfessor ?? false;
+  return user?.isCreator ?? false;
 };
 
 // Logout hook

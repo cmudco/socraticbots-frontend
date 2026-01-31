@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { CheckCircle, Copy, ExternalLink, Globe, RefreshCw } from 'lucide-react';
 
-import { useIsProfessor } from '@/hooks/queries/useUser';
+import { useIsCreator } from '@/hooks/queries/useUser';
 
 import { useBotFormStore } from '@/stores/forms/botFormStore';
 
@@ -19,7 +19,7 @@ interface BotDeploymentTabProps {
 }
 
 const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
-  const isProfessor = useIsProfessor();
+  const isCreator = useIsCreator();
   const {
     accessCode,
     accessCodeLimit,
@@ -116,11 +116,11 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
     }
   };
 
-  // Only show deployment tab for professors
-  if (!isProfessor) {
+  // Only show deployment tab for creators
+  if (!isCreator) {
     return (
       <div className="text-muted-foreground p-4 text-center">
-        <p>Deployment features are only available for professors.</p>
+        <p>Deployment features are only available for creators.</p>
       </div>
     );
   }
