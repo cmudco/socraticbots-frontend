@@ -14,6 +14,10 @@ import Login from './pages/Login';
 import PublicBotChat from './pages/PublicBotChat';
 import Register from './pages/Register';
 import Settings from './pages/Settings';
+import VoiceExamsList from './pages/VoiceExams';
+import StudentExam from './pages/VoiceExams/StudentExam';
+import VoiceAgentCreate from './pages/VoiceExams/VoiceAgentCreate';
+import VoiceAgentDetail from './pages/VoiceExams/VoiceAgentDetail';
 import { ThemeProvider } from './providers/ThemeProvider';
 
 const App: React.FC = () => {
@@ -47,6 +51,10 @@ const App: React.FC = () => {
             <Route path="bot-access/:botGroupId/:botId" element={<BotAccess />} />
             <Route path="chat" element={<Chat />} />
             <Route path="chat/:botId" element={<Chat />} />
+            <Route path="voice-exams" element={<VoiceExamsList />} />
+            <Route path="voice-exams/create" element={<VoiceAgentCreate />} />
+            <Route path="voice-exams/:id" element={<VoiceAgentDetail />} />
+            <Route path="voice-exams/:id/exam" element={<StudentExam />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/login" replace />} />

@@ -1,0 +1,128 @@
+/**
+ * API service for Voice Agents.
+ */
+import { METHOD } from '@/constants/requests';
+
+import { baseRequest } from '@/utils/baseRequest';
+
+import {
+  ElevenLabsAgentItem,
+  ElevenLabsVoice,
+  SignedUrlResponse,
+  VoiceAgent,
+  VoiceAgentCreateData,
+  VoiceAgentListItem,
+  VoiceAgentUpdateData,
+  VoiceConversation,
+  VoiceConversationListItem,
+} from '@/types/voiceAgent';
+
+class VoiceAgentService {
+  // ============ Voice Agents ============
+
+  async getVoiceAgents(): Promise<VoiceAgentListItem[]> {
+    return baseRequest<VoiceAgentListItem[]>({
+      url: 'voice/agents/',
+      method: METHOD.GET,
+    });
+  }
+
+  async getVoiceAgentById(id: number): Promise<VoiceAgent> {
+    return baseRequest<VoiceAgent>({
+      url: `voice/agents/${id}/`,
+      method: METHOD.GET,
+    });
+  }
+
+  async createVoiceAgent(data: VoiceAgentCreateData): Promise<VoiceAgent> {
+    return baseRequest<VoiceAgent>({
+      url: 'voice/agents/',
+      method: METHOD.POST,
+      data,
+    });
+  }
+
+  async updateVoiceAgent(id: number, data: VoiceAgentUpdateData): Promise<VoiceAgent> {
+    return baseRequest<VoiceAgent>({
+      url: `voice/agents/${id}/`,
+      method: METHOD.PATCH,
+      data,
+    });
+  }
+
+  async deleteVoiceAgent(id: number): Promise<void> {
+    await baseRequest<void>({
+      url: `voice/agents/${id}/`,
+      method: METHOD.DELETE,
+    });
+  }
+
+  // ============ Signed URL & Sessions ============
+
+  async getSignedUrl(agentId: number): Promise<SignedUrlResponse> {
+    return baseRequest<SignedUrlResponse>({
+      url: `voice/agents/${agentId}/get_signed_url/`,
+      method: METHOD.POST,
+    });
+  }
+
+  async startConversation(agentId: number, conversationId: string): Promise<VoiceConversation> {
+    return baseRequest<VoiceConversation>({
+      url: `voice/agents/${agentId}/start_conversation/`,
+      method: METHOD.POST,
+      data: { conversationId },
+    });
+  }
+
+  async endConversation(agentId: number, conversationId: string): Promise<VoiceConversation> {
+    return baseRequest<VoiceConversation>({
+      url: `voice/agents/${agentId}/end_conversation/`,
+      method: METHOD.POST,
+      data: { conversationId },
+    });
+  }
+
+  // ============ Voices ============
+
+  async getVoices(): Promise<ElevenLabsVoice[]> {
+    return baseRequest<ElevenLabsVoice[]>({
+      url: 'voice/agents/voices/',
+      method: METHOD.GET,
+    });
+  }
+
+  // ============ Conversations ============
+
+  async getConversations(): Promise<VoiceConversationListItem[]> {
+    return baseRequest<VoiceConversationListItem[]>({
+      url: 'voice/conversations/',
+      method: METHOD.GET,
+    });
+  }
+
+  async getConversationById(id: number): Promise<VoiceConversation> {
+    return baseRequest<VoiceConversation>({
+      url: `voice/conversations/${id}/`,
+      method: METHOD.GET,
+    });
+  }
+
+  // ============ ElevenLabs Direct API ============
+
+  async getElevenLabsAgents(): Promise<ElevenLabsAgentItem[]> {
+    return baseRequest<ElevenLabsAgentItem[]>({
+      url: 'voice/agents/elevenlabs_agents/',
+      method: METHOD.GET,
+    });
+  }
+
+  async importElevenLabsAgent(agentId: string): Promise<VoiceAgent> {
+    return baseRequest<VoiceAgent>({
+      url: 'voice/agents/import_agent/',
+      method: METHOD.POST,
+      data: { agentId },
+    });
+  }
+}
+
+export const voiceAgentService = new VoiceAgentService();
