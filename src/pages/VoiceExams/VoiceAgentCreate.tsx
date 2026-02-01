@@ -34,7 +34,7 @@ const VoiceAgentCreate: React.FC = () => {
 
   const [advancedConfig, setAdvancedConfig] = useState<ConversationConfig>({
     turn: {
-      turnTimeout: undefined,
+      turnTimeout: 7,
       silenceEndCallTimeout: undefined,
       turnEagerness: 'normal',
       spellingPatience: 'auto',
@@ -46,8 +46,7 @@ const VoiceAgentCreate: React.FC = () => {
     },
     agent: {
       prompt: {
-        llm: 'gpt-4',
-        maxTokens: 2048,
+        llm: '',
       },
     },
   });
@@ -62,9 +61,39 @@ const VoiceAgentCreate: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Build conversationConfig from advancedConfig (matching DARE structure)
+    const conversationConfig = showAdvanced
+      ? {
+          turn: {
+            turnEagerness: advancedConfig.turn?.turnEagerness,
+            turnTimeout: advancedConfig.turn?.turnTimeout,
+            spellingPatience: advancedConfig.turn?.spellingPatience,
+          },
+          tts: {
+            voiceId: formData.voiceId,
+            stability: advancedConfig.tts?.stability,
+            speed: advancedConfig.tts?.speed,
+            similarityBoost: advancedConfig.tts?.similarityBoost,
+          },
+          agent: {
+            prompt: {
+              prompt: formData.systemPrompt,
+              temperature: formData.temperature,
+              ...(advancedConfig.agent?.prompt?.llm && {
+                llm: advancedConfig.agent.prompt.llm,
+              }),
+            },
+            firstMessage: formData.firstMessage,
+          },
+          conversation: {
+            maxDurationSeconds: formData.maxDurationSeconds,
+          },
+        }
+      : undefined;
+
     const data: VoiceAgentCreateData = {
       ...formData,
-      conversationConfig: showAdvanced ? advancedConfig : undefined,
+      conversationConfig,
     };
 
     const result = await createAgent.mutateAsync(data);
@@ -292,10 +321,10 @@ const VoiceAgentCreate: React.FC = () => {
                   <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
                     Turn Settings
                   </h3>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 md:grid-cols-3">
                     <div>
                       <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
-                        Turn Eagerness
+                        Eagerness
                       </label>
                       <select
                         value={advancedConfig.turn?.turnEagerness ?? 'normal'}
@@ -314,6 +343,30 @@ const VoiceAgentCreate: React.FC = () => {
                         <option value="normal">Normal</option>
                         <option value="high">High</option>
                       </select>
+                      <p className="mt-1 text-xs text-gray-500">How quickly the agent responds</p>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                        Turn Timeout ({advancedConfig.turn?.turnTimeout ?? 7}s)
+                      </label>
+                      <input
+                        type="range"
+                        min="1"
+                        max="30"
+                        step="1"
+                        value={advancedConfig.turn?.turnTimeout ?? 7}
+                        onChange={e =>
+                          setAdvancedConfig(prev => ({
+                            ...prev,
+                            turn: {
+                              ...prev.turn,
+                              turnTimeout: parseInt(e.target.value),
+                            },
+                          }))
+                        }
+                        className="w-full"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Seconds before timeout</p>
                     </div>
                     <div>
                       <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
@@ -341,6 +394,7 @@ const VoiceAgentCreate: React.FC = () => {
                         <option value="normal">Normal</option>
                         <option value="high">High</option>
                       </select>
+                      <p className="mt-1 text-xs text-gray-500">Patience for spelling out words</p>
                     </div>
                   </div>
                 </div>
@@ -348,7 +402,7 @@ const VoiceAgentCreate: React.FC = () => {
                 {/* TTS Settings */}
                 <div>
                   <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Voice Settings
+                    Voice Settings (TTS)
                   </h3>
                   <div className="grid gap-4 md:grid-cols-3">
                     <div>
@@ -369,10 +423,11 @@ const VoiceAgentCreate: React.FC = () => {
                         }
                         className="w-full"
                       />
+                      <p className="mt-1 text-xs text-gray-500">Higher = more consistent voice</p>
                     </div>
                     <div>
                       <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
-                        Speed ({advancedConfig.tts?.speed ?? 1.0})
+                        Speed ({advancedConfig.tts?.speed ?? 1.0}x)
                       </label>
                       <input
                         type="range"
@@ -388,6 +443,7 @@ const VoiceAgentCreate: React.FC = () => {
                         }
                         className="w-full"
                       />
+                      <p className="mt-1 text-xs text-gray-500">Speech speed multiplier</p>
                     </div>
                     <div>
                       <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
@@ -407,6 +463,7 @@ const VoiceAgentCreate: React.FC = () => {
                         }
                         className="w-full"
                       />
+                      <p className="mt-1 text-xs text-gray-500">Voice similarity boost</p>
                     </div>
                   </div>
                 </div>
@@ -416,55 +473,26 @@ const VoiceAgentCreate: React.FC = () => {
                   <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
                     LLM Settings
                   </h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
-                        Model
-                      </label>
-                      <select
-                        value={advancedConfig.agent?.prompt?.llm ?? 'gpt-4'}
-                        onChange={e =>
-                          setAdvancedConfig(prev => ({
-                            ...prev,
-                            agent: {
-                              ...prev.agent,
-                              prompt: { ...prev.agent?.prompt, llm: e.target.value },
-                            },
-                          }))
-                        }
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                      >
-                        <option value="gpt-4">GPT-4</option>
-                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                        <option value="claude-3-opus">Claude 3 Opus</option>
-                        <option value="claude-3-sonnet">Claude 3 Sonnet</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
-                        Max Tokens
-                      </label>
-                      <input
-                        type="number"
-                        min={256}
-                        max={8192}
-                        value={advancedConfig.agent?.prompt?.maxTokens ?? 2048}
-                        onChange={e =>
-                          setAdvancedConfig(prev => ({
-                            ...prev,
-                            agent: {
-                              ...prev.agent,
-                              prompt: {
-                                ...prev.agent?.prompt,
-                                maxTokens: parseInt(e.target.value),
-                              },
-                            },
-                          }))
-                        }
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
+                  <div>
+                    <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                      LLM Model (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={advancedConfig.agent?.prompt?.llm ?? ''}
+                      onChange={e =>
+                        setAdvancedConfig(prev => ({
+                          ...prev,
+                          agent: {
+                            ...prev.agent,
+                            prompt: { ...prev.agent?.prompt, llm: e.target.value },
+                          },
+                        }))
+                      }
+                      placeholder="Leave empty for default"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">e.g., gpt-4o, claude-3-5-sonnet</p>
                   </div>
                 </div>
               </div>
