@@ -20,7 +20,6 @@ export const voiceAgentKeys = {
   list: () => [...voiceAgentKeys.lists()] as const,
   details: () => [...voiceAgentKeys.all, 'detail'] as const,
   detail: (id: number) => [...voiceAgentKeys.details(), id] as const,
-  voices: () => [...voiceAgentKeys.all, 'voices'] as const,
   elevenlabsAgents: () => [...voiceAgentKeys.all, 'elevenlabs'] as const,
   conversations: () => [...voiceAgentKeys.all, 'conversations'] as const,
   conversation: (id: number) => [...voiceAgentKeys.conversations(), id] as const,
@@ -180,21 +179,6 @@ export const useEndConversation = () => {
     onError: error => {
       console.error('Failed to end conversation:', error);
     },
-  });
-};
-
-/**
- * Get available ElevenLabs voices
- */
-export const useVoices = (enabled: boolean = true) => {
-  const isAuthenticated = useIsAuthenticated();
-
-  return useQuery({
-    queryKey: voiceAgentKeys.voices(),
-    queryFn: () => voiceAgentService.getVoices(),
-    enabled: enabled && isAuthenticated,
-    staleTime: 30 * 60 * 1000, // Voices don't change often
-    gcTime: 60 * 60 * 1000,
   });
 };
 
