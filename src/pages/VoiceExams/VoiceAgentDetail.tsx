@@ -16,6 +16,16 @@ import {
 
 import { VoiceAgentUpdateData } from '@/types/voiceAgent';
 
+interface AdvancedSettings {
+  turnEagerness: 'low' | 'normal' | 'high';
+  turnTimeout: number;
+  spellingPatience: 'auto' | 'low' | 'normal' | 'high';
+  ttsStability: number;
+  ttsSpeed: number;
+  ttsSimilarityBoost: number;
+  llmModel: string;
+}
+
 const VoiceAgentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -29,6 +39,15 @@ const VoiceAgentDetail: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [formData, setFormData] = useState<VoiceAgentUpdateData>({});
+  const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>({
+    turnEagerness: 'normal',
+    turnTimeout: 7,
+    spellingPatience: 'auto',
+    ttsStability: 0.5,
+    ttsSpeed: 1.0,
+    ttsSimilarityBoost: 0.75,
+    llmModel: '',
+  });
 
   const isOwner = user?.id === agent?.user;
   const isCreator = user?.isCreator ?? false;
@@ -48,14 +67,59 @@ const VoiceAgentDetail: React.FC = () => {
         examTitle: agent.examTitle,
         examInstructions: agent.examInstructions,
         status: agent.status,
-        conversationConfig: agent.conversationConfig ?? undefined,
       });
+
+      // Load advanced settings from conversationConfig
+      const config = agent.conversationConfig;
+      if (config) {
+        setAdvancedSettings({
+          turnEagerness: config.turn?.turnEagerness ?? 'normal',
+          turnTimeout: config.turn?.turnTimeout ?? 7,
+          spellingPatience: config.turn?.spellingPatience ?? 'auto',
+          ttsStability: config.tts?.stability ?? 0.5,
+          ttsSpeed: config.tts?.speed ?? 1.0,
+          ttsSimilarityBoost: config.tts?.similarityBoost ?? 0.75,
+          llmModel: config.agent?.prompt?.llm ?? '',
+        });
+      }
     }
   }, [agent]);
 
   const handleSave = async () => {
     if (!agent) return;
-    const result = await updateAgent.mutateAsync({ id: agent.id, data: formData });
+
+    // Build conversationConfig from advanced settings (matching DARE structure)
+    const conversationConfig = {
+      turn: {
+        turnEagerness: advancedSettings.turnEagerness,
+        turnTimeout: advancedSettings.turnTimeout,
+        spellingPatience: advancedSettings.spellingPatience,
+      },
+      tts: {
+        voiceId: formData.voiceId,
+        stability: advancedSettings.ttsStability,
+        speed: advancedSettings.ttsSpeed,
+        similarityBoost: advancedSettings.ttsSimilarityBoost,
+      },
+      agent: {
+        prompt: {
+          prompt: formData.systemPrompt,
+          temperature: formData.temperature,
+          ...(advancedSettings.llmModel && { llm: advancedSettings.llmModel }),
+        },
+        firstMessage: formData.firstMessage,
+      },
+      conversation: {
+        maxDurationSeconds: formData.maxDurationSeconds,
+      },
+    };
+
+    const updateData: VoiceAgentUpdateData = {
+      ...formData,
+      conversationConfig,
+    };
+
+    const result = await updateAgent.mutateAsync({ id: agent.id, data: updateData });
     if (result) {
       setIsEditing(false);
     }
@@ -347,6 +411,180 @@ const VoiceAgentDetail: React.FC = () => {
             </div>
           </div>
 
+          {/* Advanced ElevenLabs Settings */}
+          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+              Advanced ElevenLabs Settings
+            </h2>
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              Fine-tune conversation behavior, voice output, and LLM settings
+            </p>
+
+            {/* Turn Settings */}
+            <div className="mb-6">
+              <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Turn Settings
+              </h3>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                    Eagerness
+                  </label>
+                  <select
+                    value={advancedSettings.turnEagerness}
+                    onChange={e =>
+                      setAdvancedSettings(prev => ({
+                        ...prev,
+                        turnEagerness: e.target.value as 'low' | 'normal' | 'high',
+                      }))
+                    }
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="low">Low</option>
+                    <option value="normal">Normal</option>
+                    <option value="high">High</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">How quickly the agent responds</p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                    Turn Timeout ({advancedSettings.turnTimeout}s)
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="30"
+                    step="1"
+                    value={advancedSettings.turnTimeout}
+                    onChange={e =>
+                      setAdvancedSettings(prev => ({
+                        ...prev,
+                        turnTimeout: parseInt(e.target.value),
+                      }))
+                    }
+                    className="w-full"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Seconds before timeout</p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                    Spelling Patience
+                  </label>
+                  <select
+                    value={advancedSettings.spellingPatience}
+                    onChange={e =>
+                      setAdvancedSettings(prev => ({
+                        ...prev,
+                        spellingPatience: e.target.value as 'auto' | 'low' | 'normal' | 'high',
+                      }))
+                    }
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="auto">Auto</option>
+                    <option value="low">Low</option>
+                    <option value="normal">Normal</option>
+                    <option value="high">High</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">Patience for spelling out words</p>
+                </div>
+              </div>
+            </div>
+
+            {/* TTS Settings */}
+            <div className="mb-6 border-t border-gray-200 pt-4 dark:border-gray-700">
+              <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Voice Settings (TTS)
+              </h3>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                    Stability ({advancedSettings.ttsStability})
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={advancedSettings.ttsStability}
+                    onChange={e =>
+                      setAdvancedSettings(prev => ({
+                        ...prev,
+                        ttsStability: parseFloat(e.target.value),
+                      }))
+                    }
+                    className="w-full"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Higher = more consistent voice</p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                    Speed ({advancedSettings.ttsSpeed}x)
+                  </label>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2"
+                    step="0.1"
+                    value={advancedSettings.ttsSpeed}
+                    onChange={e =>
+                      setAdvancedSettings(prev => ({
+                        ...prev,
+                        ttsSpeed: parseFloat(e.target.value),
+                      }))
+                    }
+                    className="w-full"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Speech speed multiplier</p>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                    Similarity ({advancedSettings.ttsSimilarityBoost})
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={advancedSettings.ttsSimilarityBoost}
+                    onChange={e =>
+                      setAdvancedSettings(prev => ({
+                        ...prev,
+                        ttsSimilarityBoost: parseFloat(e.target.value),
+                      }))
+                    }
+                    className="w-full"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Voice similarity boost</p>
+                </div>
+              </div>
+            </div>
+
+            {/* LLM Settings */}
+            <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+              <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                LLM Settings
+              </h3>
+              <div>
+                <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                  LLM Model (optional)
+                </label>
+                <input
+                  type="text"
+                  value={advancedSettings.llmModel}
+                  onChange={e =>
+                    setAdvancedSettings(prev => ({
+                      ...prev,
+                      llmModel: e.target.value,
+                    }))
+                  }
+                  placeholder="Leave empty for default"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
+                <p className="mt-1 text-xs text-gray-500">e.g., gpt-4o, claude-3-5-sonnet</p>
+              </div>
+            </div>
+          </div>
+
           {/* Actions */}
           <div className="flex justify-between">
             <button
@@ -443,6 +681,67 @@ const VoiceAgentDetail: React.FC = () => {
                   <dt className="text-sm text-gray-500 dark:text-gray-400">ElevenLabs Agent ID</dt>
                   <dd className="text-gray-900 dark:text-white">
                     {agent.elevenlabsAgentId || 'Not configured'}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          )}
+
+          {/* Advanced ElevenLabs Settings (Owners only) */}
+          {isOwner && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                Advanced ElevenLabs Settings
+              </h2>
+              <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                Fine-tune conversation behavior, voice output, and LLM settings
+              </p>
+              <dl className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {/* Turn Settings */}
+                <div>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Eagerness</dt>
+                  <dd className="text-gray-900 capitalize dark:text-white">
+                    {agent.conversationConfig?.turn?.turnEagerness || 'normal'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Turn Timeout</dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {agent.conversationConfig?.turn?.turnTimeout || 7}s
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Spelling Patience</dt>
+                  <dd className="text-gray-900 capitalize dark:text-white">
+                    {agent.conversationConfig?.turn?.spellingPatience || 'auto'}
+                  </dd>
+                </div>
+
+                {/* TTS Settings */}
+                <div>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Stability</dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {agent.conversationConfig?.tts?.stability ?? 0.5}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Speed</dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {agent.conversationConfig?.tts?.speed ?? 1.0}x
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">Similarity Boost</dt>
+                  <dd className="text-gray-900 dark:text-white">
+                    {agent.conversationConfig?.tts?.similarityBoost ?? 0.75}
+                  </dd>
+                </div>
+
+                {/* LLM Settings */}
+                <div>
+                  <dt className="text-sm text-gray-500 dark:text-gray-400">LLM Model</dt>
+                  <dd className="font-mono text-sm text-gray-900 dark:text-white">
+                    {agent.conversationConfig?.agent?.prompt?.llm || 'default'}
                   </dd>
                 </div>
               </dl>
