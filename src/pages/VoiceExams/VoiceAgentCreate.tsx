@@ -8,14 +8,13 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, ChevronUp, Save } from 'lucide-react';
 
 import { useUser } from '@/hooks/queries/useUser';
-import { useCreateVoiceAgent, useVoices } from '@/hooks/queries/useVoiceAgents';
+import { useCreateVoiceAgent } from '@/hooks/queries/useVoiceAgents';
 
 import { ConversationConfig, VoiceAgentCreateData } from '@/types/voiceAgent';
 
 const VoiceAgentCreate: React.FC = () => {
   const navigate = useNavigate();
   const user = useUser();
-  const { data: voices, isLoading: loadingVoices } = useVoices();
   const createAgent = useCreateVoiceAgent();
 
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -230,44 +229,23 @@ const VoiceAgentCreate: React.FC = () => {
                 placeholder="Hello! I'll be conducting your exam today. Are you ready to begin?"
               />
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Voice
-                </label>
-                <select
-                  name="voiceId"
-                  value={formData.voiceId}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  disabled={loadingVoices}
-                >
-                  <option value="">Default Voice</option>
-                  {voices?.map(voice => (
-                    <option key={voice.voiceId} value={voice.voiceId}>
-                      {voice.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Temperature ({formData.temperature})
-                </label>
-                <input
-                  type="range"
-                  name="temperature"
-                  min="0"
-                  max="2"
-                  step="0.1"
-                  value={formData.temperature}
-                  onChange={handleChange}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>Focused</span>
-                  <span>Creative</span>
-                </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Temperature ({formData.temperature})
+              </label>
+              <input
+                type="range"
+                name="temperature"
+                min="0"
+                max="2"
+                step="0.1"
+                value={formData.temperature}
+                onChange={handleChange}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Focused</span>
+                <span>Creative</span>
               </div>
             </div>
             <div>

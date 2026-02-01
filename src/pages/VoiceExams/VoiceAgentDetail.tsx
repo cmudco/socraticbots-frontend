@@ -12,7 +12,6 @@ import {
   useDeleteVoiceAgent,
   useUpdateVoiceAgent,
   useVoiceAgent,
-  useVoices,
 } from '@/hooks/queries/useVoiceAgents';
 
 import { VoiceAgentUpdateData } from '@/types/voiceAgent';
@@ -24,7 +23,6 @@ const VoiceAgentDetail: React.FC = () => {
 
   const user = useUser();
   const { data: agent, isLoading } = useVoiceAgent(agentId);
-  const { data: voices } = useVoices();
   const updateAgent = useUpdateVoiceAgent();
   const deleteAgent = useDeleteVoiceAgent();
 
@@ -317,40 +315,20 @@ const VoiceAgentDetail: React.FC = () => {
                   className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 />
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Voice
-                  </label>
-                  <select
-                    name="voiceId"
-                    value={formData.voiceId ?? ''}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">Default Voice</option>
-                    {voices?.map(voice => (
-                      <option key={voice.voiceId} value={voice.voiceId}>
-                        {voice.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Temperature ({formData.temperature ?? 0.7})
-                  </label>
-                  <input
-                    type="range"
-                    name="temperature"
-                    min="0"
-                    max="2"
-                    step="0.1"
-                    value={formData.temperature ?? 0.7}
-                    onChange={handleChange}
-                    className="w-full"
-                  />
-                </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Temperature ({formData.temperature ?? 0.7})
+                </label>
+                <input
+                  type="range"
+                  name="temperature"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  value={formData.temperature ?? 0.7}
+                  onChange={handleChange}
+                  className="w-full"
+                />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">

@@ -7,7 +7,6 @@ import { baseRequest } from '@/utils/baseRequest';
 
 import {
   ElevenLabsAgentItem,
-  ElevenLabsVoice,
   SignedUrlResponse,
   VoiceAgent,
   VoiceAgentCreateData,
@@ -79,15 +78,6 @@ class VoiceAgentService {
       url: `voice/agents/${agentId}/end_conversation/`,
       method: METHOD.POST,
       data: { conversationId },
-    });
-  }
-
-  // ============ Voices ============
-
-  async getVoices(): Promise<ElevenLabsVoice[]> {
-    return baseRequest<ElevenLabsVoice[]>({
-      url: 'voice/agents/voices/',
-      method: METHOD.GET,
     });
   }
 
