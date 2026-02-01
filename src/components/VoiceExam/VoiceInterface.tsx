@@ -6,7 +6,11 @@ import { useCallback, useState } from 'react';
 
 import { useConversation } from '@elevenlabs/react';
 
-import { useVoiceAgentStore } from '@/stores/core/voiceAgentStore';
+import {
+  useEndConversation,
+  useGetSignedUrl,
+  useStartConversation,
+} from '@/hooks/queries/useVoiceAgents';
 
 import { VoiceAgent } from '@/types/voiceAgent';
 
@@ -22,28 +26,21 @@ interface TranscriptMessage {
 }
 
 export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
-  const {
-    currentConversationId,
-    loadingSignedUrl,
-    error,
-    getSignedUrl,
-    startConversation,
-    endConversation,
-    setConnected,
-    setCurrentConversationId,
-    clearSession,
-  } = useVoiceAgentStore();
-
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+
+  // TanStack Query mutations
+  const getSignedUrlMutation = useGetSignedUrl();
+  const startConversationMutation = useStartConversation();
+  const endConversationMutation = useEndConversation();
 
   const conversation = useConversation({
     onConnect: () => {
-      setConnected(true);
       setLocalError(null);
     },
     onDisconnect: () => {
-      setConnected(false);
+      // Connection ended
     },
     onMessage: (message: unknown) => {
       const content =
@@ -82,9 +79,9 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // Get signed URL from backend
-      const signedUrlResult = await getSignedUrl(agent.id);
+      const signedUrlResult = await getSignedUrlMutation.mutateAsync(agent.id);
 
-      if (!signedUrlResult) {
+      if (!signedUrlResult?.signedUrl) {
         setLocalError('Failed to get signed URL');
         return;
       }
@@ -98,13 +95,16 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
         setCurrentConversationId(conversationIdResult);
 
         // Record conversation start in backend
-        await startConversation(agent.id, conversationIdResult);
+        await startConversationMutation.mutateAsync({
+          agentId: agent.id,
+          conversationId: conversationIdResult,
+        });
       }
     } catch (err) {
       console.error('Failed to start session:', err);
       setLocalError(err instanceof Error ? err.message : 'Failed to start session');
     }
-  }, [agent.id, conversation, getSignedUrl, startConversation, setCurrentConversationId]);
+  }, [agent.id, conversation, getSignedUrlMutation, startConversationMutation]);
 
   const handleEnd = useCallback(async () => {
     try {
@@ -112,19 +112,23 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
 
       if (currentConversationId) {
         // Record conversation end and fetch transcript
-        await endConversation(agent.id, currentConversationId);
+        await endConversationMutation.mutateAsync({
+          agentId: agent.id,
+          conversationId: currentConversationId,
+        });
       }
 
-      clearSession();
+      setCurrentConversationId(null);
       onComplete?.();
     } catch (err) {
       console.error('Failed to end session:', err);
       setLocalError(err instanceof Error ? err.message : 'Failed to end session');
     }
-  }, [agent.id, currentConversationId, conversation, endConversation, clearSession, onComplete]);
+  }, [agent.id, currentConversationId, conversation, endConversationMutation, onComplete]);
 
   const isSessionActive = conversation.status === 'connected';
   const isConnecting = conversation.status === 'connecting';
+  const isLoading = getSignedUrlMutation.isPending;
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -161,9 +165,9 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
         )}
 
         {/* Error Display */}
-        {(error || localError) && (
+        {localError && (
           <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-400">
-            {error || localError}
+            {localError}
           </div>
         )}
 
@@ -187,14 +191,14 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
         <div className="flex gap-4">
           <button
             onClick={handleStart}
-            disabled={isSessionActive || isConnecting || loadingSignedUrl}
+            disabled={isSessionActive || isConnecting || isLoading}
             className={`flex-1 rounded-lg px-6 py-3 font-semibold transition-all ${
-              isSessionActive || isConnecting || loadingSignedUrl
+              isSessionActive || isConnecting || isLoading
                 ? 'cursor-not-allowed bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
                 : 'cursor-pointer bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
-            {loadingSignedUrl || isConnecting ? 'Connecting...' : 'Start Exam'}
+            {isLoading || isConnecting ? 'Connecting...' : 'Start Exam'}
           </button>
           <button
             onClick={handleEnd}
