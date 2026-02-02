@@ -91,14 +91,9 @@ const BotEditPage: React.FC = () => {
   useEffect(() => {
     if (isEdit && bot) {
       const formData = mapBotToFormData(bot);
-      console.log('[BotEditPage] Bot loaded, resetting form with:', {
-        chatModelDareId: formData.chatModelDareId,
-        trackingModelDareId: formData.trackingModelDareId,
-        title: formData.title,
-      });
       form.reset(formData);
     }
-  }, [isEdit, bot]); // Removed 'form' from deps - form.reset doesn't need form in deps
+  }, [isEdit, bot]);
 
   // Validate current step before proceeding
   const validateCurrentStep = async (): Promise<boolean> => {
@@ -166,7 +161,9 @@ const BotEditPage: React.FC = () => {
       navigate('/bot-groups');
     } catch (error) {
       console.error('Error saving bot:', error);
-      addToast({ message: 'Failed to save bot. Please try again.', type: 'error' });
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to save bot. Please try again.';
+      addToast({ message: errorMessage, type: 'error' });
     }
   };
 
@@ -184,7 +181,7 @@ const BotEditPage: React.FC = () => {
       case 'files':
         return <BotFilesStep botGroupId={numericBotGroupId} botId={numericBotId} />;
       case 'deployment':
-        return <BotDeploymentStep />;
+        return <BotDeploymentStep botId={numericBotId} />;
       default:
         return <BotBasicInfoStep isEdit={isEdit} />;
     }
@@ -244,6 +241,7 @@ const BotEditPage: React.FC = () => {
                   completedSteps={completedSteps}
                   onStepClick={handleStepClick}
                   orientation="vertical"
+                  allowClickAhead
                 />
               </CardContent>
             </Card>

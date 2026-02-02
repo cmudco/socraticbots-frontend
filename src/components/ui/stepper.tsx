@@ -116,6 +116,7 @@ export const Stepper: React.FC<StepperProps> = ({
           return (
             <div key={step.id}>
               <button
+                type="button"
                 onClick={() => handleStepClick(index)}
                 disabled={!clickable}
                 className={cn(
@@ -168,6 +169,7 @@ export const Stepper: React.FC<StepperProps> = ({
           return (
             <li key={step.id} className={cn('flex items-center', !isLastStep && 'flex-1')}>
               <button
+                type="button"
                 onClick={() => handleStepClick(index)}
                 disabled={!clickable}
                 className={cn(

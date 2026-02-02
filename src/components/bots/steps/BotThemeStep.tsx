@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 
 const BotThemeStep: React.FC = () => {
-  const { register, control, watch } = useFormContext<BotFormData>();
+  const { control, watch } = useFormContext<BotFormData>();
 
   const colors = watch(['primaryColor', 'accentColor', 'backgroundColor', 'foregroundColor']);
 
@@ -24,34 +24,102 @@ const BotThemeStep: React.FC = () => {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="primaryColor">Primary Color</Label>
-          <div className="flex gap-2">
-            <Input type="color" {...register('primaryColor')} className="h-10 w-16 p-1" />
-            <Input {...register('primaryColor')} placeholder="#8b5cf6" className="flex-1" />
-          </div>
+          <Controller
+            name="primaryColor"
+            control={control}
+            render={({ field }) => (
+              <div className="flex gap-2">
+                <Input
+                  type="color"
+                  value={field.value}
+                  onChange={e => field.onChange(e.target.value)}
+                  onInput={e => field.onChange((e.target as HTMLInputElement).value)}
+                  className="h-10 w-16 p-1"
+                />
+                <Input
+                  value={field.value}
+                  onChange={e => field.onChange(e.target.value)}
+                  placeholder="#8b5cf6"
+                  className="flex-1"
+                />
+              </div>
+            )}
+          />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="accentColor">Accent Color</Label>
-          <div className="flex gap-2">
-            <Input type="color" {...register('accentColor')} className="h-10 w-16 p-1" />
-            <Input {...register('accentColor')} placeholder="#a78bfa" className="flex-1" />
-          </div>
+          <Controller
+            name="accentColor"
+            control={control}
+            render={({ field }) => (
+              <div className="flex gap-2">
+                <Input
+                  type="color"
+                  value={field.value}
+                  onChange={e => field.onChange(e.target.value)}
+                  onInput={e => field.onChange((e.target as HTMLInputElement).value)}
+                  className="h-10 w-16 p-1"
+                />
+                <Input
+                  value={field.value}
+                  onChange={e => field.onChange(e.target.value)}
+                  placeholder="#a78bfa"
+                  className="flex-1"
+                />
+              </div>
+            )}
+          />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="backgroundColor">Background Color</Label>
-          <div className="flex gap-2">
-            <Input type="color" {...register('backgroundColor')} className="h-10 w-16 p-1" />
-            <Input {...register('backgroundColor')} placeholder="#ffffff" className="flex-1" />
-          </div>
+          <Controller
+            name="backgroundColor"
+            control={control}
+            render={({ field }) => (
+              <div className="flex gap-2">
+                <Input
+                  type="color"
+                  value={field.value}
+                  onChange={e => field.onChange(e.target.value)}
+                  onInput={e => field.onChange((e.target as HTMLInputElement).value)}
+                  className="h-10 w-16 p-1"
+                />
+                <Input
+                  value={field.value}
+                  onChange={e => field.onChange(e.target.value)}
+                  placeholder="#ffffff"
+                  className="flex-1"
+                />
+              </div>
+            )}
+          />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="foregroundColor">Text Color</Label>
-          <div className="flex gap-2">
-            <Input type="color" {...register('foregroundColor')} className="h-10 w-16 p-1" />
-            <Input {...register('foregroundColor')} placeholder="#0f172a" className="flex-1" />
-          </div>
+          <Controller
+            name="foregroundColor"
+            control={control}
+            render={({ field }) => (
+              <div className="flex gap-2">
+                <Input
+                  type="color"
+                  value={field.value}
+                  onChange={e => field.onChange(e.target.value)}
+                  onInput={e => field.onChange((e.target as HTMLInputElement).value)}
+                  className="h-10 w-16 p-1"
+                />
+                <Input
+                  value={field.value}
+                  onChange={e => field.onChange(e.target.value)}
+                  placeholder="#0f172a"
+                  className="flex-1"
+                />
+              </div>
+            )}
+          />
         </div>
       </div>
 
