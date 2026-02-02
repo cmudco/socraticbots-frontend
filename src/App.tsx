@@ -15,6 +15,8 @@ import PublicBotChat from './pages/PublicBotChat';
 import Register from './pages/Register';
 import Settings from './pages/Settings';
 import VoiceExamsList from './pages/VoiceExams';
+import ConversationDetail from './pages/VoiceExams/ConversationDetail';
+import ConversationHistory from './pages/VoiceExams/ConversationHistory';
 import StudentExam from './pages/VoiceExams/StudentExam';
 import VoiceAgentCreate from './pages/VoiceExams/VoiceAgentCreate';
 import VoiceAgentDetail from './pages/VoiceExams/VoiceAgentDetail';
@@ -53,6 +55,8 @@ const App: React.FC = () => {
             <Route path="chat/:botId" element={<Chat />} />
             <Route path="voice-exams" element={<VoiceExamsList />} />
             <Route path="voice-exams/create" element={<VoiceAgentCreate />} />
+            <Route path="voice-exams/conversations" element={<ConversationHistory />} />
+            <Route path="voice-exams/conversations/:id" element={<ConversationDetail />} />
             <Route path="voice-exams/:id" element={<VoiceAgentDetail />} />
             <Route path="voice-exams/:id/exam" element={<StudentExam />} />
           </Route>
