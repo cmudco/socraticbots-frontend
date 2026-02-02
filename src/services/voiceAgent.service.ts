@@ -97,6 +97,13 @@ class VoiceAgentService {
     });
   }
 
+  async syncConversationTranscript(id: number): Promise<VoiceConversation> {
+    return baseRequest<VoiceConversation>({
+      url: `voice/conversations/${id}/sync_transcript/`,
+      method: METHOD.POST,
+    });
+  }
+
   // ============ ElevenLabs Direct API ============
 
   async getElevenLabsAgents(): Promise<ElevenLabsAgentItem[]> {

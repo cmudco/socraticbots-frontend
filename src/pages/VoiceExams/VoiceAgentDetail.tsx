@@ -182,6 +182,12 @@ const VoiceAgentDetail: React.FC = () => {
             )}
           </div>
           <div className="flex gap-2">
+            {agent.conversationCount > 0 && (
+              <Button onClick={() => navigate('/voice-exams/conversations')} variant="outline">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                View Conversations
+              </Button>
+            )}
             {canTakeExam && (
               <Button onClick={() => navigate(`/voice-exams/${agent.id}/exam`)} variant="default">
                 <Play className="mr-2 h-4 w-4" />
@@ -200,7 +206,10 @@ const VoiceAgentDetail: React.FC = () => {
 
       {/* Stats */}
       <div className="mb-8 grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card
+          className="cursor-pointer transition-shadow hover:shadow-md"
+          onClick={() => navigate('/voice-exams/conversations')}
+        >
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
               <MessageSquare className="h-5 w-5 text-blue-500" />
@@ -209,6 +218,7 @@ const VoiceAgentDetail: React.FC = () => {
                 <p className="text-foreground text-xl font-semibold">{agent.conversationCount}</p>
               </div>
             </div>
+            <p className="text-muted-foreground mt-2 text-xs">Click to view history</p>
           </CardContent>
         </Card>
         <Card>
