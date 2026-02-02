@@ -151,9 +151,6 @@ export function mapBotToFormData(bot: {
   isPubliclyDeployed?: boolean;
   budget?: number | string;
 }): BotFormData {
-  // Debug: log incoming data
-  console.log('[mapBotToFormData] bot.modelPreference:', bot.modelPreference);
-
   return {
     // Basic Info
     title: bot.title || '',

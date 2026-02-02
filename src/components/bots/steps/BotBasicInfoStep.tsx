@@ -71,44 +71,43 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ isEdit = false }) =
       {isEdit && (
         <div className="space-y-2">
           <Label htmlFor="chatModelDareId">Agent *</Label>
-          <Controller
-            name="chatModelDareId"
-            control={control}
-            render={({ field }) => {
-              const stringValue =
-                field.value !== null && field.value !== undefined ? String(field.value) : '';
+          {modelsLoading || !dareLLMModels ? (
+            <div className="border-input bg-muted/50 text-muted-foreground flex h-10 w-full items-center rounded-md border px-3 text-sm">
+              Loading models...
+            </div>
+          ) : (
+            <Controller
+              name="chatModelDareId"
+              control={control}
+              render={({ field }) => {
+                const stringValue =
+                  field.value !== null && field.value !== undefined ? String(field.value) : '';
 
-              return (
-                <Select
-                  disabled={modelsLoading}
-                  value={stringValue}
-                  onValueChange={value => {
-                    // Guard: Don't clear value if models haven't loaded yet
-                    // (Select fires empty value when it can't find matching SelectItem)
-                    if (!value && !dareLLMModels?.length) {
-                      console.log(
-                        '[BotBasicInfoStep] Agent: Ignoring empty value - models not loaded yet'
-                      );
-                      return;
-                    }
-                    const numValue = value ? parseInt(value, 10) : null;
-                    field.onChange(numValue);
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={modelsLoading ? 'Loading...' : 'Select a model'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dareLLMModels?.map(model => (
-                      <SelectItem key={model.id} value={String(model.id)}>
-                        {model.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              );
-            }}
-          />
+                return (
+                  <Select
+                    value={stringValue}
+                    onValueChange={value => {
+                      // Reject empty values - Agent is required, never clear it
+                      // Radix Select fires empty onValueChange on remount, we must ignore it
+                      if (!value) return;
+                      field.onChange(parseInt(value, 10));
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dareLLMModels.map(model => (
+                        <SelectItem key={model.id} value={String(model.id)}>
+                          {model.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                );
+              }}
+            />
+          )}
         </div>
       )}
 
@@ -119,56 +118,53 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ isEdit = false }) =
           <p className="text-muted-foreground text-xs">
             Optional: Enable to track student progress
           </p>
-          <Controller
-            name="trackingModelDareId"
-            control={control}
-            render={({ field }) => {
-              // Handle null value as 'none' for the Select
-              const stringValue =
-                field.value !== null && field.value !== undefined && !Number.isNaN(field.value)
-                  ? String(field.value)
-                  : 'none';
+          {modelsLoading || !dareLLMModels ? (
+            <div className="border-input bg-muted/50 text-muted-foreground flex h-10 w-full items-center rounded-md border px-3 text-sm">
+              Loading models...
+            </div>
+          ) : (
+            <Controller
+              name="trackingModelDareId"
+              control={control}
+              render={({ field }) => {
+                // Handle null value as 'none' for the Select
+                const stringValue =
+                  field.value !== null && field.value !== undefined && !Number.isNaN(field.value)
+                    ? String(field.value)
+                    : 'none';
 
-              return (
-                <Select
-                  disabled={modelsLoading}
-                  value={stringValue}
-                  onValueChange={value => {
-                    // Guard: Don't clear value if models haven't loaded yet
-                    if (!value && !dareLLMModels?.length) {
-                      console.log(
-                        '[BotBasicInfoStep] Tracker: Ignoring empty value - models not loaded yet'
-                      );
-                      return;
-                    }
-                    // Also guard against invalid values (NaN from parseInt of empty string)
-                    if (value && value !== 'none') {
-                      const parsed = parseInt(value, 10);
-                      if (Number.isNaN(parsed)) {
-                        console.log('[BotBasicInfoStep] Tracker: Ignoring invalid value:', value);
-                        return;
+                return (
+                  <Select
+                    value={stringValue}
+                    onValueChange={value => {
+                      // Reject empty values - Radix fires empty on remount
+                      if (!value) return;
+                      if (value === 'none') {
+                        field.onChange(null);
+                      } else {
+                        const parsed = parseInt(value, 10);
+                        if (!Number.isNaN(parsed)) {
+                          field.onChange(parsed);
+                        }
                       }
-                      field.onChange(parsed);
-                    } else {
-                      field.onChange(null);
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="None (Optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {dareLLMModels?.map(model => (
-                      <SelectItem key={model.id} value={String(model.id)}>
-                        {model.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              );
-            }}
-          />
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="None (Optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {dareLLMModels.map(model => (
+                        <SelectItem key={model.id} value={String(model.id)}>
+                          {model.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                );
+              }}
+            />
+          )}
         </div>
       )}
 
