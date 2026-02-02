@@ -154,30 +154,13 @@ const PublicBotChat: React.FC = () => {
         is_advanced: Boolean(botInfo.isAdvanced || false),
       };
 
-      // Add all bot-specific settings
-      if (botInfo.modelPreference?.chatModelDareId) {
-        payload.llm_id = botInfo.modelPreference.chatModelDareId;
-      }
-      if (botInfo.dareFileIds) {
-        payload.embedding_ids = botInfo.dareFileIds;
-      }
-      // Bot creator's DARE user ID for shared document access
-      if (botInfo.createdByDareId) {
-        payload.file_owner_id = botInfo.createdByDareId;
-      }
-      // Add progress tracking fields
-      if (botInfo.prompts?.trackingPrompt) {
-        payload.tracking_prompt = botInfo.prompts.trackingPrompt;
-      }
-      if (botInfo.prompts?.learningGoals) {
-        payload.learning_goals = botInfo.prompts.learningGoals;
-      }
-      if (botInfo.modelPreference?.trackingModelDareId) {
-        payload.progress_llm_id = botInfo.modelPreference.trackingModelDareId;
-      }
-      if (botInfo.webSearchEnabled !== undefined) {
-        payload.web_search_enabled = Boolean(botInfo.webSearchEnabled);
-      }
+      // LLM and context settings (matching conversationStore.ts structure exactly)
+      payload.llm_id = botInfo.modelPreference?.chatModelDareId;
+      payload.embedding_ids = botInfo.dareFileIds || [];
+      payload.file_owner_id = botInfo.createdByDareId;
+      payload.progress_llm_id = botInfo.modelPreference?.trackingModelDareId;
+      payload.web_search_enabled = Boolean(botInfo.webSearchEnabled || false);
+
       if (botInfo.maxContextSnippets !== undefined) {
         payload.max_context_snippets = botInfo.maxContextSnippets;
       }
@@ -185,13 +168,14 @@ const PublicBotChat: React.FC = () => {
         payload.document_similarity_threshold = botInfo.documentSimilarityThreshold;
       }
 
-      // Add bot metadata
+      // Add bot metadata (must match conversationStore.ts payload exactly)
       payload.bot_meta = {
         title: botInfo.title,
         subject: botInfo.subject,
         topic: botInfo.topic,
-        learning_goals: botInfo.prompts?.learningGoals,
         chat_prompt: botInfo.prompts?.chatPrompt,
+        tracking_prompt: botInfo.prompts?.trackingPrompt,
+        learning_goals: botInfo.prompts?.learningGoals,
       };
 
       sendWebSocketMessage(payload);
