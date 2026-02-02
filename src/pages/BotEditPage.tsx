@@ -10,12 +10,27 @@ import {
   mapFormDataToPayload,
 } from '@/schemas/botFormSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Bot, Check, Loader2, Save } from 'lucide-react';
+import {
+  ArrowLeft,
+  Bot,
+  Check,
+  ChevronDown,
+  Files,
+  Loader2,
+  Paintbrush,
+  Rocket,
+  Save,
+  Settings,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 
 import { useBot, useCreateBot, useUpdateBot } from '@/hooks/queries/useBots';
 import { useIsCreator } from '@/hooks/queries/useUser';
 
 import { useToastStore } from '@/stores/ui/toastStore';
+
+import { cn } from '@/lib/utils';
 
 import BotBasicInfoStep from '@/components/bots/steps/BotBasicInfoStep';
 import BotDeploymentStep from '@/components/bots/steps/BotDeploymentStep';
@@ -23,9 +38,22 @@ import BotFilesStep from '@/components/bots/steps/BotFilesStep';
 import BotPromptsStep from '@/components/bots/steps/BotPromptsStep';
 import BotQuickPromptsStep from '@/components/bots/steps/BotQuickPromptsStep';
 import BotThemeStep from '@/components/bots/steps/BotThemeStep';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MobileStepper, Stepper, type StepperStep } from '@/components/ui/stepper';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+interface ConfigSection {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  optional?: boolean;
+  creatorOnly?: boolean;
+  editOnly?: boolean;
+}
 
 // ============================================================================
 // Component
@@ -54,38 +82,69 @@ const BotEditPage: React.FC = () => {
   const createBotMutation = useCreateBot();
   const updateBotMutation = useUpdateBot();
 
-  // Stepper state
-  const [currentStep, setCurrentStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  // Accordion state - track open sections
+  const [openSections, setOpenSections] = useState<string[]>(['basic']);
 
-  // Define steps based on mode and user role
-  const steps: StepperStep[] = useMemo(() => {
-    const baseSteps: StepperStep[] = [
-      { id: 'basic', title: 'Basic Info', description: 'Title, subject, and settings' },
+  // Define all configuration sections
+  const allSections: ConfigSection[] = useMemo(
+    () => [
+      {
+        id: 'basic',
+        title: 'Basic Info',
+        description: 'Title, subject, agent, and settings',
+        icon: <Settings className="h-5 w-5" />,
+      },
       {
         id: 'prompts',
         title: 'Prompts',
         description: 'Greeting and system prompts',
+        icon: <Sparkles className="h-5 w-5" />,
         optional: true,
       },
       {
         id: 'quick-prompts',
         title: 'Quick Prompts',
-        description: 'Shortcut buttons',
+        description: 'Shortcut buttons for common actions',
+        icon: <Zap className="h-5 w-5" />,
         optional: true,
       },
-      { id: 'theme', title: 'Theme', description: 'Colors and styling', optional: true },
-    ];
+      {
+        id: 'theme',
+        title: 'Theme',
+        description: 'Colors and visual styling',
+        icon: <Paintbrush className="h-5 w-5" />,
+        optional: true,
+      },
+      {
+        id: 'files',
+        title: 'Files',
+        description: 'Knowledge base documents',
+        icon: <Files className="h-5 w-5" />,
+        optional: true,
+        creatorOnly: true,
+        editOnly: true,
+      },
+      {
+        id: 'deployment',
+        title: 'Deployment',
+        description: 'Access codes and public settings',
+        icon: <Rocket className="h-5 w-5" />,
+        optional: true,
+        creatorOnly: true,
+        editOnly: true,
+      },
+    ],
+    []
+  );
 
-    if (isEdit && isCreator) {
-      baseSteps.push(
-        { id: 'files', title: 'Files', description: 'Knowledge base files', optional: true },
-        { id: 'deployment', title: 'Deployment', description: 'Access codes', optional: true }
-      );
-    }
-
-    return baseSteps;
-  }, [isEdit, isCreator]);
+  // Filter sections based on mode and user role
+  const sections = useMemo(() => {
+    return allSections.filter(section => {
+      if (section.creatorOnly && !isCreator) return false;
+      if (section.editOnly && !isEdit) return false;
+      return true;
+    });
+  }, [allSections, isCreator, isEdit]);
 
   // Load bot data when editing
   useEffect(() => {
@@ -95,47 +154,11 @@ const BotEditPage: React.FC = () => {
     }
   }, [isEdit, bot]);
 
-  // Validate current step before proceeding
-  const validateCurrentStep = async (): Promise<boolean> => {
-    if (currentStep === 0) {
-      // Validate basic info fields
-      const result = await form.trigger(['title', 'subject', 'topic']);
-      if (!result) {
-        addToast({ message: 'Please fill in all required fields', type: 'error' });
-        return false;
-      }
-    }
-    return true;
-  };
-
-  // Handle step navigation
-  const handleStepClick = async (stepIndex: number) => {
-    if (stepIndex < currentStep) {
-      setCurrentStep(stepIndex);
-      return;
-    }
-
-    if (stepIndex > currentStep) {
-      const isValid = await validateCurrentStep();
-      if (isValid) {
-        setCompletedSteps(prev => (prev.includes(currentStep) ? prev : [...prev, currentStep]));
-        setCurrentStep(stepIndex);
-      }
-    }
-  };
-
-  const handleNextStep = async () => {
-    if (currentStep < steps.length - 1) {
-      const isValid = await validateCurrentStep();
-      if (isValid) {
-        setCompletedSteps(prev => (prev.includes(currentStep) ? prev : [...prev, currentStep]));
-        setCurrentStep(prev => prev + 1);
-      }
-    }
-  };
-
-  const handlePrevStep = () => {
-    if (currentStep > 0) setCurrentStep(prev => prev - 1);
+  // Toggle section open/closed
+  const toggleSection = (sectionId: string) => {
+    setOpenSections(prev =>
+      prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]
+    );
   };
 
   // Form submission
@@ -167,11 +190,11 @@ const BotEditPage: React.FC = () => {
     }
   };
 
-  // Render current step content
-  const renderStepContent = () => {
-    switch (steps[currentStep]?.id) {
+  // Render section content
+  const renderSectionContent = (sectionId: string) => {
+    switch (sectionId) {
       case 'basic':
-        return <BotBasicInfoStep isEdit={isEdit} />;
+        return <BotBasicInfoStep />;
       case 'prompts':
         return <BotPromptsStep />;
       case 'quick-prompts':
@@ -183,7 +206,7 @@ const BotEditPage: React.FC = () => {
       case 'deployment':
         return <BotDeploymentStep botId={numericBotId} />;
       default:
-        return <BotBasicInfoStep isEdit={isEdit} />;
+        return null;
     }
   };
 
@@ -199,14 +222,13 @@ const BotEditPage: React.FC = () => {
     );
   }
 
-  const isLastStep = currentStep === steps.length - 1;
   const isSubmitting = form.formState.isSubmitting;
 
   return (
     <FormProvider {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="container mx-auto max-w-6xl px-4 py-6"
+        className="container mx-auto max-w-3xl px-4 py-6"
       >
         {/* Header */}
         <div className="mb-8 flex items-center gap-4">
@@ -226,88 +248,102 @@ const BotEditPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
-          {/* Desktop Stepper Sidebar */}
-          <div className="hidden lg:block">
-            <Card className="sticky top-6">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base">Configuration Steps</CardTitle>
-                <CardDescription>Complete each section to set up your bot</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Stepper
-                  steps={steps}
-                  currentStep={currentStep}
-                  completedSteps={completedSteps}
-                  onStepClick={handleStepClick}
-                  orientation="vertical"
-                  allowClickAhead
-                />
-              </CardContent>
-            </Card>
-          </div>
+        {/* Configuration Sections */}
+        <div className="space-y-3">
+          {sections.map((section, index) => {
+            const isOpen = openSections.includes(section.id);
 
-          {/* Main Content */}
-          <div className="flex flex-col gap-6">
-            {/* Mobile Stepper */}
-            <div className="lg:hidden">
-              <Card>
-                <CardContent className="py-4">
-                  <MobileStepper
-                    steps={steps}
-                    currentStep={currentStep}
-                    onStepChange={handleStepClick}
-                    completedSteps={completedSteps}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Step Content Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{steps[currentStep]?.title}</CardTitle>
-                {steps[currentStep]?.description && (
-                  <CardDescription>{steps[currentStep].description}</CardDescription>
+            return (
+              <div
+                key={section.id}
+                className={cn(
+                  'bg-card border-border overflow-hidden rounded-xl border transition-all duration-200',
+                  isOpen && 'ring-primary/20 ring-2'
                 )}
-              </CardHeader>
-              <CardContent>{renderStepContent()}</CardContent>
-            </Card>
-
-            {/* Navigation Footer */}
-            <div className="flex items-center justify-between gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handlePrevStep}
-                disabled={currentStep === 0}
               >
-                Previous
-              </Button>
-
-              <div className="flex gap-3">
-                {!isLastStep && (
-                  <Button type="button" variant="outline" onClick={handleNextStep}>
-                    Next Step
-                  </Button>
-                )}
-
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      {isLastStep ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                      {isEdit ? 'Save Changes' : 'Create Bot'}
-                    </span>
+                {/* Section Header */}
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section.id)}
+                  className={cn(
+                    'flex w-full items-center gap-4 p-4 text-left transition-colors',
+                    'hover:bg-muted/50',
+                    isOpen && 'border-border border-b'
                   )}
-                </Button>
+                >
+                  {/* Icon */}
+                  <div
+                    className={cn(
+                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors',
+                      isOpen
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {section.icon}
+                  </div>
+
+                  {/* Title & Description */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{section.title}</span>
+                      {section.optional && (
+                        <Badge variant="secondary" className="text-xs">
+                          Optional
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground truncate text-sm">{section.description}</p>
+                  </div>
+
+                  {/* Step number & Chevron */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-muted-foreground text-sm font-medium">
+                      {index + 1}/{sections.length}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        'text-muted-foreground h-5 w-5 transition-transform duration-200',
+                        isOpen && 'rotate-180'
+                      )}
+                    />
+                  </div>
+                </button>
+
+                {/* Section Content */}
+                <div
+                  className={cn(
+                    'grid transition-all duration-200 ease-in-out',
+                    isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                  )}
+                >
+                  <div className="overflow-hidden">
+                    <div className="p-6">{renderSectionContent(section.id)}</div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={() => navigate('/bot-groups')}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting} size="lg">
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                {isEdit ? <Save className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                {isEdit ? 'Save Changes' : 'Create Bot'}
+              </span>
+            )}
+          </Button>
         </div>
       </form>
     </FormProvider>
