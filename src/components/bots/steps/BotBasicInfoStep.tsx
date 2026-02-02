@@ -16,11 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
-interface BotBasicInfoStepProps {
-  isEdit?: boolean;
-}
-
-const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ isEdit = false }) => {
+const BotBasicInfoStep: React.FC = () => {
   const {
     register,
     control,
@@ -67,106 +63,100 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ isEdit = false }) =
         {errors.topic && <p className="text-destructive text-sm">{errors.topic.message}</p>}
       </div>
 
-      {/* Chat Model Selection - Only when editing */}
-      {isEdit && (
-        <div className="space-y-2">
-          <Label htmlFor="chatModelDareId">Agent *</Label>
-          {modelsLoading || !dareLLMModels ? (
-            <div className="border-input bg-muted/50 text-muted-foreground flex h-10 w-full items-center rounded-md border px-3 text-sm">
-              Loading models...
-            </div>
-          ) : (
-            <Controller
-              name="chatModelDareId"
-              control={control}
-              render={({ field }) => {
-                const stringValue =
-                  field.value !== null && field.value !== undefined ? String(field.value) : '';
+      {/* Chat Model Selection */}
+      <div className="space-y-2">
+        <Label htmlFor="chatModelDareId">Agent *</Label>
+        {modelsLoading || !dareLLMModels ? (
+          <div className="border-input bg-muted/50 text-muted-foreground flex h-10 w-full items-center rounded-md border px-3 text-sm">
+            Loading models...
+          </div>
+        ) : (
+          <Controller
+            name="chatModelDareId"
+            control={control}
+            render={({ field }) => {
+              const stringValue =
+                field.value !== null && field.value !== undefined ? String(field.value) : '';
 
-                return (
-                  <Select
-                    value={stringValue}
-                    onValueChange={value => {
-                      // Reject empty values - Agent is required, never clear it
-                      // Radix Select fires empty onValueChange on remount, we must ignore it
-                      if (!value) return;
-                      field.onChange(parseInt(value, 10));
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {dareLLMModels.map(model => (
-                        <SelectItem key={model.id} value={String(model.id)}>
-                          {model.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                );
-              }}
-            />
-          )}
-        </div>
-      )}
+              return (
+                <Select
+                  value={stringValue}
+                  onValueChange={value => {
+                    // Reject empty values - Agent is required, never clear it
+                    // Radix Select fires empty onValueChange on remount, we must ignore it
+                    if (!value) return;
+                    field.onChange(parseInt(value, 10));
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dareLLMModels.map(model => (
+                      <SelectItem key={model.id} value={String(model.id)}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            }}
+          />
+        )}
+      </div>
 
-      {/* Tracking Model Selection - Only when editing */}
-      {isEdit && (
-        <div className="space-y-2">
-          <Label htmlFor="trackingModelDareId">Progress Tracker</Label>
-          <p className="text-muted-foreground text-xs">
-            Optional: Enable to track student progress
-          </p>
-          {modelsLoading || !dareLLMModels ? (
-            <div className="border-input bg-muted/50 text-muted-foreground flex h-10 w-full items-center rounded-md border px-3 text-sm">
-              Loading models...
-            </div>
-          ) : (
-            <Controller
-              name="trackingModelDareId"
-              control={control}
-              render={({ field }) => {
-                // Handle null value as 'none' for the Select
-                const stringValue =
-                  field.value !== null && field.value !== undefined && !Number.isNaN(field.value)
-                    ? String(field.value)
-                    : 'none';
+      {/* Tracking Model Selection */}
+      <div className="space-y-2">
+        <Label htmlFor="trackingModelDareId">Progress Tracker</Label>
+        <p className="text-muted-foreground text-xs">Optional: Enable to track student progress</p>
+        {modelsLoading || !dareLLMModels ? (
+          <div className="border-input bg-muted/50 text-muted-foreground flex h-10 w-full items-center rounded-md border px-3 text-sm">
+            Loading models...
+          </div>
+        ) : (
+          <Controller
+            name="trackingModelDareId"
+            control={control}
+            render={({ field }) => {
+              // Handle null value as 'none' for the Select
+              const stringValue =
+                field.value !== null && field.value !== undefined && !Number.isNaN(field.value)
+                  ? String(field.value)
+                  : 'none';
 
-                return (
-                  <Select
-                    value={stringValue}
-                    onValueChange={value => {
-                      // Reject empty values - Radix fires empty on remount
-                      if (!value) return;
-                      if (value === 'none') {
-                        field.onChange(null);
-                      } else {
-                        const parsed = parseInt(value, 10);
-                        if (!Number.isNaN(parsed)) {
-                          field.onChange(parsed);
-                        }
+              return (
+                <Select
+                  value={stringValue}
+                  onValueChange={value => {
+                    // Reject empty values - Radix fires empty on remount
+                    if (!value) return;
+                    if (value === 'none') {
+                      field.onChange(null);
+                    } else {
+                      const parsed = parseInt(value, 10);
+                      if (!Number.isNaN(parsed)) {
+                        field.onChange(parsed);
                       }
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="None (Optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {dareLLMModels.map(model => (
-                        <SelectItem key={model.id} value={String(model.id)}>
-                          {model.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                );
-              }}
-            />
-          )}
-        </div>
-      )}
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="None (Optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {dareLLMModels.map(model => (
+                      <SelectItem key={model.id} value={String(model.id)}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              );
+            }}
+          />
+        )}
+      </div>
 
       {/* Bot Status Toggle */}
       <div className="space-y-4 border-t pt-4">
