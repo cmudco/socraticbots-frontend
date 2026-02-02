@@ -7,6 +7,7 @@ import ToastContainer from './components/ui/ToastContainer';
 import About from './pages/About';
 import AccessCodes from './pages/AccessCodes';
 import BotAccess from './pages/BotAccess';
+import BotEditPage from './pages/BotEditPage';
 import BotGroups from './pages/BotGroups';
 import Chat from './pages/Chat';
 import Home from './pages/Home';
@@ -49,6 +50,8 @@ const App: React.FC = () => {
             <Route path="access-codes" element={<AccessCodes />} />
             <Route path="settings" element={<Settings />} />
             <Route path="bot-groups" element={<BotGroups />} />
+            <Route path="bot-groups/:botGroupId/bots/new" element={<BotEditPage />} />
+            <Route path="bot-groups/:botGroupId/bots/:botId/edit" element={<BotEditPage />} />
             <Route path="bot-access" element={<BotAccess />} />
             <Route path="bot-access/:botGroupId/:botId" element={<BotAccess />} />
             <Route path="chat" element={<Chat />} />
