@@ -15,13 +15,18 @@ import {
   Bot,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Files,
+  LayoutList,
   Loader2,
+  Mic,
   Paintbrush,
   Rocket,
   Save,
   Settings,
   Sparkles,
+  Workflow,
   Zap,
 } from 'lucide-react';
 
@@ -38,12 +43,17 @@ import BotFilesStep from '@/components/bots/steps/BotFilesStep';
 import BotPromptsStep from '@/components/bots/steps/BotPromptsStep';
 import BotQuickPromptsStep from '@/components/bots/steps/BotQuickPromptsStep';
 import BotThemeStep from '@/components/bots/steps/BotThemeStep';
+import BotVoiceAgentStep from '@/components/bots/steps/BotVoiceAgentStep';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Stepper, type StepperStep } from '@/components/ui/stepper';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+type ViewMode = 'accordion' | 'stepper';
 
 interface ConfigSection {
   id: string;
@@ -82,8 +92,15 @@ const BotEditPage: React.FC = () => {
   const createBotMutation = useCreateBot();
   const updateBotMutation = useUpdateBot();
 
+  // View mode state
+  const [viewMode, setViewMode] = useState<ViewMode>('accordion');
+
   // Accordion state - track open sections
   const [openSections, setOpenSections] = useState<string[]>(['basic']);
+
+  // Stepper state - track current step
+  const [currentStep, setCurrentStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   // Define all configuration sections
   const allSections: ConfigSection[] = useMemo(
@@ -133,6 +150,14 @@ const BotEditPage: React.FC = () => {
         creatorOnly: true,
         editOnly: true,
       },
+      {
+        id: 'voice-agent',
+        title: 'Voice Agent',
+        description: 'Voice exam configuration',
+        icon: <Mic className="h-5 w-5" />,
+        optional: true,
+        creatorOnly: true,
+      },
     ],
     []
   );
@@ -146,6 +171,17 @@ const BotEditPage: React.FC = () => {
     });
   }, [allSections, isCreator, isEdit]);
 
+  // Convert sections to stepper steps
+  const stepperSteps: StepperStep[] = useMemo(() => {
+    return sections.map(section => ({
+      id: section.id,
+      title: section.title,
+      description: section.description,
+      icon: section.icon,
+      optional: section.optional,
+    }));
+  }, [sections]);
+
   // Load bot data when editing
   useEffect(() => {
     if (isEdit && bot) {
@@ -154,11 +190,34 @@ const BotEditPage: React.FC = () => {
     }
   }, [isEdit, bot]);
 
-  // Toggle section open/closed
+  // Toggle section open/closed (accordion mode)
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev =>
       prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]
     );
+  };
+
+  // Navigate to next step (stepper mode)
+  const goToNextStep = () => {
+    if (currentStep < sections.length - 1) {
+      // Mark current step as completed
+      if (!completedSteps.includes(currentStep)) {
+        setCompletedSteps(prev => [...prev, currentStep]);
+      }
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+
+  // Navigate to previous step (stepper mode)
+  const goToPrevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  // Handle step click in stepper
+  const handleStepClick = (stepIndex: number) => {
+    setCurrentStep(stepIndex);
   };
 
   // Form submission
@@ -205,6 +264,8 @@ const BotEditPage: React.FC = () => {
         return <BotFilesStep botGroupId={numericBotGroupId} botId={numericBotId} />;
       case 'deployment':
         return <BotDeploymentStep botId={numericBotId} />;
+      case 'voice-agent':
+        return <BotVoiceAgentStep />;
       default:
         return null;
     }
@@ -223,128 +284,263 @@ const BotEditPage: React.FC = () => {
   }
 
   const isSubmitting = form.formState.isSubmitting;
+  const currentSection = sections[currentStep];
 
   return (
     <FormProvider {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="container mx-auto max-w-3xl px-4 py-6"
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto w-full max-w-[80%] px-4 py-6">
         {/* Header */}
-        <div className="mb-8 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/bot-groups')} type="button">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full">
-              <Bot className="text-primary h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">{isEdit ? 'Edit Bot' : 'Create New Bot'}</h1>
-              <p className="text-muted-foreground text-sm">
-                {isEdit ? 'Update your bot configuration' : 'Set up your new AI assistant'}
-              </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/bot-groups')}
+              type="button"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-full">
+                <Bot className="text-primary h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">{isEdit ? 'Edit Bot' : 'Create New Bot'}</h1>
+                <p className="text-muted-foreground text-sm">
+                  {isEdit ? 'Update your bot configuration' : 'Set up your new AI assistant'}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Configuration Sections */}
-        <div className="space-y-3">
-          {sections.map((section, index) => {
-            const isOpen = openSections.includes(section.id);
-
-            return (
-              <div
-                key={section.id}
-                className={cn(
-                  'bg-card border-border overflow-hidden rounded-xl border transition-all duration-200',
-                  isOpen && 'ring-primary/20 ring-2'
-                )}
-              >
-                {/* Section Header */}
-                <button
-                  type="button"
-                  onClick={() => toggleSection(section.id)}
-                  className={cn(
-                    'flex w-full items-center gap-4 p-4 text-left transition-colors',
-                    'hover:bg-muted/50',
-                    isOpen && 'border-border border-b'
-                  )}
-                >
-                  {/* Icon */}
-                  <div
+          {/* View Toggle */}
+          <TooltipProvider>
+            <div className="bg-muted flex items-center gap-1 rounded-lg p-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('accordion')}
                     className={cn(
-                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors',
-                      isOpen
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground'
+                      'flex h-9 w-9 items-center justify-center rounded-md transition-colors',
+                      viewMode === 'accordion'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
-                    {section.icon}
-                  </div>
+                    <LayoutList className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Accordion View</p>
+                </TooltipContent>
+              </Tooltip>
 
-                  {/* Title & Description */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{section.title}</span>
-                      {section.optional && (
-                        <Badge variant="secondary" className="text-xs">
-                          Optional
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-muted-foreground truncate text-sm">{section.description}</p>
-                  </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('stepper')}
+                    className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-md transition-colors',
+                      viewMode === 'stepper'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <Workflow className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Stepper View</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+        </div>
 
-                  {/* Step number & Chevron */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-muted-foreground text-sm font-medium">
-                      {index + 1}/{sections.length}
-                    </span>
-                    <ChevronDown
-                      className={cn(
-                        'text-muted-foreground h-5 w-5 transition-transform duration-200',
-                        isOpen && 'rotate-180'
-                      )}
-                    />
-                  </div>
-                </button>
+        {/* ============ ACCORDION VIEW ============ */}
+        {viewMode === 'accordion' && (
+          <div className="space-y-3">
+            {sections.map((section, index) => {
+              const isOpen = openSections.includes(section.id);
 
-                {/* Section Content */}
+              return (
                 <div
+                  key={section.id}
                   className={cn(
-                    'grid transition-all duration-200 ease-in-out',
-                    isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    'bg-card border-border overflow-hidden rounded-xl border transition-all duration-200',
+                    isOpen && 'ring-primary/20 ring-2'
                   )}
                 >
-                  <div className="overflow-hidden">
-                    <div className="p-6">{renderSectionContent(section.id)}</div>
+                  {/* Section Header */}
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(section.id)}
+                    className={cn(
+                      'flex w-full items-center gap-4 p-4 text-left transition-colors',
+                      'hover:bg-muted/50',
+                      isOpen && 'border-border border-b'
+                    )}
+                  >
+                    {/* Icon */}
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors',
+                        isOpen
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {section.icon}
+                    </div>
+
+                    {/* Title & Description */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{section.title}</span>
+                        {section.optional && (
+                          <Badge variant="secondary" className="text-xs">
+                            Optional
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground truncate text-sm">
+                        {section.description}
+                      </p>
+                    </div>
+
+                    {/* Step number & Chevron */}
+                    <div className="flex items-center gap-3">
+                      <span className="text-muted-foreground text-sm font-medium">
+                        {index + 1}/{sections.length}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          'text-muted-foreground h-5 w-5 transition-transform duration-200',
+                          isOpen && 'rotate-180'
+                        )}
+                      />
+                    </div>
+                  </button>
+
+                  {/* Section Content */}
+                  <div
+                    className={cn(
+                      'grid transition-all duration-200 ease-in-out',
+                      isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    )}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="p-6">{renderSectionContent(section.id)}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
-        {/* Footer */}
-        <div className="mt-8 flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={() => navigate('/bot-groups')}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting} size="lg">
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                {isEdit ? <Save className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-                {isEdit ? 'Save Changes' : 'Create Bot'}
-              </span>
-            )}
-          </Button>
-        </div>
+        {/* ============ STEPPER VIEW ============ */}
+        {viewMode === 'stepper' && (
+          <div className="space-y-6">
+            {/* Horizontal Stepper */}
+            <div className="bg-card border-border rounded-xl border p-6">
+              <Stepper
+                steps={stepperSteps}
+                currentStep={currentStep}
+                completedSteps={completedSteps}
+                onStepClick={handleStepClick}
+                orientation="horizontal"
+                allowClickAhead
+              />
+            </div>
+
+            {/* Current Step Content */}
+            <div className="bg-card border-border rounded-xl border">
+              {/* Step Header */}
+              <div className="border-border flex items-center gap-4 border-b p-6">
+                <div className="bg-primary text-primary-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
+                  {currentSection?.icon}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold">{currentSection?.title}</h2>
+                    {currentSection?.optional && (
+                      <Badge variant="secondary" className="text-xs">
+                        Optional
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-muted-foreground text-sm">{currentSection?.description}</p>
+                </div>
+              </div>
+
+              {/* Step Content */}
+              <div className="p-6">{currentSection && renderSectionContent(currentSection.id)}</div>
+
+              {/* Step Navigation */}
+              <div className="border-border flex items-center justify-between border-t px-6 py-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={goToPrevStep}
+                  disabled={currentStep === 0}
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Previous
+                </Button>
+
+                <span className="text-muted-foreground text-sm">
+                  Step {currentStep + 1} of {sections.length}
+                </span>
+
+                {currentStep < sections.length - 1 ? (
+                  <Button type="button" onClick={goToNextStep}>
+                    Next
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        {isEdit ? <Save className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                        {isEdit ? 'Save Changes' : 'Create Bot'}
+                      </span>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer (Accordion mode only) */}
+        {viewMode === 'accordion' && (
+          <div className="mt-8 flex justify-end gap-3">
+            <Button type="button" variant="outline" onClick={() => navigate('/bot-groups')}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting} size="lg">
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  {isEdit ? <Save className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                  {isEdit ? 'Save Changes' : 'Create Bot'}
+                </span>
+              )}
+            </Button>
+          </div>
+        )}
       </form>
     </FormProvider>
   );
