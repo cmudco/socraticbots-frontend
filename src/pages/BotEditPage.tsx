@@ -20,7 +20,6 @@ import {
   Files,
   LayoutList,
   Loader2,
-  Mic,
   Paintbrush,
   Rocket,
   Save,
@@ -43,7 +42,6 @@ import BotFilesStep from '@/components/bots/steps/BotFilesStep';
 import BotPromptsStep from '@/components/bots/steps/BotPromptsStep';
 import BotQuickPromptsStep from '@/components/bots/steps/BotQuickPromptsStep';
 import BotThemeStep from '@/components/bots/steps/BotThemeStep';
-import BotVoiceAgentStep from '@/components/bots/steps/BotVoiceAgentStep';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Stepper, type StepperStep } from '@/components/ui/stepper';
@@ -149,14 +147,6 @@ const BotEditPage: React.FC = () => {
         optional: true,
         creatorOnly: true,
         editOnly: true,
-      },
-      {
-        id: 'voice-agent',
-        title: 'Voice Agent',
-        description: 'Voice exam configuration',
-        icon: <Mic className="h-5 w-5" />,
-        optional: true,
-        creatorOnly: true,
       },
     ],
     []
@@ -264,8 +254,6 @@ const BotEditPage: React.FC = () => {
         return <BotFilesStep botGroupId={numericBotGroupId} botId={numericBotId} />;
       case 'deployment':
         return <BotDeploymentStep botId={numericBotId} />;
-      case 'voice-agent':
-        return <BotVoiceAgentStep />;
       default:
         return null;
     }
