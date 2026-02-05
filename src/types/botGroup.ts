@@ -5,7 +5,7 @@ export interface User {
   id: number;
   email: string;
   name?: string;
-  isProfessor: boolean;
+  isCreator: boolean;
 }
 
 export interface BotGroupAccessCode {

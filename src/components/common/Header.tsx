@@ -55,12 +55,12 @@ const Header: React.FC = () => {
                       <Badge
                         variant="secondary"
                         className={`text-xs ${
-                          user.isProfessor
+                          user.isCreator
                             ? 'border-primary/20 bg-primary/10 text-primary'
                             : 'border-secondary/20 bg-secondary/10 text-secondary-foreground'
                         }`}
                       >
-                        {user.isProfessor ? (
+                        {user.isCreator ? (
                           <>
                             <GraduationCap className="mr-1 h-3 w-3" />
                             Creator

@@ -2,11 +2,14 @@ import { METHOD } from '@/constants/requests';
 
 import { baseRequest } from '@/utils/baseRequest';
 
+import type { PlatformRole } from '@/types/auth';
+
 export interface User {
   id: number;
   email: string;
   name: string;
-  isProfessor: boolean;
+  isCreator: boolean;
+  platformRole?: PlatformRole;
   externalUserId: number;
   isActive: boolean;
   dateJoined: string;

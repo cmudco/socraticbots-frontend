@@ -226,8 +226,8 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Getting Started Section - Only show to professors */}
-      {user?.isProfessor && (
+      {/* Getting Started Section - Only show to creators */}
+      {user?.isCreator && (
         <Card className="border-primary/20 from-primary/5 to-primary/10 bg-gradient-to-r">
           <CardContent className="p-8 text-center">
             <div className="mx-auto max-w-3xl space-y-6">

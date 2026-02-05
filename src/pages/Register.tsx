@@ -261,8 +261,8 @@ const Register: React.FC = () => {
                       access chapter content.
                     </p>
                     <p className="text-primary-foreground mt-1 text-sm">
-                      <strong>Instructors:</strong> If you need to create an account as an
-                      instructor, please contact support.
+                      <strong>Educators:</strong> If you need to create an account as a course
+                      creator, please contact support.
                     </p>
                   </div>
 

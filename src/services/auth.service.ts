@@ -12,6 +12,10 @@ export interface RegistrationRequest {
   access_code: string;
 }
 
+/**
+ * @deprecated Professor registration is now managed via DARE admin.
+ * This endpoint returns 410 GONE on the backend.
+ */
 export interface ProfessorRegistrationRequest {
   name: string;
   email: string;
@@ -82,6 +86,10 @@ class AuthService {
     });
   }
 
+  /**
+   * @deprecated Professor/Creator registration is now managed via DARE admin.
+   * This endpoint returns 410 GONE on the backend.
+   */
   async registerProfessor(
     registrationData: ProfessorRegistrationRequest
   ): Promise<RegistrationResponse> {

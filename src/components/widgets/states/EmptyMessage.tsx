@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { useIsProfessor } from '@/hooks/queries/useUser';
+import { useIsCreator } from '@/hooks/queries/useUser';
 
 interface EmptyMessageProps {
-  professorMessage: string;
+  creatorMessage: string;
   studentMessage: string;
   className?: string;
 }
@@ -12,13 +12,13 @@ interface EmptyMessageProps {
  * Simple empty state message that changes based on user role
  */
 const EmptyMessage: React.FC<EmptyMessageProps> = ({
-  professorMessage,
+  creatorMessage,
   studentMessage,
   className = 'py-4 text-center text-muted-foreground',
 }) => {
-  const isProfessor = useIsProfessor();
+  const isCreator = useIsCreator();
 
-  return <p className={className}>{isProfessor ? professorMessage : studentMessage}</p>;
+  return <p className={className}>{isCreator ? creatorMessage : studentMessage}</p>;
 };
 
 export default EmptyMessage;
