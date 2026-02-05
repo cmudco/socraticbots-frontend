@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { Copy, Edit, MessageSquare, Trash } from 'lucide-react';
 
-import { useIsProfessor } from '@/hooks/queries/useUser';
+import { useIsCreator } from '@/hooks/queries/useUser';
 
 import { Button } from '@/components/ui/button';
 
@@ -23,7 +23,7 @@ interface ItemActionsProps {
 
 /**
  * Standard action buttons that appear on list items
- * Shows Edit/Delete for professors, View for students
+ * Shows Edit/Delete for creators, View for students
  */
 const ItemActions: React.FC<ItemActionsProps> = ({
   onEdit,
@@ -36,11 +36,11 @@ const ItemActions: React.FC<ItemActionsProps> = ({
   chatTitle = 'Open chat',
   canManage = true,
 }) => {
-  const isProfessor = useIsProfessor();
+  const isCreator = useIsCreator();
 
   const buttonClass = 'h-auto px-2 py-1 text-xs text-muted-foreground';
 
-  if (isProfessor && canManage) {
+  if (isCreator && canManage) {
     return (
       <>
         {onEdit && (

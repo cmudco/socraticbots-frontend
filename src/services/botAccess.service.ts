@@ -15,7 +15,7 @@ export interface BotAccessUser {
     | 'bot_creator';
   accessCode: string;
   accessGrantedAt: string;
-  isProfessor: boolean;
+  isCreator: boolean;
 }
 
 export interface BotAccessUsersResponse {

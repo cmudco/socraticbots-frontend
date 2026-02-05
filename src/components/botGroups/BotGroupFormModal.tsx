@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import { Info, Users } from 'lucide-react';
 
-import { useIsProfessor } from '@/hooks/queries/useUser';
+import { useIsCreator } from '@/hooks/queries/useUser';
 
 import { useBotGroupFormStore } from '@/stores/forms/botGroupFormStore';
 
@@ -34,7 +34,7 @@ const BotGroupFormModal: React.FC<BotGroupFormModalProps> = ({
   botGroup,
   viewOnly = false,
 }) => {
-  const isProfessor = useIsProfessor();
+  const isCreator = useIsCreator();
   const { activeTab, setActiveTab, initEditBotGroup, initNewBotGroup, closeForm } =
     useBotGroupFormStore();
 
@@ -57,7 +57,7 @@ const BotGroupFormModal: React.FC<BotGroupFormModalProps> = ({
 
   const tabs = [
     { id: 'basic', label: 'Basic Info' },
-    ...(isEditMode && isProfessor ? [{ id: 'deployment', label: 'Deployment' }] : []),
+    ...(isEditMode && isCreator ? [{ id: 'deployment', label: 'Deployment' }] : []),
   ];
 
   const renderTabContent = () => {
@@ -98,7 +98,7 @@ const BotGroupFormModal: React.FC<BotGroupFormModalProps> = ({
           </div>
         </DialogHeader>
 
-        {!isEditMode && isProfessor && (
+        {!isEditMode && isCreator && (
           <div className="border-primary/20 bg-primary/5 mx-6 mt-4 rounded-lg border p-4">
             <div className="flex items-start gap-3">
               <Info size={20} className="text-primary mt-0.5 flex-shrink-0" />

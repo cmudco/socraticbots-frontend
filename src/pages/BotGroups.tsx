@@ -58,8 +58,8 @@ const BotGroups: React.FC = () => {
     if (botGroups.length === 0) {
       return (
         <EmptyStateCard
-          professorTitle="No Chatbot Groups"
-          professorMessage="Create your first chatbot group to get started."
+          creatorTitle="No Chatbot Groups"
+          creatorMessage="Create your first chatbot group to get started."
           studentTitle="No Chatbot Groups Available"
           studentMessage="You don't have access to any chatbot groups yet. Please contact your instructor for an access code."
           actionText="Create New Chatbot Group"

@@ -286,12 +286,12 @@ const BotAccess: React.FC = () => {
                                 ? `${user.firstName} ${user.lastName}`
                                 : user.email}
                             </p>
-                            {user.isProfessor && (
+                            {user.isCreator && (
                               <Badge
                                 variant="secondary"
                                 className="border-purple-200 bg-purple-100 text-purple-800 dark:border-purple-800 dark:bg-purple-900/50 dark:text-purple-200"
                               >
-                                Professor
+                                Creator
                               </Badge>
                             )}
                           </div>

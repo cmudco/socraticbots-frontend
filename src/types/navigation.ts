@@ -4,7 +4,7 @@ interface NavigationItem {
   path: string;
   label: string;
   icon: LucideIcon;
-  roles?: ('student' | 'professor')[];
+  roles?: ('student' | 'creator')[];
 }
 
 export const NAVIGATION_ITEMS: NavigationItem[] = [
@@ -32,7 +32,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     path: '/bot-access',
     label: 'Bot Access',
     icon: Users,
-    roles: ['professor'],
+    roles: ['creator'],
   },
   {
     path: '/chat',
@@ -46,8 +46,8 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   },
 ];
 
-export const getNavigationItemsForRole = (isProfessor: boolean): NavigationItem[] => {
-  const userRole = isProfessor ? 'professor' : 'student';
+export const getNavigationItemsForRole = (isCreator: boolean): NavigationItem[] => {
+  const userRole = isCreator ? 'creator' : 'student';
 
   return NAVIGATION_ITEMS.filter(item => !item.roles || item.roles.includes(userRole));
 };
