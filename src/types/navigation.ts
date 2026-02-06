@@ -1,4 +1,4 @@
-import { Bot, Home, Key, type LucideIcon, MessageCircle, Settings, Users } from 'lucide-react';
+import { Bot, Home, Key, type LucideIcon, MessageCircle, Mic, Settings, Users } from 'lucide-react';
 
 interface NavigationItem {
   path: string;
@@ -38,6 +38,11 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     path: '/chat',
     label: 'Chat',
     icon: MessageCircle,
+  },
+  {
+    path: '/voice-exams',
+    label: 'Voice Exams',
+    icon: Mic,
   },
   {
     path: '/settings',
