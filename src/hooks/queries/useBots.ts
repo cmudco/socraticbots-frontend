@@ -52,7 +52,7 @@ export const useBot = (
     queryKey: botKeys.detail(botGroupId, botId),
     queryFn: () => botService.getBot(botGroupId, botId),
     enabled: enabled && !!botGroupId && !!botId && isAuthenticated,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Always fetch fresh data for individual bot
     gcTime: 10 * 60 * 1000,
     refetchInterval,
   });
