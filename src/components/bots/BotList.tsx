@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useBots, useCloneBot } from '@/hooks/queries/useBots';
 
@@ -27,6 +28,7 @@ const BotList: React.FC<BotListProps> = ({
   onBotDeleted,
   canAddBot = true,
 }) => {
+  const navigate = useNavigate();
   const { data: bots = initialBots || [], isLoading: loading, error } = useBots(botGroupId);
   const cloneBotMutation = useCloneBot();
 
@@ -41,12 +43,14 @@ const BotList: React.FC<BotListProps> = ({
 
   const { deletedBotIds, addDeletedBot } = useUiStore();
 
-  const handleOpenCreateModal = () => {
-    openBotFormModal(botGroupId); // No bot = create mode
+  // Navigate to new bot creation page
+  const handleCreateBot = () => {
+    navigate(`/bot-groups/${botGroupId}/bots/new`);
   };
 
-  const handleOpenEditModal = (bot: Bot) => {
-    openBotFormModal(botGroupId, bot);
+  // Navigate to bot edit page
+  const handleEditBot = (bot: Bot) => {
+    navigate(`/bot-groups/${botGroupId}/bots/${bot.id}/edit`);
   };
 
   const handleOpenViewModal = (bot: Bot) => {
@@ -73,7 +77,7 @@ const BotList: React.FC<BotListProps> = ({
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-md text-foreground font-semibold">Bots</h3>
         {canAddBot && (
-          <CreateButton onClick={handleOpenCreateModal} size="sm" variant="outline">
+          <CreateButton onClick={handleCreateBot} size="sm" variant="outline">
             Add Bot
           </CreateButton>
         )}
@@ -94,7 +98,7 @@ const BotList: React.FC<BotListProps> = ({
             <BotItem
               key={bot.id}
               bot={bot}
-              onEdit={() => handleOpenEditModal(bot)}
+              onEdit={() => handleEditBot(bot)}
               onDelete={() => handleDeleteBot(bot)}
               onView={() => handleOpenViewModal(bot)}
               onClone={() => handleCloneBot(bot)}
