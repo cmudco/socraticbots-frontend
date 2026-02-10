@@ -61,7 +61,7 @@ const BotGroups: React.FC = () => {
           creatorTitle="No Chatbot Groups"
           creatorMessage="Create your first chatbot group to get started."
           studentTitle="No Chatbot Groups Available"
-          studentMessage="You don't have access to any chatbot groups yet. Please contact your instructor for an access code."
+          studentMessage="You don't have access to any chatbot groups yet. Please contact your instructor for a subscription code."
           actionText="Create New Chatbot Group"
           onAction={handleOpenCreateModal}
         />

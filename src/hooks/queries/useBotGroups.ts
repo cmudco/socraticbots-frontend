@@ -197,7 +197,7 @@ export const useRemoveCollaborator = () => {
 };
 
 /**
- * Update bot group access code
+ * Update bot group subscription code
  */
 export const useUpdateBotGroupAccessCode = () => {
   const queryClient = useQueryClient();
