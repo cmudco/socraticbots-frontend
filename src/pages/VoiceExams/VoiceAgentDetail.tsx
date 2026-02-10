@@ -212,7 +212,7 @@ const VoiceAgentDetail: React.FC = () => {
         >
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
-              <MessageSquare className="h-5 w-5 text-blue-500" />
+              <MessageSquare className="text-primary h-5 w-5" />
               <div>
                 <p className="text-muted-foreground text-sm">Conversations</p>
                 <p className="text-foreground text-xl font-semibold">{agent.conversationCount}</p>
