@@ -12,7 +12,7 @@ export const registrationKeys = {
 };
 
 /**
- * Hook to register a new student user with access code
+ * Hook to register a new student user with subscription code
  */
 export const useRegister = () => {
   return useMutation<RegistrationResponse, Error, RegistrationRequest>({

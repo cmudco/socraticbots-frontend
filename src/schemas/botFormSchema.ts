@@ -48,7 +48,7 @@ export const themeSchema = z.object({
   messageSpacing: z.enum(['compact', 'normal', 'relaxed']),
 });
 
-/** Step 5: Deployment (access codes and public settings) */
+/** Step 5: Deployment (subscription codes and public settings) */
 export const deploymentSchema = z.object({
   accessCode: z.string(),
   accessCodeLimit: z.number(),

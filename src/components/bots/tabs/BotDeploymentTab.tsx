@@ -71,7 +71,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
-      console.error('Failed to copy access code:', err);
+      console.error('Failed to copy subscription code:', err);
     }
   };
 
@@ -248,21 +248,23 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
         </CardContent>
       </Card>
 
-      {/* Access Code Section */}
+      {/* Subscription Code Section */}
       <Card>
         <CardHeader>
-          <CardTitle>{accessCode ? 'Bot Access Code' : 'Generate Access Code'}</CardTitle>
+          <CardTitle>
+            {accessCode ? 'Bot Subscription Code' : 'Generate Subscription Code'}
+          </CardTitle>
           <CardDescription>
             {accessCode
               ? 'Students can use this code to access this specific bot.'
-              : 'Generate an access code for students to access this bot.'}
+              : 'Generate a subscription code for students to access this bot.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {!accessCode && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="custom-code">Custom Access Code (Optional)</Label>
+                <Label htmlFor="custom-code">Custom Subscription Code (Optional)</Label>
                 <Input
                   id="custom-code"
                   value={customCode}
@@ -295,14 +297,14 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
           {accessCode && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="access-code">Access Code</Label>
+                <Label htmlFor="access-code">Subscription Code</Label>
                 <div className="flex space-x-2">
                   <Input
                     id="access-code"
                     value={accessCode}
                     onChange={handleAccessCodeChange}
                     className="font-mono"
-                    placeholder="Enter custom access code"
+                    placeholder="Enter custom subscription code"
                   />
                   <Button size="sm" variant="outline" onClick={handleCopyCode} className="shrink-0">
                     {copySuccess ? (
@@ -319,8 +321,8 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
                   </Button>
                 </div>
                 <p className="text-muted-foreground text-sm">
-                  You can customize this access code to make it memorable for your students. Click
-                  "Update Bot" to save changes.
+                  You can customize this subscription code to make it memorable for your students.
+                  Click "Update Bot" to save changes.
                 </p>
               </div>
 
@@ -365,7 +367,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Access code copied to clipboard! Share this with your students.
+                    Subscription code copied to clipboard! Share this with your students.
                   </AlertDescription>
                 </Alert>
               )}
@@ -381,7 +383,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
         <CardContent>
           <div className="text-muted-foreground space-y-2 text-sm">
             <p>1. Students should log into the Socratic Books platform</p>
-            <p>2. They can enter the access code to gain access to this bot</p>
+            <p>2. They can enter the subscription code to gain access to this bot</p>
             <p>3. Once redeemed, they can start chatting with the bot immediately</p>
           </div>
         </CardContent>

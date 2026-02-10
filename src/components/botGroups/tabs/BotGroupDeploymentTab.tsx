@@ -52,7 +52,7 @@ const BotGroupDeploymentTab: React.FC<BotGroupDeploymentTabProps> = ({ botGroupI
         },
       });
     } catch (error) {
-      console.error('Failed to save access code:', error);
+      console.error('Failed to save subscription code:', error);
     }
   };
 
@@ -68,7 +68,7 @@ const BotGroupDeploymentTab: React.FC<BotGroupDeploymentTabProps> = ({ botGroupI
       updateAccessCode('');
       updateAccessCodeLimit(0);
     } catch (error) {
-      console.error('Failed to delete access code:', error);
+      console.error('Failed to delete subscription code:', error);
     }
   };
 
@@ -95,18 +95,20 @@ const BotGroupDeploymentTab: React.FC<BotGroupDeploymentTabProps> = ({ botGroupI
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{accessCode ? 'Bot Group Access Code' : 'Generate Access Code'}</CardTitle>
+          <CardTitle>
+            {accessCode ? 'Bot Group Subscription Code' : 'Generate Subscription Code'}
+          </CardTitle>
           <CardDescription>
             {accessCode
               ? 'Students can use this code to access ALL bots in this bot group.'
-              : 'Generate an access code for students to access all bots in this group.'}
+              : 'Generate a subscription code for students to access all bots in this group.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {!accessCode && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="custom-code">Custom Access Code (Optional)</Label>
+                <Label htmlFor="custom-code">Custom Subscription Code (Optional)</Label>
                 <Input
                   id="custom-code"
                   value={customCode}
@@ -131,7 +133,7 @@ const BotGroupDeploymentTab: React.FC<BotGroupDeploymentTabProps> = ({ botGroupI
           {accessCode && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="access-code">Access Code</Label>
+                <Label htmlFor="access-code">Subscription Code</Label>
                 <div className="flex gap-2">
                   <Input
                     id="access-code"
@@ -208,7 +210,7 @@ const BotGroupDeploymentTab: React.FC<BotGroupDeploymentTabProps> = ({ botGroupI
         <CardContent>
           <div className="text-muted-foreground space-y-2 text-sm">
             <p>1. Students log into Socratic Books</p>
-            <p>2. Enter the access code to unlock ALL bots in this group</p>
+            <p>2. Enter the subscription code to unlock ALL bots in this group</p>
             <p>3. Start chatting with any bot immediately</p>
             <p className="mt-4 font-semibold">
               Note: One code gives access to all current and future bots in this group.
