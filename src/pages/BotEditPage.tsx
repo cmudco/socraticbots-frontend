@@ -142,7 +142,7 @@ const BotEditPage: React.FC = () => {
       {
         id: 'deployment',
         title: 'Deployment',
-        description: 'Access codes and public settings',
+        description: 'Subscription codes and public settings',
         icon: <Rocket className="h-5 w-5" />,
         optional: true,
         creatorOnly: true,

@@ -25,7 +25,7 @@ const registrationSchema = Yup.object({
   confirm_password: Yup.string()
     .required('Confirm password is required')
     .oneOf([Yup.ref('password')], 'Passwords must match'),
-  access_code: Yup.string().required('Access code is required'),
+  access_code: Yup.string().required('Subscription code is required'),
 });
 
 interface FormValues {
@@ -144,7 +144,7 @@ const Register: React.FC = () => {
         <CardHeader>
           <CardTitle>Create Account</CardTitle>
           <CardDescription>
-            Join Socratic Bots as a student using your instructor's access code
+            Join Socratic Bots as a student using your instructor's subscription code
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -243,7 +243,7 @@ const Register: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="access_code">
-                    Access Code
+                    Subscription Code
                     <span className="text-muted-foreground text-sm font-normal"> (Required)</span>
                   </Label>
                   <Field
@@ -251,14 +251,14 @@ const Register: React.FC = () => {
                     id="access_code"
                     name="access_code"
                     type="text"
-                    placeholder="Enter access code"
+                    placeholder="Enter subscription code"
                     disabled={isSubmitting}
                   />
 
                   <div className="bg-primary/60 rounded-md p-3">
                     <p className="text-primary-foreground text-sm">
-                      Enter the access code provided by your instructor to join their course and
-                      access chapter content.
+                      Enter the subscription code provided by your instructor to join their course
+                      and access chapter content.
                     </p>
                     <p className="text-primary-foreground mt-1 text-sm">
                       <strong>Educators:</strong> If you need to create an account as a course
