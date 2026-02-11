@@ -133,11 +133,9 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
   return (
     <div className="mx-auto w-full max-w-3xl">
       {/* Header */}
-      <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+      <div className="border-border bg-card mb-6 rounded-lg border p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {agent.examTitle || agent.name}
-          </h2>
+          <h2 className="text-foreground text-xl font-semibold">{agent.examTitle || agent.name}</h2>
           <div className="flex items-center gap-2">
             <span
               className={`h-3 w-3 rounded-full ${
@@ -145,20 +143,18 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
                   ? 'bg-green-500 shadow-[0_0_8px_#22c55e]'
                   : isConnecting
                     ? 'animate-pulse bg-yellow-500'
-                    : 'bg-gray-300 dark:bg-gray-600'
+                    : 'bg-muted'
               }`}
             />
-            <span className="text-sm text-gray-500 dark:text-gray-400">{conversation.status}</span>
+            <span className="text-muted-foreground text-sm">{conversation.status}</span>
           </div>
         </div>
 
         {/* Instructions */}
         {agent.examInstructions && !isSessionActive && (
-          <div className="mb-4 rounded-lg bg-gray-100 p-4 dark:bg-gray-700">
-            <h4 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Instructions
-            </h4>
-            <p className="text-sm whitespace-pre-wrap text-gray-600 dark:text-gray-400">
+          <div className="bg-muted mb-4 rounded-lg p-4">
+            <h4 className="text-foreground/80 mb-2 text-sm font-medium">Instructions</h4>
+            <p className="text-muted-foreground text-sm whitespace-pre-wrap">
               {agent.examInstructions}
             </p>
           </div>
@@ -173,12 +169,12 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
 
         {/* Speaking Indicator */}
         {isSessionActive && (
-          <div className="mb-4 flex items-center gap-4 rounded-lg bg-gray-100 p-4 dark:bg-gray-700">
+          <div className="bg-muted mb-4 flex items-center gap-4 rounded-lg p-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Agent Speaking:</span>
+              <span className="text-muted-foreground text-sm">Agent Speaking:</span>
               <span
                 className={`font-medium ${
-                  conversation.isSpeaking ? 'text-green-500' : 'text-gray-400'
+                  conversation.isSpeaking ? 'text-green-500' : 'text-muted-foreground'
                 }`}
               >
                 {conversation.isSpeaking ? 'Yes' : 'No'}
@@ -194,8 +190,8 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
             disabled={isSessionActive || isConnecting || isLoading}
             className={`flex-1 rounded-lg px-6 py-3 font-semibold transition-all ${
               isSessionActive || isConnecting || isLoading
-                ? 'cursor-not-allowed bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
-                : 'cursor-pointer bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
             }`}
           >
             {isLoading || isConnecting ? 'Connecting...' : 'Start Exam'}
@@ -205,7 +201,7 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
             disabled={!isSessionActive}
             className={`flex-1 rounded-lg px-6 py-3 font-semibold transition-all ${
               !isSessionActive
-                ? 'cursor-not-allowed bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
                 : 'cursor-pointer bg-red-600 text-white hover:bg-red-700'
             }`}
           >
@@ -215,13 +211,13 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
       </div>
 
       {/* Live Transcript */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Live Transcript</h4>
+      <div className="border-border overflow-hidden rounded-lg border">
+        <div className="border-border bg-muted border-b px-4 py-3">
+          <h4 className="text-foreground/80 text-sm font-medium">Live Transcript</h4>
         </div>
-        <div className="h-[400px] space-y-3 overflow-y-auto bg-white p-4 dark:bg-gray-900">
+        <div className="bg-background h-[400px] space-y-3 overflow-y-auto p-4">
           {messages.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">
+            <p className="text-muted-foreground text-sm italic">
               Click "Start Exam" to begin. The transcript will appear here.
             </p>
           ) : (
@@ -243,7 +239,7 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
                 >
                   {msg.role === 'user' ? 'You' : 'Examiner'}
                 </div>
-                <div className="text-sm text-gray-800 dark:text-gray-200">{msg.content}</div>
+                <div className="text-foreground text-sm">{msg.content}</div>
               </div>
             ))
           )}

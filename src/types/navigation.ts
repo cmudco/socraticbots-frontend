@@ -20,7 +20,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   // },
   {
     path: '/access-codes',
-    label: 'Access Codes',
+    label: 'Subscription Codes',
     icon: Key,
   },
   {

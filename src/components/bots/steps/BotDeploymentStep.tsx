@@ -52,7 +52,7 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
-      console.error('Failed to copy access code:', err);
+      console.error('Failed to copy subscription code:', err);
     }
   };
 
@@ -62,24 +62,24 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
 
   return (
     <div className="space-y-6">
-      {/* Access Code Section */}
+      {/* Subscription Code Section */}
       <div className="space-y-4 rounded-lg border p-4">
         <div>
           <Label className="text-base font-medium">
-            {accessCode ? 'Bot Access Code' : 'Generate Access Code'}
+            {accessCode ? 'Bot Subscription Code' : 'Generate Subscription Code'}
           </Label>
           <p className="text-muted-foreground text-xs">
             {accessCode
               ? 'Students can use this code to access this bot.'
-              : 'Generate an access code for students to access this bot.'}
+              : 'Generate a subscription code for students to access this bot.'}
           </p>
         </div>
 
         {!accessCode ? (
-          /* No access code - show generation UI */
+          /* No subscription code - show generation UI */
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="customCode">Custom Access Code (Optional)</Label>
+              <Label htmlFor="customCode">Custom Subscription Code (Optional)</Label>
               <Input
                 id="customCode"
                 value={customCode}
@@ -111,16 +111,16 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
             </div>
           </div>
         ) : (
-          /* Has access code - show management UI */
+          /* Has subscription code - show management UI */
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="accessCode">Access Code</Label>
+              <Label htmlFor="accessCode">Subscription Code</Label>
               <div className="flex gap-2">
                 <Input
                   id="accessCode"
                   {...register('accessCode')}
                   className="font-mono"
-                  placeholder="Access code"
+                  placeholder="Subscription code"
                 />
                 <Button
                   type="button"
@@ -143,7 +143,7 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
                 </Button>
               </div>
               <p className="text-muted-foreground text-xs">
-                You can customize this access code. Click "Save Changes" to apply.
+                You can customize this subscription code. Click "Save Changes" to apply.
               </p>
             </div>
 
@@ -247,7 +247,7 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
         <Label className="text-base font-medium">How Students Access This Bot</Label>
         <div className="text-muted-foreground mt-2 space-y-1 text-sm">
           <p>1. Students log into the Socratic Books platform</p>
-          <p>2. They enter the access code to gain access</p>
+          <p>2. They enter the subscription code to gain access</p>
           <p>3. Once redeemed, they can start chatting immediately</p>
         </div>
       </div>

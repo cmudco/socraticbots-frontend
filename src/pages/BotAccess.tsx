@@ -362,7 +362,7 @@ const BotAccess: React.FC = () => {
                 <Users className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
                 <h3 className="mb-2 text-lg font-medium">No users have access yet</h3>
                 <p className="text-muted-foreground">
-                  Users will appear here once they redeem an access code for this bot.
+                  Users will appear here once they redeem a subscription code for this bot.
                 </p>
               </div>
             )}
@@ -378,12 +378,12 @@ const BotAccess: React.FC = () => {
                 <h3 className="text-primary text-sm font-medium">Access Management Information</h3>
                 <div className="text-muted-foreground mt-2 space-y-1 text-sm">
                   <p>
-                    • <strong>Direct Bot Access:</strong> Users who redeemed a specific access code
-                    for this bot
+                    • <strong>Direct Bot Access:</strong> Users who redeemed a specific subscription
+                    code for this bot
                   </p>
                   <p>
-                    • <strong>Bot Group Access:</strong> Users who redeemed an access code for the
-                    entire bot group
+                    • <strong>Bot Group Access:</strong> Users who redeemed a subscription code for
+                    the entire bot group
                   </p>
                   <p>
                     • <strong>Bot Group Owner:</strong> The creator of the bot group (has access to

@@ -112,7 +112,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     }
   }, [isOpen, bot, initEditBot, initNewBot]);
 
-  // On modal open (edit), refetch first then sync access code values once
+  // On modal open (edit), refetch first then sync subscription code values once
   useEffect(() => {
     if (!isOpen || !isEdit || hasSyncedAccessRef.current) return;
 
@@ -190,7 +190,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         title,
         subject,
         topic,
-        // Access code
+        // Subscription code
         ...(accessCode !== undefined && { accessCode }),
         accessCodeLimit,
         // Model preferences
