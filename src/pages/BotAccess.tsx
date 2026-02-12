@@ -10,6 +10,7 @@ import {
   Clock,
   Key,
   Loader2,
+  MessagesSquare,
   UserX,
   Users,
 } from 'lucide-react';
@@ -19,6 +20,9 @@ import { botGroupService } from '@/services/botGroups.service';
 import { botService } from '@/services/bots.service';
 
 import RemoveAccessModal from '@/components/bots/RemoveAccessModal';
+import UserConversationsSlideOver, {
+  UserAccessInfo,
+} from '@/components/bots/UserConversationsSlideOver';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,6 +53,15 @@ const BotAccess: React.FC = () => {
     userEmail: '',
     userName: '',
     accessType: '',
+  });
+
+  // Slide-over state for viewing user conversations
+  const [conversationsSlideOver, setConversationsSlideOver] = useState<{
+    isOpen: boolean;
+    user: UserAccessInfo | null;
+  }>({
+    isOpen: false,
+    user: null,
   });
 
   useEffect(() => {
@@ -143,6 +156,20 @@ const BotAccess: React.FC = () => {
       userEmail: '',
       userName: '',
       accessType: '',
+    });
+  };
+
+  const handleViewConversations = (user: UserAccessInfo) => {
+    setConversationsSlideOver({
+      isOpen: true,
+      user,
+    });
+  };
+
+  const closeConversationsSlideOver = () => {
+    setConversationsSlideOver({
+      isOpen: false,
+      user: null,
     });
   };
 
@@ -310,7 +337,7 @@ const BotAccess: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="mt-1">
+                          <div className="mt-1 flex items-center gap-2">
                             <Badge
                               variant="outline"
                               className="bg-muted/50 border-muted-foreground/20 text-xs"
@@ -321,7 +348,27 @@ const BotAccess: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleViewConversations({
+                              userId: user.userId,
+                              email: user.email,
+                              firstName: user.firstName,
+                              lastName: user.lastName,
+                              accessType: user.accessType,
+                              accessCode: user.accessCode,
+                              accessGrantedAt: user.accessGrantedAt,
+                              isCreator: user.isCreator,
+                            })
+                          }
+                          className="text-xs"
+                        >
+                          <MessagesSquare className="mr-1.5 h-3.5 w-3.5" />
+                          Conversation
+                        </Button>
                         {user.accessType === 'bot_group_owner' ||
                         user.accessType === 'bot_creator' ? (
                           <Badge
@@ -411,6 +458,15 @@ const BotAccess: React.FC = () => {
           userEmail={removeAccessModal.userEmail}
           userName={removeAccessModal.userName}
           accessType={removeAccessModal.accessType}
+        />
+
+        {/* User Conversations Slide-over */}
+        <UserConversationsSlideOver
+          isOpen={conversationsSlideOver.isOpen}
+          onClose={closeConversationsSlideOver}
+          botGroupId={parseInt(botGroupId!)}
+          botId={parseInt(botId!)}
+          user={conversationsSlideOver.user}
         />
       </div>
     );
