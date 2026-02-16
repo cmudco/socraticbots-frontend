@@ -64,6 +64,22 @@ export interface ConversationMessagesResponse {
   totalCount: number;
 }
 
+export interface AnonymousConversation {
+  conversationId: string;
+  title: string | null;
+  createdAt: string;
+  messageCount: number;
+  sessionId: string;
+  botId: number;
+}
+
+export interface AnonymousConversationsResponse {
+  botId: number;
+  botTitle: string;
+  conversations: AnonymousConversation[];
+  totalCount: number;
+}
+
 class BotAccessService {
   async getBotAccessUsers(botGroupId: number, botId: number): Promise<BotAccessUsersResponse> {
     return baseRequest<BotAccessUsersResponse>({
@@ -101,6 +117,16 @@ class BotAccessService {
   ): Promise<ConversationMessagesResponse> {
     return baseRequest<ConversationMessagesResponse>({
       url: `conversations/bot-groups/${botGroupId}/bots/${botId}/conversations/${conversationId}/messages/`,
+      method: METHOD.GET,
+    });
+  }
+
+  async getAnonymousConversations(
+    botGroupId: number,
+    botId: number
+  ): Promise<AnonymousConversationsResponse> {
+    return baseRequest<AnonymousConversationsResponse>({
+      url: `conversations/bot-groups/${botGroupId}/bots/${botId}/anonymous-conversations/`,
       method: METHOD.GET,
     });
   }
