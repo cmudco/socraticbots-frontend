@@ -1,31 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Bot,
-  CheckCircle,
-  ChevronRight,
-  Clock,
-  Key,
-  Loader2,
-  MessagesSquare,
-  UserX,
-  Users,
-} from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 
-import { BotAccessUsersResponse, botAccessService } from '@/services/botAccess.service';
+import {
+  AnonymousConversationsResponse,
+  BotAccessUsersResponse,
+  botAccessService,
+} from '@/services/botAccess.service';
 import { botGroupService } from '@/services/botGroups.service';
 import { botService } from '@/services/bots.service';
 
+import AccessManagementInfo from '@/components/bots/AccessManagementInfo';
+import AnonymousConversationSlideOver from '@/components/bots/AnonymousConversationSlideOver';
+import AnonymousConversationsList from '@/components/bots/AnonymousConversationsList';
+import AuthenticatedUsersList from '@/components/bots/AuthenticatedUsersList';
+import BotAccessHeader from '@/components/bots/BotAccessHeader';
+import BotGroupsList from '@/components/bots/BotGroupsList';
 import RemoveAccessModal from '@/components/bots/RemoveAccessModal';
 import UserConversationsSlideOver, {
   UserAccessInfo,
 } from '@/components/bots/UserConversationsSlideOver';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { Bot as BotType } from '@/types/bot';
 import { BotGroupDetail } from '@/types/botGroup';
@@ -34,13 +31,18 @@ const BotAccess: React.FC = () => {
   const { botGroupId, botId } = useParams<{ botGroupId: string; botId: string }>();
   const navigate = useNavigate();
 
+  // State
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [botGroups, setBotGroups] = useState<BotGroupDetail[]>([]);
   const [selectedBot, setSelectedBot] = useState<BotType | null>(null);
   const [accessData, setAccessData] = useState<BotAccessUsersResponse | null>(null);
+  const [anonymousData, setAnonymousData] = useState<AnonymousConversationsResponse | null>(null);
+  const [loadingAnonymous, setLoadingAnonymous] = useState(false);
   const [removingUser, setRemovingUser] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'users' | 'anonymous'>('users');
 
+  // Modal state
   const [removeAccessModal, setRemoveAccessModal] = useState<{
     isOpen: boolean;
     userId: number;
@@ -55,7 +57,7 @@ const BotAccess: React.FC = () => {
     accessType: '',
   });
 
-  // Slide-over state for viewing user conversations
+  // Slide-over state
   const [conversationsSlideOver, setConversationsSlideOver] = useState<{
     isOpen: boolean;
     user: UserAccessInfo | null;
@@ -64,6 +66,15 @@ const BotAccess: React.FC = () => {
     user: null,
   });
 
+  const [anonymousConversationView, setAnonymousConversationView] = useState<{
+    isOpen: boolean;
+    conversationId: string | null;
+  }>({
+    isOpen: false,
+    conversationId: null,
+  });
+
+  // Fetch bot groups on mount
   useEffect(() => {
     const fetchBotGroups = async () => {
       try {
@@ -82,6 +93,7 @@ const BotAccess: React.FC = () => {
     fetchBotGroups();
   }, []);
 
+  // Fetch bot access data when bot is selected
   useEffect(() => {
     if (botGroupId && botId) {
       const fetchBotAccessData = async () => {
@@ -97,6 +109,22 @@ const BotAccess: React.FC = () => {
             parseInt(botId)
           );
           setAccessData(accessUsersData);
+
+          // If bot is publicly deployed, fetch anonymous conversations
+          if (botData.isPubliclyDeployed) {
+            setLoadingAnonymous(true);
+            try {
+              const anonymousConversations = await botAccessService.getAnonymousConversations(
+                parseInt(botGroupId),
+                parseInt(botId)
+              );
+              setAnonymousData(anonymousConversations);
+            } catch (anonErr) {
+              console.error('Failed to load anonymous conversations:', anonErr);
+            } finally {
+              setLoadingAnonymous(false);
+            }
+          }
         } catch (err: unknown) {
           const errorMessage =
             err instanceof Error ? err.message : 'Failed to load bot access data';
@@ -110,6 +138,7 @@ const BotAccess: React.FC = () => {
     }
   }, [botGroupId, botId]);
 
+  // Handlers
   const handleRemoveUserAccess = (
     userId: number,
     userEmail: string,
@@ -173,48 +202,18 @@ const BotAccess: React.FC = () => {
     });
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+  const handleViewAnonymousConversation = (conversationId: string) => {
+    setAnonymousConversationView({
+      isOpen: true,
+      conversationId,
     });
   };
 
-  const getAccessTypeLabel = (accessType: string) => {
-    switch (accessType) {
-      case 'direct_bot':
-        return 'Direct Bot Access';
-      case 'bot_group':
-        return 'Bot Group Access';
-      case 'bot_group_owner':
-        return 'Bot Group Owner';
-      case 'bot_group_collaborator':
-        return 'Bot Group Collaborator';
-      case 'bot_creator':
-        return 'Bot Creator';
-      default:
-        return accessType;
-    }
-  };
-
-  const getAccessTypeIcon = (accessType: string) => {
-    switch (accessType) {
-      case 'direct_bot':
-        return <Key className="h-4 w-4" />;
-      case 'bot_group':
-        return <Users className="h-4 w-4" />;
-      case 'bot_group_owner':
-        return <Users className="h-4 w-4" />;
-      case 'bot_group_collaborator':
-        return <Users className="h-4 w-4" />;
-      case 'bot_creator':
-        return <Bot className="h-4 w-4" />;
-      default:
-        return <Key className="h-4 w-4" />;
-    }
+  const closeAnonymousConversationView = () => {
+    setAnonymousConversationView({
+      isOpen: false,
+      conversationId: null,
+    });
   };
 
   const handleBotSelect = (botGroupId: number, botId: number) => {
@@ -227,6 +226,7 @@ const BotAccess: React.FC = () => {
     setAccessData(null);
   };
 
+  // Loading state
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -236,6 +236,7 @@ const BotAccess: React.FC = () => {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -251,206 +252,42 @@ const BotAccess: React.FC = () => {
     );
   }
 
+  // Bot detail view
   if (selectedBot && accessData) {
     return (
       <div className="container mx-auto max-w-6xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Button variant="ghost" onClick={handleBackToBots} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Bots
-          </Button>
+        <BotAccessHeader
+          bot={selectedBot}
+          accessData={accessData}
+          anonymousData={anonymousData}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onBack={handleBackToBots}
+        />
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="mb-2 text-3xl font-bold">Bot Access Management</h1>
-              <div className="text-muted-foreground">
-                <p className="text-lg">
-                  <span className="font-semibold">{selectedBot.title}</span>
-                </p>
-                <p className="text-sm">
-                  {selectedBot.botGroup.title} • {selectedBot.subject} • {selectedBot.topic}
-                </p>
-              </div>
-            </div>
+        {/* Authenticated Users List */}
+        {activeTab === 'users' && (
+          <AuthenticatedUsersList
+            users={accessData.accessUsers}
+            removingUserId={removingUser}
+            onViewConversations={handleViewConversations}
+            onRemoveAccess={handleRemoveUserAccess}
+          />
+        )}
 
-            <div className="text-right">
-              <div className="text-primary text-2xl font-bold">{accessData.totalCount}</div>
-              <div className="text-muted-foreground text-sm">Total Users</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Access Users List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Users with Access</CardTitle>
-            <p className="text-muted-foreground">Manage who has access to this bot</p>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            {accessData.accessUsers && accessData.accessUsers.length > 0 ? (
-              <div className="divide-border dark:divide-border/50 divide-y">
-                {accessData.accessUsers.map(user => (
-                  <div
-                    key={user.userId}
-                    className="hover:bg-accent/50 dark:hover:bg-accent/20 px-6 py-4 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-shrink-0">
-                          <div className="bg-primary/10 dark:bg-primary/20 border-border flex h-10 w-10 items-center justify-center rounded-full border">
-                            <span className="text-primary font-semibold">
-                              {user.firstName?.[0] || user.email[0].toUpperCase()}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center space-x-2">
-                            <p className="truncate text-sm font-medium">
-                              {user.firstName && user.lastName
-                                ? `${user.firstName} ${user.lastName}`
-                                : user.email}
-                            </p>
-                            {user.isCreator && (
-                              <Badge
-                                variant="secondary"
-                                className="border-purple-200 bg-purple-100 text-purple-800 dark:border-purple-800 dark:bg-purple-900/50 dark:text-purple-200"
-                              >
-                                Creator
-                              </Badge>
-                            )}
-                          </div>
-
-                          <div className="mt-1 flex items-center space-x-4">
-                            <p className="text-muted-foreground text-sm">{user.email}</p>
-
-                            <div className="text-muted-foreground flex items-center space-x-1 text-xs">
-                              {getAccessTypeIcon(user.accessType)}
-                              <span>{getAccessTypeLabel(user.accessType)}</span>
-                            </div>
-
-                            <div className="text-muted-foreground flex items-center space-x-1 text-xs">
-                              <Clock className="h-3 w-3" />
-                              <span>Access granted: {formatDate(user.accessGrantedAt)}</span>
-                            </div>
-                          </div>
-
-                          <div className="mt-1 flex items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className="bg-muted/50 border-muted-foreground/20 text-xs"
-                            >
-                              Code: {user.accessCode}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            handleViewConversations({
-                              userId: user.userId,
-                              email: user.email,
-                              firstName: user.firstName,
-                              lastName: user.lastName,
-                              accessType: user.accessType,
-                              accessCode: user.accessCode,
-                              accessGrantedAt: user.accessGrantedAt,
-                              isCreator: user.isCreator,
-                            })
-                          }
-                          className="text-xs"
-                        >
-                          <MessagesSquare className="mr-1.5 h-3.5 w-3.5" />
-                          Conversation
-                        </Button>
-                        {user.accessType === 'bot_group_owner' ||
-                        user.accessType === 'bot_creator' ? (
-                          <Badge
-                            variant="outline"
-                            className="text-muted-foreground border-muted-foreground/20 text-xs"
-                          >
-                            Cannot Remove
-                          </Badge>
-                        ) : (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() =>
-                              handleRemoveUserAccess(
-                                user.userId,
-                                user.email,
-                                `${user.firstName} ${user.lastName}`.trim() || user.email,
-                                user.accessType
-                              )
-                            }
-                            disabled={removingUser === user.userId}
-                          >
-                            {removingUser === user.userId ? (
-                              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                            ) : (
-                              <UserX className="mr-1 h-4 w-4" />
-                            )}
-                            Remove Access
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="px-6 py-12 text-center">
-                <Users className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                <h3 className="mb-2 text-lg font-medium">No users have access yet</h3>
-                <p className="text-muted-foreground">
-                  Users will appear here once they redeem a subscription code for this bot.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Anonymous Conversations List */}
+        {activeTab === 'anonymous' && selectedBot.isPubliclyDeployed && anonymousData && (
+          <AnonymousConversationsList
+            conversations={anonymousData.conversations}
+            loading={loadingAnonymous}
+            onViewConversation={handleViewAnonymousConversation}
+          />
+        )}
 
         {/* Info Section */}
-        <Card className="bg-primary/5 dark:bg-primary/10 border-primary/20 dark:border-primary/30 mt-8">
-          <CardContent className="p-6">
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="text-primary mt-0.5 h-5 w-5" />
-              <div>
-                <h3 className="text-primary text-sm font-medium">Access Management Information</h3>
-                <div className="text-muted-foreground mt-2 space-y-1 text-sm">
-                  <p>
-                    • <strong>Direct Bot Access:</strong> Users who redeemed a specific subscription
-                    code for this bot
-                  </p>
-                  <p>
-                    • <strong>Bot Group Access:</strong> Users who redeemed a subscription code for
-                    the entire bot group
-                  </p>
-                  <p>
-                    • <strong>Bot Group Owner:</strong> The creator of the bot group (has access to
-                    all bots)
-                  </p>
-                  <p>
-                    • <strong>Bot Group Collaborator:</strong> Users invited to collaborate on the
-                    bot group
-                  </p>
-                  <p>
-                    • <strong>Bot Creator:</strong> The user who created this specific bot
-                  </p>
-                  <p>• Removing access will prevent the user from accessing this bot</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <AccessManagementInfo />
 
-        {/* Remove Access Modal */}
+        {/* Modals and Slide-overs */}
         <RemoveAccessModal
           isOpen={removeAccessModal.isOpen}
           onClose={closeRemoveAccessModal}
@@ -460,7 +297,6 @@ const BotAccess: React.FC = () => {
           accessType={removeAccessModal.accessType}
         />
 
-        {/* User Conversations Slide-over */}
         <UserConversationsSlideOver
           isOpen={conversationsSlideOver.isOpen}
           onClose={closeConversationsSlideOver}
@@ -468,72 +304,20 @@ const BotAccess: React.FC = () => {
           botId={parseInt(botId!)}
           user={conversationsSlideOver.user}
         />
+
+        <AnonymousConversationSlideOver
+          isOpen={anonymousConversationView.isOpen}
+          onClose={closeAnonymousConversationView}
+          botGroupId={parseInt(botGroupId!)}
+          botId={parseInt(botId!)}
+          conversationId={anonymousConversationView.conversationId}
+        />
       </div>
     );
   }
 
-  return (
-    <div className="container mx-auto max-w-6xl px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2 text-3xl font-bold">Bot Access Management</h1>
-        <p className="text-muted-foreground">Select a bot to manage user access and permissions</p>
-      </div>
-
-      {botGroups.length > 0 ? (
-        <div className="space-y-6">
-          {botGroups.map(group => (
-            <Card key={group.id}>
-              <CardHeader>
-                <CardTitle className="text-xl">{group.title}</CardTitle>
-                {group.description && <p className="text-muted-foreground">{group.description}</p>}
-              </CardHeader>
-
-              <CardContent className="p-0">
-                <div className="divide-border dark:divide-border/50 divide-y">
-                  {group.bots && group.bots.length > 0 ? (
-                    group.bots.map((bot: BotType) => (
-                      <div
-                        key={bot.id}
-                        className="hover:bg-accent/50 dark:hover:bg-accent/20 cursor-pointer px-6 py-4 transition-colors"
-                        onClick={() => handleBotSelect(group.id, bot.id)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <Bot className="text-primary h-5 w-5" />
-                            <div>
-                              <h3 className="text-sm font-medium">{bot.title}</h3>
-                              <p className="text-muted-foreground text-xs">
-                                {bot.subject} • {bot.topic}
-                              </p>
-                            </div>
-                          </div>
-                          <ChevronRight className="text-muted-foreground h-5 w-5" />
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-muted-foreground px-6 py-4 text-center">
-                      No bots in this group
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Bot className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-            <h3 className="mb-2 text-lg font-medium">No bot groups found</h3>
-            <p className="text-muted-foreground">
-              Create bot groups and bots to start managing access.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+  // Bot groups list view
+  return <BotGroupsList botGroups={botGroups} onBotSelect={handleBotSelect} />;
 };
 
 export default BotAccess;
