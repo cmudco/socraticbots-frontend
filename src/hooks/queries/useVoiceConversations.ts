@@ -51,3 +51,22 @@ export function useSyncConversationTranscript() {
     },
   });
 }
+
+/**
+ * Hook to export a conversation transcript as PDF.
+ */
+export function useExportTranscriptPdf() {
+  return useMutation<{ blob: Blob; filename: string }, Error, number>({
+    mutationFn: (id: number) => voiceAgentService.exportTranscriptPdf(id),
+    onSuccess: ({ blob, filename }) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    },
+  });
+}
