@@ -5,17 +5,27 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { ArrowLeft, Bot, Clock, RefreshCw, User } from 'lucide-react';
+import { ArrowLeft, Bot, Clock, Download, RefreshCw, User } from 'lucide-react';
 
 import {
+  useExportTranscriptPdf,
   useSyncConversationTranscript,
   useVoiceConversation,
 } from '@/hooks/queries/useVoiceConversations';
+
+import { formatDate, formatDuration, formatTimeInCall } from '@/utils/formatters';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { TranscriptMessage } from '@/types/voiceAgent';
+
+const STATUS_STYLES: Record<string, string> = {
+  completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  cancelled: 'bg-muted text-muted-foreground',
+};
 
 const ConversationDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,50 +34,22 @@ const ConversationDetail: React.FC = () => {
 
   const { data: conversation, isLoading } = useVoiceConversation(conversationId);
   const syncTranscript = useSyncConversationTranscript();
+  const exportPdf = useExportTranscriptPdf();
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return '-';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}m ${secs}s`;
-  };
-
-  const formatTimeInCall = (seconds?: number) => {
-    if (seconds === undefined) return '';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      cancelled: 'bg-muted text-muted-foreground',
-    };
-
-    return (
-      <span
-        className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles[status] || styles.cancelled}`}
-      >
-        {status.replace('_', ' ')}
-      </span>
-    );
-  };
+  const getStatusBadge = (status: string) => (
+    <span
+      className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[status] || STATUS_STYLES.cancelled}`}
+    >
+      {status.replace('_', ' ')}
+    </span>
+  );
 
   const handleSyncTranscript = () => {
     syncTranscript.mutate(conversationId);
+  };
+
+  const handleDownloadTranscript = () => {
+    exportPdf.mutate(conversationId);
   };
 
   const hasTranscript = conversation?.transcript && conversation.transcript.length > 0;
@@ -115,18 +97,30 @@ const ConversationDetail: React.FC = () => {
             </div>
             <p className="text-muted-foreground mt-1">{formatDate(conversation.startedAt)}</p>
           </div>
-          {conversation.status === 'completed' && !hasTranscript && (
-            <Button
-              variant="outline"
-              onClick={handleSyncTranscript}
-              disabled={syncTranscript.isPending}
-            >
-              <RefreshCw
-                className={`mr-2 h-4 w-4 ${syncTranscript.isPending ? 'animate-spin' : ''}`}
-              />
-              Sync Transcript
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {hasTranscript && (
+              <Button
+                variant="outline"
+                onClick={handleDownloadTranscript}
+                disabled={exportPdf.isPending}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {exportPdf.isPending ? 'Exporting...' : 'Download PDF'}
+              </Button>
+            )}
+            {conversation.status === 'completed' && !hasTranscript && (
+              <Button
+                variant="outline"
+                onClick={handleSyncTranscript}
+                disabled={syncTranscript.isPending}
+              >
+                <RefreshCw
+                  className={`mr-2 h-4 w-4 ${syncTranscript.isPending ? 'animate-spin' : ''}`}
+                />
+                Sync Transcript
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
