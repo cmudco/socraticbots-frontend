@@ -100,10 +100,8 @@ const VoiceAgentDetail: React.FC = () => {
 
   const handleDelete = async () => {
     if (!agent) return;
-    const success = await deleteAgent.mutateAsync(agent.id);
-    if (success !== undefined) {
-      navigate('/voice-exams');
-    }
+    await deleteAgent.mutateAsync(agent.id);
+    navigate('/voice-exams');
   };
 
   const handleCancelEdit = () => {
