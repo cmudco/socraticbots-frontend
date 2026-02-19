@@ -59,6 +59,8 @@ export interface VoiceAgent {
   status: 'draft' | 'active';
   conversationConfig: ConversationConfig | null;
   conversationCount: number;
+  accessCodeForAdmin?: string | null;
+  hasUserAccess?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -86,6 +88,7 @@ export interface VoiceAgentCreateData {
   examInstructions?: string;
   status?: 'draft' | 'active';
   conversationConfig?: ConversationConfig;
+  accessCode?: string;
 }
 
 export interface VoiceAgentUpdateData {
@@ -100,6 +103,7 @@ export interface VoiceAgentUpdateData {
   examInstructions?: string;
   status?: 'draft' | 'active';
   conversationConfig?: ConversationConfig;
+  accessCode?: string;
 }
 
 export interface VoiceConversation {

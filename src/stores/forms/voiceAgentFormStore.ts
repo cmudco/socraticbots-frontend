@@ -11,6 +11,7 @@ export interface VoiceAgentFormState {
   name: string;
   description: string;
   status: 'draft' | 'active';
+  accessCode: string;
 
   // Exam fields
   examTitle: string;
@@ -61,6 +62,7 @@ export interface VoiceAgentFormData {
   name: string;
   description: string;
   status: 'draft' | 'active';
+  accessCode?: string;
   examTitle: string;
   examInstructions: string;
   systemPrompt: string;
@@ -99,6 +101,7 @@ const initialFormState = {
   name: '',
   description: '',
   status: 'draft' as const,
+  accessCode: '',
 
   // Exam
   examTitle: '',
@@ -186,6 +189,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       name: agent.name || '',
       description: agent.description || '',
       status: agent.status || 'draft',
+      accessCode: agent.accessCodeForAdmin || '',
 
       // Exam
       examTitle: agent.examTitle || '',
@@ -251,6 +255,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       name: state.name,
       description: state.description,
       status: state.status,
+      ...(state.accessCode.trim() && { accessCode: state.accessCode.trim() }),
       examTitle: state.examTitle,
       examInstructions: state.examInstructions,
       systemPrompt: state.systemPrompt,
