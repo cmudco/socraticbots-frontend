@@ -120,6 +120,14 @@ class VoiceAgentService {
       data: { agentId },
     });
   }
+
+  async redeemAccessCode(accessCode: string): Promise<VoiceAgent> {
+    return baseRequest<VoiceAgent>({
+      url: 'voice/agents/redeem_access_code/',
+      method: METHOD.POST,
+      data: { accessCode },
+    });
+  }
 }
 
 export const voiceAgentService = new VoiceAgentService();

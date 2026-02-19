@@ -17,6 +17,7 @@ import { VoiceAgent } from '@/types/voiceAgent';
 interface VoiceInterfaceProps {
   agent: VoiceAgent;
   onComplete?: () => void;
+  onAlreadyAttempted?: () => void;
 }
 
 interface TranscriptMessage {
@@ -25,7 +26,7 @@ interface TranscriptMessage {
   timestamp: Date;
 }
 
-export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
+export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceInterfaceProps) {
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -102,9 +103,15 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
       }
     } catch (err) {
       console.error('Failed to start session:', err);
-      setLocalError(err instanceof Error ? err.message : 'Failed to start session');
+      const message = err instanceof Error ? err.message : 'Failed to start session';
+      // Check if this is an "already attempted" error from the backend
+      if (message.includes('already completed') && onAlreadyAttempted) {
+        onAlreadyAttempted();
+        return;
+      }
+      setLocalError(message);
     }
-  }, [agent.id, conversation, getSignedUrlMutation, startConversationMutation]);
+  }, [agent.id, conversation, getSignedUrlMutation, onAlreadyAttempted, startConversationMutation]);
 
   const handleEnd = useCallback(async () => {
     try {

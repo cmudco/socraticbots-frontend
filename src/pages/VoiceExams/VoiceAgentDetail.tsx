@@ -57,8 +57,8 @@ const VoiceAgentDetail: React.FC = () => {
   } = useVoiceAgentFormStore();
 
   const isOwner = user?.id === agent?.user;
-  const isCreator = user?.isCreator ?? false;
-  const canEdit = isOwner && isCreator;
+  const isVoiceAdmin = user?.hasAdminAccessForVoiceAgent ?? false;
+  const canEdit = isOwner && isVoiceAdmin;
   const canTakeExam = agent?.status === 'active' || isOwner;
 
   // Initialize form when entering edit mode
@@ -182,7 +182,7 @@ const VoiceAgentDetail: React.FC = () => {
             )}
           </div>
           <div className="flex gap-2">
-            {agent.conversationCount > 0 && (
+            {isVoiceAdmin && agent.conversationCount > 0 && (
               <Button onClick={() => navigate('/voice-exams/conversations')} variant="outline">
                 <MessageSquare className="mr-2 h-4 w-4" />
                 View Conversations
@@ -247,7 +247,7 @@ const VoiceAgentDetail: React.FC = () => {
       {/* Content */}
       {isEditing ? (
         <div className="space-y-6">
-          <BasicInfoSection />
+          <BasicInfoSection showAccessCode={isVoiceAdmin} />
           <ExamConfigSection />
           <AIConfigSection />
           <AdvancedSettingsSection collapsible defaultOpen />
@@ -349,6 +349,14 @@ const VoiceAgentDetail: React.FC = () => {
                       {agent.elevenlabsAgentId || 'Not configured'}
                     </dd>
                   </div>
+                  {isVoiceAdmin && (
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Student Access Code</dt>
+                      <dd className="text-foreground font-mono">
+                        {agent.accessCodeForAdmin || 'Not set'}
+                      </dd>
+                    </div>
+                  )}
                 </dl>
               </CardContent>
             </Card>
