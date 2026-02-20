@@ -1,6 +1,7 @@
 /**
  * VoiceExams list page.
- * Shows all voice agents and allows creators to manage them.
+ * Shows all voice agents and allows voice admins to manage them.
+ * Students without access see an access code input to unlock an exam.
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -11,6 +12,7 @@ import { useUser } from '@/hooks/queries/useUser';
 import {
   useElevenLabsAgents,
   useImportElevenLabsAgent,
+  useRedeemVoiceAccessCode,
   useVoiceAgents,
 } from '@/hooks/queries/useVoiceAgents';
 
@@ -21,15 +23,29 @@ const VoiceExamsList: React.FC = () => {
     data: elevenlabsAgents,
     isLoading: loadingElevenlabs,
     refetch: refetchElevenlabs,
-  } = useElevenLabsAgents(user?.isCreator ?? false);
+  } = useElevenLabsAgents(user?.hasAdminAccessForVoiceAgent ?? false);
   const importAgent = useImportElevenLabsAgent();
+  const redeemCode = useRedeemVoiceAccessCode();
 
   const [showImportSection, setShowImportSection] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
+  const [redeemError, setRedeemError] = useState('');
 
-  const isCreator = user?.isCreator ?? false;
+  const isVoiceAdmin = user?.hasAdminAccessForVoiceAgent ?? false;
 
   const handleImport = async (agentId: string) => {
     await importAgent.mutateAsync(agentId);
+  };
+
+  const handleRedeemCode = async () => {
+    if (!accessCode.trim()) return;
+    setRedeemError('');
+    try {
+      await redeemCode.mutateAsync(accessCode.trim());
+      setAccessCode('');
+    } catch {
+      setRedeemError('Invalid access code. Please try again.');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -55,7 +71,7 @@ const VoiceExamsList: React.FC = () => {
         <div>
           <h1 className="text-foreground text-2xl font-bold">Voice Exams</h1>
           <p className="text-muted-foreground mt-1">
-            {isCreator
+            {isVoiceAdmin
               ? 'Create and manage voice-based exams powered by ElevenLabs AI'
               : 'Take voice-based exams powered by ElevenLabs AI'}
           </p>
@@ -68,7 +84,7 @@ const VoiceExamsList: React.FC = () => {
             <RefreshCw className="h-4 w-4" />
             Refresh
           </button>
-          {isCreator && (
+          {isVoiceAdmin && (
             <>
               <button
                 onClick={() => setShowImportSection(!showImportSection)}
@@ -89,8 +105,8 @@ const VoiceExamsList: React.FC = () => {
         </div>
       </div>
 
-      {/* Import Section (Creators only) */}
-      {isCreator && showImportSection && (
+      {/* Import Section (Voice admins only) */}
+      {isVoiceAdmin && showImportSection && (
         <div className="border-border bg-card mb-8 rounded-lg border p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-foreground text-lg font-semibold">Import from ElevenLabs</h2>
@@ -198,20 +214,48 @@ const VoiceExamsList: React.FC = () => {
       ) : (
         <div className="border-border flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-16">
           <Mic className="text-muted-foreground mb-4 h-12 w-12" />
-          <h3 className="text-foreground mb-2 text-lg font-medium">No Voice Agents Yet</h3>
-          <p className="text-muted-foreground mb-4">
-            {isCreator
-              ? 'Create your first voice agent to get started'
-              : 'No voice exams are available yet'}
-          </p>
-          {isCreator && (
-            <Link
-              to="/voice-exams/create"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2"
-            >
-              <Plus className="h-4 w-4" />
-              Create Agent
-            </Link>
+          {isVoiceAdmin ? (
+            <>
+              <h3 className="text-foreground mb-2 text-lg font-medium">No Voice Agents Yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Create your first voice agent to get started
+              </p>
+              <Link
+                to="/voice-exams/create"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2"
+              >
+                <Plus className="h-4 w-4" />
+                Create Agent
+              </Link>
+            </>
+          ) : (
+            <>
+              <h3 className="text-foreground mb-2 text-lg font-medium">Enter Your Exam Code</h3>
+              <p className="text-muted-foreground mb-6 text-center">
+                Enter the access code provided by your instructor to unlock your exam.
+              </p>
+              <div className="flex w-full max-w-sm flex-col gap-3">
+                <input
+                  type="text"
+                  value={accessCode}
+                  onChange={e => {
+                    setAccessCode(e.target.value);
+                    setRedeemError('');
+                  }}
+                  onKeyDown={e => e.key === 'Enter' && handleRedeemCode()}
+                  placeholder="Enter access code"
+                  className="border-border bg-background text-foreground placeholder:text-muted-foreground w-full rounded-lg border px-4 py-2 text-center focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+                {redeemError && <p className="text-center text-sm text-red-500">{redeemError}</p>}
+                <button
+                  onClick={handleRedeemCode}
+                  disabled={redeemCode.isPending || !accessCode.trim()}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2 disabled:opacity-50"
+                >
+                  {redeemCode.isPending ? 'Unlocking...' : 'Unlock Exam'}
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}
