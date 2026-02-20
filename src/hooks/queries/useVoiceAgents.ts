@@ -198,6 +198,37 @@ export const useElevenLabsAgents = (enabled: boolean = true) => {
 };
 
 /**
+ * Redeem an access code to unlock a voice agent
+ */
+export const useRedeemVoiceAccessCode = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (accessCode: string) => voiceAgentService.redeemAccessCode(accessCode),
+    onSuccess: (unlockedAgent: VoiceAgent) => {
+      // Add the newly unlocked agent to the list
+      queryClient.setQueryData<VoiceAgentListItem[]>(voiceAgentKeys.list(), oldAgents => {
+        const listItem: VoiceAgentListItem = {
+          id: unlockedAgent.id,
+          user: unlockedAgent.user,
+          userEmail: unlockedAgent.userEmail,
+          name: unlockedAgent.name,
+          description: unlockedAgent.description,
+          status: unlockedAgent.status,
+          examTitle: unlockedAgent.examTitle,
+          createdAt: unlockedAgent.createdAt,
+        };
+        const alreadyInList = oldAgents?.some(a => a.id === unlockedAgent.id);
+        return oldAgents ? (alreadyInList ? oldAgents : [listItem, ...oldAgents]) : [listItem];
+      });
+    },
+    onError: error => {
+      console.error('Failed to redeem access code:', error);
+    },
+  });
+};
+
+/**
  * Import an ElevenLabs agent
  */
 export const useImportElevenLabsAgent = () => {

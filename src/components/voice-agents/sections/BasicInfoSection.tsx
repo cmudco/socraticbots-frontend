@@ -16,10 +16,14 @@ import { Textarea } from '@/components/ui/textarea';
 
 interface BasicInfoSectionProps {
   viewOnly?: boolean;
+  showAccessCode?: boolean;
 }
 
-export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({ viewOnly = false }) => {
-  const { name, description, status, errors, touched, updateField, setFieldTouched } =
+export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
+  viewOnly = false,
+  showAccessCode = false,
+}) => {
+  const { name, description, status, accessCode, errors, touched, updateField, setFieldTouched } =
     useVoiceAgentFormStore();
 
   return (
@@ -73,6 +77,22 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({ viewOnly = f
             Only active agents are visible to all users
           </p>
         </div>
+
+        {showAccessCode && (
+          <div className="space-y-2">
+            <Label htmlFor="accessCode">Student Access Code</Label>
+            <Input
+              id="accessCode"
+              value={accessCode}
+              onChange={e => updateField('accessCode', e.target.value)}
+              disabled={viewOnly}
+              placeholder="e.g., EXAM2024 (leave blank for no code)"
+            />
+            <p className="text-muted-foreground text-xs">
+              Students must enter this code to unlock the exam
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

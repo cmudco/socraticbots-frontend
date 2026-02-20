@@ -36,9 +36,9 @@ const VoiceAgentCreate: React.FC = () => {
     };
   }, [initNewAgent, resetForm]);
 
-  // Redirect if not a creator
+  // Redirect if not a voice admin
   useEffect(() => {
-    if (user && !user.isCreator) {
+    if (user && !user.hasAdminAccessForVoiceAgent) {
       navigate('/voice-exams');
     }
   }, [user, navigate]);
@@ -66,7 +66,7 @@ const VoiceAgentCreate: React.FC = () => {
     }
   };
 
-  if (!user?.isCreator) {
+  if (!user?.hasAdminAccessForVoiceAgent) {
     return null;
   }
 
@@ -88,7 +88,7 @@ const VoiceAgentCreate: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <BasicInfoSection />
+        <BasicInfoSection showAccessCode />
         <ExamConfigSection />
         <AIConfigSection />
         <AdvancedSettingsSection collapsible />
