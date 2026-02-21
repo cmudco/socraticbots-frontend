@@ -112,6 +112,14 @@ class VoiceAgentService {
     });
   }
 
+  async exportAllTranscriptsPdf(): Promise<{ blob: Blob; filename: string }> {
+    return baseRequest({
+      url: 'voice/conversations/export-all/',
+      method: METHOD.GET,
+      responseType: 'blob',
+    });
+  }
+
   // ============ ElevenLabs Direct API ============
 
   async getElevenLabsAgents(): Promise<ElevenLabsAgentItem[]> {

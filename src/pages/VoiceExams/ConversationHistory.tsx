@@ -5,9 +5,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ArrowLeft, Clock, MessageSquare, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Clock, Download, MessageSquare, RefreshCw } from 'lucide-react';
 
-import { useVoiceConversations } from '@/hooks/queries/useVoiceConversations';
+import {
+  useExportAllTranscripts,
+  useVoiceConversations,
+} from '@/hooks/queries/useVoiceConversations';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 const ConversationHistory: React.FC = () => {
   const navigate = useNavigate();
   const { data: conversations, isLoading, refetch, isFetching } = useVoiceConversations();
+  const exportAll = useExportAllTranscripts();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -76,10 +80,20 @@ const ConversationHistory: React.FC = () => {
               View transcripts from your voice exam sessions
             </p>
           </div>
-          <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => exportAll.mutate()}
+              disabled={exportAll.isPending || !conversations || conversations.length === 0}
+            >
+              <Download className={`mr-2 h-4 w-4 ${exportAll.isPending ? 'animate-pulse' : ''}`} />
+              {exportAll.isPending ? 'Exporting...' : 'Export All'}
+            </Button>
+            <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
       </div>
 
