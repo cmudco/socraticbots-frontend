@@ -20,8 +20,8 @@ export interface BotAccessCode {
   code: string;
   limit?: number;
   used?: number;
-  created_at: string;
-  created_by: string;
+  createdAt: string;
+  createdBy: string;
 }
 
 export interface BotTheme {

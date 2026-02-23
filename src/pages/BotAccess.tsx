@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { AlertTriangle, Loader2 } from 'lucide-react';
 
+import { useBotAccessStore } from '@/stores/ui/botAccessStore';
+
 import {
   AnonymousConversationsResponse,
   BotAccessUsersResponse,
@@ -18,9 +20,7 @@ import AuthenticatedUsersList from '@/components/bots/AuthenticatedUsersList';
 import BotAccessHeader from '@/components/bots/BotAccessHeader';
 import BotGroupsList from '@/components/bots/BotGroupsList';
 import RemoveAccessModal from '@/components/bots/RemoveAccessModal';
-import UserConversationsSlideOver, {
-  UserAccessInfo,
-} from '@/components/bots/UserConversationsSlideOver';
+import UserConversationsSlideOver from '@/components/bots/UserConversationsSlideOver';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -31,7 +31,7 @@ const BotAccess: React.FC = () => {
   const { botGroupId, botId } = useParams<{ botGroupId: string; botId: string }>();
   const navigate = useNavigate();
 
-  // State
+  // Local state for data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [botGroups, setBotGroups] = useState<BotGroupDetail[]>([]);
@@ -39,40 +39,28 @@ const BotAccess: React.FC = () => {
   const [accessData, setAccessData] = useState<BotAccessUsersResponse | null>(null);
   const [anonymousData, setAnonymousData] = useState<AnonymousConversationsResponse | null>(null);
   const [loadingAnonymous, setLoadingAnonymous] = useState(false);
-  const [removingUser, setRemovingUser] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'users' | 'anonymous'>('users');
 
-  // Modal state
-  const [removeAccessModal, setRemoveAccessModal] = useState<{
-    isOpen: boolean;
-    userId: number;
-    userEmail: string;
-    userName: string;
-    accessType: string;
-  }>({
-    isOpen: false,
-    userId: 0,
-    userEmail: '',
-    userName: '',
-    accessType: '',
-  });
+  // Store state for UI
+  const {
+    activeTab,
+    removeAccessModal,
+    conversationsSlideOver,
+    anonymousConversationView,
+    setActiveTab,
+    setRemovingUserId,
+    closeRemoveAccessModal,
+    closeConversationsSlideOver,
+    openAnonymousConversationView,
+    closeAnonymousConversationView,
+    resetStore,
+  } = useBotAccessStore();
 
-  // Slide-over state
-  const [conversationsSlideOver, setConversationsSlideOver] = useState<{
-    isOpen: boolean;
-    user: UserAccessInfo | null;
-  }>({
-    isOpen: false,
-    user: null,
-  });
-
-  const [anonymousConversationView, setAnonymousConversationView] = useState<{
-    isOpen: boolean;
-    conversationId: string | null;
-  }>({
-    isOpen: false,
-    conversationId: null,
-  });
+  // Reset store on mount/unmount
+  useEffect(() => {
+    return () => {
+      resetStore();
+    };
+  }, [resetStore]);
 
   // Fetch bot groups on mount
   useEffect(() => {
@@ -139,26 +127,11 @@ const BotAccess: React.FC = () => {
   }, [botGroupId, botId]);
 
   // Handlers
-  const handleRemoveUserAccess = (
-    userId: number,
-    userEmail: string,
-    userName: string,
-    accessType: string
-  ) => {
-    setRemoveAccessModal({
-      isOpen: true,
-      userId,
-      userEmail,
-      userName,
-      accessType,
-    });
-  };
-
   const handleConfirmRemoveAccess = async () => {
     if (!botGroupId || !botId) return;
 
     try {
-      setRemovingUser(removeAccessModal.userId);
+      setRemovingUserId(removeAccessModal.userId);
       await botAccessService.removeUserBotAccess(
         parseInt(botGroupId),
         parseInt(botId),
@@ -174,46 +147,8 @@ const BotAccess: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to remove user access';
       setError(errorMessage);
     } finally {
-      setRemovingUser(null);
+      setRemovingUserId(null);
     }
-  };
-
-  const closeRemoveAccessModal = () => {
-    setRemoveAccessModal({
-      isOpen: false,
-      userId: 0,
-      userEmail: '',
-      userName: '',
-      accessType: '',
-    });
-  };
-
-  const handleViewConversations = (user: UserAccessInfo) => {
-    setConversationsSlideOver({
-      isOpen: true,
-      user,
-    });
-  };
-
-  const closeConversationsSlideOver = () => {
-    setConversationsSlideOver({
-      isOpen: false,
-      user: null,
-    });
-  };
-
-  const handleViewAnonymousConversation = (conversationId: string) => {
-    setAnonymousConversationView({
-      isOpen: true,
-      conversationId,
-    });
-  };
-
-  const closeAnonymousConversationView = () => {
-    setAnonymousConversationView({
-      isOpen: false,
-      conversationId: null,
-    });
   };
 
   const handleBotSelect = (botGroupId: number, botId: number) => {
@@ -224,6 +159,7 @@ const BotAccess: React.FC = () => {
     navigate('/bot-access');
     setSelectedBot(null);
     setAccessData(null);
+    resetStore();
   };
 
   // Loading state
@@ -266,21 +202,14 @@ const BotAccess: React.FC = () => {
         />
 
         {/* Authenticated Users List */}
-        {activeTab === 'users' && (
-          <AuthenticatedUsersList
-            users={accessData.accessUsers}
-            removingUserId={removingUser}
-            onViewConversations={handleViewConversations}
-            onRemoveAccess={handleRemoveUserAccess}
-          />
-        )}
+        {activeTab === 'users' && <AuthenticatedUsersList users={accessData.accessUsers} />}
 
         {/* Anonymous Conversations List */}
         {activeTab === 'anonymous' && selectedBot.isPubliclyDeployed && anonymousData && (
           <AnonymousConversationsList
             conversations={anonymousData.conversations}
             loading={loadingAnonymous}
-            onViewConversation={handleViewAnonymousConversation}
+            onViewConversation={openAnonymousConversationView}
           />
         )}
 

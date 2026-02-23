@@ -9,6 +9,8 @@ import {
   botAccessService,
 } from '@/services/botAccess.service';
 
+import { formatDate, getAccessTypeLabel } from '@/utils/formatters';
+
 import MessageBubble from '@/components/bots/MessageBubble';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,16 +23,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 
-export interface UserAccessInfo {
-  userId: number;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  accessType: string;
-  accessCode: string;
-  accessGrantedAt: string;
-  isCreator?: boolean;
-}
+import { UserAccessInfo } from '@/types/botAccess';
 
 interface UserConversationsSlideOverProps {
   isOpen: boolean;
@@ -118,40 +111,6 @@ const UserConversationsSlideOver: React.FC<UserConversationsSlideOverProps> = ({
       fetchConversation();
     }
   }, [isOpen, user, fetchConversation]);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const getAccessTypeLabel = (accessType: string) => {
-    switch (accessType) {
-      case 'direct_bot':
-        return 'Direct Bot Access';
-      case 'bot_group':
-        return 'Bot Group Access';
-      case 'bot_group_owner':
-        return 'Bot Group Owner';
-      case 'bot_group_collaborator':
-        return 'Bot Group Collaborator';
-      case 'bot_creator':
-        return 'Bot Creator';
-      default:
-        return accessType;
-    }
-  };
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -249,7 +208,7 @@ const UserConversationsSlideOver: React.FC<UserConversationsSlideOverProps> = ({
               <div className="space-y-4 px-4 py-4">
                 {conversationData.messages.length > 0 ? (
                   conversationData.messages.map((msg: ConversationMessage) => (
-                    <MessageBubble key={msg.messageId} message={msg} formatTime={formatTime} />
+                    <MessageBubble key={msg.messageId} message={msg} />
                   ))
                 ) : (
                   <p className="text-muted-foreground py-8 text-center text-sm">

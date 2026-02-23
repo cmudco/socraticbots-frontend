@@ -4,6 +4,8 @@ import { Clock, Globe, Loader2, MessagesSquare } from 'lucide-react';
 
 import { AnonymousConversation } from '@/services/botAccess.service';
 
+import { formatDate } from '@/utils/formatters';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,16 +21,6 @@ const AnonymousConversationsList: React.FC<AnonymousConversationsListProps> = ({
   loading,
   onViewConversation,
 }) => {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   return (
     <Card>
       <CardHeader>

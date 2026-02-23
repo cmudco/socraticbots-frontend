@@ -15,7 +15,7 @@ export interface ChatMessage {
   conversation?: string;
   role: ChatRole;
   content: string;
-  created_at: string;
+  createdAt: string;
   sender?: ChatSender;
   timestamp?: string;
 }
