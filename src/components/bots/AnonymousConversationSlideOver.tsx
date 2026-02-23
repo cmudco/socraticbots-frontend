@@ -77,13 +77,6 @@ const AnonymousConversationSlideOver: React.FC<AnonymousConversationSlideOverPro
     }
   }, [isOpen, conversationId, fetchConversation]);
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent
@@ -171,7 +164,7 @@ const AnonymousConversationSlideOver: React.FC<AnonymousConversationSlideOverPro
               <div className="space-y-4 px-4 py-4">
                 {conversationData.messages.length > 0 ? (
                   conversationData.messages.map((msg: ConversationMessage) => (
-                    <MessageBubble key={msg.messageId} message={msg} formatTime={formatTime} />
+                    <MessageBubble key={msg.messageId} message={msg} />
                   ))
                 ) : (
                   <p className="text-muted-foreground py-8 text-center text-sm">

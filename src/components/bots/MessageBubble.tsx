@@ -6,12 +6,13 @@ import remarkGfm from 'remark-gfm';
 
 import { ConversationMessage } from '@/services/botAccess.service';
 
+import { formatTime } from '@/utils/formatters';
+
 interface MessageBubbleProps {
   message: ConversationMessage;
-  formatTime: (date: string) => string;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, formatTime }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isUser = message.role === 'user';
 
   return (

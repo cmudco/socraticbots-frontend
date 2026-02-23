@@ -2,52 +2,22 @@ import React from 'react';
 
 import { Clock, Key, Loader2, MessagesSquare, UserX, Users } from 'lucide-react';
 
+import { useBotAccessStore } from '@/stores/ui/botAccessStore';
+
 import { BotAccessUser } from '@/services/botAccess.service';
 
-import { UserAccessInfo } from '@/components/bots/UserConversationsSlideOver';
+import { formatDate, getAccessTypeLabel } from '@/utils/formatters';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AuthenticatedUsersListProps {
   users: BotAccessUser[];
-  removingUserId: number | null;
-  onViewConversations: (user: UserAccessInfo) => void;
-  onRemoveAccess: (userId: number, email: string, userName: string, accessType: string) => void;
 }
 
-const AuthenticatedUsersList: React.FC<AuthenticatedUsersListProps> = ({
-  users,
-  removingUserId,
-  onViewConversations,
-  onRemoveAccess,
-}) => {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const getAccessTypeLabel = (accessType: string) => {
-    switch (accessType) {
-      case 'direct_bot':
-        return 'Direct Bot Access';
-      case 'bot_group':
-        return 'Bot Group Access';
-      case 'bot_group_owner':
-        return 'Bot Group Owner';
-      case 'bot_group_collaborator':
-        return 'Bot Group Collaborator';
-      case 'bot_creator':
-        return 'Bot Creator';
-      default:
-        return accessType;
-    }
-  };
+const AuthenticatedUsersList: React.FC<AuthenticatedUsersListProps> = ({ users }) => {
+  const { removingUserId, openConversationsSlideOver, openRemoveAccessModal } = useBotAccessStore();
 
   const getAccessTypeIcon = (accessType: string) => {
     switch (accessType) {
@@ -136,7 +106,7 @@ const AuthenticatedUsersList: React.FC<AuthenticatedUsersListProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        onViewConversations({
+                        openConversationsSlideOver({
                           userId: user.userId,
                           email: user.email,
                           firstName: user.firstName,
@@ -164,7 +134,7 @@ const AuthenticatedUsersList: React.FC<AuthenticatedUsersListProps> = ({
                         variant="destructive"
                         size="sm"
                         onClick={() =>
-                          onRemoveAccess(
+                          openRemoveAccessModal(
                             user.userId,
                             user.email,
                             `${user.firstName} ${user.lastName}`.trim() || user.email,
