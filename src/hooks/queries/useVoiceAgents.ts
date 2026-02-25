@@ -173,9 +173,17 @@ export const useStartConversation = () => {
  * End a voice conversation
  */
 export const useEndConversation = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({ agentId, conversationId }: { agentId: number; conversationId: string }) =>
       voiceAgentService.endConversation(agentId, conversationId),
+    onSuccess: (_, { agentId }) => {
+      // Invalidate agent detail to refresh conversation count
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.detail(agentId) });
+      // Invalidate conversations list
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.conversations() });
+    },
     onError: error => {
       console.error('Failed to end conversation:', error);
     },
