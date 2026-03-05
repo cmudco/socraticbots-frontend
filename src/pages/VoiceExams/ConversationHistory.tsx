@@ -1,23 +1,28 @@
 /**
  * Conversation History page.
- * Lists all voice conversations for the user.
+ * Lists voice conversations for a specific agent.
  */
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { ArrowLeft, Clock, Download, MessageSquare, RefreshCw } from 'lucide-react';
 
+import { useVoiceAgent } from '@/hooks/queries/useVoiceAgents';
 import {
+  useAgentConversations,
   useExportAllTranscripts,
-  useVoiceConversations,
 } from '@/hooks/queries/useVoiceConversations';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const ConversationHistory: React.FC = () => {
+  const { agentId: agentIdParam } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
-  const { data: conversations, isLoading, refetch, isFetching } = useVoiceConversations();
+  const agentId = parseInt(agentIdParam || '0');
+
+  const { data: agent } = useVoiceAgent(agentId);
+  const { data: conversations, isLoading, refetch, isFetching } = useAgentConversations(agentId);
   const exportAll = useExportAllTranscripts();
 
   const formatDate = (dateString: string) => {
@@ -67,23 +72,25 @@ const ConversationHistory: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <button
-          onClick={() => navigate('/voice-exams')}
+          onClick={() => navigate(`/voice-exams/${agentId}`)}
           className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Voice Exams
+          Back to {agent?.name || 'Agent'}
         </button>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-foreground text-2xl font-bold">Conversation History</h1>
             <p className="text-muted-foreground mt-1">
-              View transcripts from your voice exam sessions
+              {agent?.name
+                ? `Conversations for "${agent.name}"`
+                : 'View transcripts from voice exam sessions'}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => exportAll.mutate()}
+              onClick={() => exportAll.mutate(agentId)}
               disabled={exportAll.isPending || !conversations || conversations.length === 0}
             >
               <Download className={`mr-2 h-4 w-4 ${exportAll.isPending ? 'animate-pulse' : ''}`} />
@@ -104,10 +111,10 @@ const ConversationHistory: React.FC = () => {
             <MessageSquare className="text-muted-foreground mx-auto h-12 w-12" />
             <h3 className="text-foreground mt-4 text-lg font-semibold">No conversations yet</h3>
             <p className="text-muted-foreground mt-2">
-              When you complete voice exams, your conversations will appear here.
+              When students complete this voice exam, their conversations will appear here.
             </p>
-            <Button onClick={() => navigate('/voice-exams')} className="mt-4">
-              Browse Voice Exams
+            <Button onClick={() => navigate(`/voice-exams/${agentId}`)} className="mt-4">
+              Back to Agent
             </Button>
           </CardContent>
         </Card>
@@ -117,7 +124,7 @@ const ConversationHistory: React.FC = () => {
             <Card
               key={conversation.id}
               className="cursor-pointer transition-shadow hover:shadow-md"
-              onClick={() => navigate(`/voice-exams/conversations/${conversation.id}`)}
+              onClick={() => navigate(`/voice-exams/${agentId}/conversations/${conversation.id}`)}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
