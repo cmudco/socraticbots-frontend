@@ -9,7 +9,7 @@ export interface User {
   email: string;
   name: string;
   isCreator: boolean;
-  hasAdminAccessForVoiceAgent: boolean;
+  hasSupervisorAccessForVoiceAgent: boolean;
   platformRole?: PlatformRole;
   externalUserId: number;
   isActive: boolean;

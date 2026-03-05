@@ -57,7 +57,7 @@ const VoiceAgentDetail: React.FC = () => {
   } = useVoiceAgentFormStore();
 
   const isOwner = user?.id === agent?.user;
-  const isVoiceAdmin = user?.hasAdminAccessForVoiceAgent ?? false;
+  const isVoiceAdmin = user?.hasSupervisorAccessForVoiceAgent ?? false;
   const canEdit = isOwner && isVoiceAdmin;
   const canTakeExam = agent?.status === 'active' || isOwner;
 

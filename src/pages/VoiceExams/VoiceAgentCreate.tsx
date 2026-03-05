@@ -38,7 +38,7 @@ const VoiceAgentCreate: React.FC = () => {
 
   // Redirect if not a voice admin
   useEffect(() => {
-    if (user && !user.hasAdminAccessForVoiceAgent) {
+    if (user && !user.hasSupervisorAccessForVoiceAgent) {
       navigate('/voice-exams');
     }
   }, [user, navigate]);
@@ -66,7 +66,7 @@ const VoiceAgentCreate: React.FC = () => {
     }
   };
 
-  if (!user?.hasAdminAccessForVoiceAgent) {
+  if (!user?.hasSupervisorAccessForVoiceAgent) {
     return null;
   }
 

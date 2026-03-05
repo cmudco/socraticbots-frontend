@@ -22,7 +22,7 @@ const StudentExam: React.FC = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [alreadyAttempted, setAlreadyAttempted] = useState(false);
 
-  const isVoiceAdmin = user?.hasAdminAccessForVoiceAgent ?? false;
+  const isVoiceAdmin = user?.hasSupervisorAccessForVoiceAgent ?? false;
 
   const handleComplete = () => {
     setIsCompleted(true);
