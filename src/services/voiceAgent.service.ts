@@ -90,6 +90,13 @@ class VoiceAgentService {
     });
   }
 
+  async getConversationsByAgent(agentId: number): Promise<VoiceConversationListItem[]> {
+    return baseRequest<VoiceConversationListItem[]>({
+      url: `voice/conversations/?agent_id=${agentId}`,
+      method: METHOD.GET,
+    });
+  }
+
   async getConversationById(id: number): Promise<VoiceConversation> {
     return baseRequest<VoiceConversation>({
       url: `voice/conversations/${id}/`,
@@ -112,9 +119,12 @@ class VoiceAgentService {
     });
   }
 
-  async exportAllTranscriptsPdf(): Promise<{ blob: Blob; filename: string }> {
+  async exportAllTranscriptsPdf(agentId?: number): Promise<{ blob: Blob; filename: string }> {
+    const url = agentId
+      ? `voice/conversations/export-all/?agent_id=${agentId}`
+      : 'voice/conversations/export-all/';
     return baseRequest({
-      url: 'voice/conversations/export-all/',
+      url,
       method: METHOD.GET,
       responseType: 'blob',
     });

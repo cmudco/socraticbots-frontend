@@ -57,7 +57,7 @@ const VoiceAgentDetail: React.FC = () => {
   } = useVoiceAgentFormStore();
 
   const isOwner = user?.id === agent?.user;
-  const isVoiceAdmin = user?.hasAdminAccessForVoiceAgent ?? false;
+  const isVoiceAdmin = user?.hasSupervisorAccessForVoiceAgent ?? false;
   const canEdit = isOwner && isVoiceAdmin;
   const canTakeExam = agent?.status === 'active' || isOwner;
 
@@ -181,7 +181,10 @@ const VoiceAgentDetail: React.FC = () => {
           </div>
           <div className="flex gap-2">
             {isVoiceAdmin && agent.conversationCount > 0 && (
-              <Button onClick={() => navigate('/voice-exams/conversations')} variant="outline">
+              <Button
+                onClick={() => navigate(`/voice-exams/${agent.id}/conversations`)}
+                variant="outline"
+              >
                 <MessageSquare className="mr-2 h-4 w-4" />
                 View Conversations
               </Button>
@@ -206,7 +209,7 @@ const VoiceAgentDetail: React.FC = () => {
       <div className="mb-8 grid gap-4 md:grid-cols-3">
         <Card
           className="cursor-pointer transition-shadow hover:shadow-md"
-          onClick={() => navigate('/voice-exams/conversations')}
+          onClick={() => navigate(`/voice-exams/${agent.id}/conversations`)}
         >
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
