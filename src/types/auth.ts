@@ -1,11 +1,13 @@
-export type PlatformRole = 'SUPERADMIN' | 'RESEARCHER' | 'USER' | 'CREATOR' | 'SB_USER';
+import type { PlatformRole } from '@/constants/roles';
+
+export type { PlatformRole };
 
 export interface User {
   id: number;
   email: string;
   name: string;
   isCreator: boolean;
-  hasAdminAccessForVoiceAgent: boolean;
+  hasSupervisorAccessForVoiceAgent: boolean;
   platformRole?: PlatformRole;
   externalUserId?: number;
   isActive: boolean;

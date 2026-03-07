@@ -76,16 +76,16 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       setMessages([]);
       setLocalError(null);
 
-      // Get microphone permission
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Get signed URL from backend
+      // Check eligibility first (signed URL request will fail if already attempted)
       const signedUrlResult = await getSignedUrlMutation.mutateAsync(agent.id);
 
       if (!signedUrlResult?.signedUrl) {
         setLocalError('Failed to get signed URL');
         return;
       }
+
+      // Only request microphone after confirming eligibility
+      await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // Start ElevenLabs session with signed URL
       const conversationIdResult = await conversation.startSession({

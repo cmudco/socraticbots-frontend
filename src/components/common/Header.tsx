@@ -2,7 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import logo from '@/assets/logo.png';
-import { BookOpen, GraduationCap, LogOut, User } from 'lucide-react';
+import { PlatformRole } from '@/constants/roles';
+import { BookOpen, GraduationCap, LogOut, Shield, User } from 'lucide-react';
 
 import { useIsAuthenticated, useLogout, useUser } from '@/hooks/queries/useUser';
 
@@ -55,12 +56,19 @@ const Header: React.FC = () => {
                       <Badge
                         variant="secondary"
                         className={`text-xs ${
-                          user.isCreator
-                            ? 'border-primary/20 bg-primary/10 text-primary'
-                            : 'border-secondary/20 bg-secondary/10 text-secondary-foreground'
+                          user.platformRole === PlatformRole.SUPERVISOR
+                            ? 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                            : user.isCreator
+                              ? 'border-primary/20 bg-primary/10 text-primary'
+                              : 'border-secondary/20 bg-secondary/10 text-secondary-foreground'
                         }`}
                       >
-                        {user.isCreator ? (
+                        {user.platformRole === PlatformRole.SUPERVISOR ? (
+                          <>
+                            <Shield className="mr-1 h-3 w-3" />
+                            Supervisor
+                          </>
+                        ) : user.isCreator ? (
                           <>
                             <GraduationCap className="mr-1 h-3 w-3" />
                             Creator

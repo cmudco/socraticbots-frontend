@@ -23,7 +23,7 @@ const VoiceExamsList: React.FC = () => {
     data: elevenlabsAgents,
     isLoading: loadingElevenlabs,
     refetch: refetchElevenlabs,
-  } = useElevenLabsAgents(user?.hasAdminAccessForVoiceAgent ?? false);
+  } = useElevenLabsAgents(user?.hasSupervisorAccessForVoiceAgent ?? false);
   const importAgent = useImportElevenLabsAgent();
   const redeemCode = useRedeemVoiceAccessCode();
 
@@ -31,7 +31,7 @@ const VoiceExamsList: React.FC = () => {
   const [accessCode, setAccessCode] = useState('');
   const [redeemError, setRedeemError] = useState('');
 
-  const isVoiceAdmin = user?.hasAdminAccessForVoiceAgent ?? false;
+  const isVoiceAdmin = user?.hasSupervisorAccessForVoiceAgent ?? false;
 
   const handleImport = async (agentId: string) => {
     await importAgent.mutateAsync(agentId);

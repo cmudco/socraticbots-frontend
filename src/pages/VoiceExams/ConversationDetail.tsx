@@ -28,8 +28,9 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 const ConversationDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { agentId: agentIdParam, id } = useParams<{ agentId: string; id: string }>();
   const navigate = useNavigate();
+  const agentId = agentIdParam || '0';
   const conversationId = parseInt(id || '0');
 
   const { data: conversation, isLoading } = useVoiceConversation(conversationId);
@@ -70,7 +71,10 @@ const ConversationDetail: React.FC = () => {
           <p className="text-muted-foreground mt-2">
             The conversation you're looking for doesn't exist or has been deleted.
           </p>
-          <Button onClick={() => navigate('/voice-exams/conversations')} className="mt-4">
+          <Button
+            onClick={() => navigate(`/voice-exams/${agentId}/conversations`)}
+            className="mt-4"
+          >
             Back to Conversations
           </Button>
         </div>
@@ -83,7 +87,7 @@ const ConversationDetail: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <button
-          onClick={() => navigate('/voice-exams/conversations')}
+          onClick={() => navigate(`/voice-exams/${agentId}/conversations`)}
           className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
