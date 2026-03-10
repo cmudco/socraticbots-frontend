@@ -21,6 +21,7 @@ import {
 
 import {
   useDeleteVoiceAgent,
+  useMyTeams,
   useSyncFromElevenLabs,
   useUpdateVoiceAgent,
   useVoiceAgent,
@@ -61,6 +62,7 @@ const VoiceAgentDetail: React.FC = () => {
   const { data: agent, isLoading } = useVoiceAgent(agentId);
   const updateAgent = useUpdateVoiceAgent();
   const deleteAgent = useDeleteVoiceAgent();
+  const { data: myTeams } = useMyTeams();
   const syncFromElevenLabs = useSyncFromElevenLabs();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -517,9 +519,19 @@ const VoiceAgentDetail: React.FC = () => {
           {canManageAccess && (
             <SharedAccessPanel
               agentId={agent.id}
-              teamName={agent.teamName}
+              currentTeamId={agent.team}
+              currentTeamName={agent.teamName}
+              teams={myTeams ?? []}
               members={members}
               onRefresh={loadMembers}
+              onTeamChange={async teamId => {
+                try {
+                  await updateAgent.mutateAsync({ id: agent.id, data: { team: teamId } });
+                  loadMembers();
+                } catch (err) {
+                  console.error('Failed to update team:', err);
+                }
+              }}
             />
           )}
         </div>

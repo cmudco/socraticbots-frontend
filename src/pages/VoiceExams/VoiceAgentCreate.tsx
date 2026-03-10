@@ -2,10 +2,10 @@
  * Create Voice Agent page.
  * Form for creating a new ElevenLabs voice agent.
  */
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ArrowLeft, Save, Users } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 
 import { useUser } from '@/hooks/queries/useUser';
 import { useCreateVoiceAgent, useMyTeams } from '@/hooks/queries/useVoiceAgents';
@@ -13,15 +13,6 @@ import { useCreateVoiceAgent, useMyTeams } from '@/hooks/queries/useVoiceAgents'
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   AIConfigSection,
   AdvancedSettingsSection,
@@ -33,7 +24,7 @@ const VoiceAgentCreate: React.FC = () => {
   const navigate = useNavigate();
   const user = useUser();
   const createAgent = useCreateVoiceAgent();
-  const { data: myTeams, isLoading: teamsLoading } = useMyTeams();
+  const { data: myTeams } = useMyTeams();
 
   const {
     initNewAgent,
@@ -45,12 +36,6 @@ const VoiceAgentCreate: React.FC = () => {
     team,
     updateField,
   } = useVoiceAgentFormStore();
-
-  // Derive the member count for the selected team (for display)
-  const selectedTeam = useMemo(() => {
-    if (!myTeams || team === null) return null;
-    return myTeams.find(t => t.id === team) ?? null;
-  }, [myTeams, team]);
 
   // Initialize form on mount
   useEffect(() => {
@@ -122,55 +107,6 @@ const VoiceAgentCreate: React.FC = () => {
         <BasicInfoSection showAccessCode />
         <ExamConfigSection />
         <AIConfigSection />
-
-        {/* Team Assignment */}
-        {!teamsLoading && myTeams && myTeams.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Team
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {myTeams.length === 1 ? (
-                <div>
-                  <p className="text-foreground text-sm font-medium">{myTeams[0].name}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {myTeams[0].members.length} member{myTeams[0].members.length !== 1 ? 's' : ''} —
-                    manage access after creation
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label>Assign to team</Label>
-                  <Select
-                    value={team !== null ? String(team) : ''}
-                    onValueChange={value => updateField('team', Number(value))}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a team" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {myTeams.map(t => (
-                        <SelectItem key={t.id} value={String(t.id)}>
-                          {t.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedTeam && (
-                    <p className="text-muted-foreground text-xs">
-                      {selectedTeam.members.length} member
-                      {selectedTeam.members.length !== 1 ? 's' : ''} — manage access after creation
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
         <AdvancedSettingsSection collapsible />
 
         {/* Submit Button */}
