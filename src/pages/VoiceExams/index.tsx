@@ -18,7 +18,7 @@ import {
 
 const VoiceExamsList: React.FC = () => {
   const user = useUser();
-  const { data: agents, isLoading, refetch } = useVoiceAgents();
+  const { data: agents, isLoading } = useVoiceAgents();
   const {
     data: elevenlabsAgents,
     isLoading: loadingElevenlabs,
@@ -77,13 +77,6 @@ const VoiceExamsList: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={() => refetch()}
-            className="border-border text-foreground hover:bg-accent flex items-center gap-2 rounded-lg border px-4 py-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </button>
           {isVoiceAdmin && (
             <>
               <button
