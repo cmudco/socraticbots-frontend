@@ -1,10 +1,12 @@
 /**
- * SharedAccessPanel — unified panel for managing team member access on a voice agent.
+ * SharedAccessPanel — the single unified panel for team assignment + member management.
  *
- * Shows current team members, allows adding new members by email (to the team),
- * and removing existing members. All access is managed at the team level.
+ * Sections:
+ *  1. Team selector — assign or change the team this agent belongs to
+ *  2. Team members — list with roles, remove button
+ *  3. Add member — email input + role picker to add anyone to the team
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Loader2, Trash2, UserPlus, Users } from 'lucide-react';
 
@@ -13,6 +15,7 @@ import { voiceAgentService } from '@/services/voiceAgent.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -21,20 +24,36 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import type { AgentMembersResponse, VoiceTeamMembership } from '@/types/voiceAgent';
+import type {
+  AgentMembersResponse,
+  VoiceTeamMembership,
+  VoiceTeamWithMembers,
+} from '@/types/voiceAgent';
 
 interface SharedAccessPanelProps {
   agentId: number;
-  teamName: string | null;
+  /** Current team ID the agent belongs to (null = unassigned) */
+  currentTeamId: number | null;
+  /** Current team name for display */
+  currentTeamName: string | null;
+  /** All teams the logged-in user can manage */
+  teams: VoiceTeamWithMembers[];
+  /** Members loaded from the /members/ endpoint */
   members: AgentMembersResponse | null;
+  /** Called after any mutation (add/remove member, change team) */
   onRefresh: () => void;
+  /** Called when the team assignment changes — parent should PATCH the agent */
+  onTeamChange: (teamId: number | null) => void;
 }
 
 const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
   agentId,
-  teamName,
+  currentTeamId,
+  currentTeamName,
+  teams,
   members,
   onRefresh,
+  onTeamChange,
 }) => {
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState<'manager' | 'reviewer'>('reviewer');
@@ -45,12 +64,22 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
 
   const teamMembers = members?.teamMembers ?? [];
 
+  // Find the selected team object for member count display
+  const selectedTeam = useMemo(() => {
+    if (currentTeamId === null) return null;
+    return teams.find(t => t.id === currentTeamId) ?? null;
+  }, [teams, currentTeamId]);
+
+  const clearFeedback = () => {
+    setError('');
+    setSuccess('');
+  };
+
   const handleAddMember = async () => {
     const email = newEmail.trim();
     if (!email) return;
 
-    setError('');
-    setSuccess('');
+    clearFeedback();
     setIsAdding(true);
 
     try {
@@ -68,8 +97,7 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
   };
 
   const handleRemoveMember = async (membership: VoiceTeamMembership) => {
-    setError('');
-    setSuccess('');
+    clearFeedback();
     setRemovingId(membership.id);
 
     try {
@@ -90,6 +118,8 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
     }
   };
 
+  const hasTeam = currentTeamId !== null;
+
   return (
     <Card>
       <CardHeader>
@@ -97,67 +127,61 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
           <Users className="h-5 w-5" />
           Shared Access
         </CardTitle>
-        <CardDescription>
-          {teamName
-            ? `Manage members of "${teamName}" who can access this agent.`
-            : 'This agent is not assigned to a team.'}
-        </CardDescription>
+        <CardDescription>Assign this agent to a team and manage who can access it.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Feedback messages */}
+      <CardContent className="space-y-6">
+        {/* ── Section 1: Team Assignment ── */}
+        <div className="space-y-2">
+          <Label className="text-foreground text-sm font-medium">Team</Label>
+          {teams.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {currentTeamName
+                ? `Assigned to "${currentTeamName}"`
+                : 'No teams available. Ask an admin to create one.'}
+            </p>
+          ) : (
+            <>
+              <Select
+                value={currentTeamId !== null ? String(currentTeamId) : 'none'}
+                onValueChange={value => {
+                  clearFeedback();
+                  onTeamChange(value === 'none' ? null : Number(value));
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a team" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No team</SelectItem>
+                  {teams.map(t => (
+                    <SelectItem key={t.id} value={String(t.id)}>
+                      {t.name}
+                      <span className="text-muted-foreground ml-2 text-xs">
+                        ({t.members.length} member{t.members.length !== 1 ? 's' : ''})
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedTeam && (
+                <p className="text-muted-foreground text-xs">
+                  All members of this team will have access to this agent based on their role.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* ── Feedback messages ── */}
         {error && <p className="text-sm text-red-500">{error}</p>}
         {success && <p className="text-sm text-green-600 dark:text-green-400">{success}</p>}
 
-        {/* Add member by email */}
-        {teamName && (
-          <div className="space-y-2">
-            <p className="text-foreground text-sm font-medium">Add Member</p>
-            <div className="flex gap-2">
-              <Input
-                type="email"
-                placeholder="Email address"
-                value={newEmail}
-                onChange={e => {
-                  setNewEmail(e.target.value);
-                  setError('');
-                  setSuccess('');
-                }}
-                onKeyDown={handleKeyDown}
-                className="flex-1"
-              />
-              <Select value={newRole} onValueChange={v => setNewRole(v as 'manager' | 'reviewer')}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="reviewer">Reviewer</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleAddMember}
-                disabled={isAdding || !newEmail.trim()}
-                size="default"
-              >
-                {isAdding ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <UserPlus className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            <p className="text-muted-foreground text-xs">
-              Adding a member gives them access to all agents in this team.
-            </p>
-          </div>
-        )}
-
-        {/* Team Members List */}
-        {teamMembers.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-foreground text-sm font-medium">
-              Team Members ({teamMembers.length})
-            </p>
+        {/* ── Section 2: Team Members List ── */}
+        {hasTeam && teamMembers.length > 0 && (
+          <div className="space-y-3">
+            <Label className="text-foreground text-sm font-medium">
+              Members ({teamMembers.length})
+            </Label>
             <div className="space-y-2">
               {teamMembers.map((m: VoiceTeamMembership) => (
                 <div
@@ -194,16 +218,59 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
           </div>
         )}
 
-        {/* Empty states */}
-        {teamName && teamMembers.length === 0 && (
-          <p className="text-muted-foreground text-center text-sm">
-            No team members yet. Add members by email above.
+        {hasTeam && teamMembers.length === 0 && (
+          <p className="text-muted-foreground text-sm">
+            No members in this team yet. Add someone below.
           </p>
         )}
 
-        {!teamName && (
+        {/* ── Section 3: Add Member ── */}
+        {hasTeam && (
+          <div className="space-y-2">
+            <Label className="text-foreground text-sm font-medium">Add Member</Label>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="Email address"
+                value={newEmail}
+                onChange={e => {
+                  setNewEmail(e.target.value);
+                  clearFeedback();
+                }}
+                onKeyDown={handleKeyDown}
+                className="flex-1"
+              />
+              <Select value={newRole} onValueChange={v => setNewRole(v as 'manager' | 'reviewer')}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reviewer">Reviewer</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={handleAddMember}
+                disabled={isAdding || !newEmail.trim()}
+                size="default"
+              >
+                {isAdding ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPlus className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              This person will be added to the team and will have access to all agents in it.
+            </p>
+          </div>
+        )}
+
+        {/* ── No team selected ── */}
+        {!hasTeam && teams.length > 0 && (
           <p className="text-muted-foreground text-center text-sm">
-            Assign this agent to a team to manage member access.
+            Select a team above to manage members.
           </p>
         )}
       </CardContent>
