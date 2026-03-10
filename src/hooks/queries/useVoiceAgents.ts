@@ -21,6 +21,7 @@ export const voiceAgentKeys = {
   details: () => [...voiceAgentKeys.all, 'detail'] as const,
   detail: (id: number) => [...voiceAgentKeys.details(), id] as const,
   elevenlabsAgents: () => [...voiceAgentKeys.all, 'elevenlabs'] as const,
+  myTeams: () => [...voiceAgentKeys.all, 'myTeams'] as const,
   conversations: () => [...voiceAgentKeys.all, 'conversations'] as const,
   conversation: (id: number) => [...voiceAgentKeys.conversations(), id] as const,
 };
@@ -56,6 +57,21 @@ export const useVoiceAgent = (id: number, enabled: boolean = true) => {
 };
 
 /**
+ * Get teams the current user manages (or all teams for supervisors)
+ */
+export const useMyTeams = (enabled: boolean = true) => {
+  const isAuthenticated = useIsAuthenticated();
+
+  return useQuery({
+    queryKey: voiceAgentKeys.myTeams(),
+    queryFn: () => voiceAgentService.getMyTeams(),
+    enabled: enabled && isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+};
+
+/**
  * Create a new voice agent
  */
 export const useCreateVoiceAgent = () => {
@@ -72,8 +88,11 @@ export const useCreateVoiceAgent = () => {
           userEmail: newAgent.userEmail,
           name: newAgent.name,
           description: newAgent.description,
+          team: newAgent.team,
+          teamName: newAgent.teamName,
           status: newAgent.status,
           examTitle: newAgent.examTitle,
+          accessLevel: newAgent.permissions.accessLevel,
           createdAt: newAgent.createdAt,
         };
         return oldAgents ? [listItem, ...oldAgents] : [listItem];
@@ -106,8 +125,11 @@ export const useUpdateVoiceAgent = () => {
           userEmail: updatedAgent.userEmail,
           name: updatedAgent.name,
           description: updatedAgent.description,
+          team: updatedAgent.team,
+          teamName: updatedAgent.teamName,
           status: updatedAgent.status,
           examTitle: updatedAgent.examTitle,
+          accessLevel: updatedAgent.permissions.accessLevel,
           createdAt: updatedAgent.createdAt,
         };
         return oldAgents
@@ -222,8 +244,11 @@ export const useRedeemVoiceAccessCode = () => {
           userEmail: unlockedAgent.userEmail,
           name: unlockedAgent.name,
           description: unlockedAgent.description,
+          team: unlockedAgent.team,
+          teamName: unlockedAgent.teamName,
           status: unlockedAgent.status,
           examTitle: unlockedAgent.examTitle,
+          accessLevel: unlockedAgent.permissions.accessLevel,
           createdAt: unlockedAgent.createdAt,
         };
         const alreadyInList = oldAgents?.some(a => a.id === unlockedAgent.id);
@@ -253,8 +278,11 @@ export const useImportElevenLabsAgent = () => {
           userEmail: importedAgent.userEmail,
           name: importedAgent.name,
           description: importedAgent.description,
+          team: importedAgent.team,
+          teamName: importedAgent.teamName,
           status: importedAgent.status,
           examTitle: importedAgent.examTitle,
+          accessLevel: importedAgent.permissions.accessLevel,
           createdAt: importedAgent.createdAt,
         };
         return oldAgents ? [listItem, ...oldAgents] : [listItem];

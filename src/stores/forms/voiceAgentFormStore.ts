@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { AgentStatus, GrantAccessMode, SpellingPatience, TurnEagerness } from '@/types/voiceAgent';
 import type { VoiceAgent } from '@/types/voiceAgent';
 
 export interface VoiceAgentFormState {
@@ -10,8 +11,9 @@ export interface VoiceAgentFormState {
   // Basic fields
   name: string;
   description: string;
-  status: 'draft' | 'active';
+  status: AgentStatus;
   accessCode: string;
+  team: number | null;
 
   // Exam fields
   examTitle: string;
@@ -25,9 +27,9 @@ export interface VoiceAgentFormState {
   maxDurationSeconds: number;
 
   // Advanced ElevenLabs Settings - Turn
-  turnEagerness: 'low' | 'normal' | 'high';
+  turnEagerness: TurnEagerness;
   turnTimeout: number;
-  spellingPatience: 'auto' | 'low' | 'normal' | 'high';
+  spellingPatience: SpellingPatience;
 
   // Advanced ElevenLabs Settings - TTS
   ttsStability: number;
@@ -36,6 +38,10 @@ export interface VoiceAgentFormState {
 
   // Advanced ElevenLabs Settings - LLM
   llmModel: string;
+
+  // Team member selection (used on create page, not persisted in getFormData)
+  grantAccessMode: GrantAccessMode;
+  selectedMemberUserIds: number[];
 
   // Validation
   touched: Record<string, boolean>;
@@ -50,6 +56,9 @@ export interface VoiceAgentFormState {
     value: VoiceAgentFormState[K]
   ) => void;
   updateNumericField: (field: string, value: number) => void;
+  setGrantAccessMode: (mode: GrantAccessMode) => void;
+  toggleMemberSelection: (userId: number) => void;
+  setSelectedMemberUserIds: (userIds: number[]) => void;
   initNewAgent: () => void;
   initEditAgent: (agent: VoiceAgent) => void;
   resetForm: () => void;
@@ -61,8 +70,9 @@ export interface VoiceAgentFormState {
 export interface VoiceAgentFormData {
   name: string;
   description: string;
-  status: 'draft' | 'active';
+  status: AgentStatus;
   accessCode?: string;
+  team?: number | null;
   examTitle: string;
   examInstructions: string;
   systemPrompt: string;
@@ -72,9 +82,9 @@ export interface VoiceAgentFormData {
   maxDurationSeconds: number;
   conversationConfig?: {
     turn: {
-      turnEagerness: 'low' | 'normal' | 'high';
+      turnEagerness: TurnEagerness;
       turnTimeout: number;
-      spellingPatience: 'auto' | 'low' | 'normal' | 'high';
+      spellingPatience: SpellingPatience;
     };
     tts: {
       voiceId: string;
@@ -100,8 +110,9 @@ const initialFormState = {
   // Basic
   name: '',
   description: '',
-  status: 'draft' as const,
+  status: AgentStatus.Draft,
   accessCode: '',
+  team: null as number | null,
 
   // Exam
   examTitle: '',
@@ -115,9 +126,9 @@ const initialFormState = {
   maxDurationSeconds: 1800,
 
   // Advanced - Turn
-  turnEagerness: 'normal' as const,
+  turnEagerness: TurnEagerness.Normal,
   turnTimeout: 7,
-  spellingPatience: 'auto' as const,
+  spellingPatience: SpellingPatience.Auto,
 
   // Advanced - TTS
   ttsStability: 0.5,
@@ -126,6 +137,10 @@ const initialFormState = {
 
   // Advanced - LLM
   llmModel: '',
+
+  // Team member selection
+  grantAccessMode: GrantAccessMode.EntireTeam,
+  selectedMemberUserIds: [] as number[],
 };
 
 const initialValidationState = {
@@ -171,6 +186,20 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
     set({ [field]: value });
   },
 
+  setGrantAccessMode: (mode: GrantAccessMode) => set({ grantAccessMode: mode }),
+
+  toggleMemberSelection: (userId: number) =>
+    set(state => {
+      const ids = state.selectedMemberUserIds;
+      return {
+        selectedMemberUserIds: ids.includes(userId)
+          ? ids.filter(id => id !== userId)
+          : [...ids, userId],
+      };
+    }),
+
+  setSelectedMemberUserIds: (userIds: number[]) => set({ selectedMemberUserIds: userIds }),
+
   initNewAgent: () =>
     set({
       isSubmitting: false,
@@ -188,8 +217,9 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       // Basic
       name: agent.name || '',
       description: agent.description || '',
-      status: agent.status || 'draft',
+      status: agent.status || AgentStatus.Draft,
       accessCode: agent.accessCodeForAdmin || '',
+      team: agent.team ?? null,
 
       // Exam
       examTitle: agent.examTitle || '',
@@ -203,9 +233,9 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       maxDurationSeconds: agent.maxDurationSeconds ?? 1800,
 
       // Advanced - Turn
-      turnEagerness: config?.turn?.turnEagerness ?? 'normal',
+      turnEagerness: config?.turn?.turnEagerness ?? TurnEagerness.Normal,
       turnTimeout: config?.turn?.turnTimeout ?? 7,
-      spellingPatience: config?.turn?.spellingPatience ?? 'auto',
+      spellingPatience: config?.turn?.spellingPatience ?? SpellingPatience.Auto,
 
       // Advanced - TTS
       ttsStability: config?.tts?.stability ?? 0.5,
@@ -256,6 +286,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       description: state.description,
       status: state.status,
       ...(state.accessCode.trim() && { accessCode: state.accessCode.trim() }),
+      ...(state.team !== null && { team: state.team }),
       examTitle: state.examTitle,
       examInstructions: state.examInstructions,
       systemPrompt: state.systemPrompt,

@@ -2,12 +2,60 @@
  * TypeScript types for Voice Agent feature.
  */
 
+// ── Enums ──
+
+export enum AgentStatus {
+  Draft = 'draft',
+  Active = 'active',
+}
+
+export enum TurnEagerness {
+  Low = 'low',
+  Normal = 'normal',
+  High = 'high',
+}
+
+export enum SpellingPatience {
+  Auto = 'auto',
+  Low = 'low',
+  Normal = 'normal',
+  High = 'high',
+}
+
+export enum GrantAccessMode {
+  EntireTeam = 'entire_team',
+  SpecificMembers = 'specific_members',
+}
+
+export enum ConversationStatus {
+  InProgress = 'in_progress',
+  Completed = 'completed',
+  Failed = 'failed',
+  Cancelled = 'cancelled',
+}
+
+export enum TranscriptRole {
+  User = 'user',
+  Agent = 'agent',
+}
+
+export enum TeamMemberRole {
+  Manager = 'manager',
+  Admin = 'admin',
+  Reviewer = 'reviewer',
+}
+
+export enum AgentMemberRole {
+  Admin = 'admin',
+  Reviewer = 'reviewer',
+}
+
 // ElevenLabs conversation config types
 export interface ElevenLabsTurnConfig {
   turnTimeout?: number;
   silenceEndCallTimeout?: number;
-  turnEagerness?: 'low' | 'normal' | 'high';
-  spellingPatience?: 'auto' | 'low' | 'normal' | 'high';
+  turnEagerness?: TurnEagerness;
+  spellingPatience?: SpellingPatience;
 }
 
 export interface ElevenLabsTtsConfig {
@@ -42,12 +90,77 @@ export interface ConversationConfig {
   agent?: ElevenLabsAgentConfig;
 }
 
+// Access levels returned by the backend
+export type VoiceAccessLevel =
+  | 'supervisor'
+  | 'owner'
+  | 'manager'
+  | 'admin'
+  | 'reviewer'
+  | 'student';
+
+export interface VoicePermissions {
+  canEdit: boolean;
+  canDelete: boolean;
+  canManageAccess: boolean;
+  canViewTranscripts: boolean;
+  canLaunchExam: boolean;
+  isStaff: boolean;
+  accessLevel: VoiceAccessLevel | null;
+}
+
+// Team types
+export interface VoiceTeam {
+  id: number;
+  name: string;
+  description: string;
+  createdBy: number;
+  createdByEmail: string;
+  isActive: boolean;
+  memberCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VoiceTeamWithMembers extends VoiceTeam {
+  members: VoiceTeamMembership[];
+}
+
+export interface VoiceTeamMembership {
+  id: number;
+  team: number;
+  user: number;
+  userEmail: string;
+  role: TeamMemberRole;
+  grantedBy: number;
+  grantedByEmail: string | null;
+  createdAt: string;
+}
+
+export interface VoiceAgentMembership {
+  id: number;
+  agent: number;
+  user: number;
+  userEmail: string;
+  role: AgentMemberRole;
+  grantedBy: number;
+  grantedByEmail: string | null;
+  createdAt: string;
+}
+
+export interface AgentMembersResponse {
+  teamMembers: VoiceTeamMembership[];
+  agentMembers: VoiceAgentMembership[];
+}
+
 export interface VoiceAgent {
   id: number;
   user: number;
   userEmail: string;
   name: string;
   description: string;
+  team: number | null;
+  teamName: string | null;
   elevenlabsAgentId: string | null;
   voiceId: string;
   systemPrompt: string;
@@ -56,11 +169,12 @@ export interface VoiceAgent {
   maxDurationSeconds: number;
   examTitle: string;
   examInstructions: string;
-  status: 'draft' | 'active';
+  status: AgentStatus;
   conversationConfig: ConversationConfig | null;
   conversationCount: number;
   accessCodeForAdmin?: string | null;
   hasUserAccess?: boolean;
+  permissions: VoicePermissions;
   createdAt: string;
   updatedAt: string;
 }
@@ -71,8 +185,11 @@ export interface VoiceAgentListItem {
   userEmail: string;
   name: string;
   description: string;
-  status: 'draft' | 'active';
+  team: number | null;
+  teamName: string | null;
+  status: AgentStatus;
   examTitle: string;
+  accessLevel: VoiceAccessLevel | null;
   createdAt: string;
 }
 
@@ -86,9 +203,10 @@ export interface VoiceAgentCreateData {
   maxDurationSeconds?: number;
   examTitle?: string;
   examInstructions?: string;
-  status?: 'draft' | 'active';
+  status?: AgentStatus;
   conversationConfig?: ConversationConfig;
   accessCode?: string;
+  team?: number | null;
 }
 
 export interface VoiceAgentUpdateData {
@@ -101,9 +219,10 @@ export interface VoiceAgentUpdateData {
   maxDurationSeconds?: number;
   examTitle?: string;
   examInstructions?: string;
-  status?: 'draft' | 'active';
+  status?: AgentStatus;
   conversationConfig?: ConversationConfig;
   accessCode?: string;
+  team?: number | null;
 }
 
 export interface VoiceConversation {
@@ -116,7 +235,7 @@ export interface VoiceConversation {
   startedAt: string;
   endedAt: string | null;
   durationSeconds: number | null;
-  status: 'in_progress' | 'completed' | 'failed' | 'cancelled';
+  status: ConversationStatus;
   transcript: TranscriptMessage[];
   createdAt: string;
 }
@@ -129,11 +248,11 @@ export interface VoiceConversationListItem {
   startedAt: string;
   endedAt: string | null;
   durationSeconds: number | null;
-  status: 'in_progress' | 'completed' | 'failed' | 'cancelled';
+  status: ConversationStatus;
 }
 
 export interface TranscriptMessage {
-  role: 'user' | 'agent';
+  role: TranscriptRole;
   message: string;
   time_in_call_secs?: number;
 }

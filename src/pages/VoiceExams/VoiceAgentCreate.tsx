@@ -2,17 +2,20 @@
  * Create Voice Agent page.
  * Form for creating a new ElevenLabs voice agent.
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ArrowLeft, Save } from 'lucide-react';
 
 import { useUser } from '@/hooks/queries/useUser';
-import { useCreateVoiceAgent } from '@/hooks/queries/useVoiceAgents';
+import { useCreateVoiceAgent, useMyTeams } from '@/hooks/queries/useVoiceAgents';
 
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
 
+import { voiceAgentService } from '@/services/voiceAgent.service';
+
 import { Button } from '@/components/ui/button';
+import TeamMembersPreview from '@/components/voice-agents/TeamMembersPreview';
 import {
   AIConfigSection,
   AdvancedSettingsSection,
@@ -20,13 +23,35 @@ import {
   ExamConfigSection,
 } from '@/components/voice-agents/sections';
 
+import { GrantAccessMode } from '@/types/voiceAgent';
+
 const VoiceAgentCreate: React.FC = () => {
   const navigate = useNavigate();
   const user = useUser();
   const createAgent = useCreateVoiceAgent();
+  const { data: myTeams, isLoading: teamsLoading } = useMyTeams();
 
-  const { initNewAgent, validateForm, getFormData, isSubmitting, setSubmitting, resetForm } =
-    useVoiceAgentFormStore();
+  const {
+    initNewAgent,
+    validateForm,
+    getFormData,
+    isSubmitting,
+    setSubmitting,
+    resetForm,
+    team,
+    grantAccessMode,
+    selectedMemberUserIds,
+    setGrantAccessMode,
+    toggleMemberSelection,
+    updateField,
+  } = useVoiceAgentFormStore();
+
+  // Derive the members of the currently selected team
+  const selectedTeamMembers = useMemo(() => {
+    if (!myTeams || team === null) return [];
+    const selectedTeam = myTeams.find(t => t.id === team);
+    return selectedTeam?.members ?? [];
+  }, [myTeams, team]);
 
   // Initialize form on mount
   useEffect(() => {
@@ -36,9 +61,16 @@ const VoiceAgentCreate: React.FC = () => {
     };
   }, [initNewAgent, resetForm]);
 
-  // Redirect if not a voice admin
+  // Auto-select team when there is exactly one
   useEffect(() => {
-    if (user && !user.hasSupervisorAccessForVoiceAgent) {
+    if (myTeams && myTeams.length === 1 && team === null) {
+      updateField('team', myTeams[0].id);
+    }
+  }, [myTeams, team, updateField]);
+
+  // Redirect if not a creator/supervisor (managers also pass via isCreator)
+  useEffect(() => {
+    if (user && !user.isCreator && !user.hasSupervisorAccessForVoiceAgent) {
       navigate('/voice-exams');
     }
   }, [user, navigate]);
@@ -56,6 +88,27 @@ const VoiceAgentCreate: React.FC = () => {
       const formData = getFormData();
       const result = await createAgent.mutateAsync(formData);
       if (result) {
+        // Grant access to specific members if selected
+        if (
+          grantAccessMode === GrantAccessMode.SpecificMembers &&
+          selectedMemberUserIds.length > 0
+        ) {
+          for (const userId of selectedMemberUserIds) {
+            const member = selectedTeamMembers.find(m => m.user === userId);
+            if (member) {
+              try {
+                await voiceAgentService.addAgentMember(
+                  result.id,
+                  member.userEmail,
+                  'reviewer',
+                  'agent'
+                );
+              } catch (err) {
+                console.error(`Failed to grant access to ${member.userEmail}:`, err);
+              }
+            }
+          }
+        }
         resetForm();
         navigate(`/voice-exams/${result.id}`);
       }
@@ -66,7 +119,7 @@ const VoiceAgentCreate: React.FC = () => {
     }
   };
 
-  if (!user?.hasSupervisorAccessForVoiceAgent) {
+  if (user && !user.isCreator && !user.hasSupervisorAccessForVoiceAgent) {
     return null;
   }
 
@@ -91,6 +144,20 @@ const VoiceAgentCreate: React.FC = () => {
         <BasicInfoSection showAccessCode />
         <ExamConfigSection />
         <AIConfigSection />
+
+        {!teamsLoading && myTeams && myTeams.length > 0 && (
+          <TeamMembersPreview
+            teams={myTeams}
+            selectedTeamId={team}
+            onTeamChange={id => updateField('team', id)}
+            members={selectedTeamMembers}
+            grantAccessMode={grantAccessMode}
+            selectedMemberUserIds={selectedMemberUserIds}
+            onModeChange={setGrantAccessMode}
+            onToggleMember={toggleMemberSelection}
+          />
+        )}
+
         <AdvancedSettingsSection collapsible />
 
         {/* Submit Button */}
