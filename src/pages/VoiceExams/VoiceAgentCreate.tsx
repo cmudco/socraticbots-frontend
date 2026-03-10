@@ -5,25 +5,29 @@
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Users } from 'lucide-react';
 
 import { useUser } from '@/hooks/queries/useUser';
 import { useCreateVoiceAgent, useMyTeams } from '@/hooks/queries/useVoiceAgents';
 
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
 
-import { voiceAgentService } from '@/services/voiceAgent.service';
-
 import { Button } from '@/components/ui/button';
-import TeamMembersPreview from '@/components/voice-agents/TeamMembersPreview';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   AIConfigSection,
   AdvancedSettingsSection,
   BasicInfoSection,
   ExamConfigSection,
 } from '@/components/voice-agents/sections';
-
-import { GrantAccessMode } from '@/types/voiceAgent';
 
 const VoiceAgentCreate: React.FC = () => {
   const navigate = useNavigate();
@@ -39,18 +43,13 @@ const VoiceAgentCreate: React.FC = () => {
     setSubmitting,
     resetForm,
     team,
-    grantAccessMode,
-    selectedMemberUserIds,
-    setGrantAccessMode,
-    toggleMemberSelection,
     updateField,
   } = useVoiceAgentFormStore();
 
-  // Derive the members of the currently selected team
-  const selectedTeamMembers = useMemo(() => {
-    if (!myTeams || team === null) return [];
-    const selectedTeam = myTeams.find(t => t.id === team);
-    return selectedTeam?.members ?? [];
+  // Derive the member count for the selected team (for display)
+  const selectedTeam = useMemo(() => {
+    if (!myTeams || team === null) return null;
+    return myTeams.find(t => t.id === team) ?? null;
   }, [myTeams, team]);
 
   // Initialize form on mount
@@ -88,27 +87,6 @@ const VoiceAgentCreate: React.FC = () => {
       const formData = getFormData();
       const result = await createAgent.mutateAsync(formData);
       if (result) {
-        // Grant access to specific members if selected
-        if (
-          grantAccessMode === GrantAccessMode.SpecificMembers &&
-          selectedMemberUserIds.length > 0
-        ) {
-          for (const userId of selectedMemberUserIds) {
-            const member = selectedTeamMembers.find(m => m.user === userId);
-            if (member) {
-              try {
-                await voiceAgentService.addAgentMember(
-                  result.id,
-                  member.userEmail,
-                  'reviewer',
-                  'agent'
-                );
-              } catch (err) {
-                console.error(`Failed to grant access to ${member.userEmail}:`, err);
-              }
-            }
-          }
-        }
         resetForm();
         navigate(`/voice-exams/${result.id}`);
       }
@@ -145,17 +123,52 @@ const VoiceAgentCreate: React.FC = () => {
         <ExamConfigSection />
         <AIConfigSection />
 
+        {/* Team Assignment */}
         {!teamsLoading && myTeams && myTeams.length > 0 && (
-          <TeamMembersPreview
-            teams={myTeams}
-            selectedTeamId={team}
-            onTeamChange={id => updateField('team', id)}
-            members={selectedTeamMembers}
-            grantAccessMode={grantAccessMode}
-            selectedMemberUserIds={selectedMemberUserIds}
-            onModeChange={setGrantAccessMode}
-            onToggleMember={toggleMemberSelection}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Team
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {myTeams.length === 1 ? (
+                <div>
+                  <p className="text-foreground text-sm font-medium">{myTeams[0].name}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {myTeams[0].members.length} member{myTeams[0].members.length !== 1 ? 's' : ''} —
+                    manage access after creation
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Assign to team</Label>
+                  <Select
+                    value={team !== null ? String(team) : ''}
+                    onValueChange={value => updateField('team', Number(value))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a team" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {myTeams.map(t => (
+                        <SelectItem key={t.id} value={String(t.id)}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedTeam && (
+                    <p className="text-muted-foreground text-xs">
+                      {selectedTeam.members.length} member
+                      {selectedTeam.members.length !== 1 ? 's' : ''} — manage access after creation
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         <AdvancedSettingsSection collapsible />

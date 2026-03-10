@@ -1,92 +1,92 @@
 /**
- * SharedAccessPanel — allows managers to grant/revoke access to team members.
- * Managers can only grant access to members of their team (not arbitrary emails).
- * Shows "Entire team" vs "Select specific members" toggle with member list.
+ * SharedAccessPanel — unified panel for managing team member access on a voice agent.
+ *
+ * Shows current team members, allows adding new members by email (to the team),
+ * and removing existing members. All access is managed at the team level.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 
-import { Check, Trash2, UserPlus, Users } from 'lucide-react';
+import { Loader2, Trash2, UserPlus, Users } from 'lucide-react';
 
 import { voiceAgentService } from '@/services/voiceAgent.service';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-import type {
-  AgentMembersResponse,
-  VoiceAgentMembership,
-  VoiceTeamMembership,
-} from '@/types/voiceAgent';
+import type { AgentMembersResponse, VoiceTeamMembership } from '@/types/voiceAgent';
 
 interface SharedAccessPanelProps {
   agentId: number;
-  hasTeam: boolean;
+  teamName: string | null;
   members: AgentMembersResponse | null;
   onRefresh: () => void;
 }
 
 const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
   agentId,
-  hasTeam,
+  teamName,
   members,
   onRefresh,
 }) => {
-  const [isGranting, setIsGranting] = useState<number | null>(null);
-  const [isRemoving, setIsRemoving] = useState<number | null>(null);
+  const [newEmail, setNewEmail] = useState('');
+  const [newRole, setNewRole] = useState<'manager' | 'reviewer'>('reviewer');
+  const [isAdding, setIsAdding] = useState(false);
+  const [removingId, setRemovingId] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const teamMembers = useMemo(() => members?.teamMembers ?? [], [members]);
-  const agentMembers = useMemo(() => members?.agentMembers ?? [], [members]);
+  const teamMembers = members?.teamMembers ?? [];
 
-  // Build a set of user IDs that already have agent-level access
-  const agentMemberUserIds = useMemo(() => new Set(agentMembers.map(m => m.user)), [agentMembers]);
+  const handleAddMember = async () => {
+    const email = newEmail.trim();
+    if (!email) return;
 
-  // Team members who don't yet have explicit agent-level access
-  const teamMembersWithoutAccess = useMemo(
-    () => teamMembers.filter(m => !agentMemberUserIds.has(m.user)),
-    [teamMembers, agentMemberUserIds]
-  );
-
-  const handleGrantAccess = async (member: VoiceTeamMembership) => {
     setError('');
-    setIsGranting(member.user);
+    setSuccess('');
+    setIsAdding(true);
+
     try {
-      await voiceAgentService.addAgentMember(agentId, member.userEmail, 'reviewer', 'agent');
+      await voiceAgentService.addAgentMember(agentId, email, newRole, 'team');
+      setNewEmail('');
+      setNewRole('reviewer');
+      setSuccess(`Added ${email} as ${newRole}`);
       onRefresh();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to grant access';
+      const msg = err instanceof Error ? err.message : 'Failed to add member';
       setError(msg);
     } finally {
-      setIsGranting(null);
+      setIsAdding(false);
     }
   };
 
-  const handleGrantAllTeamMembers = async () => {
+  const handleRemoveMember = async (membership: VoiceTeamMembership) => {
     setError('');
-    setIsGranting(-1); // sentinel for "granting all"
+    setSuccess('');
+    setRemovingId(membership.id);
+
     try {
-      for (const member of teamMembersWithoutAccess) {
-        try {
-          await voiceAgentService.addAgentMember(agentId, member.userEmail, 'reviewer', 'agent');
-        } catch (err) {
-          console.error(`Failed to grant access to ${member.userEmail}:`, err);
-        }
-      }
+      await voiceAgentService.removeAgentMember(agentId, membership.id, 'team');
       onRefresh();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to remove member';
+      setError(msg);
     } finally {
-      setIsGranting(null);
+      setRemovingId(null);
     }
   };
 
-  const handleRemoveAccess = async (membership: VoiceAgentMembership) => {
-    setIsRemoving(membership.id);
-    try {
-      await voiceAgentService.removeAgentMember(agentId, membership.id, 'agent');
-      onRefresh();
-    } catch (err) {
-      console.error('Failed to remove access:', err);
-    } finally {
-      setIsRemoving(null);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddMember();
     }
   };
 
@@ -98,100 +98,95 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
           Shared Access
         </CardTitle>
         <CardDescription>
-          Grant team members access to view transcripts or manage this agent.
+          {teamName
+            ? `Manage members of "${teamName}" who can access this agent.`
+            : 'This agent is not assigned to a team.'}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-5">
+        {/* Feedback messages */}
         {error && <p className="text-sm text-red-500">{error}</p>}
+        {success && <p className="text-sm text-green-600 dark:text-green-400">{success}</p>}
 
-        {/* Team Members — grant access */}
-        {hasTeam && teamMembers.length > 0 && (
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h4 className="text-foreground text-sm font-medium">
-                Team Members ({teamMembers.length})
-              </h4>
-              {teamMembersWithoutAccess.length > 0 && (
-                <Button
-                  onClick={handleGrantAllTeamMembers}
-                  disabled={isGranting !== null}
-                  size="sm"
-                  variant="outline"
-                >
-                  <UserPlus className="mr-1 h-4 w-4" />
-                  {isGranting === -1 ? 'Granting...' : 'Grant All'}
-                </Button>
-              )}
+        {/* Add member by email */}
+        {teamName && (
+          <div className="space-y-2">
+            <p className="text-foreground text-sm font-medium">Add Member</p>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="Email address"
+                value={newEmail}
+                onChange={e => {
+                  setNewEmail(e.target.value);
+                  setError('');
+                  setSuccess('');
+                }}
+                onKeyDown={handleKeyDown}
+                className="flex-1"
+              />
+              <Select value={newRole} onValueChange={v => setNewRole(v as 'manager' | 'reviewer')}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reviewer">Reviewer</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={handleAddMember}
+                disabled={isAdding || !newEmail.trim()}
+                size="default"
+              >
+                {isAdding ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPlus className="h-4 w-4" />
+                )}
+              </Button>
             </div>
-            <div className="space-y-2">
-              {teamMembers.map((m: VoiceTeamMembership) => {
-                const hasAccess = agentMemberUserIds.has(m.user);
-                return (
-                  <div
-                    key={m.id}
-                    className="border-border flex items-center justify-between rounded-lg border px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-foreground text-sm">{m.userEmail}</span>
-                      <span className="text-muted-foreground rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize dark:bg-gray-800">
-                        {m.role}
-                      </span>
-                      {hasAccess && (
-                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                          agent access
-                        </span>
-                      )}
-                    </div>
-                    {!hasAccess && (
-                      <Button
-                        onClick={() => handleGrantAccess(m)}
-                        disabled={isGranting !== null}
-                        size="sm"
-                        variant="ghost"
-                        className="h-8"
-                      >
-                        <UserPlus className="mr-1 h-3.5 w-3.5" />
-                        {isGranting === m.user ? 'Granting...' : 'Grant'}
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            {teamMembersWithoutAccess.length === 0 && (
-              <p className="text-muted-foreground mt-2 flex items-center gap-1 text-xs">
-                <Check className="h-3.5 w-3.5 text-green-500" />
-                All team members have agent-level access.
-              </p>
-            )}
+            <p className="text-muted-foreground text-xs">
+              Adding a member gives them access to all agents in this team.
+            </p>
           </div>
         )}
 
-        {/* Agent-Level Members — with remove option */}
-        {agentMembers.length > 0 && (
-          <div>
-            <h4 className="text-foreground mb-2 text-sm font-medium">
-              Agent-Level Access ({agentMembers.length})
-            </h4>
+        {/* Team Members List */}
+        {teamMembers.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-foreground text-sm font-medium">
+              Team Members ({teamMembers.length})
+            </p>
             <div className="space-y-2">
-              {agentMembers.map((m: VoiceAgentMembership) => (
+              {teamMembers.map((m: VoiceTeamMembership) => (
                 <div
                   key={m.id}
                   className="border-border flex items-center justify-between rounded-lg border px-3 py-2"
                 >
-                  <div>
+                  <div className="flex items-center gap-2">
                     <span className="text-foreground text-sm">{m.userEmail}</span>
-                    <span className="text-muted-foreground ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs capitalize dark:bg-gray-800">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
+                        m.role === 'manager'
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                      }`}
+                    >
                       {m.role}
                     </span>
                   </div>
                   <button
-                    onClick={() => handleRemoveAccess(m)}
-                    disabled={isRemoving === m.id}
+                    onClick={() => handleRemoveMember(m)}
+                    disabled={removingId === m.id}
                     className="text-muted-foreground hover:text-destructive disabled:opacity-50"
-                    title="Remove access"
+                    title="Remove from team"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {removingId === m.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               ))}
@@ -199,16 +194,16 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
           </div>
         )}
 
-        {/* No team case — fallback message */}
-        {!hasTeam && agentMembers.length === 0 && (
+        {/* Empty states */}
+        {teamName && teamMembers.length === 0 && (
           <p className="text-muted-foreground text-center text-sm">
-            This agent is not assigned to a team. Assign it to a team to manage member access.
+            No team members yet. Add members by email above.
           </p>
         )}
 
-        {hasTeam && teamMembers.length === 0 && agentMembers.length === 0 && (
+        {!teamName && (
           <p className="text-muted-foreground text-center text-sm">
-            No team members found. Add members to the team first.
+            Assign this agent to a team to manage member access.
           </p>
         )}
       </CardContent>

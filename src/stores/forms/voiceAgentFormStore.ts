@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { AgentStatus, GrantAccessMode, SpellingPatience, TurnEagerness } from '@/types/voiceAgent';
+import { AgentStatus, SpellingPatience, TurnEagerness } from '@/types/voiceAgent';
 import type { VoiceAgent } from '@/types/voiceAgent';
 
 export interface VoiceAgentFormState {
@@ -39,10 +39,6 @@ export interface VoiceAgentFormState {
   // Advanced ElevenLabs Settings - LLM
   llmModel: string;
 
-  // Team member selection (used on create page, not persisted in getFormData)
-  grantAccessMode: GrantAccessMode;
-  selectedMemberUserIds: number[];
-
   // Validation
   touched: Record<string, boolean>;
   errors: Record<string, string>;
@@ -56,9 +52,6 @@ export interface VoiceAgentFormState {
     value: VoiceAgentFormState[K]
   ) => void;
   updateNumericField: (field: string, value: number) => void;
-  setGrantAccessMode: (mode: GrantAccessMode) => void;
-  toggleMemberSelection: (userId: number) => void;
-  setSelectedMemberUserIds: (userIds: number[]) => void;
   initNewAgent: () => void;
   initEditAgent: (agent: VoiceAgent) => void;
   resetForm: () => void;
@@ -137,10 +130,6 @@ const initialFormState = {
 
   // Advanced - LLM
   llmModel: '',
-
-  // Team member selection
-  grantAccessMode: GrantAccessMode.EntireTeam,
-  selectedMemberUserIds: [] as number[],
 };
 
 const initialValidationState = {
@@ -185,20 +174,6 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
   updateNumericField: (field: string, value: number) => {
     set({ [field]: value });
   },
-
-  setGrantAccessMode: (mode: GrantAccessMode) => set({ grantAccessMode: mode }),
-
-  toggleMemberSelection: (userId: number) =>
-    set(state => {
-      const ids = state.selectedMemberUserIds;
-      return {
-        selectedMemberUserIds: ids.includes(userId)
-          ? ids.filter(id => id !== userId)
-          : [...ids, userId],
-      };
-    }),
-
-  setSelectedMemberUserIds: (userIds: number[]) => set({ selectedMemberUserIds: userIds }),
 
   initNewAgent: () =>
     set({

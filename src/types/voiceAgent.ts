@@ -22,11 +22,6 @@ export enum SpellingPatience {
   High = 'high',
 }
 
-export enum GrantAccessMode {
-  EntireTeam = 'entire_team',
-  SpecificMembers = 'specific_members',
-}
-
 export enum ConversationStatus {
   InProgress = 'in_progress',
   Completed = 'completed',
