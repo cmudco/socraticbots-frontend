@@ -25,12 +25,12 @@ const VoiceExamsList: React.FC = () => {
   const user = useUser();
   const { data: agents, isLoading } = useVoiceAgents();
 
-  // Can create = supervisor, creator, or has at least one owner/manager role
+  // Can create = supervisor or voice team manager
   const canCreate = useMemo(() => {
-    if (user?.hasSupervisorAccessForVoiceAgent || user?.isCreator) return true;
-    if (!agents) return false;
-    return agents.some(a => a.accessLevel === 'owner' || a.accessLevel === 'manager');
-  }, [user, agents]);
+    if (user?.hasSupervisorAccessForVoiceAgent) return true;
+    if (user?.isVoiceTeamManager) return true;
+    return false;
+  }, [user]);
 
   const {
     data: elevenlabsAgents,
