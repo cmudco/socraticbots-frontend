@@ -52,9 +52,9 @@ const VoiceAgentCreate: React.FC = () => {
     }
   }, [myTeams, team, updateField]);
 
-  // Redirect if not a creator/supervisor (managers also pass via isCreator)
+  // Redirect if not a supervisor or voice team manager
   useEffect(() => {
-    if (user && !user.isCreator && !user.hasSupervisorAccessForVoiceAgent) {
+    if (user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager) {
       navigate('/voice-exams');
     }
   }, [user, navigate]);
@@ -82,7 +82,7 @@ const VoiceAgentCreate: React.FC = () => {
     }
   };
 
-  if (user && !user.isCreator && !user.hasSupervisorAccessForVoiceAgent) {
+  if (user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager) {
     return null;
   }
 
