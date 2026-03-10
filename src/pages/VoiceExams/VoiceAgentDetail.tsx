@@ -517,7 +517,7 @@ const VoiceAgentDetail: React.FC = () => {
           {canManageAccess && (
             <SharedAccessPanel
               agentId={agent.id}
-              hasTeam={!!agent.team}
+              teamName={agent.teamName}
               members={members}
               onRefresh={loadMembers}
             />
