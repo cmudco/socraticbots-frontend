@@ -1,12 +1,13 @@
 /**
  * VoiceExams list page.
- * Shows all voice agents and allows voice admins to manage them.
- * Students without access see an access code input to unlock an exam.
+ * Shows all voice agents the user can access via any role.
+ * Admins/managers can create new agents, import from ElevenLabs, and manage.
+ * Students see an access code input to unlock exams.
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Clock, Download, Mic, Plus, RefreshCw, User } from 'lucide-react';
+import { Clock, Download, Mic, Plus, RefreshCw, Shield, User, Users } from 'lucide-react';
 
 import { useUser } from '@/hooks/queries/useUser';
 import {
@@ -16,22 +17,32 @@ import {
   useVoiceAgents,
 } from '@/hooks/queries/useVoiceAgents';
 
+import { ROLE_BADGE_STYLES } from '@/utils/voiceAgentStyles';
+
+import { AgentStatus } from '@/types/voiceAgent';
+
 const VoiceExamsList: React.FC = () => {
   const user = useUser();
   const { data: agents, isLoading } = useVoiceAgents();
+
+  // Can create = supervisor, creator, or has at least one owner/manager role
+  const canCreate = useMemo(() => {
+    if (user?.hasSupervisorAccessForVoiceAgent || user?.isCreator) return true;
+    if (!agents) return false;
+    return agents.some(a => a.accessLevel === 'owner' || a.accessLevel === 'manager');
+  }, [user, agents]);
+
   const {
     data: elevenlabsAgents,
     isLoading: loadingElevenlabs,
     refetch: refetchElevenlabs,
-  } = useElevenLabsAgents(user?.hasSupervisorAccessForVoiceAgent ?? false);
+  } = useElevenLabsAgents(canCreate);
   const importAgent = useImportElevenLabsAgent();
   const redeemCode = useRedeemVoiceAccessCode();
 
   const [showImportSection, setShowImportSection] = useState(false);
   const [accessCode, setAccessCode] = useState('');
   const [redeemError, setRedeemError] = useState('');
-
-  const isVoiceAdmin = user?.hasSupervisorAccessForVoiceAgent ?? false;
 
   const handleImport = async (agentId: string) => {
     await importAgent.mutateAsync(agentId);
@@ -71,13 +82,13 @@ const VoiceExamsList: React.FC = () => {
         <div>
           <h1 className="text-foreground text-2xl font-bold">Voice Exams</h1>
           <p className="text-muted-foreground mt-1">
-            {isVoiceAdmin
+            {canCreate
               ? 'Create and manage voice-based exams powered by ElevenLabs AI'
               : 'Take voice-based exams powered by ElevenLabs AI'}
           </p>
         </div>
         <div className="flex gap-3">
-          {isVoiceAdmin && (
+          {canCreate && (
             <>
               <button
                 onClick={() => setShowImportSection(!showImportSection)}
@@ -99,7 +110,7 @@ const VoiceExamsList: React.FC = () => {
       </div>
 
       {/* Import Section (Voice admins only) */}
-      {isVoiceAdmin && showImportSection && (
+      {canCreate && showImportSection && (
         <div className="border-border bg-card mb-8 rounded-lg border p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-foreground text-lg font-semibold">Import from ElevenLabs</h2>
@@ -168,15 +179,25 @@ const VoiceExamsList: React.FC = () => {
                 <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
                   <Mic className="text-primary h-6 w-6" />
                 </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    agent.status === 'active'
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {agent.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  {agent.accessLevel && agent.accessLevel !== 'student' && (
+                    <span
+                      className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_STYLES[agent.accessLevel] || ''}`}
+                    >
+                      <Shield className="h-3 w-3" />
+                      {agent.accessLevel}
+                    </span>
+                  )}
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      agent.status === AgentStatus.Active
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {agent.status}
+                  </span>
+                </div>
               </div>
 
               <h3 className="text-foreground group-hover:text-primary mb-2 text-lg font-semibold">
@@ -191,7 +212,13 @@ const VoiceExamsList: React.FC = () => {
                 {agent.description || 'No description provided'}
               </p>
 
-              <div className="text-muted-foreground flex items-center gap-4 text-xs">
+              <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-xs">
+                {agent.teamName && (
+                  <div className="flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    {agent.teamName}
+                  </div>
+                )}
                 <div className="flex items-center gap-1">
                   <User className="h-3 w-3" />
                   {agent.userEmail}
@@ -207,7 +234,7 @@ const VoiceExamsList: React.FC = () => {
       ) : (
         <div className="border-border flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-16">
           <Mic className="text-muted-foreground mb-4 h-12 w-12" />
-          {isVoiceAdmin ? (
+          {canCreate ? (
             <>
               <h3 className="text-foreground mb-2 text-lg font-medium">No Voice Agents Yet</h3>
               <p className="text-muted-foreground mb-4">

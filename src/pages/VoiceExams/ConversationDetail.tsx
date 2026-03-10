@@ -18,7 +18,7 @@ import { formatDate, formatDuration, formatTimeInCall } from '@/utils/formatters
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { TranscriptMessage } from '@/types/voiceAgent';
+import { ConversationStatus, TranscriptRole , TranscriptMessage } from '@/types/voiceAgent';
 
 const STATUS_STYLES: Record<string, string> = {
   completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -112,7 +112,7 @@ const ConversationDetail: React.FC = () => {
                 {exportPdf.isPending ? 'Exporting...' : 'Download PDF'}
               </Button>
             )}
-            {conversation.status === 'completed' && !hasTranscript && (
+            {conversation.status === ConversationStatus.Completed && !hasTranscript && (
               <Button
                 variant="outline"
                 onClick={handleSyncTranscript}
@@ -171,11 +171,11 @@ const ConversationDetail: React.FC = () => {
           {!hasTranscript ? (
             <div className="py-8 text-center">
               <p className="text-muted-foreground">
-                {conversation.status === 'in_progress'
+                {conversation.status === ConversationStatus.InProgress
                   ? 'Transcript will be available after the conversation ends.'
                   : 'No transcript available. Try syncing from ElevenLabs.'}
               </p>
-              {conversation.status === 'completed' && (
+              {conversation.status === ConversationStatus.Completed && (
                 <Button
                   variant="outline"
                   className="mt-4"
@@ -194,16 +194,16 @@ const ConversationDetail: React.FC = () => {
               {conversation.transcript.map((message: TranscriptMessage, index: number) => (
                 <div
                   key={index}
-                  className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+                  className={`flex gap-3 ${message.role === TranscriptRole.User ? 'flex-row-reverse' : ''}`}
                 >
                   <div
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                      message.role === 'user'
+                      message.role === TranscriptRole.User
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground'
                     }`}
                   >
-                    {message.role === 'user' ? (
+                    {message.role === TranscriptRole.User ? (
                       <User className="h-4 w-4" />
                     ) : (
                       <Bot className="h-4 w-4" />
@@ -211,7 +211,7 @@ const ConversationDetail: React.FC = () => {
                   </div>
                   <div
                     className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.role === 'user'
+                      message.role === TranscriptRole.User
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-foreground'
                     }`}
@@ -220,7 +220,7 @@ const ConversationDetail: React.FC = () => {
                     {message.time_in_call_secs !== undefined && (
                       <p
                         className={`mt-1 text-xs ${
-                          message.role === 'user'
+                          message.role === TranscriptRole.User
                             ? 'text-primary-foreground/70'
                             : 'text-muted-foreground'
                         }`}

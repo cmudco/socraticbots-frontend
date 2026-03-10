@@ -13,11 +13,12 @@ import {
   Play,
   RefreshCw,
   Save,
+  Shield,
   Trash2,
+  Users,
   X,
 } from 'lucide-react';
 
-import { useUser } from '@/hooks/queries/useUser';
 import {
   useDeleteVoiceAgent,
   useSyncFromElevenLabs,
@@ -26,6 +27,8 @@ import {
 } from '@/hooks/queries/useVoiceAgents';
 
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
+
+import { voiceAgentService } from '@/services/voiceAgent.service';
 
 import { toast } from '@/utils/toast';
 
@@ -39,6 +42,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import SharedAccessPanel from '@/components/voice-agents/SharedAccessPanel';
 import {
   AIConfigSection,
   AdvancedSettingsSection,
@@ -46,12 +50,14 @@ import {
   ExamConfigSection,
 } from '@/components/voice-agents/sections';
 
+import { AgentStatus } from '@/types/voiceAgent';
+import type { AgentMembersResponse } from '@/types/voiceAgent';
+
 const VoiceAgentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const agentId = parseInt(id || '0');
 
-  const user = useUser();
   const { data: agent, isLoading } = useVoiceAgent(agentId);
   const updateAgent = useUpdateVoiceAgent();
   const deleteAgent = useDeleteVoiceAgent();
@@ -59,6 +65,7 @@ const VoiceAgentDetail: React.FC = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [members, setMembers] = useState<AgentMembersResponse | null>(null);
 
   const {
     initEditAgent,
@@ -70,10 +77,30 @@ const VoiceAgentDetail: React.FC = () => {
     setShowAdvanced,
   } = useVoiceAgentFormStore();
 
-  const isOwner = user?.id === agent?.user;
-  const isVoiceAdmin = user?.hasSupervisorAccessForVoiceAgent ?? false;
-  const canEdit = isOwner && isVoiceAdmin;
-  const canTakeExam = agent?.status === 'active' || isOwner;
+  // Permission-driven UI from backend access resolver
+  const perms = agent?.permissions;
+  const canEdit = perms?.canEdit ?? false;
+  const canDelete = perms?.canDelete ?? false;
+  const canManageAccess = perms?.canManageAccess ?? false;
+  const canViewTranscripts = perms?.canViewTranscripts ?? false;
+  const canLaunchExam = perms?.canLaunchExam ?? false;
+  const accessLevel = perms?.accessLevel;
+
+  // Load members when agent is loaded and user can manage
+  const loadMembers = React.useCallback(async () => {
+    if (agent && canManageAccess) {
+      try {
+        const data = await voiceAgentService.getAgentMembers(agent.id);
+        setMembers(data);
+      } catch {
+        // Ignore — user may not have access
+      }
+    }
+  }, [agent, canManageAccess]);
+
+  useEffect(() => {
+    loadMembers();
+  }, [loadMembers]);
 
   // Initialize form when entering edit mode
   useEffect(() => {
@@ -193,7 +220,7 @@ const VoiceAgentDetail: React.FC = () => {
               <h1 className="text-foreground text-2xl font-bold">{agent.name}</h1>
               <span
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  agent.status === 'active'
+                  agent.status === AgentStatus.Active
                     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                     : 'bg-muted text-muted-foreground'
                 }`}
@@ -206,7 +233,7 @@ const VoiceAgentDetail: React.FC = () => {
             )}
           </div>
           <div className="flex gap-2">
-            {isVoiceAdmin && agent.conversationCount > 0 && (
+            {canViewTranscripts && agent.conversationCount > 0 && (
               <Button
                 onClick={() => navigate(`/voice-exams/${agent.id}/conversations`)}
                 variant="outline"
@@ -215,7 +242,7 @@ const VoiceAgentDetail: React.FC = () => {
                 View Conversations
               </Button>
             )}
-            {canTakeExam && (
+            {canLaunchExam && (
               <Button onClick={() => navigate(`/voice-exams/${agent.id}/exam`)} variant="default">
                 <Play className="mr-2 h-4 w-4" />
                 Take Exam
@@ -286,22 +313,26 @@ const VoiceAgentDetail: React.FC = () => {
       {/* Content */}
       {isEditing ? (
         <div className="space-y-6">
-          <BasicInfoSection showAccessCode={isVoiceAdmin} />
+          <BasicInfoSection showAccessCode={canManageAccess} />
           <ExamConfigSection />
           <AIConfigSection />
           <AdvancedSettingsSection collapsible defaultOpen />
 
           {/* Actions */}
           <div className="flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="text-destructive hover:bg-destructive/10 border-destructive/50"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Agent
-            </Button>
+            {canDelete ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-destructive hover:bg-destructive/10 border-destructive/50"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Agent
+              </Button>
+            ) : (
+              <div />
+            )}
             <div className="flex gap-3">
               <Button type="button" variant="outline" onClick={handleCancelEdit}>
                 <X className="mr-2 h-4 w-4" />
@@ -342,8 +373,8 @@ const VoiceAgentDetail: React.FC = () => {
             </Card>
           )}
 
-          {/* System Prompt (Owners only) */}
-          {isOwner && (
+          {/* System Prompt (staff who can edit) */}
+          {canEdit && (
             <Card>
               <CardHeader>
                 <CardTitle>System Prompt</CardTitle>
@@ -366,8 +397,8 @@ const VoiceAgentDetail: React.FC = () => {
             </Card>
           )}
 
-          {/* Configuration Details (Owners only) */}
-          {isOwner && (
+          {/* Configuration Details (staff with edit access) */}
+          {canEdit && (
             <Card>
               <CardHeader>
                 <CardTitle>Configuration</CardTitle>
@@ -388,11 +419,29 @@ const VoiceAgentDetail: React.FC = () => {
                       {agent.elevenlabsAgentId || 'Not configured'}
                     </dd>
                   </div>
-                  {isVoiceAdmin && (
+                  {canManageAccess && (
                     <div>
                       <dt className="text-muted-foreground text-sm">Student Access Code</dt>
                       <dd className="text-foreground font-mono">
                         {agent.accessCodeForAdmin || 'Not set'}
+                      </dd>
+                    </div>
+                  )}
+                  {agent.teamName && (
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Team</dt>
+                      <dd className="text-foreground flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        {agent.teamName}
+                      </dd>
+                    </div>
+                  )}
+                  {accessLevel && (
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Your Role</dt>
+                      <dd className="text-foreground flex items-center gap-1 capitalize">
+                        <Shield className="h-4 w-4" />
+                        {accessLevel}
                       </dd>
                     </div>
                   )}
@@ -401,8 +450,8 @@ const VoiceAgentDetail: React.FC = () => {
             </Card>
           )}
 
-          {/* Advanced ElevenLabs Settings (Owners only) */}
-          {isOwner && agent.conversationConfig && (
+          {/* Advanced ElevenLabs Settings (staff with edit access) */}
+          {canEdit && agent.conversationConfig && (
             <Card>
               <CardHeader>
                 <CardTitle>Advanced ElevenLabs Settings</CardTitle>
@@ -462,6 +511,16 @@ const VoiceAgentDetail: React.FC = () => {
                 </dl>
               </CardContent>
             </Card>
+          )}
+
+          {/* Shared Access Panel (managers only) */}
+          {canManageAccess && (
+            <SharedAccessPanel
+              agentId={agent.id}
+              hasTeam={!!agent.team}
+              members={members}
+              onRefresh={loadMembers}
+            />
           )}
         </div>
       )}
