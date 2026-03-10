@@ -387,8 +387,8 @@ const VoiceAgentDetail: React.FC = () => {
             </Card>
           )}
 
-          {/* First Message */}
-          {agent.firstMessage && (
+          {/* First Message (staff only) */}
+          {canEdit && agent.firstMessage && (
             <Card>
               <CardHeader>
                 <CardTitle>First Message</CardTitle>
