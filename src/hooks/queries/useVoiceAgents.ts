@@ -268,3 +268,38 @@ export const useImportElevenLabsAgent = () => {
     },
   });
 };
+
+/**
+ * Sync a voice agent's config from ElevenLabs
+ */
+export const useSyncFromElevenLabs = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => voiceAgentService.syncFromElevenLabs(id),
+    onSuccess: (updatedAgent: VoiceAgent, id) => {
+      // Update the specific agent detail cache
+      queryClient.setQueryData<VoiceAgent>(voiceAgentKeys.detail(id), updatedAgent);
+
+      // Update the agent in the list cache
+      queryClient.setQueryData<VoiceAgentListItem[]>(voiceAgentKeys.list(), oldAgents => {
+        const listItem: VoiceAgentListItem = {
+          id: updatedAgent.id,
+          user: updatedAgent.user,
+          userEmail: updatedAgent.userEmail,
+          name: updatedAgent.name,
+          description: updatedAgent.description,
+          status: updatedAgent.status,
+          examTitle: updatedAgent.examTitle,
+          createdAt: updatedAgent.createdAt,
+        };
+        return oldAgents
+          ? oldAgents.map(agent => (agent.id === id ? listItem : agent))
+          : [listItem];
+      });
+    },
+    onError: error => {
+      console.error('Failed to sync from ElevenLabs:', error);
+    },
+  });
+};
