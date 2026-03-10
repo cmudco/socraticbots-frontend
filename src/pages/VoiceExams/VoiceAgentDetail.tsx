@@ -5,16 +5,29 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { ArrowLeft, Clock, Edit2, MessageSquare, Play, Save, Trash2, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  Clock,
+  Edit2,
+  MessageSquare,
+  Play,
+  RefreshCw,
+  Save,
+  Trash2,
+  X,
+} from 'lucide-react';
 
 import { useUser } from '@/hooks/queries/useUser';
 import {
   useDeleteVoiceAgent,
+  useSyncFromElevenLabs,
   useUpdateVoiceAgent,
   useVoiceAgent,
 } from '@/hooks/queries/useVoiceAgents';
 
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
+
+import { toast } from '@/utils/toast';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +55,7 @@ const VoiceAgentDetail: React.FC = () => {
   const { data: agent, isLoading } = useVoiceAgent(agentId);
   const updateAgent = useUpdateVoiceAgent();
   const deleteAgent = useDeleteVoiceAgent();
+  const syncFromElevenLabs = useSyncFromElevenLabs();
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -114,6 +128,18 @@ const VoiceAgentDetail: React.FC = () => {
       setShowAdvanced(!!agent.conversationConfig);
       setIsEditing(true);
     }
+  };
+
+  const handleSyncFromElevenLabs = () => {
+    if (!agent) return;
+    syncFromElevenLabs.mutate(agent.id, {
+      onSuccess: () => {
+        toast.success('Agent synced from ElevenLabs');
+      },
+      onError: () => {
+        toast.error('Failed to sync from ElevenLabs');
+      },
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -193,6 +219,18 @@ const VoiceAgentDetail: React.FC = () => {
               <Button onClick={() => navigate(`/voice-exams/${agent.id}/exam`)} variant="default">
                 <Play className="mr-2 h-4 w-4" />
                 Take Exam
+              </Button>
+            )}
+            {canEdit && !isEditing && agent.elevenlabsAgentId && (
+              <Button
+                onClick={handleSyncFromElevenLabs}
+                variant="outline"
+                disabled={syncFromElevenLabs.isPending}
+              >
+                <RefreshCw
+                  className={`mr-2 h-4 w-4 ${syncFromElevenLabs.isPending ? 'animate-spin' : ''}`}
+                />
+                {syncFromElevenLabs.isPending ? 'Syncing...' : 'Sync from ElevenLabs'}
               </Button>
             )}
             {canEdit && !isEditing && (

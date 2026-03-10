@@ -139,6 +139,13 @@ class VoiceAgentService {
     });
   }
 
+  async syncFromElevenLabs(id: number): Promise<VoiceAgent> {
+    return baseRequest<VoiceAgent>({
+      url: `voice/agents/${id}/sync_from_elevenlabs/`,
+      method: METHOD.POST,
+    });
+  }
+
   async importElevenLabsAgent(agentId: string): Promise<VoiceAgent> {
     return baseRequest<VoiceAgent>({
       url: 'voice/agents/import_agent/',
