@@ -105,7 +105,10 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       console.error('Failed to start session:', err);
       const message = err instanceof Error ? err.message : 'Failed to start session';
       // Check if this is an "already attempted" error from the backend
-      if (message.includes('already completed') && onAlreadyAttempted) {
+      if (
+        (message.includes('already completed') || message.includes('maximum number of attempts')) &&
+        onAlreadyAttempted
+      ) {
         onAlreadyAttempted();
         return;
       }

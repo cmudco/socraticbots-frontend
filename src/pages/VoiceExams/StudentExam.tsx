@@ -86,7 +86,7 @@ const StudentExam: React.FC = () => {
           <CheckCircle className="mx-auto mb-4 h-16 w-16 text-blue-500" />
           <h1 className="text-foreground mb-2 text-2xl font-bold">Exam Already Completed</h1>
           <p className="text-muted-foreground mb-6">
-            You have already completed this exam. Only one attempt is allowed per student.
+            You have reached the maximum number of attempts for this exam.
           </p>
           <button
             onClick={() => navigate('/voice-exams')}
