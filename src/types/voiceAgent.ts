@@ -246,6 +246,15 @@ export interface VoiceConversationListItem {
   status: ConversationStatus;
 }
 
+export interface StudentAttemptInfo {
+  userId: number;
+  email: string;
+  maxAttempts: number;
+  attemptsUsed: number;
+  canRetake: boolean;
+  accessGrantedAt: string;
+}
+
 export interface TranscriptMessage {
   role: TranscriptRole;
   message: string;

@@ -44,6 +44,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import SharedAccessPanel from '@/components/voice-agents/SharedAccessPanel';
+import StudentAttemptsPanel from '@/components/voice-agents/StudentAttemptsPanel';
 import {
   AIConfigSection,
   AdvancedSettingsSection,
@@ -534,6 +535,9 @@ const VoiceAgentDetail: React.FC = () => {
               }}
             />
           )}
+
+          {/* Student Attempts Panel (managers only) */}
+          {canManageAccess && <StudentAttemptsPanel agentId={agent.id} />}
         </div>
       )}
 

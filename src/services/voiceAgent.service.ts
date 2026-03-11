@@ -9,6 +9,7 @@ import {
   AgentMembersResponse,
   ElevenLabsAgentItem,
   SignedUrlResponse,
+  StudentAttemptInfo,
   VoiceAgent,
   VoiceAgentCreateData,
   VoiceAgentListItem,
@@ -206,6 +207,23 @@ class VoiceAgentService {
       url: `voice/agents/${agentId}/remove-member/`,
       method: METHOD.POST,
       data: { membershipId, scope },
+    });
+  }
+
+  // ============ Student Attempts ============
+
+  async getStudentAttempts(agentId: number): Promise<StudentAttemptInfo[]> {
+    return baseRequest<StudentAttemptInfo[]>({
+      url: `voice/agents/${agentId}/students/`,
+      method: METHOD.GET,
+    });
+  }
+
+  async grantRetake(agentId: number, email: string, maxAttempts: number): Promise<void> {
+    await baseRequest<void>({
+      url: `voice/agents/${agentId}/grant-retake/`,
+      method: METHOD.POST,
+      data: { email, maxAttempts },
     });
   }
 }

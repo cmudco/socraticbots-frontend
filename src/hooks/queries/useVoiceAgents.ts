@@ -8,6 +8,7 @@ import { useIsAuthenticated } from '@/hooks/queries/useUser';
 import { voiceAgentService } from '@/services/voiceAgent.service';
 
 import {
+  StudentAttemptInfo,
   VoiceAgent,
   VoiceAgentCreateData,
   VoiceAgentListItem,
@@ -24,6 +25,7 @@ export const voiceAgentKeys = {
   myTeams: () => [...voiceAgentKeys.all, 'myTeams'] as const,
   conversations: () => [...voiceAgentKeys.all, 'conversations'] as const,
   conversation: (id: number) => [...voiceAgentKeys.conversations(), id] as const,
+  students: (agentId: number) => [...voiceAgentKeys.all, 'students', agentId] as const,
 };
 
 /**
@@ -328,6 +330,43 @@ export const useSyncFromElevenLabs = () => {
     },
     onError: error => {
       console.error('Failed to sync from ElevenLabs:', error);
+    },
+  });
+};
+
+/**
+ * Get students with attempt info for an agent
+ */
+export const useStudentAttempts = (agentId: number) => {
+  return useQuery<StudentAttemptInfo[]>({
+    queryKey: voiceAgentKeys.students(agentId),
+    queryFn: () => voiceAgentService.getStudentAttempts(agentId),
+    enabled: agentId > 0,
+    staleTime: 30 * 1000,
+  });
+};
+
+/**
+ * Grant a student additional exam attempts
+ */
+export const useGrantRetake = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      agentId,
+      email,
+      maxAttempts,
+    }: {
+      agentId: number;
+      email: string;
+      maxAttempts: number;
+    }) => voiceAgentService.grantRetake(agentId, email, maxAttempts),
+    onSuccess: (_, { agentId }) => {
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.students(agentId) });
+    },
+    onError: error => {
+      console.error('Failed to grant retake:', error);
     },
   });
 };
