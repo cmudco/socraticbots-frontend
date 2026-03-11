@@ -43,6 +43,14 @@ const VoiceExamsList: React.FC = () => {
   const [showImportSection, setShowImportSection] = useState(false);
   const [accessCode, setAccessCode] = useState('');
   const [redeemError, setRedeemError] = useState('');
+  const hasAgents = !!agents && agents.length > 0;
+  const canRedeemAccessCode =
+    !!user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager;
+  const showRedeemCardInGrid = canRedeemAccessCode && hasAgents;
+  const redeemTitle = hasAgents ? 'Unlock Another Exam' : 'Enter Your Exam Code';
+  const redeemDescription = hasAgents
+    ? 'Enter another access code to unlock a different voice exam.'
+    : 'Enter the access code provided by your instructor to unlock your exam.';
 
   const handleImport = async (agentId: string) => {
     await importAgent.mutateAsync(agentId);
@@ -173,7 +181,7 @@ const VoiceExamsList: React.FC = () => {
             <Link
               key={agent.id}
               to={`/voice-exams/${agent.id}`}
-              className="border-border bg-card group rounded-lg border p-6 transition-shadow hover:shadow-lg"
+              className="border-border bg-card group flex h-full flex-col rounded-lg border p-6 transition-shadow hover:shadow-lg"
             >
               <div className="mb-4 flex items-start justify-between">
                 <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
@@ -230,31 +238,11 @@ const VoiceExamsList: React.FC = () => {
               </div>
             </Link>
           ))}
-        </div>
-      ) : (
-        <div className="border-border flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-16">
-          <Mic className="text-muted-foreground mb-4 h-12 w-12" />
-          {canCreate ? (
-            <>
-              <h3 className="text-foreground mb-2 text-lg font-medium">No Voice Agents Yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Create your first voice agent to get started
-              </p>
-              <Link
-                to="/voice-exams/create"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2"
-              >
-                <Plus className="h-4 w-4" />
-                Create Agent
-              </Link>
-            </>
-          ) : (
-            <>
-              <h3 className="text-foreground mb-2 text-lg font-medium">Enter Your Exam Code</h3>
-              <p className="text-muted-foreground mb-6 text-center">
-                Enter the access code provided by your instructor to unlock your exam.
-              </p>
-              <div className="flex w-full max-w-sm flex-col gap-3">
+          {showRedeemCardInGrid && (
+            <div className="border-border bg-card flex h-full flex-col rounded-lg border p-6">
+              <h3 className="text-foreground mb-2 text-lg font-semibold">{redeemTitle}</h3>
+              <p className="text-muted-foreground mb-4 text-sm">{redeemDescription}</p>
+              <div className="flex flex-1 flex-col gap-3">
                 <input
                   type="text"
                   value={accessCode}
@@ -275,6 +263,55 @@ const VoiceExamsList: React.FC = () => {
                   {redeemCode.isPending ? 'Unlocking...' : 'Unlock Exam'}
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="border-border flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-16">
+          <Mic className="text-muted-foreground mb-4 h-12 w-12" />
+          {canCreate ? (
+            <>
+              <h3 className="text-foreground mb-2 text-lg font-medium">No Voice Agents Yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Create your first voice agent to get started
+              </p>
+              <Link
+                to="/voice-exams/create"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2"
+              >
+                <Plus className="h-4 w-4" />
+                Create Agent
+              </Link>
+            </>
+          ) : (
+            <>
+              <h3 className="text-foreground mb-2 text-lg font-medium">No Exams Unlocked Yet</h3>
+              <p className="text-muted-foreground mb-6 text-center">
+                Use the access code below to unlock your exam.
+              </p>
+              {canRedeemAccessCode && (
+                <div className="flex w-full max-w-sm flex-col gap-3">
+                  <input
+                    type="text"
+                    value={accessCode}
+                    onChange={e => {
+                      setAccessCode(e.target.value);
+                      setRedeemError('');
+                    }}
+                    onKeyDown={e => e.key === 'Enter' && handleRedeemCode()}
+                    placeholder="Enter access code"
+                    className="border-border bg-background text-foreground placeholder:text-muted-foreground w-full rounded-lg border px-4 py-2 text-center focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                  {redeemError && <p className="text-center text-sm text-red-500">{redeemError}</p>}
+                  <button
+                    onClick={handleRedeemCode}
+                    disabled={redeemCode.isPending || !accessCode.trim()}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2 disabled:opacity-50"
+                  >
+                    {redeemCode.isPending ? 'Unlocking...' : 'Unlock Exam'}
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
