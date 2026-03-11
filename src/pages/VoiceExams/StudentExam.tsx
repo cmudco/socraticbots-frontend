@@ -7,22 +7,23 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 
-import { useUser } from '@/hooks/queries/useUser';
 import { useVoiceAgent } from '@/hooks/queries/useVoiceAgents';
 
 import VoiceInterface from '@/components/VoiceExam/VoiceInterface';
+
+import { AgentStatus } from '@/types/voiceAgent';
 
 const StudentExam: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const agentId = parseInt(id || '0');
 
-  const user = useUser();
   const { data: agent, isLoading } = useVoiceAgent(agentId);
   const [isCompleted, setIsCompleted] = useState(false);
   const [alreadyAttempted, setAlreadyAttempted] = useState(false);
 
-  const isVoiceAdmin = user?.hasSupervisorAccessForVoiceAgent ?? false;
+  // Use permissions from backend access resolver instead of supervisor-only check
+  const isStaff = agent?.permissions?.isStaff ?? false;
 
   const handleComplete = () => {
     setIsCompleted(true);
@@ -59,7 +60,7 @@ const StudentExam: React.FC = () => {
     );
   }
 
-  if (agent.status !== 'active' && !isVoiceAdmin) {
+  if (agent.status !== AgentStatus.Active && !isStaff) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="text-center">
@@ -85,7 +86,7 @@ const StudentExam: React.FC = () => {
           <CheckCircle className="mx-auto mb-4 h-16 w-16 text-blue-500" />
           <h1 className="text-foreground mb-2 text-2xl font-bold">Exam Already Completed</h1>
           <p className="text-muted-foreground mb-6">
-            You have already completed this exam. Only one attempt is allowed per student.
+            You have reached the maximum number of attempts for this exam.
           </p>
           <button
             onClick={() => navigate('/voice-exams')}
@@ -108,7 +109,7 @@ const StudentExam: React.FC = () => {
             Thank you for completing the exam. Your responses have been recorded.
           </p>
           <div className="flex justify-center gap-4">
-            {isVoiceAdmin && (
+            {isStaff && (
               <button
                 onClick={() => setIsCompleted(false)}
                 className="border-border text-foreground hover:bg-accent rounded-lg border px-6 py-2"

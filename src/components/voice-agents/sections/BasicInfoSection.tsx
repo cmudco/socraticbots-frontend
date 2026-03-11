@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
+import { AgentStatus } from '@/types/voiceAgent';
+
 interface BasicInfoSectionProps {
   viewOnly?: boolean;
   showAccessCode?: boolean;
@@ -62,7 +64,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
           <Label htmlFor="status">Status</Label>
           <Select
             value={status}
-            onValueChange={value => updateField('status', value as 'draft' | 'active')}
+            onValueChange={value => updateField('status', value as AgentStatus)}
             disabled={viewOnly}
           >
             <SelectTrigger className="w-full">

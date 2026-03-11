@@ -6,14 +6,19 @@ import { METHOD } from '@/constants/requests';
 import { baseRequest } from '@/utils/baseRequest';
 
 import {
+  AgentMembersResponse,
   ElevenLabsAgentItem,
   SignedUrlResponse,
+  StudentAttemptInfo,
   VoiceAgent,
   VoiceAgentCreateData,
   VoiceAgentListItem,
+  VoiceAgentMembership,
   VoiceAgentUpdateData,
   VoiceConversation,
   VoiceConversationListItem,
+  VoiceTeamMembership,
+  VoiceTeamWithMembers,
 } from '@/types/voiceAgent';
 
 class VoiceAgentService {
@@ -159,6 +164,66 @@ class VoiceAgentService {
       url: 'voice/agents/redeem_access_code/',
       method: METHOD.POST,
       data: { accessCode },
+    });
+  }
+
+  // ============ Teams ============
+
+  async getMyTeams(): Promise<VoiceTeamWithMembers[]> {
+    return baseRequest<VoiceTeamWithMembers[]>({
+      url: 'voice/agents/my_teams/',
+      method: METHOD.GET,
+    });
+  }
+
+  // ============ Shared Access (Members) ============
+
+  async getAgentMembers(agentId: number): Promise<AgentMembersResponse> {
+    return baseRequest<AgentMembersResponse>({
+      url: `voice/agents/${agentId}/members/`,
+      method: METHOD.GET,
+    });
+  }
+
+  async addAgentMember(
+    agentId: number,
+    email: string,
+    role: string,
+    scope: 'team' | 'agent' = 'agent'
+  ): Promise<VoiceTeamMembership | VoiceAgentMembership> {
+    return baseRequest({
+      url: `voice/agents/${agentId}/add-member/`,
+      method: METHOD.POST,
+      data: { email, role, scope },
+    });
+  }
+
+  async removeAgentMember(
+    agentId: number,
+    membershipId: number,
+    scope: 'team' | 'agent' = 'agent'
+  ): Promise<void> {
+    await baseRequest<void>({
+      url: `voice/agents/${agentId}/remove-member/`,
+      method: METHOD.POST,
+      data: { membershipId, scope },
+    });
+  }
+
+  // ============ Student Attempts ============
+
+  async getStudentAttempts(agentId: number): Promise<StudentAttemptInfo[]> {
+    return baseRequest<StudentAttemptInfo[]>({
+      url: `voice/agents/${agentId}/students/`,
+      method: METHOD.GET,
+    });
+  }
+
+  async grantRetake(agentId: number, email: string, maxAttempts: number): Promise<void> {
+    await baseRequest<void>({
+      url: `voice/agents/${agentId}/grant-retake/`,
+      method: METHOD.POST,
+      data: { email, maxAttempts },
     });
   }
 }

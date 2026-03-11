@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 
+import { SpellingPatience, TurnEagerness } from '@/types/voiceAgent';
+
 interface AdvancedSettingsSectionProps {
   viewOnly?: boolean;
   collapsible?: boolean;
@@ -59,9 +61,7 @@ export const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = (
             <Label>Eagerness</Label>
             <Select
               value={turnEagerness}
-              onValueChange={value =>
-                updateField('turnEagerness', value as 'low' | 'normal' | 'high')
-              }
+              onValueChange={value => updateField('turnEagerness', value as TurnEagerness)}
               disabled={viewOnly}
             >
               <SelectTrigger className="w-full">
@@ -96,9 +96,7 @@ export const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = (
             <Label>Spelling Patience</Label>
             <Select
               value={spellingPatience}
-              onValueChange={value =>
-                updateField('spellingPatience', value as 'auto' | 'low' | 'normal' | 'high')
-              }
+              onValueChange={value => updateField('spellingPatience', value as SpellingPatience)}
               disabled={viewOnly}
             >
               <SelectTrigger className="w-full">

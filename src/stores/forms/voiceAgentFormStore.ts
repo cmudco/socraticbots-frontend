@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { AgentStatus, SpellingPatience, TurnEagerness } from '@/types/voiceAgent';
 import type { VoiceAgent } from '@/types/voiceAgent';
 
 export interface VoiceAgentFormState {
@@ -10,8 +11,9 @@ export interface VoiceAgentFormState {
   // Basic fields
   name: string;
   description: string;
-  status: 'draft' | 'active';
+  status: AgentStatus;
   accessCode: string;
+  team: number | null;
 
   // Exam fields
   examTitle: string;
@@ -25,9 +27,9 @@ export interface VoiceAgentFormState {
   maxDurationSeconds: number;
 
   // Advanced ElevenLabs Settings - Turn
-  turnEagerness: 'low' | 'normal' | 'high';
+  turnEagerness: TurnEagerness;
   turnTimeout: number;
-  spellingPatience: 'auto' | 'low' | 'normal' | 'high';
+  spellingPatience: SpellingPatience;
 
   // Advanced ElevenLabs Settings - TTS
   ttsStability: number;
@@ -61,8 +63,9 @@ export interface VoiceAgentFormState {
 export interface VoiceAgentFormData {
   name: string;
   description: string;
-  status: 'draft' | 'active';
+  status: AgentStatus;
   accessCode?: string;
+  team?: number | null;
   examTitle: string;
   examInstructions: string;
   systemPrompt: string;
@@ -72,9 +75,9 @@ export interface VoiceAgentFormData {
   maxDurationSeconds: number;
   conversationConfig?: {
     turn: {
-      turnEagerness: 'low' | 'normal' | 'high';
+      turnEagerness: TurnEagerness;
       turnTimeout: number;
-      spellingPatience: 'auto' | 'low' | 'normal' | 'high';
+      spellingPatience: SpellingPatience;
     };
     tts: {
       voiceId: string;
@@ -100,8 +103,9 @@ const initialFormState = {
   // Basic
   name: '',
   description: '',
-  status: 'draft' as const,
+  status: AgentStatus.Draft,
   accessCode: '',
+  team: null as number | null,
 
   // Exam
   examTitle: '',
@@ -115,9 +119,9 @@ const initialFormState = {
   maxDurationSeconds: 1800,
 
   // Advanced - Turn
-  turnEagerness: 'normal' as const,
+  turnEagerness: TurnEagerness.Normal,
   turnTimeout: 7,
-  spellingPatience: 'auto' as const,
+  spellingPatience: SpellingPatience.Auto,
 
   // Advanced - TTS
   ttsStability: 0.5,
@@ -188,8 +192,9 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       // Basic
       name: agent.name || '',
       description: agent.description || '',
-      status: agent.status || 'draft',
+      status: agent.status || AgentStatus.Draft,
       accessCode: agent.accessCodeForAdmin || '',
+      team: agent.team ?? null,
 
       // Exam
       examTitle: agent.examTitle || '',
@@ -203,9 +208,9 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       maxDurationSeconds: agent.maxDurationSeconds ?? 1800,
 
       // Advanced - Turn
-      turnEagerness: config?.turn?.turnEagerness ?? 'normal',
+      turnEagerness: config?.turn?.turnEagerness ?? TurnEagerness.Normal,
       turnTimeout: config?.turn?.turnTimeout ?? 7,
-      spellingPatience: config?.turn?.spellingPatience ?? 'auto',
+      spellingPatience: config?.turn?.spellingPatience ?? SpellingPatience.Auto,
 
       // Advanced - TTS
       ttsStability: config?.tts?.stability ?? 0.5,
@@ -256,6 +261,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       description: state.description,
       status: state.status,
       ...(state.accessCode.trim() && { accessCode: state.accessCode.trim() }),
+      ...(state.team !== null && { team: state.team }),
       examTitle: state.examTitle,
       examInstructions: state.examInstructions,
       systemPrompt: state.systemPrompt,
