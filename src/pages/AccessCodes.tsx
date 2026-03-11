@@ -5,6 +5,8 @@ import { CheckCircle, Clock, Key } from 'lucide-react';
 
 import { accessCodeService } from '@/services/accessCodes.service';
 
+import { formatDate } from '@/utils/formatters';
+
 const AccessCodes: React.FC = () => {
   const [accessCode, setAccessCode] = useState('');
   const [message, setMessage] = useState('');
@@ -41,16 +43,6 @@ const AccessCodes: React.FC = () => {
     if (accessCode.trim()) {
       redeemMutation.mutate(accessCode.trim());
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   return (

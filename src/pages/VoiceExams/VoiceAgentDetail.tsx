@@ -28,6 +28,7 @@ import {
 
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
 
+import { formatDate } from '@/utils/formatters';
 import { toast } from '@/utils/toast';
 
 import { Button } from '@/components/ui/button';
@@ -147,16 +148,6 @@ const VoiceAgentDetail: React.FC = () => {
       onError: () => {
         toast.error('Failed to sync from ElevenLabs');
       },
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 

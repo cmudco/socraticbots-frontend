@@ -18,6 +18,8 @@ import { BotAccessUsersResponse, botAccessService } from '@/services/botAccess.s
 import { botGroupService } from '@/services/botGroups.service';
 import { botService } from '@/services/bots.service';
 
+import { formatDate } from '@/utils/formatters';
+
 import RemoveAccessModal from '@/components/bots/RemoveAccessModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -143,16 +145,6 @@ const BotAccess: React.FC = () => {
       userEmail: '',
       userName: '',
       accessType: '',
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 

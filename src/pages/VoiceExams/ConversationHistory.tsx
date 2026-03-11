@@ -13,6 +13,8 @@ import {
   useExportAllTranscripts,
 } from '@/hooks/queries/useVoiceConversations';
 
+import { formatDate } from '@/utils/formatters';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -24,16 +26,6 @@ const ConversationHistory: React.FC = () => {
   const { data: agent } = useVoiceAgent(agentId);
   const { data: conversations, isLoading, refetch, isFetching } = useAgentConversations(agentId);
   const exportAll = useExportAllTranscripts();
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   const formatDuration = (seconds: number | null) => {
     if (!seconds) return '-';
