@@ -4,7 +4,7 @@
  * Admins/managers can create new agents, import from ElevenLabs, and manage.
  * Students see an access code input to unlock exams.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Clock, Download, Mic, Plus, RefreshCw, Shield, User, Users } from 'lucide-react';
@@ -25,12 +25,7 @@ const VoiceExamsList: React.FC = () => {
   const user = useUser();
   const { data: agents, isLoading } = useVoiceAgents();
 
-  // Can create = supervisor or voice team manager
-  const canCreate = useMemo(() => {
-    if (user?.hasSupervisorAccessForVoiceAgent) return true;
-    if (user?.isVoiceTeamManager) return true;
-    return false;
-  }, [user]);
+  const canCreate = user?.hasSupervisorAccessForVoiceAgent || user?.isVoiceTeamManager || false;
 
   const {
     data: elevenlabsAgents,

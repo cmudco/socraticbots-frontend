@@ -8,12 +8,28 @@ import { useIsAuthenticated } from '@/hooks/queries/useUser';
 import { voiceAgentService } from '@/services/voiceAgent.service';
 
 import {
+  AgentMembersResponse,
   StudentAttemptInfo,
   VoiceAgent,
   VoiceAgentCreateData,
   VoiceAgentListItem,
   VoiceAgentUpdateData,
 } from '@/types/voiceAgent';
+
+/** Map a full VoiceAgent to the slim list representation. */
+const toListItem = (agent: VoiceAgent): VoiceAgentListItem => ({
+  id: agent.id,
+  user: agent.user,
+  userEmail: agent.userEmail,
+  name: agent.name,
+  description: agent.description,
+  team: agent.team,
+  teamName: agent.teamName,
+  status: agent.status,
+  examTitle: agent.examTitle,
+  accessLevel: agent.permissions.accessLevel,
+  createdAt: agent.createdAt,
+});
 
 export const voiceAgentKeys = {
   all: ['voiceAgents'] as const,
@@ -26,6 +42,7 @@ export const voiceAgentKeys = {
   conversations: () => [...voiceAgentKeys.all, 'conversations'] as const,
   conversation: (id: number) => [...voiceAgentKeys.conversations(), id] as const,
   students: (agentId: number) => [...voiceAgentKeys.all, 'students', agentId] as const,
+  members: (agentId: number) => [...voiceAgentKeys.all, 'members', agentId] as const,
 };
 
 /**
@@ -82,26 +99,10 @@ export const useCreateVoiceAgent = () => {
   return useMutation({
     mutationFn: (data: VoiceAgentCreateData) => voiceAgentService.createVoiceAgent(data),
     onSuccess: (newAgent: VoiceAgent) => {
-      // Optimistically update the agents list
       queryClient.setQueryData<VoiceAgentListItem[]>(voiceAgentKeys.list(), oldAgents => {
-        const listItem: VoiceAgentListItem = {
-          id: newAgent.id,
-          user: newAgent.user,
-          userEmail: newAgent.userEmail,
-          name: newAgent.name,
-          description: newAgent.description,
-          team: newAgent.team,
-          teamName: newAgent.teamName,
-          status: newAgent.status,
-          examTitle: newAgent.examTitle,
-          accessLevel: newAgent.permissions.accessLevel,
-          createdAt: newAgent.createdAt,
-        };
+        const listItem = toListItem(newAgent);
         return oldAgents ? [listItem, ...oldAgents] : [listItem];
       });
-    },
-    onError: error => {
-      console.error('Failed to create voice agent:', error);
     },
   });
 };
@@ -116,31 +117,13 @@ export const useUpdateVoiceAgent = () => {
     mutationFn: ({ id, data }: { id: number; data: VoiceAgentUpdateData }) =>
       voiceAgentService.updateVoiceAgent(id, data),
     onSuccess: (updatedAgent: VoiceAgent, { id }) => {
-      // Update the specific agent detail
       queryClient.setQueryData<VoiceAgent>(voiceAgentKeys.detail(id), updatedAgent);
-
-      // Update the agent in the list
       queryClient.setQueryData<VoiceAgentListItem[]>(voiceAgentKeys.list(), oldAgents => {
-        const listItem: VoiceAgentListItem = {
-          id: updatedAgent.id,
-          user: updatedAgent.user,
-          userEmail: updatedAgent.userEmail,
-          name: updatedAgent.name,
-          description: updatedAgent.description,
-          team: updatedAgent.team,
-          teamName: updatedAgent.teamName,
-          status: updatedAgent.status,
-          examTitle: updatedAgent.examTitle,
-          accessLevel: updatedAgent.permissions.accessLevel,
-          createdAt: updatedAgent.createdAt,
-        };
+        const listItem = toListItem(updatedAgent);
         return oldAgents
           ? oldAgents.map(agent => (agent.id === id ? listItem : agent))
           : [listItem];
       });
-    },
-    onError: error => {
-      console.error('Failed to update voice agent:', error);
     },
   });
 };
@@ -162,9 +145,6 @@ export const useDeleteVoiceAgent = () => {
       // Remove the detailed data
       queryClient.removeQueries({ queryKey: voiceAgentKeys.detail(id) });
     },
-    onError: error => {
-      console.error('Failed to delete voice agent:', error);
-    },
   });
 };
 
@@ -174,9 +154,6 @@ export const useDeleteVoiceAgent = () => {
 export const useGetSignedUrl = () => {
   return useMutation({
     mutationFn: (agentId: number) => voiceAgentService.getSignedUrl(agentId),
-    onError: error => {
-      console.error('Failed to get signed URL:', error);
-    },
   });
 };
 
@@ -187,9 +164,6 @@ export const useStartConversation = () => {
   return useMutation({
     mutationFn: ({ agentId, conversationId }: { agentId: number; conversationId: string }) =>
       voiceAgentService.startConversation(agentId, conversationId),
-    onError: error => {
-      console.error('Failed to start conversation:', error);
-    },
   });
 };
 
@@ -207,9 +181,6 @@ export const useEndConversation = () => {
       queryClient.invalidateQueries({ queryKey: voiceAgentKeys.detail(agentId) });
       // Invalidate conversations list
       queryClient.invalidateQueries({ queryKey: voiceAgentKeys.conversations() });
-    },
-    onError: error => {
-      console.error('Failed to end conversation:', error);
     },
   });
 };
@@ -238,27 +209,12 @@ export const useRedeemVoiceAccessCode = () => {
   return useMutation({
     mutationFn: (accessCode: string) => voiceAgentService.redeemAccessCode(accessCode),
     onSuccess: (unlockedAgent: VoiceAgent) => {
-      // Add the newly unlocked agent to the list
       queryClient.setQueryData<VoiceAgentListItem[]>(voiceAgentKeys.list(), oldAgents => {
-        const listItem: VoiceAgentListItem = {
-          id: unlockedAgent.id,
-          user: unlockedAgent.user,
-          userEmail: unlockedAgent.userEmail,
-          name: unlockedAgent.name,
-          description: unlockedAgent.description,
-          team: unlockedAgent.team,
-          teamName: unlockedAgent.teamName,
-          status: unlockedAgent.status,
-          examTitle: unlockedAgent.examTitle,
-          accessLevel: unlockedAgent.permissions.accessLevel,
-          createdAt: unlockedAgent.createdAt,
-        };
         const alreadyInList = oldAgents?.some(a => a.id === unlockedAgent.id);
-        return oldAgents ? (alreadyInList ? oldAgents : [listItem, ...oldAgents]) : [listItem];
+        if (alreadyInList) return oldAgents;
+        const listItem = toListItem(unlockedAgent);
+        return oldAgents ? [listItem, ...oldAgents] : [listItem];
       });
-    },
-    onError: error => {
-      console.error('Failed to redeem access code:', error);
     },
   });
 };
@@ -272,29 +228,11 @@ export const useImportElevenLabsAgent = () => {
   return useMutation({
     mutationFn: (agentId: string) => voiceAgentService.importElevenLabsAgent(agentId),
     onSuccess: (importedAgent: VoiceAgent) => {
-      // Add to local agents list
       queryClient.setQueryData<VoiceAgentListItem[]>(voiceAgentKeys.list(), oldAgents => {
-        const listItem: VoiceAgentListItem = {
-          id: importedAgent.id,
-          user: importedAgent.user,
-          userEmail: importedAgent.userEmail,
-          name: importedAgent.name,
-          description: importedAgent.description,
-          team: importedAgent.team,
-          teamName: importedAgent.teamName,
-          status: importedAgent.status,
-          examTitle: importedAgent.examTitle,
-          accessLevel: importedAgent.permissions.accessLevel,
-          createdAt: importedAgent.createdAt,
-        };
+        const listItem = toListItem(importedAgent);
         return oldAgents ? [listItem, ...oldAgents] : [listItem];
       });
-
-      // Invalidate ElevenLabs agents to refresh sync status
       queryClient.invalidateQueries({ queryKey: voiceAgentKeys.elevenlabsAgents() });
-    },
-    onError: error => {
-      console.error('Failed to import agent:', error);
     },
   });
 };
@@ -308,28 +246,13 @@ export const useSyncFromElevenLabs = () => {
   return useMutation({
     mutationFn: (id: number) => voiceAgentService.syncFromElevenLabs(id),
     onSuccess: (updatedAgent: VoiceAgent, id) => {
-      // Update the specific agent detail cache
       queryClient.setQueryData<VoiceAgent>(voiceAgentKeys.detail(id), updatedAgent);
-
-      // Update the agent in the list cache
       queryClient.setQueryData<VoiceAgentListItem[]>(voiceAgentKeys.list(), oldAgents => {
-        const listItem: VoiceAgentListItem = {
-          id: updatedAgent.id,
-          user: updatedAgent.user,
-          userEmail: updatedAgent.userEmail,
-          name: updatedAgent.name,
-          description: updatedAgent.description,
-          status: updatedAgent.status,
-          examTitle: updatedAgent.examTitle,
-          createdAt: updatedAgent.createdAt,
-        };
+        const listItem = toListItem(updatedAgent);
         return oldAgents
           ? oldAgents.map(agent => (agent.id === id ? listItem : agent))
           : [listItem];
       });
-    },
-    onError: error => {
-      console.error('Failed to sync from ElevenLabs:', error);
     },
   });
 };
@@ -365,8 +288,63 @@ export const useGrantRetake = () => {
     onSuccess: (_, { agentId }) => {
       queryClient.invalidateQueries({ queryKey: voiceAgentKeys.students(agentId) });
     },
-    onError: error => {
-      console.error('Failed to grant retake:', error);
+  });
+};
+
+/**
+ * Get members (team + agent-level) for an agent
+ */
+export const useAgentMembers = (agentId: number, enabled: boolean = true) => {
+  return useQuery<AgentMembersResponse>({
+    queryKey: voiceAgentKeys.members(agentId),
+    queryFn: () => voiceAgentService.getAgentMembers(agentId),
+    enabled: enabled && agentId > 0,
+    staleTime: 60 * 1000,
+  });
+};
+
+/**
+ * Add a member to an agent's team
+ */
+export const useAddAgentMember = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      agentId,
+      email,
+      role,
+      scope,
+    }: {
+      agentId: number;
+      email: string;
+      role: string;
+      scope: 'team' | 'agent';
+    }) => voiceAgentService.addAgentMember(agentId, email, role, scope),
+    onSuccess: (_, { agentId }) => {
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.members(agentId) });
+    },
+  });
+};
+
+/**
+ * Remove a member from an agent's team
+ */
+export const useRemoveAgentMember = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      agentId,
+      membershipId,
+      scope,
+    }: {
+      agentId: number;
+      membershipId: number;
+      scope: 'team' | 'agent';
+    }) => voiceAgentService.removeAgentMember(agentId, membershipId, scope),
+    onSuccess: (_, { agentId }) => {
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.members(agentId) });
     },
   });
 };
