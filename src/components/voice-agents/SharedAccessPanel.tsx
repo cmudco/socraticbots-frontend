@@ -10,7 +10,16 @@ import React, { useMemo, useState } from 'react';
 
 import { Loader2, Trash2, UserPlus, Users } from 'lucide-react';
 
-import { voiceAgentService } from '@/services/voiceAgent.service';
+import {
+  useAddAgentMember,
+  useAgentMembers,
+  useMyTeams,
+  useRemoveAgentMember,
+  useUpdateVoiceAgent,
+} from '@/hooks/queries/useVoiceAgents';
+
+import { getErrorMessage } from '@/utils/errorHandler';
+import { toast } from '@/utils/toast';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,88 +33,65 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import type {
-  AgentMembersResponse,
-  VoiceTeamMembership,
-  VoiceTeamWithMembers,
-} from '@/types/voiceAgent';
+import type { VoiceTeamMembership } from '@/types/voiceAgent';
 
 interface SharedAccessPanelProps {
   agentId: number;
-  /** Current team ID the agent belongs to (null = unassigned) */
   currentTeamId: number | null;
-  /** Current team name for display */
   currentTeamName: string | null;
-  /** All teams the logged-in user can manage */
-  teams: VoiceTeamWithMembers[];
-  /** Members loaded from the /members/ endpoint */
-  members: AgentMembersResponse | null;
-  /** Called after any mutation (add/remove member, change team) */
-  onRefresh: () => void;
-  /** Called when the team assignment changes — parent should PATCH the agent */
-  onTeamChange: (teamId: number | null) => void;
 }
 
 const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
   agentId,
   currentTeamId,
   currentTeamName,
-  teams,
-  members,
-  onRefresh,
-  onTeamChange,
 }) => {
+  const { data: myTeams } = useMyTeams();
+  const { data: members } = useAgentMembers(agentId);
+  const updateAgent = useUpdateVoiceAgent();
+  const addMember = useAddAgentMember();
+  const removeMember = useRemoveAgentMember();
+
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState<'manager' | 'reviewer'>('reviewer');
-  const [isAdding, setIsAdding] = useState(false);
   const [removingId, setRemovingId] = useState<number | null>(null);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
+  const teams = myTeams ?? [];
   const teamMembers = members?.teamMembers ?? [];
 
-  // Find the selected team object for member count display
   const selectedTeam = useMemo(() => {
     if (currentTeamId === null) return null;
     return teams.find(t => t.id === currentTeamId) ?? null;
   }, [teams, currentTeamId]);
 
-  const clearFeedback = () => {
-    setError('');
-    setSuccess('');
+  const handleTeamChange = async (teamId: number | null) => {
+    try {
+      await updateAgent.mutateAsync({ id: agentId, data: { team: teamId } });
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err));
+    }
   };
 
   const handleAddMember = async () => {
     const email = newEmail.trim();
     if (!email) return;
 
-    clearFeedback();
-    setIsAdding(true);
-
     try {
-      await voiceAgentService.addAgentMember(agentId, email, newRole, 'team');
+      await addMember.mutateAsync({ agentId, email, role: newRole, scope: 'team' });
       setNewEmail('');
       setNewRole('reviewer');
-      setSuccess(`Added ${email} as ${newRole}`);
-      onRefresh();
+      toast.success(`Added ${email} as ${newRole}`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to add member';
-      setError(msg);
-    } finally {
-      setIsAdding(false);
+      toast.error(getErrorMessage(err));
     }
   };
 
   const handleRemoveMember = async (membership: VoiceTeamMembership) => {
-    clearFeedback();
     setRemovingId(membership.id);
-
     try {
-      await voiceAgentService.removeAgentMember(agentId, membership.id, 'team');
-      onRefresh();
+      await removeMember.mutateAsync({ agentId, membershipId: membership.id, scope: 'team' });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to remove member';
-      setError(msg);
+      toast.error(getErrorMessage(err));
     } finally {
       setRemovingId(null);
     }
@@ -144,8 +130,7 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
               <Select
                 value={currentTeamId !== null ? String(currentTeamId) : 'none'}
                 onValueChange={value => {
-                  clearFeedback();
-                  onTeamChange(value === 'none' ? null : Number(value));
+                  handleTeamChange(value === 'none' ? null : Number(value));
                 }}
               >
                 <SelectTrigger className="w-full">
@@ -171,10 +156,6 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
             </>
           )}
         </div>
-
-        {/* ── Feedback messages ── */}
-        {error && <p className="text-sm text-red-500">{error}</p>}
-        {success && <p className="text-sm text-green-600 dark:text-green-400">{success}</p>}
 
         {/* ── Section 2: Team Members List ── */}
         {hasTeam && teamMembers.length > 0 && (
@@ -233,10 +214,7 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
                 type="email"
                 placeholder="Email address"
                 value={newEmail}
-                onChange={e => {
-                  setNewEmail(e.target.value);
-                  clearFeedback();
-                }}
+                onChange={e => setNewEmail(e.target.value)}
                 onKeyDown={handleKeyDown}
                 className="flex-1"
               />
@@ -251,10 +229,10 @@ const SharedAccessPanel: React.FC<SharedAccessPanelProps> = ({
               </Select>
               <Button
                 onClick={handleAddMember}
-                disabled={isAdding || !newEmail.trim()}
+                disabled={addMember.isPending || !newEmail.trim()}
                 size="default"
               >
-                {isAdding ? (
+                {addMember.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <UserPlus className="h-4 w-4" />

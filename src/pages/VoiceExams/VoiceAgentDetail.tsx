@@ -21,15 +21,12 @@ import {
 
 import {
   useDeleteVoiceAgent,
-  useMyTeams,
   useSyncFromElevenLabs,
   useUpdateVoiceAgent,
   useVoiceAgent,
 } from '@/hooks/queries/useVoiceAgents';
 
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
-
-import { voiceAgentService } from '@/services/voiceAgent.service';
 
 import { toast } from '@/utils/toast';
 
@@ -53,7 +50,6 @@ import {
 } from '@/components/voice-agents/sections';
 
 import { AgentStatus } from '@/types/voiceAgent';
-import type { AgentMembersResponse } from '@/types/voiceAgent';
 
 const VoiceAgentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -63,12 +59,10 @@ const VoiceAgentDetail: React.FC = () => {
   const { data: agent, isLoading } = useVoiceAgent(agentId);
   const updateAgent = useUpdateVoiceAgent();
   const deleteAgent = useDeleteVoiceAgent();
-  const { data: myTeams } = useMyTeams();
   const syncFromElevenLabs = useSyncFromElevenLabs();
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [members, setMembers] = useState<AgentMembersResponse | null>(null);
 
   const {
     initEditAgent,
@@ -88,22 +82,6 @@ const VoiceAgentDetail: React.FC = () => {
   const canViewTranscripts = perms?.canViewTranscripts ?? false;
   const canLaunchExam = perms?.canLaunchExam ?? false;
   const accessLevel = perms?.accessLevel;
-
-  // Load members when agent is loaded and user can manage
-  const loadMembers = React.useCallback(async () => {
-    if (agent && canManageAccess) {
-      try {
-        const data = await voiceAgentService.getAgentMembers(agent.id);
-        setMembers(data);
-      } catch {
-        // Ignore — user may not have access
-      }
-    }
-  }, [agent, canManageAccess]);
-
-  useEffect(() => {
-    loadMembers();
-  }, [loadMembers]);
 
   // Initialize form when entering edit mode
   useEffect(() => {
@@ -522,17 +500,6 @@ const VoiceAgentDetail: React.FC = () => {
               agentId={agent.id}
               currentTeamId={agent.team}
               currentTeamName={agent.teamName}
-              teams={myTeams ?? []}
-              members={members}
-              onRefresh={loadMembers}
-              onTeamChange={async teamId => {
-                try {
-                  await updateAgent.mutateAsync({ id: agent.id, data: { team: teamId } });
-                  loadMembers();
-                } catch (err) {
-                  console.error('Failed to update team:', err);
-                }
-              }}
             />
           )}
 
