@@ -7,73 +7,45 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Clock, Download, Mic, Plus, RefreshCw, Shield, User, Users } from 'lucide-react';
+import { Clock, Download, Mic, Plus, Shield, User, Users } from 'lucide-react';
 
 import { useUser } from '@/hooks/queries/useUser';
-import {
-  useElevenLabsAgents,
-  useImportElevenLabsAgent,
-  useRedeemVoiceAccessCode,
-  useVoiceAgents,
-} from '@/hooks/queries/useVoiceAgents';
+import { useVoiceAgents } from '@/hooks/queries/useVoiceAgents';
 
+import { formatShortDate } from '@/utils/formatters';
 import { ROLE_BADGE_STYLES } from '@/utils/voiceAgentStyles';
 
 import { AgentStatus } from '@/types/voiceAgent';
+
+import ImportSection from './ImportSection';
+import RedeemAccessCodeForm from './RedeemAccessCodeForm';
+
+const DESCRIPTIONS = {
+  admin: 'Create and manage voice-based exams powered by ElevenLabs AI',
+  student: 'Take voice-based exams powered by ElevenLabs AI',
+  redeemUnlock: 'Enter another access code to unlock a different voice exam.',
+  redeemFirst: 'Enter the access code provided by your instructor to unlock your exam.',
+  emptyPrompt: 'Use the access code below to unlock your exam.',
+} as const;
 
 const VoiceExamsList: React.FC = () => {
   const user = useUser();
   const { data: agents, isLoading } = useVoiceAgents();
 
   const canCreate = user?.hasSupervisorAccessForVoiceAgent || user?.isVoiceTeamManager || false;
+  const canRedeemAccessCode =
+    !!user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager;
 
   // Hide draft exams from students — only creators/managers see drafts
   const visibleAgents = canCreate
     ? agents
     : agents?.filter(agent => agent.status === AgentStatus.Active);
-
-  const {
-    data: elevenlabsAgents,
-    isLoading: loadingElevenlabs,
-    refetch: refetchElevenlabs,
-  } = useElevenLabsAgents(canCreate);
-  const importAgent = useImportElevenLabsAgent();
-  const redeemCode = useRedeemVoiceAccessCode();
+  const hasAgents = !!visibleAgents && visibleAgents.length > 0;
 
   const [showImportSection, setShowImportSection] = useState(false);
-  const [accessCode, setAccessCode] = useState('');
-  const [redeemError, setRedeemError] = useState('');
-  const hasAgents = !!agents && agents.length > 0;
-  const canRedeemAccessCode =
-    !!user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager;
-  const showRedeemCardInGrid = canRedeemAccessCode && hasAgents;
+
   const redeemTitle = hasAgents ? 'Unlock Another Exam' : 'Enter Your Exam Code';
-  const redeemDescription = hasAgents
-    ? 'Enter another access code to unlock a different voice exam.'
-    : 'Enter the access code provided by your instructor to unlock your exam.';
-
-  const handleImport = async (agentId: string) => {
-    await importAgent.mutateAsync(agentId);
-  };
-
-  const handleRedeemCode = async () => {
-    if (!accessCode.trim()) return;
-    setRedeemError('');
-    try {
-      await redeemCode.mutateAsync(accessCode.trim());
-      setAccessCode('');
-    } catch {
-      setRedeemError('Invalid access code. Please try again.');
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  const redeemDescription = hasAgents ? DESCRIPTIONS.redeemUnlock : DESCRIPTIONS.redeemFirst;
 
   if (isLoading) {
     return (
@@ -90,9 +62,7 @@ const VoiceExamsList: React.FC = () => {
         <div>
           <h1 className="text-foreground text-2xl font-bold">Voice Exams</h1>
           <p className="text-muted-foreground mt-1">
-            {canCreate
-              ? 'Create and manage voice-based exams powered by ElevenLabs AI'
-              : 'Take voice-based exams powered by ElevenLabs AI'}
+            {canCreate ? DESCRIPTIONS.admin : DESCRIPTIONS.student}
           </p>
         </div>
         <div className="flex gap-3">
@@ -118,64 +88,10 @@ const VoiceExamsList: React.FC = () => {
       </div>
 
       {/* Import Section (Voice admins only) */}
-      {canCreate && showImportSection && (
-        <div className="border-border bg-card mb-8 rounded-lg border p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-foreground text-lg font-semibold">Import from ElevenLabs</h2>
-            <button
-              onClick={() => refetchElevenlabs()}
-              disabled={loadingElevenlabs}
-              className="text-primary hover:text-primary/80 flex items-center gap-2 text-sm"
-            >
-              <RefreshCw className={`h-4 w-4 ${loadingElevenlabs ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-          </div>
-
-          {loadingElevenlabs ? (
-            <div className="flex h-24 items-center justify-center">
-              <div className="border-primary h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
-            </div>
-          ) : elevenlabsAgents && elevenlabsAgents.length > 0 ? (
-            <div className="grid gap-3">
-              {elevenlabsAgents.map(agent => (
-                <div
-                  key={agent.agentId}
-                  className="border-border flex items-center justify-between rounded-lg border p-4"
-                >
-                  <div>
-                    <h3 className="text-foreground font-medium">{agent.name}</h3>
-                    <p className="text-muted-foreground text-sm">
-                      ID: {agent.agentId.substring(0, 16)}...
-                    </p>
-                  </div>
-                  {agent.isSynced ? (
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-sm text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                      Imported
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => handleImport(agent.agentId)}
-                      disabled={importAgent.isPending}
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-                    >
-                      {importAgent.isPending ? 'Importing...' : 'Import'}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-center">
-              No ElevenLabs agents found. Create one in the ElevenLabs dashboard or use the Create
-              Agent button above.
-            </p>
-          )}
-        </div>
-      )}
+      {canCreate && showImportSection && <ImportSection canCreate={canCreate} />}
 
       {/* Agents Grid */}
-      {visibleAgents && visibleAgents.length > 0 ? (
+      {hasAgents ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {visibleAgents.map(agent => (
             <Link
@@ -233,40 +149,23 @@ const VoiceExamsList: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {formatDate(agent.createdAt)}
+                  {formatShortDate(agent.createdAt)}
                 </div>
               </div>
             </Link>
           ))}
-          {showRedeemCardInGrid && (
-            <div className="border-border bg-card flex h-full flex-col rounded-lg border p-6">
-              <h3 className="text-foreground mb-2 text-lg font-semibold">{redeemTitle}</h3>
-              <p className="text-muted-foreground mb-4 text-sm">{redeemDescription}</p>
-              <div className="flex flex-1 flex-col gap-3">
-                <input
-                  type="text"
-                  value={accessCode}
-                  onChange={e => {
-                    setAccessCode(e.target.value);
-                    setRedeemError('');
-                  }}
-                  onKeyDown={e => e.key === 'Enter' && handleRedeemCode()}
-                  placeholder="Enter access code"
-                  className="border-border bg-background text-foreground placeholder:text-muted-foreground w-full rounded-lg border px-4 py-2 text-center focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
-                {redeemError && <p className="text-center text-sm text-red-500">{redeemError}</p>}
-                <button
-                  onClick={handleRedeemCode}
-                  disabled={redeemCode.isPending || !accessCode.trim()}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2 disabled:opacity-50"
-                >
-                  {redeemCode.isPending ? 'Unlocking...' : 'Unlock Exam'}
-                </button>
-              </div>
-            </div>
+
+          {/* Redeem card inside grid when user already has agents */}
+          {canRedeemAccessCode && (
+            <RedeemAccessCodeForm
+              title={redeemTitle}
+              description={redeemDescription}
+              className="border-border bg-card flex h-full flex-col rounded-lg border p-6"
+            />
           )}
         </div>
       ) : (
+        /* Empty state */
         <div className="border-border flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-16">
           <Mic className="text-muted-foreground mb-4 h-12 w-12" />
           {canCreate ? (
@@ -286,31 +185,13 @@ const VoiceExamsList: React.FC = () => {
           ) : (
             <>
               <h3 className="text-foreground mb-2 text-lg font-medium">No Exams Unlocked Yet</h3>
-              <p className="text-muted-foreground mb-6 text-center">
-                Use the access code below to unlock your exam.
-              </p>
+              <p className="text-muted-foreground mb-6 text-center">{DESCRIPTIONS.emptyPrompt}</p>
               {canRedeemAccessCode && (
-                <div className="flex w-full max-w-sm flex-col gap-3">
-                  <input
-                    type="text"
-                    value={accessCode}
-                    onChange={e => {
-                      setAccessCode(e.target.value);
-                      setRedeemError('');
-                    }}
-                    onKeyDown={e => e.key === 'Enter' && handleRedeemCode()}
-                    placeholder="Enter access code"
-                    className="border-border bg-background text-foreground placeholder:text-muted-foreground w-full rounded-lg border px-4 py-2 text-center focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
-                  {redeemError && <p className="text-center text-sm text-red-500">{redeemError}</p>}
-                  <button
-                    onClick={handleRedeemCode}
-                    disabled={redeemCode.isPending || !accessCode.trim()}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2 disabled:opacity-50"
-                  >
-                    {redeemCode.isPending ? 'Unlocking...' : 'Unlock Exam'}
-                  </button>
-                </div>
+                <RedeemAccessCodeForm
+                  title={redeemTitle}
+                  description={redeemDescription}
+                  className="w-full max-w-sm"
+                />
               )}
             </>
           )}
