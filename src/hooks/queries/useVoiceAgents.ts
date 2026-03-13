@@ -208,13 +208,8 @@ export const useRedeemVoiceAccessCode = () => {
 
   return useMutation({
     mutationFn: (accessCode: string) => voiceAgentService.redeemAccessCode(accessCode),
-    onSuccess: (unlockedAgent: VoiceAgent) => {
-      queryClient.setQueryData<VoiceAgentListItem[]>(voiceAgentKeys.list(), oldAgents => {
-        const alreadyInList = oldAgents?.some(a => a.id === unlockedAgent.id);
-        if (alreadyInList) return oldAgents;
-        const listItem = toListItem(unlockedAgent);
-        return oldAgents ? [listItem, ...oldAgents] : [listItem];
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.list() });
     },
   });
 };
