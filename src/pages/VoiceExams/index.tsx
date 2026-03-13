@@ -27,6 +27,11 @@ const VoiceExamsList: React.FC = () => {
 
   const canCreate = user?.hasSupervisorAccessForVoiceAgent || user?.isVoiceTeamManager || false;
 
+  // Hide draft exams from students — only creators/managers see drafts
+  const visibleAgents = canCreate
+    ? agents
+    : agents?.filter(agent => agent.status === AgentStatus.Active);
+
   const {
     data: elevenlabsAgents,
     isLoading: loadingElevenlabs,
@@ -162,9 +167,9 @@ const VoiceExamsList: React.FC = () => {
       )}
 
       {/* Agents Grid */}
-      {agents && agents.length > 0 ? (
+      {visibleAgents && visibleAgents.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {agents.map(agent => (
+          {visibleAgents.map(agent => (
             <Link
               key={agent.id}
               to={`/voice-exams/${agent.id}`}
