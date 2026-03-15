@@ -2,7 +2,7 @@
  * VoiceInterface component for conducting voice exams.
  * Uses ElevenLabs SDK for real-time voice conversations.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useConversation } from '@elevenlabs/react';
 
@@ -30,6 +30,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
 
   // TanStack Query mutations
   const getSignedUrlMutation = useGetSignedUrl();
@@ -71,6 +72,22 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     },
   });
 
+  const stopMicrophone = useCallback(() => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+  }, []);
+
+  // Cleanup microphone on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
   const handleStart = useCallback(async () => {
     try {
       setMessages([]);
@@ -85,7 +102,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
 
       // Only request microphone after confirming eligibility
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
 
       // Start ElevenLabs session with signed URL
       const conversationIdResult = await conversation.startSession({
@@ -103,6 +121,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
     } catch (err) {
       console.error('Failed to start session:', err);
+      stopMicrophone();
       const message = err instanceof Error ? err.message : 'Failed to start session';
       // Check if this is an "already attempted" error from the backend
       if (
@@ -114,11 +133,19 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
       setLocalError(message);
     }
-  }, [agent.id, conversation, getSignedUrlMutation, onAlreadyAttempted, startConversationMutation]);
+  }, [
+    agent.id,
+    conversation,
+    getSignedUrlMutation,
+    onAlreadyAttempted,
+    startConversationMutation,
+    stopMicrophone,
+  ]);
 
   const handleEnd = useCallback(async () => {
     try {
       await conversation.endSession();
+      stopMicrophone();
 
       if (currentConversationId) {
         // Record conversation end and fetch transcript
@@ -132,9 +159,17 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       onComplete?.();
     } catch (err) {
       console.error('Failed to end session:', err);
+      stopMicrophone();
       setLocalError(err instanceof Error ? err.message : 'Failed to end session');
     }
-  }, [agent.id, currentConversationId, conversation, endConversationMutation, onComplete]);
+  }, [
+    agent.id,
+    currentConversationId,
+    conversation,
+    endConversationMutation,
+    onComplete,
+    stopMicrophone,
+  ]);
 
   const isSessionActive = conversation.status === 'connected';
   const isConnecting = conversation.status === 'connecting';
