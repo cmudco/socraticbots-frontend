@@ -12,6 +12,8 @@ import {
   useStartConversation,
 } from '@/hooks/queries/useVoiceAgents';
 
+import { formatTimeInCall } from '@/utils/formatters';
+
 import { VoiceAgent } from '@/types/voiceAgent';
 
 interface VoiceInterfaceProps {
@@ -25,12 +27,6 @@ interface TranscriptMessage {
   content: string;
   timestamp: Date;
 }
-
-const formatTime = (seconds: number): string => {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-};
 
 export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceInterfaceProps) {
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
@@ -265,7 +261,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
           <div className="border-border bg-muted mb-4 rounded-lg border p-4">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-foreground text-sm font-medium">
-                {formatTime(elapsedSeconds)} / {formatTime(maxDuration)}
+                {formatTimeInCall(elapsedSeconds)} / {formatTimeInCall(maxDuration)}
               </span>
               {progress >= 0.9 && (
                 <span className="animate-pulse text-sm font-semibold text-red-500">
