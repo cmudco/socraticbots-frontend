@@ -26,11 +26,23 @@ interface TranscriptMessage {
   timestamp: Date;
 }
 
+const formatTime = (seconds: number): string => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+};
+
 export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceInterfaceProps) {
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const examStartTimeRef = useRef<number | null>(null);
+  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const handleEndRef = useRef<(() => Promise<void>) | null>(null);
+
+  const maxDuration = agent.maxDurationSeconds;
 
   // TanStack Query mutations
   const getSignedUrlMutation = useGetSignedUrl();
@@ -79,11 +91,35 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     }
   }, []);
 
-  // Cleanup microphone on unmount
+  const stopTimer = useCallback(() => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+  }, []);
+
+  const startTimer = useCallback(() => {
+    stopTimer();
+    examStartTimeRef.current = Date.now();
+    setElapsedSeconds(0);
+    timerIntervalRef.current = setInterval(() => {
+      if (!examStartTimeRef.current) return;
+      const elapsed = Math.floor((Date.now() - examStartTimeRef.current) / 1000);
+      setElapsedSeconds(elapsed);
+      if (elapsed >= maxDuration) {
+        handleEndRef.current?.();
+      }
+    }, 1000);
+  }, [maxDuration, stopTimer]);
+
+  // Cleanup microphone and timer on unmount
   useEffect(() => {
     return () => {
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
       }
     };
   }, []);
@@ -112,6 +148,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
       if (conversationIdResult) {
         setCurrentConversationId(conversationIdResult);
+        startTimer();
 
         // Record conversation start in backend
         await startConversationMutation.mutateAsync({
@@ -139,11 +176,13 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     getSignedUrlMutation,
     onAlreadyAttempted,
     startConversationMutation,
+    startTimer,
     stopMicrophone,
   ]);
 
   const handleEnd = useCallback(async () => {
     try {
+      stopTimer();
       await conversation.endSession();
       stopMicrophone();
 
@@ -169,11 +208,20 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     endConversationMutation,
     onComplete,
     stopMicrophone,
+    stopTimer,
   ]);
+
+  // Keep handleEndRef in sync so the timer can call it without stale closures
+  useEffect(() => {
+    handleEndRef.current = handleEnd;
+  }, [handleEnd]);
 
   const isSessionActive = conversation.status === 'connected';
   const isConnecting = conversation.status === 'connecting';
   const isLoading = getSignedUrlMutation.isPending;
+  const progress = maxDuration > 0 ? Math.min(elapsedSeconds / maxDuration, 1) : 0;
+  const progressColor =
+    progress < 0.75 ? 'bg-green-500' : progress < 0.9 ? 'bg-yellow-500' : 'bg-red-500';
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -209,6 +257,28 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         {localError && (
           <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-400">
             {localError}
+          </div>
+        )}
+
+        {/* Exam Timer */}
+        {isSessionActive && (
+          <div className="border-border bg-muted mb-4 rounded-lg border p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-foreground text-sm font-medium">
+                {formatTime(elapsedSeconds)} / {formatTime(maxDuration)}
+              </span>
+              {progress >= 0.9 && (
+                <span className="animate-pulse text-sm font-semibold text-red-500">
+                  Time running out!
+                </span>
+              )}
+            </div>
+            <div className="bg-muted-foreground/20 h-2 w-full overflow-hidden rounded-full">
+              <div
+                className={`h-full rounded-full transition-all duration-1000 ${progressColor}`}
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
           </div>
         )}
 
