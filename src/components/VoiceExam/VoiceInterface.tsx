@@ -102,7 +102,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       if (!examStartTimeRef.current) return;
       const elapsed = Math.floor((Date.now() - examStartTimeRef.current) / 1000);
       setElapsedSeconds(elapsed);
-      if (elapsed >= maxDuration) {
+      if (maxDuration > 0 && elapsed >= maxDuration) {
         handleEndRef.current?.();
       }
     }, 1000);
@@ -146,8 +146,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         setCurrentConversationId(conversationIdResult);
         startTimer();
 
-        // Record conversation start in backend
-        await startConversationMutation.mutateAsync({
+        // Record conversation start in backend (non-blocking so a backend
+        // failure doesn't tear down the already-live ElevenLabs session)
+        startConversationMutation.mutate({
           agentId: agent.id,
           conversationId: conversationIdResult,
         });
