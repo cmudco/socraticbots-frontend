@@ -10,6 +10,8 @@ import BotAccess from './pages/BotAccess';
 import BotEditPage from './pages/BotEditPage';
 import BotGroups from './pages/BotGroups';
 import Chat from './pages/Chat';
+import ForgotPassword from './pages/ForgotPassword';
+import ForgotPasswordSuccess from './pages/ForgotPasswordSuccess';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import PublicBotChat from './pages/PublicBotChat';
@@ -35,6 +37,8 @@ const App: React.FC = () => {
           {/* Auth routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password-success" element={<ForgotPasswordSuccess />} />
 
           {/* Protected routes */}
           <Route
@@ -58,8 +62,8 @@ const App: React.FC = () => {
             <Route path="chat/:botId" element={<Chat />} />
             <Route path="voice-exams" element={<VoiceExamsList />} />
             <Route path="voice-exams/create" element={<VoiceAgentCreate />} />
-            <Route path="voice-exams/conversations" element={<ConversationHistory />} />
-            <Route path="voice-exams/conversations/:id" element={<ConversationDetail />} />
+            <Route path="voice-exams/:agentId/conversations" element={<ConversationHistory />} />
+            <Route path="voice-exams/:agentId/conversations/:id" element={<ConversationDetail />} />
             <Route path="voice-exams/:id" element={<VoiceAgentDetail />} />
             <Route path="voice-exams/:id/exam" element={<StudentExam />} />
           </Route>

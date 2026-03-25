@@ -1,44 +1,51 @@
 /**
  * VoiceExams list page.
- * Shows all voice agents and allows creators to manage them.
+ * Shows all voice agents the user can access via any role.
+ * Admins/managers can create new agents, import from ElevenLabs, and manage.
+ * Students see an access code input to unlock exams.
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Clock, Download, Mic, Plus, RefreshCw, User } from 'lucide-react';
+import { Clock, Download, Mic, Plus, Shield, User, Users } from 'lucide-react';
 
 import { useUser } from '@/hooks/queries/useUser';
-import {
-  useElevenLabsAgents,
-  useImportElevenLabsAgent,
-  useVoiceAgents,
-} from '@/hooks/queries/useVoiceAgents';
+import { useVoiceAgents } from '@/hooks/queries/useVoiceAgents';
+
+import { formatShortDate } from '@/utils/formatters';
+import { ROLE_BADGE_STYLES } from '@/utils/voiceAgentStyles';
+
+import { AgentStatus } from '@/types/voiceAgent';
+
+import ImportSection from './ImportSection';
+import RedeemAccessCodeForm from './RedeemAccessCodeForm';
+
+const DESCRIPTIONS = {
+  admin: 'Create and manage voice-based exams powered by ElevenLabs AI',
+  student: 'Take voice-based exams powered by ElevenLabs AI',
+  redeemUnlock: 'Enter another access code to unlock a different voice exam.',
+  redeemFirst: 'Enter the access code provided by your instructor to unlock your exam.',
+  emptyPrompt: 'Use the access code below to unlock your exam.',
+} as const;
 
 const VoiceExamsList: React.FC = () => {
   const user = useUser();
-  const { data: agents, isLoading, refetch } = useVoiceAgents();
-  const {
-    data: elevenlabsAgents,
-    isLoading: loadingElevenlabs,
-    refetch: refetchElevenlabs,
-  } = useElevenLabsAgents(user?.isCreator ?? false);
-  const importAgent = useImportElevenLabsAgent();
+  const { data: agents, isLoading } = useVoiceAgents();
+
+  const canCreate = user?.hasSupervisorAccessForVoiceAgent || user?.isVoiceTeamManager || false;
+  const canRedeemAccessCode =
+    !!user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager;
+
+  // Hide draft exams from students — only creators/managers see drafts
+  const visibleAgents = canCreate
+    ? agents
+    : agents?.filter(agent => agent.status === AgentStatus.Active);
+  const hasAgents = !!visibleAgents && visibleAgents.length > 0;
 
   const [showImportSection, setShowImportSection] = useState(false);
 
-  const isCreator = user?.isCreator ?? false;
-
-  const handleImport = async (agentId: string) => {
-    await importAgent.mutateAsync(agentId);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  const redeemTitle = hasAgents ? 'Unlock Another Exam' : 'Enter Your Exam Code';
+  const redeemDescription = hasAgents ? DESCRIPTIONS.redeemUnlock : DESCRIPTIONS.redeemFirst;
 
   if (isLoading) {
     return (
@@ -55,20 +62,11 @@ const VoiceExamsList: React.FC = () => {
         <div>
           <h1 className="text-foreground text-2xl font-bold">Voice Exams</h1>
           <p className="text-muted-foreground mt-1">
-            {isCreator
-              ? 'Create and manage voice-based exams powered by ElevenLabs AI'
-              : 'Take voice-based exams powered by ElevenLabs AI'}
+            {canCreate ? DESCRIPTIONS.admin : DESCRIPTIONS.student}
           </p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={() => refetch()}
-            className="border-border text-foreground hover:bg-accent flex items-center gap-2 rounded-lg border px-4 py-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </button>
-          {isCreator && (
+          {canCreate && (
             <>
               <button
                 onClick={() => setShowImportSection(!showImportSection)}
@@ -89,85 +87,41 @@ const VoiceExamsList: React.FC = () => {
         </div>
       </div>
 
-      {/* Import Section (Creators only) */}
-      {isCreator && showImportSection && (
-        <div className="border-border bg-card mb-8 rounded-lg border p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-foreground text-lg font-semibold">Import from ElevenLabs</h2>
-            <button
-              onClick={() => refetchElevenlabs()}
-              disabled={loadingElevenlabs}
-              className="text-primary hover:text-primary/80 flex items-center gap-2 text-sm"
-            >
-              <RefreshCw className={`h-4 w-4 ${loadingElevenlabs ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-          </div>
-
-          {loadingElevenlabs ? (
-            <div className="flex h-24 items-center justify-center">
-              <div className="border-primary h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
-            </div>
-          ) : elevenlabsAgents && elevenlabsAgents.length > 0 ? (
-            <div className="grid gap-3">
-              {elevenlabsAgents.map(agent => (
-                <div
-                  key={agent.agentId}
-                  className="border-border flex items-center justify-between rounded-lg border p-4"
-                >
-                  <div>
-                    <h3 className="text-foreground font-medium">{agent.name}</h3>
-                    <p className="text-muted-foreground text-sm">
-                      ID: {agent.agentId.substring(0, 16)}...
-                    </p>
-                  </div>
-                  {agent.isSynced ? (
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-sm text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                      Imported
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => handleImport(agent.agentId)}
-                      disabled={importAgent.isPending}
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-                    >
-                      {importAgent.isPending ? 'Importing...' : 'Import'}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-center">
-              No ElevenLabs agents found. Create one in the ElevenLabs dashboard or use the Create
-              Agent button above.
-            </p>
-          )}
-        </div>
-      )}
+      {/* Import Section (Voice admins only) */}
+      {canCreate && showImportSection && <ImportSection canCreate={canCreate} />}
 
       {/* Agents Grid */}
-      {agents && agents.length > 0 ? (
+      {hasAgents ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {agents.map(agent => (
+          {visibleAgents.map(agent => (
             <Link
               key={agent.id}
               to={`/voice-exams/${agent.id}`}
-              className="border-border bg-card group rounded-lg border p-6 transition-shadow hover:shadow-lg"
+              className="border-border bg-card group flex h-full flex-col rounded-lg border p-6 transition-shadow hover:shadow-lg"
             >
               <div className="mb-4 flex items-start justify-between">
                 <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
                   <Mic className="text-primary h-6 w-6" />
                 </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    agent.status === 'active'
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {agent.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  {agent.accessLevel && agent.accessLevel !== 'student' && (
+                    <span
+                      className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_STYLES[agent.accessLevel] || ''}`}
+                    >
+                      <Shield className="h-3 w-3" />
+                      {agent.accessLevel}
+                    </span>
+                  )}
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      agent.status === AgentStatus.Active
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {agent.status}
+                  </span>
+                </div>
               </div>
 
               <h3 className="text-foreground group-hover:text-primary mb-2 text-lg font-semibold">
@@ -182,36 +136,64 @@ const VoiceExamsList: React.FC = () => {
                 {agent.description || 'No description provided'}
               </p>
 
-              <div className="text-muted-foreground flex items-center gap-4 text-xs">
+              <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-xs">
+                {agent.teamName && (
+                  <div className="flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    {agent.teamName}
+                  </div>
+                )}
                 <div className="flex items-center gap-1">
                   <User className="h-3 w-3" />
                   {agent.userEmail}
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {formatDate(agent.createdAt)}
+                  {formatShortDate(agent.createdAt)}
                 </div>
               </div>
             </Link>
           ))}
+
+          {/* Redeem card inside grid when user already has agents */}
+          {canRedeemAccessCode && (
+            <RedeemAccessCodeForm
+              title={redeemTitle}
+              description={redeemDescription}
+              className="border-border bg-card flex h-full flex-col rounded-lg border p-6"
+            />
+          )}
         </div>
       ) : (
+        /* Empty state */
         <div className="border-border flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-16">
           <Mic className="text-muted-foreground mb-4 h-12 w-12" />
-          <h3 className="text-foreground mb-2 text-lg font-medium">No Voice Agents Yet</h3>
-          <p className="text-muted-foreground mb-4">
-            {isCreator
-              ? 'Create your first voice agent to get started'
-              : 'No voice exams are available yet'}
-          </p>
-          {isCreator && (
-            <Link
-              to="/voice-exams/create"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2"
-            >
-              <Plus className="h-4 w-4" />
-              Create Agent
-            </Link>
+          {canCreate ? (
+            <>
+              <h3 className="text-foreground mb-2 text-lg font-medium">No Voice Agents Yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Create your first voice agent to get started
+              </p>
+              <Link
+                to="/voice-exams/create"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2"
+              >
+                <Plus className="h-4 w-4" />
+                Create Agent
+              </Link>
+            </>
+          ) : (
+            <>
+              <h3 className="text-foreground mb-2 text-lg font-medium">No Exams Unlocked Yet</h3>
+              <p className="text-muted-foreground mb-6 text-center">{DESCRIPTIONS.emptyPrompt}</p>
+              {canRedeemAccessCode && (
+                <RedeemAccessCodeForm
+                  title={redeemTitle}
+                  description={redeemDescription}
+                  className="w-full max-w-sm"
+                />
+              )}
+            </>
           )}
         </div>
       )}

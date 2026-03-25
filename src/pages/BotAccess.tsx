@@ -13,12 +13,8 @@ import {
 import { botGroupService } from '@/services/botGroups.service';
 import { botService } from '@/services/bots.service';
 
-import AccessManagementInfo from '@/components/bots/AccessManagementInfo';
-import AnonymousConversationSlideOver from '@/components/bots/AnonymousConversationSlideOver';
-import AnonymousConversationsList from '@/components/bots/AnonymousConversationsList';
-import AuthenticatedUsersList from '@/components/bots/AuthenticatedUsersList';
-import BotAccessHeader from '@/components/bots/BotAccessHeader';
-import BotGroupsList from '@/components/bots/BotGroupsList';
+import { formatDate } from '@/utils/formatters';
+
 import RemoveAccessModal from '@/components/bots/RemoveAccessModal';
 import UserConversationsSlideOver from '@/components/bots/UserConversationsSlideOver';
 import { Button } from '@/components/ui/button';
@@ -147,7 +143,51 @@ const BotAccess: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to remove user access';
       setError(errorMessage);
     } finally {
-      setRemovingUserId(null);
+      setRemovingUser(null);
+    }
+  };
+
+  const closeRemoveAccessModal = () => {
+    setRemoveAccessModal({
+      isOpen: false,
+      userId: 0,
+      userEmail: '',
+      userName: '',
+      accessType: '',
+    });
+  };
+
+  const getAccessTypeLabel = (accessType: string) => {
+    switch (accessType) {
+      case 'direct_bot':
+        return 'Direct Bot Access';
+      case 'bot_group':
+        return 'Bot Group Access';
+      case 'bot_group_owner':
+        return 'Bot Group Owner';
+      case 'bot_group_collaborator':
+        return 'Bot Group Collaborator';
+      case 'bot_creator':
+        return 'Bot Creator';
+      default:
+        return accessType;
+    }
+  };
+
+  const getAccessTypeIcon = (accessType: string) => {
+    switch (accessType) {
+      case 'direct_bot':
+        return <Key className="h-4 w-4" />;
+      case 'bot_group':
+        return <Users className="h-4 w-4" />;
+      case 'bot_group_owner':
+        return <Users className="h-4 w-4" />;
+      case 'bot_group_collaborator':
+        return <Users className="h-4 w-4" />;
+      case 'bot_creator':
+        return <Bot className="h-4 w-4" />;
+      default:
+        return <Key className="h-4 w-4" />;
     }
   };
 

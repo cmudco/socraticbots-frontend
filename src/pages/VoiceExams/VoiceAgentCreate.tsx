@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 
 import { useUser } from '@/hooks/queries/useUser';
-import { useCreateVoiceAgent } from '@/hooks/queries/useVoiceAgents';
+import { useCreateVoiceAgent, useMyTeams } from '@/hooks/queries/useVoiceAgents';
 
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
 
@@ -24,9 +24,18 @@ const VoiceAgentCreate: React.FC = () => {
   const navigate = useNavigate();
   const user = useUser();
   const createAgent = useCreateVoiceAgent();
+  const { data: myTeams } = useMyTeams();
 
-  const { initNewAgent, validateForm, getFormData, isSubmitting, setSubmitting, resetForm } =
-    useVoiceAgentFormStore();
+  const {
+    initNewAgent,
+    validateForm,
+    getFormData,
+    isSubmitting,
+    setSubmitting,
+    resetForm,
+    team,
+    updateField,
+  } = useVoiceAgentFormStore();
 
   // Initialize form on mount
   useEffect(() => {
@@ -36,9 +45,16 @@ const VoiceAgentCreate: React.FC = () => {
     };
   }, [initNewAgent, resetForm]);
 
-  // Redirect if not a creator
+  // Auto-select team when there is exactly one
   useEffect(() => {
-    if (user && !user.isCreator) {
+    if (myTeams && myTeams.length === 1 && team === null) {
+      updateField('team', myTeams[0].id);
+    }
+  }, [myTeams, team, updateField]);
+
+  // Redirect if not a supervisor or voice team manager
+  useEffect(() => {
+    if (user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager) {
       navigate('/voice-exams');
     }
   }, [user, navigate]);
@@ -66,7 +82,7 @@ const VoiceAgentCreate: React.FC = () => {
     }
   };
 
-  if (!user?.isCreator) {
+  if (user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager) {
     return null;
   }
 
@@ -88,7 +104,7 @@ const VoiceAgentCreate: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <BasicInfoSection />
+        <BasicInfoSection showAccessCode />
         <ExamConfigSection />
         <AIConfigSection />
         <AdvancedSettingsSection collapsible />

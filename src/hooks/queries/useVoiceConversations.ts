@@ -11,6 +11,7 @@ import { VoiceConversation, VoiceConversationListItem } from '@/types/voiceAgent
 const CONVERSATION_KEYS = {
   all: ['voice-conversations'] as const,
   list: () => [...CONVERSATION_KEYS.all, 'list'] as const,
+  byAgent: (agentId: number) => [...CONVERSATION_KEYS.all, 'agent', agentId] as const,
   detail: (id: number) => [...CONVERSATION_KEYS.all, 'detail', id] as const,
 };
 
@@ -21,6 +22,17 @@ export function useVoiceConversations() {
   return useQuery<VoiceConversationListItem[]>({
     queryKey: CONVERSATION_KEYS.list(),
     queryFn: () => voiceAgentService.getConversations(),
+  });
+}
+
+/**
+ * Hook to fetch voice conversations for a specific agent.
+ */
+export function useAgentConversations(agentId: number) {
+  return useQuery<VoiceConversationListItem[]>({
+    queryKey: CONVERSATION_KEYS.byAgent(agentId),
+    queryFn: () => voiceAgentService.getConversationsByAgent(agentId),
+    enabled: agentId > 0,
   });
 }
 
@@ -48,6 +60,44 @@ export function useSyncConversationTranscript() {
       queryClient.setQueryData(CONVERSATION_KEYS.detail(data.id), data);
       // Invalidate the list to refresh status
       queryClient.invalidateQueries({ queryKey: CONVERSATION_KEYS.list() });
+    },
+  });
+}
+
+/**
+ * Hook to export a conversation transcript as PDF.
+ */
+export function useExportTranscriptPdf() {
+  return useMutation<{ blob: Blob; filename: string }, Error, number>({
+    mutationFn: (id: number) => voiceAgentService.exportTranscriptPdf(id),
+    onSuccess: ({ blob, filename }) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    },
+  });
+}
+
+/**
+ * Hook to export all conversation transcripts as a ZIP of PDFs.
+ */
+export function useExportAllTranscripts() {
+  return useMutation<{ blob: Blob; filename: string }, Error, number | undefined>({
+    mutationFn: (agentId?: number) => voiceAgentService.exportAllTranscriptsPdf(agentId),
+    onSuccess: ({ blob, filename }) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     },
   });
 }

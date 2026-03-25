@@ -54,6 +54,15 @@ class AuthService {
     });
   }
 
+  async forgotPassword(email: string): Promise<void> {
+    await baseRequest({
+      url: 'users/forgot-password/',
+      method: METHOD.POST,
+      data: { email },
+      includeAuthToken: false,
+    });
+  }
+
   async refreshToken(): Promise<AuthTokens> {
     throw new Error('Token refresh is disabled');
   }

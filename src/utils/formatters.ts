@@ -1,31 +1,47 @@
 /**
- * Shared formatting utilities for dates, times, and labels
+ * Common formatting utilities.
  */
 
+/**
+ * Format a date string for display.
+ */
 export const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'short',
+    month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
 };
 
-export const formatTime = (dateString: string): string => {
-  return new Date(dateString).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
+/**
+ * Format a short date (without time).
+ */
+export const formatShortDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 };
 
-export const getAccessTypeLabel = (accessType: string): string => {
-  const labels: Record<string, string> = {
-    direct_bot: 'Direct Bot Access',
-    bot_group: 'Bot Group Access',
-    bot_group_owner: 'Bot Group Owner',
-    bot_group_collaborator: 'Bot Group Collaborator',
-    bot_creator: 'Bot Creator',
-  };
-  return labels[accessType] || accessType;
+/**
+ * Format duration in seconds to human-readable format.
+ */
+export const formatDuration = (seconds: number | null): string => {
+  if (!seconds) return '-';
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}m ${secs}s`;
+};
+
+/**
+ * Format time in call (mm:ss format).
+ */
+export const formatTimeInCall = (seconds?: number): string => {
+  if (seconds === undefined) return '';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 };

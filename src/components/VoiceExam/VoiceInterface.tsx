@@ -2,7 +2,7 @@
  * VoiceInterface component for conducting voice exams.
  * Uses ElevenLabs SDK for real-time voice conversations.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useConversation } from '@elevenlabs/react';
 
@@ -12,11 +12,14 @@ import {
   useStartConversation,
 } from '@/hooks/queries/useVoiceAgents';
 
+import { formatTimeInCall } from '@/utils/formatters';
+
 import { VoiceAgent } from '@/types/voiceAgent';
 
 interface VoiceInterfaceProps {
   agent: VoiceAgent;
   onComplete?: () => void;
+  onAlreadyAttempted?: () => void;
 }
 
 interface TranscriptMessage {
@@ -25,10 +28,17 @@ interface TranscriptMessage {
   timestamp: Date;
 }
 
-export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
+export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceInterfaceProps) {
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const examStartTimeRef = useRef<number | null>(null);
+  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const handleEndRef = useRef<(() => Promise<void>) | null>(null);
+
+  const maxDuration = agent.maxDurationSeconds;
 
   // TanStack Query mutations
   const getSignedUrlMutation = useGetSignedUrl();
@@ -70,21 +80,62 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
     },
   });
 
+  const stopMicrophone = useCallback(() => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+  }, []);
+
+  const stopTimer = useCallback(() => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+  }, []);
+
+  const startTimer = useCallback(() => {
+    stopTimer();
+    examStartTimeRef.current = Date.now();
+    setElapsedSeconds(0);
+    timerIntervalRef.current = setInterval(() => {
+      if (!examStartTimeRef.current) return;
+      const elapsed = Math.floor((Date.now() - examStartTimeRef.current) / 1000);
+      setElapsedSeconds(elapsed);
+      if (maxDuration > 0 && elapsed >= maxDuration) {
+        handleEndRef.current?.();
+      }
+    }, 1000);
+  }, [maxDuration, stopTimer]);
+
+  // Cleanup microphone and timer on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+    };
+  }, []);
+
   const handleStart = useCallback(async () => {
     try {
       setMessages([]);
       setLocalError(null);
 
-      // Get microphone permission
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Get signed URL from backend
+      // Check eligibility first (signed URL request will fail if already attempted)
       const signedUrlResult = await getSignedUrlMutation.mutateAsync(agent.id);
 
       if (!signedUrlResult?.signedUrl) {
         setLocalError('Failed to get signed URL');
         return;
       }
+
+      // Only request microphone after confirming eligibility
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
 
       // Start ElevenLabs session with signed URL
       const conversationIdResult = await conversation.startSession({
@@ -93,22 +144,44 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
 
       if (conversationIdResult) {
         setCurrentConversationId(conversationIdResult);
+        startTimer();
 
-        // Record conversation start in backend
-        await startConversationMutation.mutateAsync({
+        // Record conversation start in backend (non-blocking so a backend
+        // failure doesn't tear down the already-live ElevenLabs session)
+        startConversationMutation.mutate({
           agentId: agent.id,
           conversationId: conversationIdResult,
         });
       }
     } catch (err) {
       console.error('Failed to start session:', err);
-      setLocalError(err instanceof Error ? err.message : 'Failed to start session');
+      stopMicrophone();
+      const message = err instanceof Error ? err.message : 'Failed to start session';
+      // Check if this is an "already attempted" error from the backend
+      if (
+        (message.includes('already completed') || message.includes('maximum number of attempts')) &&
+        onAlreadyAttempted
+      ) {
+        onAlreadyAttempted();
+        return;
+      }
+      setLocalError(message);
     }
-  }, [agent.id, conversation, getSignedUrlMutation, startConversationMutation]);
+  }, [
+    agent.id,
+    conversation,
+    getSignedUrlMutation,
+    onAlreadyAttempted,
+    startConversationMutation,
+    startTimer,
+    stopMicrophone,
+  ]);
 
   const handleEnd = useCallback(async () => {
     try {
+      stopTimer();
       await conversation.endSession();
+      stopMicrophone();
 
       if (currentConversationId) {
         // Record conversation end and fetch transcript
@@ -122,13 +195,30 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
       onComplete?.();
     } catch (err) {
       console.error('Failed to end session:', err);
+      stopMicrophone();
       setLocalError(err instanceof Error ? err.message : 'Failed to end session');
     }
-  }, [agent.id, currentConversationId, conversation, endConversationMutation, onComplete]);
+  }, [
+    agent.id,
+    currentConversationId,
+    conversation,
+    endConversationMutation,
+    onComplete,
+    stopMicrophone,
+    stopTimer,
+  ]);
+
+  // Keep handleEndRef in sync so the timer can call it without stale closures
+  useEffect(() => {
+    handleEndRef.current = handleEnd;
+  }, [handleEnd]);
 
   const isSessionActive = conversation.status === 'connected';
   const isConnecting = conversation.status === 'connecting';
   const isLoading = getSignedUrlMutation.isPending;
+  const progress = maxDuration > 0 ? Math.min(elapsedSeconds / maxDuration, 1) : 0;
+  const progressColor =
+    progress < 0.75 ? 'bg-green-500' : progress < 0.9 ? 'bg-yellow-500' : 'bg-red-500';
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -164,6 +254,28 @@ export function VoiceInterface({ agent, onComplete }: VoiceInterfaceProps) {
         {localError && (
           <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-400">
             {localError}
+          </div>
+        )}
+
+        {/* Exam Timer */}
+        {isSessionActive && (
+          <div className="border-border bg-muted mb-4 rounded-lg border p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-foreground text-sm font-medium">
+                {formatTimeInCall(elapsedSeconds)} / {formatTimeInCall(maxDuration)}
+              </span>
+              {progress >= 0.9 && (
+                <span className="animate-pulse text-sm font-semibold text-red-500">
+                  Time running out!
+                </span>
+              )}
+            </div>
+            <div className="bg-muted-foreground/20 h-2 w-full overflow-hidden rounded-full">
+              <div
+                className={`h-full rounded-full transition-all duration-1000 ${progressColor}`}
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
           </div>
         )}
 
