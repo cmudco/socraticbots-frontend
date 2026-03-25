@@ -3,6 +3,7 @@
  * Adapted from DARE's NotificationPopover with Zustand instead of Redux
  */
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { formatDistanceToNow } from 'date-fns';
 import { AlertCircle, AlertTriangle, Bell, Check, Info, Trash2 } from 'lucide-react';
@@ -41,6 +42,7 @@ interface NotificationPopoverProps {
 }
 
 const NotificationPopover: React.FC<NotificationPopoverProps> = ({ className }) => {
+  const navigate = useNavigate();
   const {
     notifications,
     unreadCount,
@@ -156,7 +158,11 @@ const NotificationPopover: React.FC<NotificationPopoverProps> = ({ className }) 
                   )}
                   onClick={() => {
                     if (notification.actionUrl) {
-                      window.open(notification.actionUrl, '_blank');
+                      if (notification.actionUrl.startsWith('/')) {
+                        navigate(notification.actionUrl);
+                      } else {
+                        window.open(notification.actionUrl, '_blank');
+                      }
                     }
                     if (notification.effectiveStatus === NotificationStatus.UNREAD) {
                       markAsRead(notification.id);
