@@ -1,56 +1,77 @@
-// src/App.tsx
 import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
-import { useAuthInitialization } from './hooks/queries/useAuthInitialization';
+import ToastContainer from './components/ui/ToastContainer';
 import About from './pages/About';
-import Books from './pages/Books';
+import AccessCodes from './pages/AccessCodes';
+import BotAccess from './pages/BotAccess';
+import BotEditPage from './pages/BotEditPage';
+import BotGroups from './pages/BotGroups';
 import Chat from './pages/Chat';
+import ForgotPassword from './pages/ForgotPassword';
+import ForgotPasswordSuccess from './pages/ForgotPasswordSuccess';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import PublicBotChat from './pages/PublicBotChat';
+import Register from './pages/Register';
 import Settings from './pages/Settings';
-import { ReactQueryProvider } from './providers/ReactQueryProvider';
-
-// Auth initialization component
-const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  useAuthInitialization();
-  return <>{children}</>;
-};
+import VoiceExamsList from './pages/VoiceExams';
+import ConversationDetail from './pages/VoiceExams/ConversationDetail';
+import ConversationHistory from './pages/VoiceExams/ConversationHistory';
+import StudentExam from './pages/VoiceExams/StudentExam';
+import VoiceAgentCreate from './pages/VoiceExams/VoiceAgentCreate';
+import VoiceAgentDetail from './pages/VoiceExams/VoiceAgentDetail';
+import { ThemeProvider } from './providers/ThemeProvider';
 
 const App: React.FC = () => {
   return (
-    <ReactQueryProvider>
-      <AuthInitializer>
-        <BrowserRouter>
-          <Routes>
-            {/* Public route - no layout */}
-            <Route path="/login" element={<Login />} />
+    <ThemeProvider>
+      <BrowserRouter>
+        <ToastContainer />
+        <Routes>
+          {/* Public routes (no auth required) */}
+          <Route path="/public-deployment/bot/:botId" element={<PublicBotChat />} />
 
-            {/* Protected routes with shared layout */}
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              {/* Nested routes - these render in the Layout's Outlet */}
-              <Route index element={<Home />} />
-              <Route path="about" element={<About />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="books" element={<Books />} />
-              <Route path="chat" element={<Chat />} />
-            </Route>
+          {/* Auth routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password-success" element={<ForgotPasswordSuccess />} />
 
-            {/* Catch all - redirect to login */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthInitializer>
-    </ReactQueryProvider>
+          {/* Protected routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Home />} />
+            <Route path="about" element={<About />} />
+            <Route path="access-codes" element={<AccessCodes />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="bot-groups" element={<BotGroups />} />
+            <Route path="bot-groups/:botGroupId/bots/new" element={<BotEditPage />} />
+            <Route path="bot-groups/:botGroupId/bots/:botId/edit" element={<BotEditPage />} />
+            <Route path="bot-access" element={<BotAccess />} />
+            <Route path="bot-access/:botGroupId/:botId" element={<BotAccess />} />
+            <Route path="chat" element={<Chat />} />
+            <Route path="chat/:botId" element={<Chat />} />
+            <Route path="voice-exams" element={<VoiceExamsList />} />
+            <Route path="voice-exams/create" element={<VoiceAgentCreate />} />
+            <Route path="voice-exams/:agentId/conversations" element={<ConversationHistory />} />
+            <Route path="voice-exams/:agentId/conversations/:id" element={<ConversationDetail />} />
+            <Route path="voice-exams/:id" element={<VoiceAgentDetail />} />
+            <Route path="voice-exams/:id/exam" element={<StudentExam />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 };
 

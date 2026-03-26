@@ -1,12 +1,35 @@
-// src/services/auth.service.ts
 import { METHOD } from '@/constants/requests';
 
 import { baseRequest } from '@/utils/baseRequest';
 
 import { AuthTokens, User } from '@/types/auth';
 
+export interface RegistrationRequest {
+  name: string;
+  email: string;
+  password: string;
+  confirm_password: string;
+  access_code: string;
+}
+
+/**
+ * @deprecated Professor registration is now managed via DARE admin.
+ * This endpoint returns 410 GONE on the backend.
+ */
+export interface ProfessorRegistrationRequest {
+  name: string;
+  email: string;
+  password: string;
+  confirm_password: string;
+}
+
+export interface RegistrationResponse {
+  message: string;
+  name: string;
+  next_steps: string[];
+}
+
 class AuthService {
-  // Check if a token is valid
   async validateToken(token: string): Promise<boolean> {
     try {
       await baseRequest({
@@ -22,48 +45,35 @@ class AuthService {
     }
   }
 
-  // Login and get tokens
-  async login(username: string, password: string): Promise<AuthTokens> {
+  async login(email: string, password: string): Promise<AuthTokens> {
     return baseRequest<AuthTokens>({
-      url: 'users/token/',
+      url: 'users/login/',
       method: METHOD.POST,
-      data: { username, password },
+      data: { email, password },
       includeAuthToken: false,
     });
   }
 
-  // Refresh tokens
-  async refreshToken(refreshToken: string): Promise<AuthTokens> {
-    try {
-      const data = await baseRequest<AuthTokens>({
-        url: 'users/token/refresh/',
-        method: METHOD.POST,
-        data: { refresh: refreshToken },
-        includeAuthToken: false,
-      });
-
-      // Check if we got a new refresh token
-      const newRefreshToken = data.refresh || refreshToken;
-
-      return {
-        access: data.access,
-        refresh: newRefreshToken,
-      };
-    } catch (error) {
-      console.error('Token refresh failed with exception:', error);
-      throw error;
-    }
+  async forgotPassword(email: string): Promise<void> {
+    await baseRequest({
+      url: 'users/forgot-password/',
+      method: METHOD.POST,
+      data: { email },
+      includeAuthToken: false,
+    });
   }
 
-  // Fetch user profile
+  async refreshToken(): Promise<AuthTokens> {
+    throw new Error('Token refresh is disabled');
+  }
+
   async fetchUserProfile(): Promise<User> {
     return baseRequest<User>({
-      url: 'users/me/',
+      url: 'users/user-info/',
       method: METHOD.GET,
     });
   }
 
-  // Change password
   async changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
     await baseRequest({
       url: 'users/change-password/',
@@ -74,6 +84,30 @@ class AuthService {
       },
     });
     return true;
+  }
+
+  async register(registrationData: RegistrationRequest): Promise<RegistrationResponse> {
+    return baseRequest<RegistrationResponse>({
+      url: 'access-codes/register/',
+      method: METHOD.POST,
+      data: registrationData,
+      includeAuthToken: false,
+    });
+  }
+
+  /**
+   * @deprecated Professor/Creator registration is now managed via DARE admin.
+   * This endpoint returns 410 GONE on the backend.
+   */
+  async registerProfessor(
+    registrationData: ProfessorRegistrationRequest
+  ): Promise<RegistrationResponse> {
+    return baseRequest<RegistrationResponse>({
+      url: 'access-codes/register-professor/',
+      method: METHOD.POST,
+      data: registrationData,
+      includeAuthToken: false,
+    });
   }
 }
 

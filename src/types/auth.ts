@@ -1,9 +1,19 @@
-// src/types/auth.ts
+import type { PlatformRole } from '@/constants/roles';
+
+export type { PlatformRole };
+
 export interface User {
   id: number;
-  username: string;
   email: string;
-  // Add any other user fields you need
+  name: string;
+  isCreator: boolean;
+  hasSupervisorAccessForVoiceAgent: boolean;
+  isVoiceTeamManager: boolean;
+  platformRole?: PlatformRole;
+  externalUserId?: number;
+  isActive: boolean;
+  dateJoined?: string;
+  platform: string;
 }
 
 export interface AuthTokens {

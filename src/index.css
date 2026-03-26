@@ -1,6 +1,18 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+@import './themes/common.css';
+@import './themes/amber-minimal.css';
+@import './themes/amethyst-haze.css';
+@import './themes/bold-tech.css';
+@import './themes/sunset-horizon.css';
+@import './themes/caffeine.css';
+@import './themes/ocean-breeze.css';
+@import './themes/bubblegum.css';
+@import './themes/twitter.css';
+@import './themes/t3-chat.css';
+@import './styles/bot-theme.css';
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -117,4 +129,32 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Accordion animations */
+@keyframes accordion-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@theme inline {
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
 }

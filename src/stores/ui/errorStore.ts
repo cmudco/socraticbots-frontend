@@ -5,19 +5,17 @@ interface AppError {
   message: string;
   type: 'error' | 'warning' | 'info';
   timestamp: number;
-  context?: string; // Which component/operation triggered the error
+  context?: string;
 }
 
 interface ErrorStoreState {
   errors: AppError[];
 
-  // Actions
   addError: (message: string, type?: 'error' | 'warning' | 'info', context?: string) => void;
   removeError: (id: string) => void;
   clearAllErrors: () => void;
   clearErrorsByContext: (context: string) => void;
 
-  // Getters
   getErrorsByContext: (context: string) => AppError[];
   hasErrors: () => boolean;
   hasErrorsInContext: (context: string) => boolean;
@@ -39,7 +37,6 @@ export const useErrorStore = create<ErrorStoreState>((set, get) => ({
       errors: [...state.errors, error],
     }));
 
-    // Auto-remove error after 5 seconds for non-critical errors
     if (type !== 'error') {
       setTimeout(() => {
         get().removeError(error.id);
