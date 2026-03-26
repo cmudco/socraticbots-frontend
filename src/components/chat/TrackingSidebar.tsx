@@ -1,66 +1,67 @@
-// src/components/chat/TrackingSidebar.tsx
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import {
-  AlertCircle,
   ArrowUpRight,
-  BarChart3,
   BookOpen,
   CheckCircle2,
-  Clock,
+  ChevronDown,
+  ChevronUp,
   Lightbulb,
-  Loader2,
-  RefreshCw,
   TrendingUp,
 } from 'lucide-react';
 
-import { useStreamProgressTracking, useTrackingProgress } from '@/hooks/queries/useChat';
-
-import { useChatStore } from '@/stores/core/chatStore';
+import { useConversationStore } from '@/stores/core/conversationStore';
+import { useIsProgressStreaming, useProgressTokens } from '@/stores/core/websocketStore';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 
 const TrackingSidebar: React.FC = () => {
-  const { selectedConversationId } = useChatStore();
+  // Use the conversation store for bot and conversation context
   const {
-    data: progressData,
-    isLoading: progressLoading,
-    error: progressError,
-  } = useTrackingProgress(selectedConversationId);
-  const { streamProgressTracking } = useStreamProgressTracking();
+    activeConversation,
+    currentBotId,
+    currentBot,
+    isProgressCollapsed,
+    setProgressCollapsed,
+  } = useConversationStore();
+  const dareConversationId = activeConversation?.dareConversationId;
 
-  // Get progress streaming state from Zustand store
-  const { isProgressStreaming, progressTokens, setProgressStreaming, clearProgressTokens } =
-    useChatStore();
+  // Use individual WebSocket selectors to avoid re-render loops
+  const isProgressStreaming = useIsProgressStreaming();
+  const progressTokens = useProgressTokens();
 
-  if (!selectedConversationId) {
+  // Check if tracking is enabled for the current bot
+  const isTrackingEnabled = currentBot?.modelPreference?.trackingModelDareId != null;
+
+  // Hide entire sidebar if no tracking model is configured
+  if (!isTrackingEnabled) {
+    return null;
+  }
+
+  if (!currentBotId || !dareConversationId) {
     return (
-      <div className="flex h-full flex-col bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
-        {/* Header - consistent with chat styling */}
-        <div className="border-b border-slate-200/60 px-4 py-4">
+      <div className="from-muted/30 via-background to-primary/5 flex h-full flex-col bg-gradient-to-br">
+        <div className="border-border/60 border-b px-4 py-4">
           <div className="flex items-center space-x-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-md">
-              <TrendingUp className="h-4 w-4 text-white" />
+            <div className="from-primary to-primary/80 flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br shadow-md">
+              <TrendingUp className="text-primary-foreground h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-slate-800">Learning Progress</h2>
-              <p className="text-sm text-slate-600">Track your progress and insights</p>
+              <h2 className="text-foreground text-base font-semibold">Learning Progress</h2>
+              <p className="text-muted-foreground text-sm">Track your progress and insights</p>
             </div>
           </div>
         </div>
 
-        {/* Empty state - consistent spacing */}
         <div className="flex flex-1 items-center justify-center px-4 py-4">
-          <div className="w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-6 text-center shadow-sm backdrop-blur-sm">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200">
-              <BookOpen className="h-6 w-6 text-slate-400" />
+          <div className="border-border bg-background/90 w-full rounded-2xl border px-4 py-6 text-center shadow-sm backdrop-blur-sm">
+            <div className="from-muted to-muted/80 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br">
+              <BookOpen className="text-muted-foreground h-6 w-6" />
             </div>
-            <h3 className="mb-2 text-sm font-semibold text-slate-800">Select a Chapter</h3>
-            <p className="text-sm leading-relaxed text-slate-600">
-              Choose a chapter to start tracking your learning progress.
+            <h3 className="text-foreground mb-2 text-sm font-semibold">Select a Bot</h3>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Choose a bot to start tracking your learning progress.
             </p>
           </div>
         </div>
@@ -69,249 +70,156 @@ const TrackingSidebar: React.FC = () => {
   }
 
   return (
-    <div className="flex h-full flex-col bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
+    <div className="from-muted/30 via-background to-primary/5 flex h-full flex-col bg-gradient-to-br">
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-        {/* Progress Assessment Card - matching message bubble styling */}
-        <div className="rounded-2xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur-sm">
-          {/* Card Header */}
-          <div className="border-b border-slate-200/60 px-4 py-3">
+        {/* Progress Assessment Section */}
+        <div className="border-border bg-background/90 rounded-2xl border shadow-sm backdrop-blur-sm">
+          <div className="border-border/60 border-b px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
-                  <BarChart3 className="h-3 w-3 text-white" />
+                <div className="from-secondary to-secondary/80 flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br">
+                  <TrendingUp className="text-secondary-foreground h-3 w-3" />
                 </div>
-                <h3 className="text-sm font-semibold text-slate-800">Progress Assessment</h3>
+                <h3 className="text-foreground text-sm font-semibold">Progress Assessment</h3>
               </div>
               <div className="flex items-center space-x-2">
                 {isProgressStreaming && (
                   <Badge
                     variant="secondary"
-                    className="animate-pulse border-emerald-200 bg-emerald-50 text-emerald-700"
+                    className="border-secondary/20 bg-secondary/10 text-secondary-foreground animate-pulse"
                   >
-                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    <div className="border-secondary mr-1 h-3 w-3 animate-spin rounded-full border border-t-transparent"></div>
                     Analyzing...
                   </Badge>
                 )}
-                {!isProgressStreaming && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setProgressStreaming(true);
-                      clearProgressTokens();
-                      streamProgressTracking(selectedConversationId);
-                    }}
-                    className="h-6 w-6 p-0 hover:bg-emerald-50"
-                    disabled={isProgressStreaming}
-                  >
-                    <RefreshCw className="h-3 w-3 text-slate-500" />
-                  </Button>
-                )}
-                {progressData?.created_at && !isProgressStreaming && (
-                  <div className="flex items-center space-x-1 text-xs text-slate-500">
-                    <Clock className="h-3 w-3" />
-                    <span>{new Date(progressData.created_at).toLocaleTimeString()}</span>
-                  </div>
-                )}
+                <button
+                  onClick={() => setProgressCollapsed(!isProgressCollapsed)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={isProgressCollapsed ? 'Expand' : 'Collapse'}
+                >
+                  {isProgressCollapsed ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronUp className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
           </div>
-
-          {/* Card Content */}
-          <div className="px-4 py-3">
-            {progressLoading ? (
-              <div className="space-y-4 py-6">
-                <div className="flex items-center justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-500"></div>
-                </div>
-                <div className="space-y-2 text-center">
-                  <p className="text-sm font-medium text-slate-700">Loading progress...</p>
-                  <p className="text-xs text-slate-500">Fetching your latest assessment</p>
-                </div>
-                <Progress value={33} className="w-full" />
-              </div>
-            ) : progressError ? (
-              <div className="py-8 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-                  <AlertCircle className="h-6 w-6 text-red-500" />
-                </div>
-                <h4 className="mb-1 text-sm font-medium text-red-700">Error Loading Progress</h4>
-                <p className="text-xs text-red-600">Unable to load your progress assessment</p>
-              </div>
-            ) : !progressData || !progressData.content ? (
-              <div className="py-8 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-50">
-                  <Lightbulb className="h-6 w-6 text-slate-400" />
-                </div>
-                <h4 className="mb-2 text-sm font-medium text-slate-700">No Progress Data Yet</h4>
-                <p className="mb-4 text-xs text-slate-500">
-                  Start chatting to get personalized feedback on your learning progress
-                </p>
-                <Badge variant="outline" className="bg-slate-50">
-                  <ArrowUpRight className="mr-1 h-3 w-3" />
-                  Begin Learning
-                </Badge>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Show streaming progress if active */}
-                {isProgressStreaming && progressTokens.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="prose prose-sm prose-slate max-w-none">
-                      <ReactMarkdown
-                        components={{
-                          h1: ({ children }) => (
-                            <h1 className="mb-4 flex items-center rounded-lg border-l-4 border-emerald-400 bg-gradient-to-r from-emerald-50 to-green-50 p-3 text-base font-bold text-slate-800">
-                              <TrendingUp className="mr-2 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                              {children}
-                            </h1>
-                          ),
-                          h2: ({ children }) => (
-                            <h2 className="mt-5 mb-3 flex items-center text-sm font-semibold text-slate-700">
-                              <div className="mr-2 h-2 w-2 flex-shrink-0 rounded-full bg-emerald-400"></div>
-                              {children}
-                            </h2>
-                          ),
-                          h3: ({ children }) => (
-                            <h3 className="mt-4 mb-2 flex items-center text-sm font-medium text-slate-600">
-                              <div className="mr-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-slate-400"></div>
-                              {children}
-                            </h3>
-                          ),
-                          p: ({ children }) => (
-                            <p className="mb-3 text-sm leading-relaxed text-slate-600">
-                              {children}
-                            </p>
-                          ),
-                          ul: ({ children }) => (
-                            <ul className="mb-4 space-y-2 rounded-lg bg-slate-50/50 p-3">
-                              {children}
-                            </ul>
-                          ),
-                          li: ({ children }) => (
-                            <li className="flex items-start space-x-2 text-sm text-slate-600">
-                              <div className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-500"></div>
-                              <span>{children}</span>
-                            </li>
-                          ),
-                          strong: ({ children }) => (
-                            <strong className="rounded bg-yellow-50 px-1 font-semibold text-slate-800">
-                              {children}
-                            </strong>
-                          ),
-                          blockquote: ({ children }) => (
-                            <div className="my-4 rounded-r-lg border-l-4 border-emerald-300 bg-gradient-to-r from-emerald-50 to-green-50 p-4">
-                              <div className="text-sm font-medium text-slate-700">{children}</div>
-                            </div>
-                          ),
-                        }}
-                      >
-                        {progressTokens.join('')}
-                      </ReactMarkdown>
-                    </div>
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></div>
-                      <span className="text-xs font-medium text-emerald-600">
-                        Generating assessment...
-                      </span>
-                    </div>
+          {!isProgressCollapsed && (
+            <div className="max-h-[70vh] overflow-y-auto px-4 py-3">
+              {!progressTokens.length && !isProgressStreaming ? (
+                <div className="py-8 text-center">
+                  <div className="bg-muted mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+                    <Lightbulb className="text-muted-foreground h-6 w-6" />
                   </div>
-                )}
+                  <h4 className="text-foreground mb-2 text-sm font-medium">No Progress Data Yet</h4>
+                  <p className="text-muted-foreground mb-4 text-xs">
+                    Start chatting to get personalized feedback on your learning progress
+                  </p>
+                  <Badge variant="outline" className="bg-muted">
+                    <ArrowUpRight className="mr-1 h-3 w-3" />
+                    Begin Learning
+                  </Badge>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {(isProgressStreaming || progressTokens.length > 0) && (
+                    <div className="space-y-4">
+                      <div className="prose prose-sm prose-slate max-w-none">
+                        <ReactMarkdown
+                          components={{
+                            h1: ({ children }) => (
+                              <h1 className="border-secondary from-secondary/10 to-secondary/5 text-foreground mb-4 flex items-center rounded-lg border-l-4 bg-gradient-to-r p-3 text-base font-bold">
+                                <TrendingUp className="text-secondary-foreground mr-2 h-4 w-4 flex-shrink-0" />
+                                {children}
+                              </h1>
+                            ),
+                            h2: ({ children }) => (
+                              <h2 className="text-foreground mt-5 mb-3 flex items-center text-sm font-semibold">
+                                <div className="bg-secondary mr-2 h-2 w-2 flex-shrink-0 rounded-full"></div>
+                                {children}
+                              </h2>
+                            ),
+                            h3: ({ children }) => (
+                              <h3 className="text-muted-foreground mt-4 mb-2 flex items-center text-sm font-medium">
+                                <div className="bg-muted-foreground mr-2 h-1.5 w-1.5 flex-shrink-0 rounded-full"></div>
+                                {children}
+                              </h3>
+                            ),
+                            p: ({ children }) => (
+                              <p className="text-muted-foreground mb-3 text-sm leading-relaxed">
+                                {children}
+                              </p>
+                            ),
+                            ul: ({ children }) => (
+                              <ul className="bg-muted/30 mb-4 space-y-2 rounded-lg p-3">
+                                {children}
+                              </ul>
+                            ),
+                            li: ({ children }) => (
+                              <li className="text-muted-foreground flex items-start space-x-2 text-sm">
+                                <div className="bg-secondary mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full"></div>
+                                <span>{children}</span>
+                              </li>
+                            ),
+                            strong: ({ children }) => (
+                              <strong className="bg-accent text-foreground rounded px-1 font-semibold">
+                                {children}
+                              </strong>
+                            ),
+                            blockquote: ({ children }) => (
+                              <div className="border-secondary from-secondary/10 to-secondary/5 my-4 rounded-r-lg border-l-4 bg-gradient-to-r p-4">
+                                <div className="text-foreground text-sm font-medium">
+                                  {children}
+                                </div>
+                              </div>
+                            ),
+                          }}
+                        >
+                          {progressTokens.join('')}
+                        </ReactMarkdown>
+                      </div>
 
-                {/* Show final progress data when not streaming */}
-                {!isProgressStreaming && progressData?.content && (
-                  <div className="prose prose-sm prose-slate max-w-none">
-                    <ReactMarkdown
-                      components={{
-                        h1: ({ children }) => (
-                          <h1 className="mb-4 flex items-center rounded-lg border-l-4 border-emerald-400 bg-gradient-to-r from-emerald-50 to-green-50 p-3 text-base font-bold text-slate-800">
-                            <TrendingUp className="mr-2 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                            {children}
-                          </h1>
-                        ),
-                        h2: ({ children }) => (
-                          <h2 className="mt-5 mb-3 flex items-center text-sm font-semibold text-slate-700">
-                            <div className="mr-2 h-2 w-2 flex-shrink-0 rounded-full bg-emerald-400"></div>
-                            {children}
-                          </h2>
-                        ),
-                        h3: ({ children }) => (
-                          <h3 className="mt-4 mb-2 flex items-center text-sm font-medium text-slate-600">
-                            <div className="mr-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-slate-400"></div>
-                            {children}
-                          </h3>
-                        ),
-                        p: ({ children }) => (
-                          <p className="mb-3 text-sm leading-relaxed text-slate-600">{children}</p>
-                        ),
-                        ul: ({ children }) => (
-                          <ul className="mb-4 space-y-2 rounded-lg bg-slate-50/50 p-3">
-                            {children}
-                          </ul>
-                        ),
-                        li: ({ children }) => (
-                          <li className="flex items-start space-x-2 text-sm text-slate-600">
-                            <div className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-500"></div>
-                            <span>{children}</span>
-                          </li>
-                        ),
-                        strong: ({ children }) => (
-                          <strong className="rounded bg-yellow-50 px-1 font-semibold text-slate-800">
-                            {children}
-                          </strong>
-                        ),
-                        blockquote: ({ children }) => (
-                          <div className="my-4 rounded-r-lg border-l-4 border-emerald-300 bg-gradient-to-r from-emerald-50 to-green-50 p-4">
-                            <div className="text-sm font-medium text-slate-700">{children}</div>
-                          </div>
-                        ),
-                      }}
-                    >
-                      {progressData.content}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                      {isProgressStreaming && (
+                        <div className="flex items-center justify-center space-x-2">
+                          <div className="bg-secondary h-2 w-2 animate-pulse rounded-full"></div>
+                          <span className="text-secondary-foreground text-xs font-medium">
+                            Generating assessment...
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                {/* Show loading state when streaming but no tokens yet */}
-                {isProgressStreaming && progressTokens.length === 0 && (
-                  <div className="space-y-4 py-6">
-                    <div className="flex items-center justify-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500"></div>
+                  {isProgressStreaming && progressTokens.length === 0 && (
+                    <div className="space-y-4 py-6">
+                      <div className="flex items-center justify-center">
+                        <div className="border-secondary/20 border-t-secondary h-8 w-8 animate-spin rounded-full border-2"></div>
+                      </div>
+                      <div className="space-y-2 text-center">
+                        <p className="text-foreground text-sm font-medium">
+                          Analyzing your progress...
+                        </p>
+                        <p className="text-muted-foreground text-xs">This may take a few moments</p>
+                      </div>
                     </div>
-                    <div className="space-y-2 text-center">
-                      <p className="text-sm font-medium text-slate-700">
-                        Analyzing your progress...
-                      </p>
-                      <p className="text-xs text-slate-500">This may take a few moments</p>
-                    </div>
-                  </div>
-                )}
-
-                {progressData.created_at && !isProgressStreaming && (
-                  <div className="border-t border-slate-200 pt-3">
-                    <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span>Last updated</span>
-                      <span className="font-medium">
-                        {new Date(progressData.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Quick Stats */}
-        {progressData?.content && !isProgressStreaming && (
-          <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-violet-50 to-purple-50 shadow-sm">
+        {progressTokens.length > 0 && !isProgressStreaming && (
+          <div className="border-border from-primary/5 to-secondary/5 rounded-2xl border bg-gradient-to-r shadow-sm">
             <div className="px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <span className="text-sm font-medium text-slate-700">Progress Active</span>
+                  <CheckCircle2 className="text-secondary-foreground h-4 w-4" />
+                  <span className="text-foreground text-sm font-medium">Progress Active</span>
                 </div>
-                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+                <Badge variant="secondary" className="bg-secondary/10 text-secondary-foreground">
                   Updated
                 </Badge>
               </div>
@@ -320,10 +228,9 @@ const TrackingSidebar: React.FC = () => {
         )}
       </div>
 
-      {/* Footer - consistent with chat styling */}
-      <div className="border-t border-slate-200/60 bg-white/90 px-4 py-3 backdrop-blur-sm">
-        <div className="flex items-center justify-center space-x-2 text-xs text-slate-500">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></div>
+      <div className="border-border/60 bg-background/90 border-t px-4 py-3 backdrop-blur-sm">
+        <div className="text-muted-foreground flex items-center justify-center space-x-2 text-xs">
+          <div className="bg-secondary h-2 w-2 animate-pulse rounded-full"></div>
           <span>Progress updates automatically as you chat</span>
         </div>
       </div>

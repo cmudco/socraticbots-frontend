@@ -1,27 +1,56 @@
 import { create } from 'zustand';
 
-import type { Chapter } from '@/services/chapters.service';
+// import type { Chapter } from '@/services/chapters.service'; // Temporarily disabled
 
-import type { Book } from '@/types/book';
+// Temporary interface for backward compatibility
+interface Chapter {
+  id: string;
+  title: string;
+  [key: string]: any;
+}
+
+import type { Bot } from '@/types/bot';
+import type { BotGroup } from '@/types/botGroup';
+
+interface DeleteConfirmationModal {
+  isOpen: boolean;
+  itemId: string | null;
+  itemTitle: string;
+  itemType: string;
+}
 
 interface ModalStoreState {
-  // Book modals
-  bookFormModal: {
+  // Bot Group modals
+  botGroupFormModal: {
     isOpen: boolean;
-    book: Book | null;
-    mode: 'create' | 'edit';
+    botGroup: BotGroup | null;
+    mode: 'create' | 'edit' | 'view';
   };
-  deleteBookModal: {
+  deleteBotGroupModal: {
     isOpen: boolean;
-    book: Book | null;
+    botGroup: BotGroup | null;
   };
 
-  // Chapter modals
+  // Bot modals
+  botFormModal: {
+    isOpen: boolean;
+    bot: Bot | null;
+    botGroupId: number | null;
+    mode: 'create' | 'edit' | 'view';
+  };
+  deleteBotModal: {
+    isOpen: boolean;
+    bot: Bot | null;
+    botGroupId: number | null;
+  };
+
+  // Legacy chapter modals (keeping for backward compatibility)
+
   chapterFormModal: {
     isOpen: boolean;
     chapter: Chapter | null;
     bookId: string | null;
-    mode: 'create' | 'edit';
+    mode: 'create' | 'edit' | 'view';
   };
   deleteChapterModal: {
     isOpen: boolean;
@@ -29,42 +58,66 @@ interface ModalStoreState {
     bookId: string | null;
   };
 
-  // Chat modals
   clearConversationModal: {
     isOpen: boolean;
   };
 
-  // Book modal actions
-  openBookFormModal: (book?: Book) => void;
-  closeBookFormModal: () => void;
-  openDeleteBookModal: (book: Book) => void;
-  closeDeleteBookModal: () => void;
+  deleteConfirmationModal: DeleteConfirmationModal;
 
-  // Chapter modal actions
-  openChapterFormModal: (bookId: string, chapter?: Chapter) => void;
+  // Bot Group modal methods
+  openBotGroupFormModal: (botGroup?: BotGroup, viewOnly?: boolean) => void;
+  closeBotGroupFormModal: () => void;
+  openDeleteBotGroupModal: (botGroup: BotGroup) => void;
+  closeDeleteBotGroupModal: () => void;
+
+  // Bot modal methods  
+  openBotFormModal: (botGroupId: number, bot?: Bot, viewOnly?: boolean) => void;
+  closeBotFormModal: () => void;
+  openDeleteBotModal: (botGroupId: number, bot: Bot) => void;
+  closeDeleteBotModal: () => void;
+
+  // Legacy methods (keeping for backward compatibility)
+
+  openChapterFormModal: (bookId: string, chapter?: Chapter, viewOnly?: boolean) => void;
   closeChapterFormModal: () => void;
   openDeleteChapterModal: (bookId: string, chapter: Chapter) => void;
   closeDeleteChapterModal: () => void;
 
-  // Chat modal actions
   openClearConversationModal: () => void;
   closeClearConversationModal: () => void;
 
-  // Reset all modals
+  openDeleteConfirmation: (itemId: string, itemTitle: string, itemType: string) => void;
+  closeDeleteConfirmation: () => void;
+
   resetAllModals: () => void;
 }
 
 export const useModalStore = create<ModalStoreState>(set => ({
-  // Initial state
-  bookFormModal: {
+  // Bot Group modals
+  botGroupFormModal: {
     isOpen: false,
-    book: null,
+    botGroup: null,
     mode: 'create',
   },
-  deleteBookModal: {
+  deleteBotGroupModal: {
     isOpen: false,
-    book: null,
+    botGroup: null,
   },
+
+  // Bot modals
+  botFormModal: {
+    isOpen: false,
+    bot: null,
+    botGroupId: null,
+    mode: 'create',
+  },
+  deleteBotModal: {
+    isOpen: false,
+    bot: null,
+    botGroupId: null,
+  },
+
+  // Legacy modals
   chapterFormModal: {
     isOpen: false,
     chapter: null,
@@ -79,47 +132,89 @@ export const useModalStore = create<ModalStoreState>(set => ({
   clearConversationModal: {
     isOpen: false,
   },
+  deleteConfirmationModal: {
+    isOpen: false,
+    itemId: null,
+    itemTitle: '',
+    itemType: '',
+  },
 
-  // Book modal actions
-  openBookFormModal: (book?: Book) =>
+  // Bot Group modal methods
+  openBotGroupFormModal: (botGroup?: BotGroup, viewOnly?: boolean) =>
     set({
-      bookFormModal: {
+      botGroupFormModal: {
         isOpen: true,
-        book: book || null,
-        mode: book ? 'edit' : 'create',
+        botGroup: botGroup || null,
+        mode: viewOnly ? 'view' : botGroup ? 'edit' : 'create',
       },
     }),
-  closeBookFormModal: () =>
+  closeBotGroupFormModal: () =>
     set({
-      bookFormModal: {
+      botGroupFormModal: {
         isOpen: false,
-        book: null,
+        botGroup: null,
         mode: 'create',
       },
     }),
-  openDeleteBookModal: (book: Book) =>
+  openDeleteBotGroupModal: (botGroup: BotGroup) =>
     set({
-      deleteBookModal: {
+      deleteBotGroupModal: {
         isOpen: true,
-        book,
+        botGroup,
       },
     }),
-  closeDeleteBookModal: () =>
+  closeDeleteBotGroupModal: () =>
     set({
-      deleteBookModal: {
+      deleteBotGroupModal: {
         isOpen: false,
-        book: null,
+        botGroup: null,
       },
     }),
 
-  // Chapter modal actions
-  openChapterFormModal: (bookId: string, chapter?: Chapter) =>
+  // Bot modal methods  
+  openBotFormModal: (botGroupId: number, bot?: Bot, viewOnly?: boolean) =>
+    set({
+      botFormModal: {
+        isOpen: true,
+        bot: bot || null,
+        botGroupId,
+        mode: viewOnly ? 'view' : bot ? 'edit' : 'create',
+      },
+    }),
+  closeBotFormModal: () =>
+    set({
+      botFormModal: {
+        isOpen: false,
+        bot: null,
+        botGroupId: null,
+        mode: 'create',
+      },
+    }),
+  openDeleteBotModal: (botGroupId: number, bot: Bot) =>
+    set({
+      deleteBotModal: {
+        isOpen: true,
+        bot,
+        botGroupId,
+      },
+    }),
+  closeDeleteBotModal: () =>
+    set({
+      deleteBotModal: {
+        isOpen: false,
+        bot: null,
+        botGroupId: null,
+      },
+    }),
+
+
+  openChapterFormModal: (bookId: string, chapter?: Chapter, viewOnly?: boolean) =>
     set({
       chapterFormModal: {
         isOpen: true,
         chapter: chapter || null,
         bookId,
-        mode: chapter ? 'edit' : 'create',
+        mode: viewOnly ? 'view' : chapter ? 'edit' : 'create',
       },
     }),
   closeChapterFormModal: () =>
@@ -148,7 +243,6 @@ export const useModalStore = create<ModalStoreState>(set => ({
       },
     }),
 
-  // Chat modal actions
   openClearConversationModal: () =>
     set({
       clearConversationModal: {
@@ -162,18 +256,50 @@ export const useModalStore = create<ModalStoreState>(set => ({
       },
     }),
 
-  // Reset all modals
+  openDeleteConfirmation: (itemId: string, itemTitle: string, itemType: string) =>
+    set({
+      deleteConfirmationModal: {
+        isOpen: true,
+        itemId,
+        itemTitle,
+        itemType,
+      },
+    }),
+  closeDeleteConfirmation: () =>
+    set({
+      deleteConfirmationModal: {
+        isOpen: false,
+        itemId: null,
+        itemTitle: '',
+        itemType: '',
+      },
+    }),
+
   resetAllModals: () =>
     set({
-      bookFormModal: {
+      // Bot Group modals
+      botGroupFormModal: {
         isOpen: false,
-        book: null,
+        botGroup: null,
         mode: 'create',
       },
-      deleteBookModal: {
+      deleteBotGroupModal: {
         isOpen: false,
-        book: null,
+        botGroup: null,
       },
+      // Bot modals
+      botFormModal: {
+        isOpen: false,
+        bot: null,
+        botGroupId: null,
+        mode: 'create',
+      },
+      deleteBotModal: {
+        isOpen: false,
+        bot: null,
+        botGroupId: null,
+      },
+      // Legacy modals
       chapterFormModal: {
         isOpen: false,
         chapter: null,
@@ -187,6 +313,12 @@ export const useModalStore = create<ModalStoreState>(set => ({
       },
       clearConversationModal: {
         isOpen: false,
+      },
+      deleteConfirmationModal: {
+        isOpen: false,
+        itemId: null,
+        itemTitle: '',
+        itemType: '',
       },
     }),
 }));

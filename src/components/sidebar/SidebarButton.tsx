@@ -1,12 +1,12 @@
-// src/components/sidebar/SidebarButton.tsx
 import React from 'react';
-import { IconType } from 'react-icons';
 import { Link } from 'react-router-dom';
+
+import { LucideIcon } from 'lucide-react';
 
 interface SidebarButtonProps {
   to: string;
   label: string;
-  icon: IconType;
+  icon: LucideIcon;
   isActive: boolean;
   isCollapsed: boolean;
 }
@@ -22,7 +22,9 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
     <Link
       to={to}
       className={`flex items-center rounded-lg transition-all duration-200 ${isCollapsed ? 'justify-center px-3' : 'space-x-3 px-4'} py-2 ${
-        isActive ? 'bg-blue-500 text-white' : 'text-gray-700 hover:bg-blue-100'
+        isActive
+          ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+          : 'text-sidebar-foreground hover:bg-sidebar-accent'
       } `}
       title={isCollapsed ? label : ''}
     >

@@ -1,29 +1,31 @@
-// src/components/auth/ProtectedRoute.tsx
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useUserInfo } from '@/hooks/queries/useUser';
+import { useSocketConnection } from '@/hooks/useSocketConnection';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { data: user, isLoading, isError } = useUserInfo();
   const location = useLocation();
 
-  // Show loading state while checking authentication
+  // Initialize Socket.IO connection when user is authenticated
+  // This ensures socket connects on login and stays connected across protected routes
+  useSocketConnection();
+
+  // Show loading spinner while fetching user data
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    // Save the location they were trying to go to
+  // If no user data or error (likely 401), redirect to login
+  if (isError || !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If authenticated, show the protected content
   return <>{children}</>;
 };
 

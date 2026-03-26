@@ -1,43 +1,43 @@
-// src/components/sidebar/Sidebar.tsx
 import React from 'react';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useLocation } from 'react-router-dom';
 
-import { useAuth } from '@/hooks/useAuth';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+import { useIsAuthenticated, useUser } from '@/hooks/queries/useUser';
 
 import { useUiStore } from '@/stores/ui/uiStore';
 
-import { NAVIGATION_ITEMS } from '@/types/navigation';
+import { getNavigationItemsForRole } from '@/types/navigation';
 
 import SidebarButton from './SidebarButton';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { sidebarCollapsed, toggleSidebar } = useUiStore();
-  const { isAuthenticated } = useAuth();
+  const user = useUser();
+  const isAuthenticated = useIsAuthenticated();
 
-  // Don't render sidebar at all if not authenticated
   if (!isAuthenticated) {
     return null;
   }
 
-  const mainNavItems = NAVIGATION_ITEMS.filter(item => item.path !== '/settings');
-  const settingsItem = NAVIGATION_ITEMS.find(item => item.path === '/settings');
+  const navigationItems = getNavigationItemsForRole(user?.isCreator ?? false);
+
+  const mainNavItems = navigationItems.filter(item => item.path !== '/settings');
+  const settingsItem = navigationItems.find(item => item.path === '/settings');
 
   return (
     <div
-      className={`fixed top-14 left-0 ${sidebarCollapsed ? 'w-16' : 'w-64'} z-10 h-[calc(100vh-3.5rem)] bg-white shadow-lg transition-all duration-300`}
+      className={`fixed top-14 left-0 ${sidebarCollapsed ? 'w-16' : 'w-64'} bg-sidebar z-10 h-[calc(100vh-3.5rem)] shadow-lg transition-all duration-300`}
     >
-      {/* Toggle Button */}
       <button
         onClick={toggleSidebar}
-        className="absolute top-4 right-[-12px] z-10 rounded-full bg-white p-2 shadow-md hover:bg-gray-100"
+        className="bg-sidebar hover:bg-sidebar-accent absolute top-4 right-[-12px] z-10 rounded-full p-2 shadow-md"
       >
-        {sidebarCollapsed ? <FaChevronRight size={12} /> : <FaChevronLeft size={12} />}
+        {sidebarCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
 
       <div className={`flex h-full flex-col ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
-        {/* Main navigation items */}
         <div className="flex-grow space-y-2">
           {mainNavItems.map(item => (
             <SidebarButton
@@ -51,9 +51,8 @@ const Sidebar: React.FC = () => {
           ))}
         </div>
 
-        {/* Settings button at bottom */}
         {settingsItem && (
-          <div className="mt-4 border-t border-gray-200 pt-4">
+          <div className="border-sidebar-border mt-4 border-t pt-4">
             <SidebarButton
               to={settingsItem.path}
               label={settingsItem.label}

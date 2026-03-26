@@ -1,37 +1,58 @@
-// src/types/navigation.ts
-import { FaBook, FaCog, FaComment, FaHome, FaInfoCircle } from 'react-icons/fa';
-import { IconType } from 'react-icons/lib';
+import { Bot, Home, Key, type LucideIcon, MessageCircle, Mic, Settings, Users } from 'lucide-react';
 
 interface NavigationItem {
   path: string;
   label: string;
-  icon: IconType;
+  icon: LucideIcon;
+  roles?: ('student' | 'creator')[];
 }
 
 export const NAVIGATION_ITEMS: NavigationItem[] = [
   {
     path: '/',
     label: 'Home',
-    icon: FaHome,
+    icon: Home,
+  },
+  // {
+  //   path: '/about',
+  //   label: 'About',
+  //   icon: Info,
+  // },
+  {
+    path: '/access-codes',
+    label: 'Subscription Codes',
+    icon: Key,
   },
   {
-    path: '/about',
-    label: 'About',
-    icon: FaInfoCircle,
+    path: '/bot-groups',
+    label: 'Chatbot Groups',
+    icon: Bot,
   },
   {
-    path: '/settings',
-    label: 'Settings',
-    icon: FaCog,
-  },
-  {
-    path: '/books',
-    label: 'Books',
-    icon: FaBook,
+    path: '/bot-access',
+    label: 'Bot Access',
+    icon: Users,
+    roles: ['creator'],
   },
   {
     path: '/chat',
     label: 'Chat',
-    icon: FaComment,
+    icon: MessageCircle,
+  },
+  {
+    path: '/voice-exams',
+    label: 'Voice Exams',
+    icon: Mic,
+  },
+  {
+    path: '/settings',
+    label: 'Settings',
+    icon: Settings,
   },
 ];
+
+export const getNavigationItemsForRole = (isCreator: boolean): NavigationItem[] => {
+  const userRole = isCreator ? 'creator' : 'student';
+
+  return NAVIGATION_ITEMS.filter(item => !item.roles || item.roles.includes(userRole));
+};
