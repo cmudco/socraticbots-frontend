@@ -32,6 +32,54 @@ export interface RemoveUserAccessResponse {
   deletedAcceptances: number;
 }
 
+export interface UserConversation {
+  conversationId: string;
+  title: string | null;
+  createdAt: string;
+  messageCount: number;
+  botId: number;
+}
+
+export interface UserConversationsResponse {
+  userId: number;
+  userEmail: string;
+  userName: string;
+  botId: number;
+  botTitle: string;
+  conversations: UserConversation[];
+  totalCount: number;
+}
+
+export interface ConversationMessage {
+  messageId: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  createdAt: string;
+}
+
+export interface ConversationMessagesResponse {
+  conversationId: string;
+  title: string | null;
+  messages: ConversationMessage[];
+  totalCount: number;
+}
+
+export interface AnonymousConversation {
+  conversationId: string;
+  title: string | null;
+  createdAt: string;
+  messageCount: number;
+  sessionId: string;
+  botId: number;
+}
+
+export interface AnonymousConversationsResponse {
+  botId: number;
+  botTitle: string;
+  conversations: AnonymousConversation[];
+  totalCount: number;
+}
+
 class BotAccessService {
   async getBotAccessUsers(botGroupId: number, botId: number): Promise<BotAccessUsersResponse> {
     return baseRequest<BotAccessUsersResponse>({
@@ -48,6 +96,38 @@ class BotAccessService {
     return baseRequest<RemoveUserAccessResponse>({
       url: `access-codes/bot-groups/${botGroupId}/bots/${botId}/users/${userId}/remove/`,
       method: METHOD.DELETE,
+    });
+  }
+
+  async getUserConversations(
+    botGroupId: number,
+    botId: number,
+    userId: number
+  ): Promise<UserConversationsResponse> {
+    return baseRequest<UserConversationsResponse>({
+      url: `conversations/bot-groups/${botGroupId}/bots/${botId}/users/${userId}/conversations/`,
+      method: METHOD.GET,
+    });
+  }
+
+  async getConversationMessages(
+    botGroupId: number,
+    botId: number,
+    conversationId: string
+  ): Promise<ConversationMessagesResponse> {
+    return baseRequest<ConversationMessagesResponse>({
+      url: `conversations/bot-groups/${botGroupId}/bots/${botId}/conversations/${conversationId}/messages/`,
+      method: METHOD.GET,
+    });
+  }
+
+  async getAnonymousConversations(
+    botGroupId: number,
+    botId: number
+  ): Promise<AnonymousConversationsResponse> {
+    return baseRequest<AnonymousConversationsResponse>({
+      url: `conversations/bot-groups/${botGroupId}/bots/${botId}/anonymous-conversations/`,
+      method: METHOD.GET,
     });
   }
 }
