@@ -15,10 +15,11 @@ import {
 
 import { formatDate, formatDuration, formatTimeInCall } from '@/utils/formatters';
 
+import ConversationAudioPlayer from '@/components/VoiceExam/ConversationAudioPlayer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { ConversationStatus, TranscriptRole , TranscriptMessage } from '@/types/voiceAgent';
+import { ConversationStatus, TranscriptMessage, TranscriptRole } from '@/types/voiceAgent';
 
 const STATUS_STYLES: Record<string, string> = {
   completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -112,18 +113,23 @@ const ConversationDetail: React.FC = () => {
                 {exportPdf.isPending ? 'Exporting...' : 'Download PDF'}
               </Button>
             )}
-            {conversation.status === ConversationStatus.Completed && !hasTranscript && (
-              <Button
-                variant="outline"
-                onClick={handleSyncTranscript}
-                disabled={syncTranscript.isPending}
-              >
-                <RefreshCw
-                  className={`mr-2 h-4 w-4 ${syncTranscript.isPending ? 'animate-spin' : ''}`}
-                />
-                Sync Transcript
-              </Button>
-            )}
+            {conversation.status === ConversationStatus.Completed &&
+              (!hasTranscript || !conversation.hasAudio) && (
+                <Button
+                  variant="outline"
+                  onClick={handleSyncTranscript}
+                  disabled={syncTranscript.isPending}
+                >
+                  <RefreshCw
+                    className={`mr-2 h-4 w-4 ${syncTranscript.isPending ? 'animate-spin' : ''}`}
+                  />
+                  {syncTranscript.isPending
+                    ? 'Syncing...'
+                    : !hasTranscript
+                      ? 'Sync Transcript'
+                      : 'Sync Recording'}
+                </Button>
+              )}
           </div>
         </div>
       </div>
@@ -156,6 +162,14 @@ const ConversationDetail: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Audio Recording */}
+      {conversation.hasAudio && conversation.audioUrl && (
+        <ConversationAudioPlayer
+          conversationId={conversation.id}
+          audioUrl={conversation.audioUrl}
+        />
+      )}
 
       {/* Transcript */}
       <Card>

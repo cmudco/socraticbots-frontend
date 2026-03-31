@@ -135,6 +135,15 @@ class VoiceAgentService {
     });
   }
 
+  async fetchConversationAudioBlob(id: number): Promise<Blob> {
+    const result = await baseRequest({
+      url: `voice/conversations/${id}/audio/`,
+      method: METHOD.GET,
+      responseType: 'blob',
+    });
+    return result.blob;
+  }
+
   // ============ ElevenLabs Direct API ============
 
   async getElevenLabsAgents(): Promise<ElevenLabsAgentItem[]> {

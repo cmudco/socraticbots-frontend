@@ -1,6 +1,8 @@
 /**
  * React Query hooks for voice conversations.
  */
+import { useEffect, useMemo } from 'react';
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { voiceAgentService } from '@/services/voiceAgent.service';
@@ -13,6 +15,7 @@ const CONVERSATION_KEYS = {
   list: () => [...CONVERSATION_KEYS.all, 'list'] as const,
   byAgent: (agentId: number) => [...CONVERSATION_KEYS.all, 'agent', agentId] as const,
   detail: (id: number) => [...CONVERSATION_KEYS.all, 'detail', id] as const,
+  audio: (id: number) => [...CONVERSATION_KEYS.all, 'audio', id] as const,
 };
 
 /**
@@ -100,4 +103,39 @@ export function useExportAllTranscripts() {
       window.URL.revokeObjectURL(url);
     },
   });
+}
+
+/**
+ * Hook to fetch a conversation audio recording as a blob URL.
+ *
+ * Fetches via Axios (carries JWT auth header) and converts to a blob URL
+ * suitable for use as <audio src>. The blob URL is revoked on unmount
+ * to prevent memory leaks.
+ *
+ * Returns { blobUrl, isLoading } — blobUrl is null while loading or if no audioUrl provided.
+ */
+export function useConversationAudio(id: number, audioUrl: string | null) {
+  const query = useQuery<Blob, Error>({
+    queryKey: CONVERSATION_KEYS.audio(id),
+    queryFn: () => voiceAgentService.fetchConversationAudioBlob(id),
+    enabled: !!audioUrl,
+    staleTime: 30 * 60 * 1000, // 30 minutes — audio doesn't change
+    gcTime: 60 * 60 * 1000, // 1 hour
+  });
+
+  const blobUrl = useMemo(
+    () => (query.data ? URL.createObjectURL(query.data) : null),
+    [query.data]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+    };
+     
+  }, [blobUrl]);
+
+  return { blobUrl, isLoading: query.isLoading };
 }

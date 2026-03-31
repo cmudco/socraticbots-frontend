@@ -232,6 +232,8 @@ export interface VoiceConversation {
   durationSeconds: number | null;
   status: ConversationStatus;
   transcript: TranscriptMessage[];
+  hasAudio: boolean;
+  audioUrl: string | null;
   createdAt: string;
 }
 
@@ -244,6 +246,7 @@ export interface VoiceConversationListItem {
   endedAt: string | null;
   durationSeconds: number | null;
   status: ConversationStatus;
+  hasAudio: boolean;
 }
 
 export interface StudentAttemptInfo {
