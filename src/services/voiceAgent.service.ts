@@ -3,6 +3,8 @@
  */
 import { METHOD } from '@/constants/requests';
 
+import config from '@/lib/config';
+
 import { baseRequest } from '@/utils/baseRequest';
 
 import {
@@ -83,6 +85,27 @@ class VoiceAgentService {
       url: `voice/agents/${agentId}/end_conversation/`,
       method: METHOD.POST,
       data: { conversationId },
+    });
+  }
+
+  /**
+   * Fire-and-forget keepalive POST to end_conversation.
+   * Uses native fetch with keepalive so the request survives component
+   * baseRequest uses axios, and axios does not support the keepalive option.
+   * unmount and browser page unload (axios cannot do this).
+   */
+  beaconEndConversation(agentId: number, conversationId: string): void {
+    const token = localStorage.getItem('access_token');
+    fetch(`${config.apiUrl}/voice/agents/${agentId}/end_conversation/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ conversationId }),
+      keepalive: true,
+    }).catch(() => {
+      // Best-effort — ignore errors on page exit
     });
   }
 

@@ -12,9 +12,11 @@ import {
   useStartConversation,
 } from '@/hooks/queries/useVoiceAgents';
 
+import { voiceAgentService } from '@/services/voiceAgent.service';
+
 import { formatTimeInCall } from '@/utils/formatters';
 
-import { VoiceAgent } from '@/types/voiceAgent';
+import { TranscriptRole, VoiceAgent } from '@/types/voiceAgent';
 
 interface VoiceInterfaceProps {
   agent: VoiceAgent;
@@ -23,7 +25,7 @@ interface VoiceInterfaceProps {
 }
 
 interface TranscriptMessage {
-  role: 'user' | 'agent';
+  role: TranscriptRole;
   content: string;
   timestamp: Date;
 }
@@ -39,6 +41,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const handleEndRef = useRef<(() => Promise<void>) | null>(null);
 
   const maxDuration = agent.maxDurationSeconds;
+  // Ref kept in sync with currentConversationId so event handlers / cleanup
+  // effects always have the latest value without stale closures.
+  const currentConversationIdRef = useRef<string | null>(null);
 
   // TanStack Query mutations
   const getSignedUrlMutation = useGetSignedUrl();
@@ -65,7 +70,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         setMessages(prev => [
           ...prev,
           {
-            role: source === 'user' ? 'user' : 'agent',
+            role: source === 'user' ? TranscriptRole.User : TranscriptRole.Agent,
             content,
             timestamp: new Date(),
           },
@@ -94,6 +99,15 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     }
   }, []);
 
+  // Fire-and-forget POST to end_conversation using fetch keepalive so the
+  // request survives component unmount and page unload.
+  const fireEndConversationBeacon = useCallback(
+    (conversationId: string) => {
+      voiceAgentService.beaconEndConversation(agent.id, conversationId);
+    },
+    [agent.id]
+  );
+
   const startTimer = useCallback(() => {
     stopTimer();
     examStartTimeRef.current = Date.now();
@@ -108,7 +122,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     }, 1000);
   }, [maxDuration, stopTimer]);
 
-  // Cleanup microphone and timer on unmount
+  // Cleanup on unmount (e.g. user navigates away via React Router).
+  // If a conversation is still active, fire a keepalive request to end it.
   useEffect(() => {
     return () => {
       if (mediaStreamRef.current) {
@@ -117,8 +132,27 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
       }
+      const convId = currentConversationIdRef.current;
+      if (convId) {
+        fireEndConversationBeacon(convId);
+      }
     };
+    // fireEndConversationBeacon is stable (only depends on agent.id which
+    // doesn't change), so the empty-dep array is intentional here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Handle hard browser close / refresh while a session is active.
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const convId = currentConversationIdRef.current;
+      if (convId) {
+        fireEndConversationBeacon(convId);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [fireEndConversationBeacon]);
 
   const handleStart = useCallback(async () => {
     try {
@@ -144,6 +178,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
       if (conversationIdResult) {
         setCurrentConversationId(conversationIdResult);
+        currentConversationIdRef.current = conversationIdResult;
         startTimer();
 
         // Record conversation start in backend (non-blocking so a backend
@@ -178,16 +213,21 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   ]);
 
   const handleEnd = useCallback(async () => {
+    // Grab and clear the ref immediately so the unmount / beforeunload
+    // cleanup does not fire a duplicate end_conversation request.
+    const convId = currentConversationId;
+    currentConversationIdRef.current = null;
+
     try {
       stopTimer();
       await conversation.endSession();
       stopMicrophone();
 
-      if (currentConversationId) {
+      if (convId) {
         // Record conversation end and fetch transcript
         await endConversationMutation.mutateAsync({
           agentId: agent.id,
-          conversationId: currentConversationId,
+          conversationId: convId,
         });
       }
 
@@ -337,19 +377,19 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
               <div
                 key={idx}
                 className={`rounded-lg border-l-4 p-3 ${
-                  msg.role === 'user'
+                  msg.role === TranscriptRole.User
                     ? 'border-l-blue-500 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-l-purple-500 bg-purple-50 dark:bg-purple-900/20'
                 }`}
               >
                 <div
                   className={`mb-1 text-xs font-medium ${
-                    msg.role === 'user'
+                    msg.role === TranscriptRole.User
                       ? 'text-blue-600 dark:text-blue-400'
                       : 'text-purple-600 dark:text-purple-400'
                   }`}
                 >
-                  {msg.role === 'user' ? 'You' : 'Examiner'}
+                  {msg.role === TranscriptRole.User ? 'You' : 'Examiner'}
                 </div>
                 <div className="text-foreground text-sm">{msg.content}</div>
               </div>

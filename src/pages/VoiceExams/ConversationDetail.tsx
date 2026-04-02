@@ -8,6 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Bot, Clock, Download, RefreshCw, User } from 'lucide-react';
 
 import {
+  useConversationAudio,
   useExportTranscriptPdf,
   useSyncConversationTranscript,
   useVoiceConversation,
@@ -37,6 +38,10 @@ const ConversationDetail: React.FC = () => {
   const { data: conversation, isLoading } = useVoiceConversation(conversationId);
   const syncTranscript = useSyncConversationTranscript();
   const exportPdf = useExportTranscriptPdf();
+  const { blobUrl: audioBlobUrl, isLoading: audioLoading } = useConversationAudio(
+    conversationId,
+    conversation?.audioUrl ?? null
+  );
 
   const getStatusBadge = (status: string) => (
     <span
@@ -50,8 +55,21 @@ const ConversationDetail: React.FC = () => {
     syncTranscript.mutate(conversationId);
   };
 
+  const syncError =
+    syncTranscript.isError && syncTranscript.error ? syncTranscript.error.message : null;
+
   const handleDownloadTranscript = () => {
     exportPdf.mutate(conversationId);
+  };
+
+  const handleDownloadRecording = () => {
+    if (!audioBlobUrl) return;
+    const link = document.createElement('a');
+    link.href = audioBlobUrl;
+    link.download = `recording-${conversationId}.mp3`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const hasTranscript = conversation?.transcript && conversation.transcript.length > 0;
@@ -103,6 +121,12 @@ const ConversationDetail: React.FC = () => {
             <p className="text-muted-foreground mt-1">{formatDate(conversation.startedAt)}</p>
           </div>
           <div className="flex gap-2">
+            {audioBlobUrl && (
+              <Button variant="outline" onClick={handleDownloadRecording}>
+                <Download className="mr-2 h-4 w-4" />
+                Download Recording
+              </Button>
+            )}
             {hasTranscript && (
               <Button
                 variant="outline"
@@ -110,10 +134,11 @@ const ConversationDetail: React.FC = () => {
                 disabled={exportPdf.isPending}
               >
                 <Download className="mr-2 h-4 w-4" />
-                {exportPdf.isPending ? 'Exporting...' : 'Download PDF'}
+                {exportPdf.isPending ? 'Exporting...' : 'Download Transcript'}
               </Button>
             )}
-            {conversation.status === ConversationStatus.Completed &&
+            {(conversation.status === ConversationStatus.Completed ||
+              conversation.status === ConversationStatus.InProgress) &&
               (!hasTranscript || !conversation.hasAudio) && (
                 <Button
                   variant="outline"
@@ -133,6 +158,13 @@ const ConversationDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Sync error */}
+      {syncError && (
+        <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-400">
+          {syncError}
+        </div>
+      )}
 
       {/* Stats */}
       <Card className="mb-6">
@@ -165,10 +197,7 @@ const ConversationDetail: React.FC = () => {
 
       {/* Audio Recording */}
       {conversation.hasAudio && conversation.audioUrl && (
-        <ConversationAudioPlayer
-          conversationId={conversation.id}
-          audioUrl={conversation.audioUrl}
-        />
+        <ConversationAudioPlayer blobUrl={audioBlobUrl} isLoading={audioLoading} />
       )}
 
       {/* Transcript */}
@@ -186,10 +215,11 @@ const ConversationDetail: React.FC = () => {
             <div className="py-8 text-center">
               <p className="text-muted-foreground">
                 {conversation.status === ConversationStatus.InProgress
-                  ? 'Transcript will be available after the conversation ends.'
+                  ? 'This exam may have ended unexpectedly. Try syncing to retrieve the transcript.'
                   : 'No transcript available. Try syncing from ElevenLabs.'}
               </p>
-              {conversation.status === ConversationStatus.Completed && (
+              {(conversation.status === ConversationStatus.Completed ||
+                conversation.status === ConversationStatus.InProgress) && (
                 <Button
                   variant="outline"
                   className="mt-4"
@@ -199,7 +229,7 @@ const ConversationDetail: React.FC = () => {
                   <RefreshCw
                     className={`mr-2 h-4 w-4 ${syncTranscript.isPending ? 'animate-spin' : ''}`}
                   />
-                  Sync Transcript
+                  {syncTranscript.isPending ? 'Syncing...' : 'Sync Transcript'}
                 </Button>
               )}
             </div>
