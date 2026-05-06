@@ -47,6 +47,8 @@ export interface BotQuickPrompt {
   updatedAt: string;
 }
 
+export type BillingSource = 'OWNER_WALLET' | 'GROUP_WALLET' | 'USER_WALLET' | 'LITELLM_KEY';
+
 export interface Bot {
   id: number;
   isAdvanced?: boolean;
@@ -57,6 +59,8 @@ export interface Bot {
   isPubliclyDeployed?: boolean;
   budget?: number;
   budgetUsed?: number;
+  billingSource?: BillingSource;
+  billingTargetId?: string | null;
   botGroup: {
     id: number;
     title: string;
@@ -107,6 +111,8 @@ export interface UpdateBotRequest {
   accessCodeLimit?: number;
   isPubliclyDeployed?: boolean;
   budget?: number;
+  billingSource?: BillingSource;
+  billingTargetId?: string | null;
 }
 
 export interface BotModelPreferenceRequest {

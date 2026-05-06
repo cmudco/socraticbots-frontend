@@ -12,11 +12,13 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ArrowLeft,
+  BarChart2,
   Bot,
   Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  DollarSign,
   Files,
   LayoutList,
   Loader2,
@@ -42,6 +44,8 @@ import BotFilesStep from '@/components/bots/steps/BotFilesStep';
 import BotPromptsStep from '@/components/bots/steps/BotPromptsStep';
 import BotQuickPromptsStep from '@/components/bots/steps/BotQuickPromptsStep';
 import BotThemeStep from '@/components/bots/steps/BotThemeStep';
+import BotBillingTab from '@/components/bots/tabs/BotBillingTab';
+import BotUsageTab from '@/components/bots/tabs/BotUsageTab';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Stepper, type StepperStep } from '@/components/ui/stepper';
@@ -148,6 +152,24 @@ const BotEditPage: React.FC = () => {
         creatorOnly: true,
         editOnly: true,
       },
+      {
+        id: 'billing',
+        title: 'Billing',
+        description: 'Spend cap and billing source',
+        icon: <DollarSign className="h-5 w-5" />,
+        optional: true,
+        creatorOnly: true,
+        editOnly: true,
+      },
+      {
+        id: 'usage',
+        title: 'Usage Analytics',
+        description: 'Per-user cost and token breakdown',
+        icon: <BarChart2 className="h-5 w-5" />,
+        optional: true,
+        creatorOnly: true,
+        editOnly: true,
+      },
     ],
     []
   );
@@ -243,7 +265,7 @@ const BotEditPage: React.FC = () => {
   const renderSectionContent = (sectionId: string) => {
     switch (sectionId) {
       case 'basic':
-        return <BotBasicInfoStep />;
+        return <BotBasicInfoStep botId={isEdit ? numericBotId : undefined} />;
       case 'prompts':
         return <BotPromptsStep />;
       case 'quick-prompts':
@@ -254,6 +276,16 @@ const BotEditPage: React.FC = () => {
         return <BotFilesStep botGroupId={numericBotGroupId} botId={numericBotId} />;
       case 'deployment':
         return <BotDeploymentStep botId={numericBotId} />;
+      case 'billing':
+        return (
+          <BotBillingTab
+            botGroupId={numericBotGroupId}
+            botId={numericBotId}
+            budgetUsed={bot?.budgetUsed}
+          />
+        );
+      case 'usage':
+        return <BotUsageTab botGroupId={numericBotGroupId} botId={numericBotId} />;
       default:
         return null;
     }

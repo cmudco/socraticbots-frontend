@@ -2,16 +2,34 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
-import { dareLLMModelsService, DareLLMModel } from '@/services/dareLLMModels.service';
+import { DareLLMModel, dareLLMModelsService } from '@/services/dareLLMModels.service';
 
 export const dareLLMModelKeys = {
   all: ['dareLLMModels'] as const,
   lists: () => [...dareLLMModelKeys.all, 'list'] as const,
   list: (filters?: string) => [...dareLLMModelKeys.lists(), { filters }] as const,
+  scoped: (walletScope: string) => [...dareLLMModelKeys.all, 'scoped', walletScope] as const,
   details: () => [...dareLLMModelKeys.all, 'detail'] as const,
   detail: (id: number) => [...dareLLMModelKeys.details(), id] as const,
   search: (query: string) => [...dareLLMModelKeys.all, 'search', query] as const,
   provider: (provider: string) => [...dareLLMModelKeys.all, 'provider', provider] as const,
+};
+
+/**
+ * Get wallet-aware DARE LLM models. Pass `walletScope='active'` for the user's
+ * own conversations/workflows, or `walletScope=`bot:${botId}`` for a bot's
+ * model picker (filtered by the bot's `billing_source`).
+ */
+export const useWalletScopedDareLLMModels = (walletScope: string, enabled: boolean = true) => {
+  const isAuthenticated = useIsAuthenticated();
+
+  return useQuery({
+    queryKey: dareLLMModelKeys.scoped(walletScope),
+    queryFn: () => dareLLMModelsService.getWalletScopedDareLLMModels(walletScope),
+    enabled: enabled && !!walletScope && isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 };
 
 /**
@@ -80,12 +98,13 @@ export const useDareLLMModelsByProvider = (provider: string, enabled: boolean = 
 export const useDareLLMProviders = () => {
   const { data: models, ...rest } = useDareLLMModels();
 
-  const providers = models?.reduce((acc: string[], model: DareLLMModel) => {
-    if (!acc.includes(model.provider)) {
-      acc.push(model.provider);
-    }
-    return acc;
-  }, []) || [];
+  const providers =
+    models?.reduce((acc: string[], model: DareLLMModel) => {
+      if (!acc.includes(model.provider)) {
+        acc.push(model.provider);
+      }
+      return acc;
+    }, []) || [];
 
   return {
     data: providers,
