@@ -10,6 +10,7 @@ import { useIsAuthenticated, useLogout, useUser } from '@/hooks/queries/useUser'
 import NotificationPopover from '@/components/ui/NotificationPopover';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { WalletBadge } from '@/components/wallet/WalletBadge';
 
 const Header: React.FC = () => {
   const user = useUser();
@@ -84,6 +85,9 @@ const Header: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Wallet Badge — proxies DARE billing for transparency in SB */}
+              <WalletBadge />
 
               {/* Notification Bell */}
               <NotificationPopover />

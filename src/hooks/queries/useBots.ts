@@ -136,6 +136,13 @@ export const useUpdateBot = () => {
       queryClient.setQueryData<Bot[]>(botKeys.list(botGroupId), oldBots => {
         return oldBots ? oldBots.map(bot => (bot.id === botId ? updatedBot : bot)) : [updatedBot];
       });
+
+      // Drop the wallet-scoped model picker cache for this bot — billing
+      // source / target may have changed and the next picker render must
+      // refetch with the new scope.
+      queryClient.invalidateQueries({
+        queryKey: ['dareLLMModels', 'scoped', `bot:${botId}`],
+      });
     },
     onError: error => {
       console.error('Failed to update bot:', error);
