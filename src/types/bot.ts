@@ -1,7 +1,8 @@
 export interface BotModelPreference {
   id: number;
-  chatModelDareId?: number;
-  trackingModelDareId?: number;
+  // Opaque DARE picker id — see PickerModel in dareLLMModels.service.
+  chatModelDareId?: string | null;
+  trackingModelDareId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -116,8 +117,8 @@ export interface UpdateBotRequest {
 }
 
 export interface BotModelPreferenceRequest {
-  chatModelDareId?: number;
-  trackingModelDareId?: number;
+  chatModelDareId?: string | null;
+  trackingModelDareId?: string | null;
 }
 
 export interface BotPromptRequest {

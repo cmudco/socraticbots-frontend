@@ -27,8 +27,9 @@ interface BotFormState {
   learningGoals: string;
   isAdvanced: boolean;
   isActive: boolean;
-  chatModelDareId: number | null;
-  trackingModelDareId: number | null;
+  // Opaque DARE picker id ("42" or "litellm:<key>:<name>"). See PickerModel.
+  chatModelDareId: string | null;
+  trackingModelDareId: string | null;
   webSearchEnabled: boolean;
   accessCode: string;
   accessCodeLimit: number;
@@ -62,7 +63,7 @@ interface BotFormState {
   updateField: (field: string, value: string) => void;
   setIsAdvanced: (value: boolean) => void;
   setIsActive: (value: boolean) => void;
-  updateModelField: (field: string, value: number | null) => void;
+  updateModelField: (field: string, value: string | null) => void;
   setWebSearchEnabled: (value: boolean) => void;
   updateAccessCode: (code: string) => void;
   updateAccessCodeLimit: (limit: number) => void;
@@ -183,8 +184,8 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       learningGoals: bot.prompts?.learningGoals || '',
       isAdvanced: !!bot.isAdvanced,
       isActive: bot.isActive !== undefined ? bot.isActive : true,
-      chatModelDareId: bot.modelPreference?.chatModelDareId || null,
-      trackingModelDareId: bot.modelPreference?.trackingModelDareId || null,
+      chatModelDareId: bot.modelPreference?.chatModelDareId ?? null,
+      trackingModelDareId: bot.modelPreference?.trackingModelDareId ?? null,
       webSearchEnabled: !!bot.webSearchEnabled,
       accessCode: bot.accessCode?.code || '',
       accessCodeLimit: bot.accessCode?.limit ?? 0,

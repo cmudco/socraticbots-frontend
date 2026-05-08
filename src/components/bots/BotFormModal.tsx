@@ -39,8 +39,8 @@ interface FormValues {
   title: string;
   subject: string;
   topic: string;
-  chatModelDareId: number | null;
-  trackingModelDareId: number | null;
+  chatModelDareId: string | null;
+  trackingModelDareId: string | null;
 }
 
 const BotFormModal: React.FC<BotFormModalProps> = ({
