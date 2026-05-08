@@ -180,8 +180,16 @@ export const useConversationStore = create<ConversationStore>()(
         };
 
         if (currentBot) {
-          // LLM and context settings
-          payload.llm_id = currentBot.modelPreference?.chatModelDareId;
+          // LLM and context settings.
+          //
+          // `model_id` is the new opaque dispatch field on DARE's chat
+          // socket (replaces the legacy `llm_id`); DARE inverts the
+          // encoding via `parse_model_id` — so a stringified PK ("42") or
+          // a LiteLLM handle ("litellm:<key>:<name>") both work.
+          //
+          // `progress_llm_id` is the SB-specific tracker field; DARE
+          // accepts the same opaque-string contract on this one.
+          payload.model_id = currentBot.modelPreference?.chatModelDareId;
           payload.embedding_ids = currentBot.dareFileIds || [];
           payload.file_owner_id = currentBot.createdByDareId;
           payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;

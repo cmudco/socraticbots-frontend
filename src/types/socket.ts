@@ -199,11 +199,14 @@ export interface SendMessagePayload {
   is_advanced?: boolean;
   tracking_prompt?: string;
   learning_goals?: string;
-  progress_llm_id?: number;
+  // Opaque DARE picker id ("42" or "litellm:<key>:<name>") for the
+  // tracker model. SB-specific field; DARE resolves via parse_model_id.
+  progress_llm_id?: string | null;
   bot_meta?: BotMeta;
 
-  // LLM configuration
-  llm_id?: number;
+  // LLM configuration. `model_id` is the new opaque dispatch field on
+  // DARE's chat socket (replaces the legacy `llm_id`).
+  model_id?: string | null;
   prompt_id?: number;
   temperature?: number;
   max_tokens?: number;
@@ -233,7 +236,8 @@ export interface SendMessagePayload {
 export interface RegeneratePayload {
   conversationId: string;
   message_id: string;
-  llm_id?: number;
+  // Opaque DARE picker id; aligns with the chat-send `model_id` field.
+  model_id?: string | null;
   temperature?: number;
   max_tokens?: number;
   [key: string]: unknown;
