@@ -70,34 +70,3 @@ export interface EffectivePolicy {
   amountSource: 'USER' | 'GROUP' | 'SYSTEM';
   periodSource: 'USER' | 'GROUP' | 'SYSTEM';
 }
-
-export interface BotUsageRow {
-  userId: number | null;
-  userEmail: string;
-  totalCost: string;
-  inputTokens: number;
-  outputTokens: number;
-  messageCount: number;
-}
-
-export interface BotUsageDateRow {
-  date: string | null;
-  totalCost: string;
-  messageCount: number;
-}
-
-export interface BotUsageResponse {
-  botId: number;
-  period: '7d' | '30d' | '90d' | 'all';
-  groupBy: 'user' | 'date';
-  totals: {
-    totalCost: string;
-    totalInputTokens: number;
-    totalOutputTokens: number;
-    messageCount: number;
-  };
-  // Per data-schema-contract: separate named fields per shape (no wire union).
-  // FE reads `groupBy` to pick which array to render. The unused side is null.
-  userBreakdown: BotUsageRow[] | null;
-  dateBreakdown: BotUsageDateRow[] | null;
-}

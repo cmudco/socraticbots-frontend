@@ -202,22 +202,6 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
         {watch('isPubliclyDeployed') && botId && (
           <div className="space-y-4 border-t pt-4">
             <div className="space-y-2">
-              <Label htmlFor="budget">Budget Limit (USD)</Label>
-              <Input
-                id="budget"
-                type="number"
-                min="1"
-                max="20"
-                step="0.01"
-                {...register('budget')}
-                placeholder="1.00"
-              />
-              <p className="text-muted-foreground text-xs">
-                Set a budget limit for public usage (minimum $1, maximum $20).
-              </p>
-            </div>
-
-            <div className="space-y-2">
               <Label>Public URL</Label>
               <div className="flex gap-2">
                 <Input value={getPublicBotUrl()} readOnly className="font-mono text-sm" />
