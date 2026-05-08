@@ -44,23 +44,3 @@ export const useEffectivePolicy = () => {
     staleTime: 5 * 60_000, // policy doesn't change minute-to-minute
   });
 };
-
-/**
- * Per-bot usage — owner-only. Disabled until both ids are present so
- * non-owner navigation doesn't trigger a 403.
- */
-export const useBotUsage = (
-  botId: number | null | undefined,
-  options?: { groupBy?: 'user' | 'date'; period?: '7d' | '30d' | '90d' | 'all' }
-) => {
-  return useQuery({
-    queryKey: ['wallet', 'bot-usage', botId, options?.groupBy, options?.period],
-    queryFn: () =>
-      walletService.getBotUsage(botId as number, {
-        groupBy: options?.groupBy ?? 'user',
-        period: options?.period ?? 'all',
-      }),
-    enabled: typeof botId === 'number' && botId > 0,
-    staleTime: 30_000,
-  });
-};

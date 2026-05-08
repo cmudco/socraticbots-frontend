@@ -71,7 +71,6 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     accessCode,
     accessCodeLimit,
     isPubliclyDeployed,
-    budget,
     primaryColor,
     accentColor,
     backgroundColor,
@@ -206,7 +205,6 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         webSearchEnabled,
         // Public deployment
         isPubliclyDeployed,
-        ...(budget && { budget: parseFloat(budget) || 0 }),
         // Theme
         theme: {
           primaryColor,
@@ -264,7 +262,6 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     webSearchEnabled,
     accessCode,
     accessCodeLimit,
-    budget,
     isPubliclyDeployed,
     isEdit,
     bot,

@@ -54,9 +54,6 @@ export const deploymentSchema = z.object({
   accessCode: z.string(),
   accessCodeLimit: z.number(),
   isPubliclyDeployed: z.boolean(),
-  budget: z.string(),
-  billingSource: z.enum(['OWNER_WALLET', 'GROUP_WALLET', 'USER_WALLET', 'LITELLM_KEY']),
-  billingTargetId: z.string().nullable(),
 });
 
 // ============================================================================
@@ -109,9 +106,6 @@ export const DEFAULT_BOT_FORM_VALUES: BotFormData = {
   accessCode: '',
   accessCodeLimit: 0,
   isPubliclyDeployed: false,
-  budget: '',
-  billingSource: 'OWNER_WALLET' as const,
-  billingTargetId: null,
 };
 
 // ============================================================================
@@ -154,9 +148,6 @@ export function mapBotToFormData(bot: {
   } | null;
   accessCode?: { code?: string; limit?: number } | null;
   isPubliclyDeployed?: boolean;
-  budget?: number | string;
-  billingSource?: 'OWNER_WALLET' | 'GROUP_WALLET' | 'USER_WALLET' | 'LITELLM_KEY';
-  billingTargetId?: string | null;
 }): BotFormData {
   return {
     // Basic Info
@@ -193,9 +184,6 @@ export function mapBotToFormData(bot: {
     accessCode: bot.accessCode?.code || '',
     accessCodeLimit: bot.accessCode?.limit ?? 0,
     isPubliclyDeployed: bot.isPubliclyDeployed ?? false,
-    budget: bot.budget ? String(bot.budget) : '',
-    billingSource: bot.billingSource ?? 'OWNER_WALLET',
-    billingTargetId: bot.billingTargetId ?? null,
   };
 }
 
@@ -239,8 +227,5 @@ export function mapFormDataToPayload(data: BotFormData) {
     accessCode: data.accessCode || undefined,
     accessCodeLimit: data.accessCodeLimit,
     isPubliclyDeployed: data.isPubliclyDeployed,
-    budget: data.budget ? parseFloat(data.budget) : undefined,
-    billingSource: data.billingSource,
-    billingTargetId: data.billingTargetId || null,
   };
 }

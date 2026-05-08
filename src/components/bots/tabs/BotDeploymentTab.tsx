@@ -28,10 +28,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
     updateAccessCodeLimit,
     updateAccessCodeUsed,
     isPubliclyDeployed,
-    budget,
-    budgetUsed,
     setIsPubliclyDeployed,
-    updateBudget,
   } = useBotFormStore();
   const [copySuccess, setCopySuccess] = useState(false);
   const [copyUrlSuccess, setCopyUrlSuccess] = useState(false);
@@ -87,21 +84,6 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
     }
   };
 
-  const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateBudget(e.target.value);
-  };
-
-  const handleBudgetBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const numValue = parseFloat(value);
-
-    if (value === '' || isNaN(numValue) || numValue < 1) {
-      updateBudget('1');
-    } else if (numValue > 20) {
-      updateBudget('20');
-    }
-  };
-
   const getPublicBotUrl = () => {
     return `${window.location.origin}/public-deployment/bot/${botId}`;
   };
@@ -124,11 +106,6 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
       </div>
     );
   }
-
-  const budgetUsedNum = Number(budgetUsed) || 0;
-  const budgetRemaining = budget ? parseFloat(budget) - budgetUsedNum : 0;
-  const budgetPercent =
-    budget && parseFloat(budget) > 0 ? (budgetUsedNum / parseFloat(budget)) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -160,51 +137,6 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
 
           {isPubliclyDeployed && (
             <div className="space-y-4 border-t pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="budget">Budget (USD)</Label>
-                <Input
-                  id="budget"
-                  type="number"
-                  min="1"
-                  max="20"
-                  step="0.01"
-                  value={budget || ''}
-                  onChange={handleBudgetChange}
-                  onBlur={handleBudgetBlur}
-                  placeholder="1.00"
-                  required
-                />
-                <p className="text-muted-foreground text-sm">
-                  Set a budget limit for public usage (minimum $1, maximum $20).
-                </p>
-              </div>
-
-              {budget && parseFloat(budget) > 0 && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Budget Used</span>
-                    <span className="font-mono">
-                      ${budgetUsedNum.toFixed(2)} / ${parseFloat(budget).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="bg-secondary h-2 overflow-hidden rounded-full">
-                    <div
-                      className={`h-full transition-all ${
-                        budgetPercent >= 90
-                          ? 'bg-destructive'
-                          : budgetPercent >= 70
-                            ? 'bg-yellow-500'
-                            : 'bg-primary'
-                      }`}
-                      style={{ width: `${Math.min(budgetPercent, 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-muted-foreground text-sm">
-                    ${budgetRemaining.toFixed(2)} remaining
-                  </p>
-                </div>
-              )}
-
               <div className="space-y-2">
                 <Label>Public URL</Label>
                 <div className="flex gap-2">

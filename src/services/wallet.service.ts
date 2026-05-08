@@ -2,12 +2,7 @@ import { METHOD } from '@/constants/requests';
 
 import { baseRequest } from '@/utils/baseRequest';
 
-import {
-  BotUsageResponse,
-  EffectivePolicy,
-  TransactionsResponse,
-  WalletsResponse,
-} from '@/types/wallet';
+import { EffectivePolicy, TransactionsResponse, WalletsResponse } from '@/types/wallet';
 
 class WalletService {
   /**
@@ -43,25 +38,6 @@ class WalletService {
     return baseRequest<EffectivePolicy>({
       url: 'wallet/effective-policy/',
       method: METHOD.GET,
-    });
-  }
-
-  /**
-   * Per-bot usage breakdown — owner-only on the DARE side.
-   * Returns an aggregate `totals` block plus a `breakdown` array
-   * grouped by user (default) or date.
-   */
-  async getBotUsage(
-    botId: number,
-    options?: { groupBy?: 'user' | 'date'; period?: '7d' | '30d' | '90d' | 'all' }
-  ): Promise<BotUsageResponse> {
-    return baseRequest<BotUsageResponse>({
-      url: `wallet/bots/${botId}/usage/`,
-      method: METHOD.GET,
-      params: {
-        group_by: options?.groupBy ?? 'user',
-        period: options?.period ?? 'all',
-      },
     });
   }
 }
