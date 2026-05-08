@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { useIsAuthenticated } from '@/hooks/queries/useUser';
 
-import { DareLLMModel, dareLLMModelsService } from '@/services/dareLLMModels.service';
+import { PickerModel, dareLLMModelsService } from '@/services/dareLLMModels.service';
 
 export const dareLLMModelKeys = {
   all: ['dareLLMModels'] as const,
@@ -99,7 +99,7 @@ export const useDareLLMProviders = () => {
   const { data: models, ...rest } = useDareLLMModels();
 
   const providers =
-    models?.reduce((acc: string[], model: DareLLMModel) => {
+    models?.reduce((acc: string[], model: PickerModel) => {
       if (!acc.includes(model.provider)) {
         acc.push(model.provider);
       }

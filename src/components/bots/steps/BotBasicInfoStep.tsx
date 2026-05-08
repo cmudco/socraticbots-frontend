@@ -98,37 +98,32 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
           <Controller
             name="chatModelDareId"
             control={control}
-            render={({ field }) => {
-              const stringValue =
-                field.value !== null && field.value !== undefined ? String(field.value) : '';
-
-              return (
-                <Select
-                  value={stringValue}
-                  onValueChange={value => {
-                    // Reject empty values - Agent is required, never clear it
-                    // Radix Select fires empty onValueChange on remount, we must ignore it
-                    if (!value) return;
-                    const parsed = parseInt(value, 10);
-                    if (Number.isNaN(parsed)) return;
-                    field.onChange(parsed);
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dareLLMModels
-                      .filter(model => typeof model.id === 'number')
-                      .map(model => (
-                        <SelectItem key={model.id} value={String(model.id)}>
-                          {model.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              );
-            }}
+            render={({ field }) => (
+              <Select
+                value={field.value ?? ''}
+                onValueChange={value => {
+                  // Picker ids are opaque ("42" or "litellm:<key>:<name>") —
+                  // store verbatim, don't parse. Radix fires an empty
+                  // onValueChange on remount; ignore so we don't wipe the
+                  // selected agent.
+                  if (!value) return;
+                  field.onChange(value);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {dareLLMModels
+                    .filter(model => !model.isSynthetic && model.id != null)
+                    .map(model => (
+                      <SelectItem key={model.id} value={String(model.id)}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            )}
           />
         )}
       </div>
@@ -145,45 +140,31 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
           <Controller
             name="trackingModelDareId"
             control={control}
-            render={({ field }) => {
-              // Handle null value as 'none' for the Select
-              const stringValue =
-                field.value !== null && field.value !== undefined && !Number.isNaN(field.value)
-                  ? String(field.value)
-                  : 'none';
-
-              return (
-                <Select
-                  value={stringValue}
-                  onValueChange={value => {
-                    // Reject empty values - Radix fires empty on remount
-                    if (!value) return;
-                    if (value === 'none') {
-                      field.onChange(null);
-                    } else {
-                      const parsed = parseInt(value, 10);
-                      if (!Number.isNaN(parsed)) {
-                        field.onChange(parsed);
-                      }
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="None (Optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {dareLLMModels
-                      .filter(model => typeof model.id === 'number')
-                      .map(model => (
-                        <SelectItem key={model.id} value={String(model.id)}>
-                          {model.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              );
-            }}
+            render={({ field }) => (
+              <Select
+                value={field.value ?? 'none'}
+                onValueChange={value => {
+                  // Radix fires empty onValueChange on remount; ignore.
+                  if (!value) return;
+                  // Picker ids are opaque — store verbatim, no parsing.
+                  field.onChange(value === 'none' ? null : value);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="None (Optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {dareLLMModels
+                    .filter(model => !model.isSynthetic && model.id != null)
+                    .map(model => (
+                      <SelectItem key={model.id} value={String(model.id)}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            )}
           />
         )}
       </div>
