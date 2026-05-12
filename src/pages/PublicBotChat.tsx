@@ -237,6 +237,17 @@ const PublicBotChat: React.FC = () => {
               {botInfo.subject} • {botInfo.topic}
             </p>
           </div>
+          {botInfo.budget !== null && botInfo.budget !== undefined && (
+            <div className="text-muted-foreground hidden text-right text-sm md:block">
+              <div className="font-mono">
+                $
+                {(
+                  parseFloat(String(botInfo.budget)) - parseFloat(String(botInfo.budgetUsed || 0))
+                ).toFixed(2)}
+              </div>
+              <div className="text-xs">Budget Remaining</div>
+            </div>
+          )}
           {/* Dark/Light Mode Toggle */}
           <button
             onClick={toggleDarkMode}
