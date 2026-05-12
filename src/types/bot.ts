@@ -56,6 +56,8 @@ export interface Bot {
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
   isPubliclyDeployed?: boolean;
+  budget?: number | string | null;
+  budgetUsed?: number | string;
   botGroup: {
     id: number;
     title: string;
@@ -105,6 +107,7 @@ export interface UpdateBotRequest {
   documentSimilarityThreshold?: number;
   accessCodeLimit?: number;
   isPubliclyDeployed?: boolean;
+  budget?: number;
 }
 
 export interface BotModelPreferenceRequest {

@@ -71,6 +71,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     accessCode,
     accessCodeLimit,
     isPubliclyDeployed,
+    budget,
     primaryColor,
     accentColor,
     backgroundColor,
@@ -83,6 +84,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     updateAccessCode,
     updateAccessCodeLimit,
     updateAccessCodeUsed,
+    updateBudget,
     setActiveTab,
     closeForm,
     setSubmitting,
@@ -127,6 +129,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
             updateAccessCodeLimit(serverAccess.limit ?? 0);
             updateAccessCodeUsed(serverAccess.used ?? 0);
           }
+          updateBudget(botData.budget ? String(botData.budget) : '');
           hasSyncedAccessRef.current = true;
         }
       } catch {
@@ -138,6 +141,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
             updateAccessCodeLimit(serverAccess.limit ?? 0);
             updateAccessCodeUsed(serverAccess.used ?? 0);
           }
+          updateBudget(latestBot.budget ? String(latestBot.budget) : '');
           hasSyncedAccessRef.current = true;
         }
       }
@@ -154,6 +158,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     updateAccessCode,
     updateAccessCodeLimit,
     updateAccessCodeUsed,
+    updateBudget,
   ]);
 
   useEffect(() => {
@@ -205,6 +210,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         webSearchEnabled,
         // Public deployment
         isPubliclyDeployed,
+        ...(budget && { budget: parseFloat(budget) }),
         // Theme
         theme: {
           primaryColor,
@@ -263,6 +269,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     accessCode,
     accessCodeLimit,
     isPubliclyDeployed,
+    budget,
     isEdit,
     bot,
     updateBotMutation,

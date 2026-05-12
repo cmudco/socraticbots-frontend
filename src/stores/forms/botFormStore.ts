@@ -35,6 +35,8 @@ interface BotFormState {
   accessCodeLimit: number;
   accessCodeUsed: number;
   isPubliclyDeployed: boolean;
+  budget: string;
+  budgetUsed: string;
 
   // Theme fields
   primaryColor: string;
@@ -67,6 +69,7 @@ interface BotFormState {
   updateAccessCodeLimit: (limit: number) => void;
   updateAccessCodeUsed: (used: number) => void;
   setIsPubliclyDeployed: (value: boolean) => void;
+  updateBudget: (budget: string) => void;
   updateThemeField: (field: string, value: string) => void;
   // Quick prompts actions
   setQuickPrompts: (prompts: QuickPromptFormItem[]) => void;
@@ -102,6 +105,8 @@ const initialFormState = {
   accessCodeLimit: 0,
   accessCodeUsed: 0,
   isPubliclyDeployed: false,
+  budget: '',
+  budgetUsed: '0',
   // Theme defaults
   primaryColor: '#8b5cf6',
   accentColor: '#a78bfa',
@@ -186,6 +191,8 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       accessCodeLimit: bot.accessCode?.limit ?? 0,
       accessCodeUsed: bot.accessCode?.used ?? 0,
       isPubliclyDeployed: !!bot.isPubliclyDeployed,
+      budget: bot.budget ? String(bot.budget) : '',
+      budgetUsed: bot.budgetUsed ? String(bot.budgetUsed) : '0',
       // Theme fields
       primaryColor: bot.theme?.primaryColor || '#8b5cf6',
       accentColor: bot.theme?.accentColor || '#a78bfa',
@@ -245,6 +252,10 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
   },
 
   setIsPubliclyDeployed: (value: boolean) => set({ isPubliclyDeployed: value }),
+
+  updateBudget: (budget: string) => {
+    set({ budget });
+  },
 
   updateThemeField: (field: string, value: string) => {
     set({ [field]: value });
