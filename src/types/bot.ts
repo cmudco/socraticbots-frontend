@@ -1,7 +1,8 @@
 export interface BotModelPreference {
   id: number;
-  chatModelDareId?: number;
-  trackingModelDareId?: number;
+  // Opaque DARE picker id — see PickerModel in dareLLMModels.service.
+  chatModelDareId?: string | null;
+  trackingModelDareId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,8 +56,8 @@ export interface Bot {
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
   isPubliclyDeployed?: boolean;
-  budget?: number;
-  budgetUsed?: number;
+  budget?: number | string | null;
+  budgetUsed?: number | string;
   botGroup: {
     id: number;
     title: string;
@@ -110,8 +111,8 @@ export interface UpdateBotRequest {
 }
 
 export interface BotModelPreferenceRequest {
-  chatModelDareId?: number;
-  trackingModelDareId?: number;
+  chatModelDareId?: string | null;
+  trackingModelDareId?: string | null;
 }
 
 export interface BotPromptRequest {

@@ -19,6 +19,7 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
   const [customCode, setCustomCode] = useState('');
 
   const accessCode = watch('accessCode');
+  const isPubliclyDeployed = watch('isPubliclyDeployed');
 
   const generateRandomCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -199,7 +200,7 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
           )}
         />
 
-        {watch('isPubliclyDeployed') && botId && (
+        {isPubliclyDeployed && botId && (
           <div className="space-y-4 border-t pt-4">
             <div className="space-y-2">
               <Label htmlFor="budget">Budget Limit (USD)</Label>
@@ -213,7 +214,7 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
                 placeholder="1.00"
               />
               <p className="text-muted-foreground text-xs">
-                Set a budget limit for public usage (minimum $1, maximum $20).
+                Set a budget limit for anonymous public usage (minimum $1, maximum $20).
               </p>
             </div>
 

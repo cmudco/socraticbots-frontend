@@ -243,7 +243,7 @@ const BotEditPage: React.FC = () => {
   const renderSectionContent = (sectionId: string) => {
     switch (sectionId) {
       case 'basic':
-        return <BotBasicInfoStep />;
+        return <BotBasicInfoStep botId={isEdit ? numericBotId : undefined} />;
       case 'prompts':
         return <BotPromptsStep />;
       case 'quick-prompts':

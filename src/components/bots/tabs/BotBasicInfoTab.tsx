@@ -20,8 +20,9 @@ interface FormValues {
   title: string;
   subject: string;
   topic: string;
-  chatModelDareId: number | null;
-  trackingModelDareId: number | null;
+  // Opaque DARE picker id ("42" or "litellm:<key>:<name>"). See PickerModel.
+  chatModelDareId: string | null;
+  trackingModelDareId: string | null;
 }
 
 interface BotBasicInfoTabProps {
@@ -35,9 +36,9 @@ const getValidationSchema = (isEdit: boolean) =>
     subject: Yup.string().required('Subject is required'),
     topic: Yup.string().required('Topic is required'),
     chatModelDareId: isEdit
-      ? Yup.number().nullable().required('Chat model is required')
-      : Yup.number().nullable(),
-    trackingModelDareId: Yup.number().nullable(),
+      ? Yup.string().nullable().required('Chat model is required')
+      : Yup.string().nullable(),
+    trackingModelDareId: Yup.string().nullable(),
   });
 
 const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps>(
@@ -163,10 +164,10 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                   ) : (
                     <Select
                       disabled={viewOnly || modelsLoading}
-                      value={values.chatModelDareId?.toString() || ''}
+                      value={values.chatModelDareId ?? ''}
                       onValueChange={value => {
-                        const modelId = value ? parseInt(value, 10) : null;
-                        updateModelField('chatModelDareId', modelId);
+                        // Picker ids are opaque — store verbatim, don't parse.
+                        updateModelField('chatModelDareId', value || null);
                       }}
                     >
                       <SelectTrigger className="w-full">
@@ -176,7 +177,7 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                       </SelectTrigger>
                       <SelectContent>
                         {dareLLMModels?.map(model => (
-                          <SelectItem key={model.id} value={model.id.toString()}>
+                          <SelectItem key={model.id} value={String(model.id)}>
                             <div className="flex flex-col">
                               <span className="font-medium">{model.name}</span>
                             </div>
@@ -210,10 +211,13 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                   ) : (
                     <Select
                       disabled={viewOnly || modelsLoading}
-                      value={values.trackingModelDareId?.toString() || 'none'}
+                      value={values.trackingModelDareId ?? 'none'}
                       onValueChange={value => {
-                        const modelId = value === 'none' ? null : parseInt(value, 10);
-                        updateModelField('trackingModelDareId', modelId);
+                        // Picker ids are opaque — store verbatim, don't parse.
+                        updateModelField(
+                          'trackingModelDareId',
+                          value === 'none' || !value ? null : value
+                        );
                       }}
                     >
                       <SelectTrigger className="w-full">
@@ -224,7 +228,7 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                       <SelectContent>
                         <SelectItem value="none">None</SelectItem>
                         {dareLLMModels?.map(model => (
-                          <SelectItem key={model.id} value={model.id.toString()}>
+                          <SelectItem key={model.id} value={String(model.id)}>
                             <div className="flex flex-col">
                               <span className="font-medium">{model.name}</span>
                             </div>

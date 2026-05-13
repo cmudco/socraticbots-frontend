@@ -1,9 +1,10 @@
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { WalletEmptyReason } from '@/constants/wallet';
 import type { BotFormData } from '@/schemas/botFormSchema';
 
-import { useDareLLMModels } from '@/hooks/queries/useDareLLMModels';
+import { useWalletScopedDareLLMModels } from '@/hooks/queries/useDareLLMModels';
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,14 +17,23 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
-const BotBasicInfoStep: React.FC = () => {
+interface BotBasicInfoStepProps {
+  botId?: number;
+}
+
+const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
   const {
     register,
     control,
     formState: { errors },
   } = useFormContext<BotFormData>();
 
-  const { data: dareLLMModels, isLoading: modelsLoading } = useDareLLMModels();
+  const walletScope = botId ? `bot:${botId}` : 'active';
+  const { data: walletScoped, isLoading: modelsLoading } =
+    useWalletScopedDareLLMModels(walletScope);
+
+  const dareLLMModels = walletScoped?.models ?? [];
+  const wallet = walletScoped?.wallet;
 
   return (
     <div className="space-y-6">
@@ -66,7 +76,21 @@ const BotBasicInfoStep: React.FC = () => {
       {/* Chat Model Selection */}
       <div className="space-y-2">
         <Label htmlFor="chatModelDareId">Agent *</Label>
-        {modelsLoading || !dareLLMModels ? (
+        {wallet?.isEmpty ? (
+          <div className="border-input bg-muted/30 text-muted-foreground flex flex-col gap-1 rounded-md border px-3 py-3 text-sm">
+            <span className="font-medium">
+              {wallet.emptyReason === WalletEmptyReason.NO_KEYS &&
+                'No keys configured for this bot’s billing source.'}
+              {wallet.emptyReason === WalletEmptyReason.PROBE_FAILED &&
+                'Could not reach the configured LiteLLM proxy.'}
+              {wallet.emptyReason === WalletEmptyReason.TARGET_KEY_DELETED &&
+                'The LiteLLM key targeted by this bot was removed.'}
+            </span>
+            <span className="text-xs">
+              Update the bot’s billing source in the Billing tab to load models.
+            </span>
+          </div>
+        ) : modelsLoading || !dareLLMModels ? (
           <div className="border-input bg-muted/50 text-muted-foreground flex h-10 w-full items-center rounded-md border px-3 text-sm">
             Loading models...
           </div>
@@ -74,33 +98,32 @@ const BotBasicInfoStep: React.FC = () => {
           <Controller
             name="chatModelDareId"
             control={control}
-            render={({ field }) => {
-              const stringValue =
-                field.value !== null && field.value !== undefined ? String(field.value) : '';
-
-              return (
-                <Select
-                  value={stringValue}
-                  onValueChange={value => {
-                    // Reject empty values - Agent is required, never clear it
-                    // Radix Select fires empty onValueChange on remount, we must ignore it
-                    if (!value) return;
-                    field.onChange(parseInt(value, 10));
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dareLLMModels.map(model => (
+            render={({ field }) => (
+              <Select
+                value={field.value ?? ''}
+                onValueChange={value => {
+                  // Picker ids are opaque ("42" or "litellm:<key>:<name>") —
+                  // store verbatim, don't parse. Radix fires an empty
+                  // onValueChange on remount; ignore so we don't wipe the
+                  // selected agent.
+                  if (!value) return;
+                  field.onChange(value);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {dareLLMModels
+                    .filter(model => !model.isSynthetic && model.id != null)
+                    .map(model => (
                       <SelectItem key={model.id} value={String(model.id)}>
                         {model.name}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              );
-            }}
+                </SelectContent>
+              </Select>
+            )}
           />
         )}
       </div>
@@ -117,43 +140,31 @@ const BotBasicInfoStep: React.FC = () => {
           <Controller
             name="trackingModelDareId"
             control={control}
-            render={({ field }) => {
-              // Handle null value as 'none' for the Select
-              const stringValue =
-                field.value !== null && field.value !== undefined && !Number.isNaN(field.value)
-                  ? String(field.value)
-                  : 'none';
-
-              return (
-                <Select
-                  value={stringValue}
-                  onValueChange={value => {
-                    // Reject empty values - Radix fires empty on remount
-                    if (!value) return;
-                    if (value === 'none') {
-                      field.onChange(null);
-                    } else {
-                      const parsed = parseInt(value, 10);
-                      if (!Number.isNaN(parsed)) {
-                        field.onChange(parsed);
-                      }
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="None (Optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {dareLLMModels.map(model => (
+            render={({ field }) => (
+              <Select
+                value={field.value ?? 'none'}
+                onValueChange={value => {
+                  // Radix fires empty onValueChange on remount; ignore.
+                  if (!value) return;
+                  // Picker ids are opaque — store verbatim, no parsing.
+                  field.onChange(value === 'none' ? null : value);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="None (Optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {dareLLMModels
+                    .filter(model => !model.isSynthetic && model.id != null)
+                    .map(model => (
                       <SelectItem key={model.id} value={String(model.id)}>
                         {model.name}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              );
-            }}
+                </SelectContent>
+              </Select>
+            )}
           />
         )}
       </div>
