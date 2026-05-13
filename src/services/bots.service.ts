@@ -22,8 +22,8 @@ class BotService {
   async createBot(
     botGroupId: number,
     botData: CreateBotRequest & {
-      chatModelDareId?: number;
-      trackingModelDareId?: number;
+      chatModelDareId?: string | null;
+      trackingModelDareId?: string | null;
       greeting?: string;
       chatPrompt?: string;
       trackingPrompt?: string;
@@ -66,8 +66,8 @@ class BotService {
     botGroupId: number,
     botId: number,
     botData: UpdateBotRequest & {
-      chatModelDareId?: number;
-      trackingModelDareId?: number;
+      chatModelDareId?: string | null;
+      trackingModelDareId?: string | null;
       greeting?: string;
       chatPrompt?: string;
       trackingPrompt?: string;

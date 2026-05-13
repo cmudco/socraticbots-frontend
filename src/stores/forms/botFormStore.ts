@@ -27,15 +27,16 @@ interface BotFormState {
   learningGoals: string;
   isAdvanced: boolean;
   isActive: boolean;
-  chatModelDareId: number | null;
-  trackingModelDareId: number | null;
+  // Opaque DARE picker id ("42" or "litellm:<key>:<name>"). See PickerModel.
+  chatModelDareId: string | null;
+  trackingModelDareId: string | null;
   webSearchEnabled: boolean;
   accessCode: string;
   accessCodeLimit: number;
   accessCodeUsed: number;
   isPubliclyDeployed: boolean;
   budget: string;
-  budgetUsed: number;
+  budgetUsed: string;
 
   // Theme fields
   primaryColor: string;
@@ -62,7 +63,7 @@ interface BotFormState {
   updateField: (field: string, value: string) => void;
   setIsAdvanced: (value: boolean) => void;
   setIsActive: (value: boolean) => void;
-  updateModelField: (field: string, value: number | null) => void;
+  updateModelField: (field: string, value: string | null) => void;
   setWebSearchEnabled: (value: boolean) => void;
   updateAccessCode: (code: string) => void;
   updateAccessCodeLimit: (limit: number) => void;
@@ -105,7 +106,7 @@ const initialFormState = {
   accessCodeUsed: 0,
   isPubliclyDeployed: false,
   budget: '',
-  budgetUsed: 0,
+  budgetUsed: '0',
   // Theme defaults
   primaryColor: '#8b5cf6',
   accentColor: '#a78bfa',
@@ -183,15 +184,15 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       learningGoals: bot.prompts?.learningGoals || '',
       isAdvanced: !!bot.isAdvanced,
       isActive: bot.isActive !== undefined ? bot.isActive : true,
-      chatModelDareId: bot.modelPreference?.chatModelDareId || null,
-      trackingModelDareId: bot.modelPreference?.trackingModelDareId || null,
+      chatModelDareId: bot.modelPreference?.chatModelDareId ?? null,
+      trackingModelDareId: bot.modelPreference?.trackingModelDareId ?? null,
       webSearchEnabled: !!bot.webSearchEnabled,
       accessCode: bot.accessCode?.code || '',
       accessCodeLimit: bot.accessCode?.limit ?? 0,
       accessCodeUsed: bot.accessCode?.used ?? 0,
       isPubliclyDeployed: !!bot.isPubliclyDeployed,
       budget: bot.budget ? String(bot.budget) : '',
-      budgetUsed: bot.budgetUsed ?? 0,
+      budgetUsed: bot.budgetUsed ? String(bot.budgetUsed) : '0',
       // Theme fields
       primaryColor: bot.theme?.primaryColor || '#8b5cf6',
       accentColor: bot.theme?.accentColor || '#a78bfa',
@@ -228,7 +229,7 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
 
   setIsActive: (value: boolean) => set({ isActive: value }),
 
-  updateModelField: (field: string, value: number | null) => {
+  updateModelField: (field: string, value: string | null) => {
     set({
       [field]: value,
     });

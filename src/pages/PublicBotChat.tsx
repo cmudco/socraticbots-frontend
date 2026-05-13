@@ -248,7 +248,6 @@ const PublicBotChat: React.FC = () => {
               <div className="text-xs">Budget Remaining</div>
             </div>
           )}
-
           {/* Dark/Light Mode Toggle */}
           <button
             onClick={toggleDarkMode}
