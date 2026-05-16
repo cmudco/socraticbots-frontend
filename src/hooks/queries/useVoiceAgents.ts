@@ -25,6 +25,7 @@ const toListItem = (agent: VoiceAgent): VoiceAgentListItem => ({
   description: agent.description,
   team: agent.team,
   teamName: agent.teamName,
+  voiceProvider: agent.voiceProvider,
   status: agent.status,
   examTitle: agent.examTitle,
   accessLevel: agent.permissions.accessLevel,

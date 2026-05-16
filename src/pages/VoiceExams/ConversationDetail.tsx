@@ -18,13 +18,20 @@ import { formatDate, formatDuration, formatTimeInCall } from '@/utils/formatters
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { ConversationStatus, TranscriptRole , TranscriptMessage } from '@/types/voiceAgent';
+import {
+  ConversationStatus,
+  TranscriptMessage,
+  TranscriptRole,
+  VoiceProvider,
+} from '@/types/voiceAgent';
 
-const STATUS_STYLES: Record<string, string> = {
-  completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  cancelled: 'bg-muted text-muted-foreground',
+const STATUS_STYLES: { [K in ConversationStatus]: string } = {
+  [ConversationStatus.Completed]:
+    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  [ConversationStatus.InProgress]:
+    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  [ConversationStatus.Failed]: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  [ConversationStatus.Cancelled]: 'bg-muted text-muted-foreground',
 };
 
 const ConversationDetail: React.FC = () => {
@@ -37,10 +44,8 @@ const ConversationDetail: React.FC = () => {
   const syncTranscript = useSyncConversationTranscript();
   const exportPdf = useExportTranscriptPdf();
 
-  const getStatusBadge = (status: string) => (
-    <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[status] || STATUS_STYLES.cancelled}`}
-    >
+  const getStatusBadge = (status: ConversationStatus) => (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[status]}`}>
       {status.replace('_', ' ')}
     </span>
   );
@@ -112,18 +117,20 @@ const ConversationDetail: React.FC = () => {
                 {exportPdf.isPending ? 'Exporting...' : 'Download PDF'}
               </Button>
             )}
-            {conversation.status === ConversationStatus.Completed && !hasTranscript && (
-              <Button
-                variant="outline"
-                onClick={handleSyncTranscript}
-                disabled={syncTranscript.isPending}
-              >
-                <RefreshCw
-                  className={`mr-2 h-4 w-4 ${syncTranscript.isPending ? 'animate-spin' : ''}`}
-                />
-                Sync Transcript
-              </Button>
-            )}
+            {conversation.status === ConversationStatus.Completed &&
+              !hasTranscript &&
+              conversation.agentVoiceProvider === VoiceProvider.ElevenLabs && (
+                <Button
+                  variant="outline"
+                  onClick={handleSyncTranscript}
+                  disabled={syncTranscript.isPending}
+                >
+                  <RefreshCw
+                    className={`mr-2 h-4 w-4 ${syncTranscript.isPending ? 'animate-spin' : ''}`}
+                  />
+                  Sync Transcript
+                </Button>
+              )}
           </div>
         </div>
       </div>
@@ -173,21 +180,22 @@ const ConversationDetail: React.FC = () => {
               <p className="text-muted-foreground">
                 {conversation.status === ConversationStatus.InProgress
                   ? 'Transcript will be available after the conversation ends.'
-                  : 'No transcript available. Try syncing from ElevenLabs.'}
+                  : 'No transcript available.'}
               </p>
-              {conversation.status === ConversationStatus.Completed && (
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={handleSyncTranscript}
-                  disabled={syncTranscript.isPending}
-                >
-                  <RefreshCw
-                    className={`mr-2 h-4 w-4 ${syncTranscript.isPending ? 'animate-spin' : ''}`}
-                  />
-                  Sync Transcript
-                </Button>
-              )}
+              {conversation.status === ConversationStatus.Completed &&
+                conversation.agentVoiceProvider === VoiceProvider.ElevenLabs && (
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={handleSyncTranscript}
+                    disabled={syncTranscript.isPending}
+                  >
+                    <RefreshCw
+                      className={`mr-2 h-4 w-4 ${syncTranscript.isPending ? 'animate-spin' : ''}`}
+                    />
+                    Sync Transcript
+                  </Button>
+                )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -217,7 +225,7 @@ const ConversationDetail: React.FC = () => {
                     }`}
                   >
                     <p className="text-sm">{message.message}</p>
-                    {message.time_in_call_secs !== undefined && (
+                    {message.timeInCallSecs !== undefined && (
                       <p
                         className={`mt-1 text-xs ${
                           message.role === TranscriptRole.User
@@ -225,7 +233,7 @@ const ConversationDetail: React.FC = () => {
                             : 'text-muted-foreground'
                         }`}
                       >
-                        {formatTimeInCall(message.time_in_call_secs)}
+                        {formatTimeInCall(message.timeInCallSecs)}
                       </p>
                     )}
                   </div>

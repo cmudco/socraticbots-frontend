@@ -1,6 +1,6 @@
 /**
  * VoiceInterface component for conducting voice exams.
- * Uses ElevenLabs SDK for real-time voice conversations.
+ * Uses the configured provider runtime for real-time voice conversations.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -11,10 +11,11 @@ import {
   useGetSignedUrl,
   useStartConversation,
 } from '@/hooks/queries/useVoiceAgents';
+import { useMistralVoiceSession } from '@/hooks/useMistralVoiceSession';
 
 import { formatTimeInCall } from '@/utils/formatters';
 
-import { VoiceAgent } from '@/types/voiceAgent';
+import { VoiceAgent, VoiceProvider } from '@/types/voiceAgent';
 
 interface VoiceInterfaceProps {
   agent: VoiceAgent;
@@ -34,6 +35,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const isMistralSessionActiveRef = useRef(false);
   const examStartTimeRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const handleEndRef = useRef<(() => Promise<void>) | null>(null);
@@ -87,6 +89,35 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     }
   }, []);
 
+  const {
+    status: mistralVoiceStatus,
+    isSpeaking: mistralVoiceIsSpeaking,
+    isListening: mistralIsListening,
+    startSession: startMistralVoiceSession,
+    endSession: endMistralVoiceSession,
+  } = useMistralVoiceSession({
+    onConnect: () => {
+      setLocalError(null);
+    },
+    onMessage: message => {
+      const content = message.message || message.content;
+      if (!content) return;
+
+      setMessages(prev => [
+        ...prev,
+        {
+          role: message.role === 'user' ? 'user' : 'agent',
+          content,
+          timestamp: new Date(),
+        },
+      ]);
+    },
+    onError: err => {
+      console.error('Mistral voice runtime error:', err);
+      setLocalError(err.message || 'An error occurred');
+    },
+  });
+
   const stopTimer = useCallback(() => {
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -111,6 +142,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   // Cleanup microphone and timer on unmount
   useEffect(() => {
     return () => {
+      isMistralSessionActiveRef.current = false;
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
       }
@@ -127,6 +159,23 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
       // Check eligibility first (signed URL request will fail if already attempted)
       const signedUrlResult = await getSignedUrlMutation.mutateAsync(agent.id);
+
+      if (signedUrlResult.provider === VoiceProvider.MistralVoice) {
+        if (!signedUrlResult.transportUrl || !signedUrlResult.token || !signedUrlResult.sessionId) {
+          setLocalError('Failed to get Mistral voice session details');
+          return;
+        }
+
+        isMistralSessionActiveRef.current = true;
+        await startMistralVoiceSession({
+          transportUrl: signedUrlResult.transportUrl,
+          token: signedUrlResult.token,
+        });
+
+        setCurrentConversationId(signedUrlResult.sessionId);
+        startTimer();
+        return;
+      }
 
       if (!signedUrlResult?.signedUrl) {
         setLocalError('Failed to get signed URL');
@@ -155,6 +204,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
     } catch (err) {
       console.error('Failed to start session:', err);
+      isMistralSessionActiveRef.current = false;
       stopMicrophone();
       const message = err instanceof Error ? err.message : 'Failed to start session';
       // Check if this is an "already attempted" error from the backend
@@ -172,6 +222,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     conversation,
     getSignedUrlMutation,
     onAlreadyAttempted,
+    startMistralVoiceSession,
     startConversationMutation,
     startTimer,
     stopMicrophone,
@@ -180,10 +231,15 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const handleEnd = useCallback(async () => {
     try {
       stopTimer();
-      await conversation.endSession();
+      if (agent.voiceProvider === VoiceProvider.MistralVoice) {
+        isMistralSessionActiveRef.current = false;
+        await endMistralVoiceSession();
+      } else {
+        await conversation.endSession();
+      }
       stopMicrophone();
 
-      if (currentConversationId) {
+      if (currentConversationId && agent.voiceProvider === VoiceProvider.ElevenLabs) {
         // Record conversation end and fetch transcript
         await endConversationMutation.mutateAsync({
           agentId: agent.id,
@@ -200,8 +256,10 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     }
   }, [
     agent.id,
+    agent.voiceProvider,
     currentConversationId,
     conversation,
+    endMistralVoiceSession,
     endConversationMutation,
     onComplete,
     stopMicrophone,
@@ -213,8 +271,10 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     handleEndRef.current = handleEnd;
   }, [handleEnd]);
 
-  const isSessionActive = conversation.status === 'connected';
-  const isConnecting = conversation.status === 'connecting';
+  const activeStatus =
+    agent.voiceProvider === VoiceProvider.MistralVoice ? mistralVoiceStatus : conversation.status;
+  const isSessionActive = activeStatus === 'connected';
+  const isConnecting = activeStatus === 'connecting';
   const isLoading = getSignedUrlMutation.isPending;
   const progress = maxDuration > 0 ? Math.min(elapsedSeconds / maxDuration, 1) : 0;
   const progressColor =
@@ -236,7 +296,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                     : 'bg-muted'
               }`}
             />
-            <span className="text-muted-foreground text-sm">{conversation.status}</span>
+            <span className="text-muted-foreground text-sm">{activeStatus}</span>
           </div>
         </div>
 
@@ -286,12 +346,36 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
               <span className="text-muted-foreground text-sm">Agent Speaking:</span>
               <span
                 className={`font-medium ${
-                  conversation.isSpeaking ? 'text-green-500' : 'text-muted-foreground'
+                  (
+                    agent.voiceProvider === VoiceProvider.MistralVoice
+                      ? mistralVoiceIsSpeaking
+                      : conversation.isSpeaking
+                  )
+                    ? 'text-green-500'
+                    : 'text-muted-foreground'
                 }`}
               >
-                {conversation.isSpeaking ? 'Yes' : 'No'}
+                {(
+                  agent.voiceProvider === VoiceProvider.MistralVoice
+                    ? mistralVoiceIsSpeaking
+                    : conversation.isSpeaking
+                )
+                  ? 'Yes'
+                  : 'No'}
               </span>
             </div>
+            {agent.voiceProvider === VoiceProvider.MistralVoice && (
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground text-sm">Listening:</span>
+                <span
+                  className={`font-medium ${
+                    mistralIsListening ? 'text-green-500' : 'text-muted-foreground'
+                  }`}
+                >
+                  {mistralIsListening ? 'Yes' : 'No'}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

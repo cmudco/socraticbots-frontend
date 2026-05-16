@@ -9,6 +9,11 @@ export enum AgentStatus {
   Active = 'active',
 }
 
+export enum VoiceProvider {
+  ElevenLabs = 'elevenlabs',
+  MistralVoice = 'mistral_pipecat',
+}
+
 export enum TurnEagerness {
   Low = 'low',
   Normal = 'normal',
@@ -157,7 +162,9 @@ export interface VoiceAgent {
   team: number | null;
   teamName: string | null;
   elevenlabsAgentId: string | null;
+  voiceProvider: VoiceProvider;
   voiceId: string;
+  language: string;
   systemPrompt: string;
   firstMessage: string;
   temperature: number;
@@ -182,6 +189,7 @@ export interface VoiceAgentListItem {
   description: string;
   team: number | null;
   teamName: string | null;
+  voiceProvider: VoiceProvider;
   status: AgentStatus;
   examTitle: string;
   accessLevel: VoiceAccessLevel | null;
@@ -192,6 +200,8 @@ export interface VoiceAgentCreateData {
   name: string;
   description?: string;
   voiceId?: string;
+  voiceProvider?: VoiceProvider;
+  language?: string;
   systemPrompt: string;
   firstMessage?: string;
   temperature?: number;
@@ -208,6 +218,8 @@ export interface VoiceAgentUpdateData {
   name?: string;
   description?: string;
   voiceId?: string;
+  voiceProvider?: VoiceProvider;
+  language?: string;
   systemPrompt?: string;
   firstMessage?: string;
   temperature?: number;
@@ -224,9 +236,11 @@ export interface VoiceConversation {
   id: number;
   agent: number;
   agentName: string;
+  agentVoiceProvider: VoiceProvider;
   user: number;
   userEmail: string;
   elevenlabsConversationId: string;
+  providerConversationId: string | null;
   startedAt: string;
   endedAt: string | null;
   durationSeconds: number | null;
@@ -239,6 +253,7 @@ export interface VoiceConversationListItem {
   id: number;
   agent: number;
   agentName: string;
+  agentVoiceProvider: VoiceProvider;
   userEmail: string;
   startedAt: string;
   endedAt: string | null;
@@ -258,12 +273,17 @@ export interface StudentAttemptInfo {
 export interface TranscriptMessage {
   role: TranscriptRole;
   message: string;
-  time_in_call_secs?: number;
+  timeInCallSecs?: number;
 }
 
 export interface SignedUrlResponse {
-  signedUrl: string;
-  agentId: string;
+  provider: VoiceProvider;
+  signedUrl?: string;
+  agentId?: string;
+  sessionId?: string;
+  transportUrl?: string;
+  token?: string;
+  expiresAt?: string;
 }
 
 export interface ElevenLabsVoice {

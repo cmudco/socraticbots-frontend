@@ -5,8 +5,17 @@ import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
+
+import { VoiceProvider } from '@/types/voiceAgent';
 
 interface AIConfigSectionProps {
   viewOnly?: boolean;
@@ -16,6 +25,8 @@ export const AIConfigSection: React.FC<AIConfigSectionProps> = ({ viewOnly = fal
   const {
     systemPrompt,
     firstMessage,
+    voiceProvider,
+    language,
     temperature,
     maxDurationSeconds,
     errors,
@@ -66,6 +77,34 @@ export const AIConfigSection: React.FC<AIConfigSectionProps> = ({ viewOnly = fal
             The agent's opening message when the exam starts
           </p>
         </div>
+
+        {voiceProvider === VoiceProvider.MistralVoice && (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Language</Label>
+              <Select
+                value={language}
+                onValueChange={value => updateField('language', value)}
+                disabled={viewOnly}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="es">Spanish</SelectItem>
+                  <SelectItem value="fr">French</SelectItem>
+                  <SelectItem value="de">German</SelectItem>
+                  <SelectItem value="it">Italian</SelectItem>
+                  <SelectItem value="pt">Portuguese</SelectItem>
+                  <SelectItem value="nl">Dutch</SelectItem>
+                  <SelectItem value="hi">Hindi</SelectItem>
+                  <SelectItem value="ar">Arabic</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-3">
