@@ -48,9 +48,10 @@ import {
   AdvancedSettingsSection,
   BasicInfoSection,
   ExamConfigSection,
+  ProviderSection,
 } from '@/components/voice-agents/sections';
 
-import { AgentStatus } from '@/types/voiceAgent';
+import { AgentStatus, VoiceProvider } from '@/types/voiceAgent';
 
 const VoiceAgentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -220,18 +221,21 @@ const VoiceAgentDetail: React.FC = () => {
                 Take Exam
               </Button>
             )}
-            {canEdit && !isEditing && agent.elevenlabsAgentId && (
-              <Button
-                onClick={handleSyncFromElevenLabs}
-                variant="outline"
-                disabled={syncFromElevenLabs.isPending}
-              >
-                <RefreshCw
-                  className={`mr-2 h-4 w-4 ${syncFromElevenLabs.isPending ? 'animate-spin' : ''}`}
-                />
-                {syncFromElevenLabs.isPending ? 'Syncing...' : 'Sync from ElevenLabs'}
-              </Button>
-            )}
+            {canEdit &&
+              !isEditing &&
+              agent.voiceProvider === VoiceProvider.ElevenLabs &&
+              agent.elevenlabsAgentId && (
+                <Button
+                  onClick={handleSyncFromElevenLabs}
+                  variant="outline"
+                  disabled={syncFromElevenLabs.isPending}
+                >
+                  <RefreshCw
+                    className={`mr-2 h-4 w-4 ${syncFromElevenLabs.isPending ? 'animate-spin' : ''}`}
+                  />
+                  {syncFromElevenLabs.isPending ? 'Syncing...' : 'Sync from ElevenLabs'}
+                </Button>
+              )}
             {canEdit && !isEditing && (
               <Button onClick={handleStartEdit} variant="outline">
                 <Edit2 className="mr-2 h-4 w-4" />
@@ -285,6 +289,7 @@ const VoiceAgentDetail: React.FC = () => {
       {/* Content */}
       {isEditing ? (
         <div className="space-y-6">
+          <ProviderSection />
           <BasicInfoSection showAccessCode={canManageAccess} />
           <ExamConfigSection />
           <AIConfigSection />
@@ -382,15 +387,33 @@ const VoiceAgentDetail: React.FC = () => {
                     <dd className="text-foreground">{agent.temperature}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground text-sm">Voice ID</dt>
-                    <dd className="text-foreground">{agent.voiceId || 'Default'}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground text-sm">ElevenLabs Agent ID</dt>
+                    <dt className="text-muted-foreground text-sm">Provider</dt>
                     <dd className="text-foreground">
-                      {agent.elevenlabsAgentId || 'Not configured'}
+                      {agent.voiceProvider === VoiceProvider.MistralVoice
+                        ? 'Mistral Voice'
+                        : 'ElevenLabs'}
                     </dd>
                   </div>
+                  {agent.voiceProvider === VoiceProvider.ElevenLabs && (
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Voice ID</dt>
+                      <dd className="text-foreground">{agent.voiceId || 'Default'}</dd>
+                    </div>
+                  )}
+                  {agent.voiceProvider === VoiceProvider.ElevenLabs && (
+                    <div>
+                      <dt className="text-muted-foreground text-sm">ElevenLabs Agent ID</dt>
+                      <dd className="text-foreground">
+                        {agent.elevenlabsAgentId || 'Not configured'}
+                      </dd>
+                    </div>
+                  )}
+                  {agent.voiceProvider === VoiceProvider.MistralVoice && (
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Language</dt>
+                      <dd className="text-foreground">{agent.language}</dd>
+                    </div>
+                  )}
                   {canManageAccess && (
                     <div>
                       <dt className="text-muted-foreground text-sm">Student Access Code</dt>
@@ -423,67 +446,69 @@ const VoiceAgentDetail: React.FC = () => {
           )}
 
           {/* Advanced ElevenLabs Settings (staff with edit access) */}
-          {canEdit && agent.conversationConfig && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Advanced ElevenLabs Settings</CardTitle>
-                <CardDescription>
-                  Fine-tune conversation behavior, voice output, and LLM settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <dl className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {/* Turn Settings */}
-                  <div>
-                    <dt className="text-muted-foreground text-sm">Eagerness</dt>
-                    <dd className="text-foreground capitalize">
-                      {agent.conversationConfig?.turn?.turnEagerness || 'normal'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground text-sm">Turn Timeout</dt>
-                    <dd className="text-foreground">
-                      {agent.conversationConfig?.turn?.turnTimeout || 7}s
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground text-sm">Spelling Patience</dt>
-                    <dd className="text-foreground capitalize">
-                      {agent.conversationConfig?.turn?.spellingPatience || 'auto'}
-                    </dd>
-                  </div>
+          {canEdit &&
+            agent.voiceProvider === VoiceProvider.ElevenLabs &&
+            agent.conversationConfig && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Advanced ElevenLabs Settings</CardTitle>
+                  <CardDescription>
+                    Fine-tune conversation behavior, voice output, and LLM settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <dl className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {/* Turn Settings */}
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Eagerness</dt>
+                      <dd className="text-foreground capitalize">
+                        {agent.conversationConfig?.turn?.turnEagerness || 'normal'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Turn Timeout</dt>
+                      <dd className="text-foreground">
+                        {agent.conversationConfig?.turn?.turnTimeout || 7}s
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Spelling Patience</dt>
+                      <dd className="text-foreground capitalize">
+                        {agent.conversationConfig?.turn?.spellingPatience || 'auto'}
+                      </dd>
+                    </div>
 
-                  {/* TTS Settings */}
-                  <div>
-                    <dt className="text-muted-foreground text-sm">Stability</dt>
-                    <dd className="text-foreground">
-                      {agent.conversationConfig?.tts?.stability ?? 0.5}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground text-sm">Speed</dt>
-                    <dd className="text-foreground">
-                      {agent.conversationConfig?.tts?.speed ?? 1.0}x
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground text-sm">Similarity Boost</dt>
-                    <dd className="text-foreground">
-                      {agent.conversationConfig?.tts?.similarityBoost ?? 0.75}
-                    </dd>
-                  </div>
+                    {/* TTS Settings */}
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Stability</dt>
+                      <dd className="text-foreground">
+                        {agent.conversationConfig?.tts?.stability ?? 0.5}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Speed</dt>
+                      <dd className="text-foreground">
+                        {agent.conversationConfig?.tts?.speed ?? 1.0}x
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Similarity Boost</dt>
+                      <dd className="text-foreground">
+                        {agent.conversationConfig?.tts?.similarityBoost ?? 0.75}
+                      </dd>
+                    </div>
 
-                  {/* LLM Settings */}
-                  <div>
-                    <dt className="text-muted-foreground text-sm">LLM Model</dt>
-                    <dd className="text-foreground font-mono text-sm">
-                      {agent.conversationConfig?.agent?.prompt?.llm || 'default'}
-                    </dd>
-                  </div>
-                </dl>
-              </CardContent>
-            </Card>
-          )}
+                    {/* LLM Settings */}
+                    <div>
+                      <dt className="text-muted-foreground text-sm">LLM Model</dt>
+                      <dd className="text-foreground font-mono text-sm">
+                        {agent.conversationConfig?.agent?.prompt?.llm || 'default'}
+                      </dd>
+                    </div>
+                  </dl>
+                </CardContent>
+              </Card>
+            )}
 
           {/* Shared Access Panel (managers only) */}
           {canManageAccess && (
