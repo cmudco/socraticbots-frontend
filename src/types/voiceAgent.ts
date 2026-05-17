@@ -11,6 +11,8 @@ export enum AgentStatus {
 
 export enum VoiceProvider {
   ElevenLabs = 'elevenlabs',
+  // Mistral Voxtral via the full-duplex Pipecat runtime
+  // (server-side VAD + barge-in + streaming).
   MistralVoice = 'mistral_pipecat',
 }
 
