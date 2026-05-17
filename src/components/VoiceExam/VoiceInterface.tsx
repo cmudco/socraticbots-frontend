@@ -11,7 +11,7 @@ import {
   useGetSignedUrl,
   useStartConversation,
 } from '@/hooks/queries/useVoiceAgents';
-import { useMistralVoiceSession } from '@/hooks/useMistralVoiceSession';
+import { usePipecatVoiceSession } from '@/hooks/usePipecatVoiceSession';
 
 import { formatTimeInCall } from '@/utils/formatters';
 
@@ -90,12 +90,12 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   }, []);
 
   const {
-    status: mistralVoiceStatus,
-    isSpeaking: mistralVoiceIsSpeaking,
-    isListening: mistralIsListening,
-    startSession: startMistralVoiceSession,
-    endSession: endMistralVoiceSession,
-  } = useMistralVoiceSession({
+    status: pipecatStatus,
+    isSpeaking: pipecatIsSpeaking,
+    isListening: pipecatIsListening,
+    startSession: startPipecatSession,
+    endSession: endPipecatSession,
+  } = usePipecatVoiceSession({
     onConnect: () => {
       setLocalError(null);
     },
@@ -113,10 +113,13 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       ]);
     },
     onError: err => {
-      console.error('Mistral voice runtime error:', err);
+      console.error('Pipecat voice runtime error:', err);
       setLocalError(err.message || 'An error occurred');
     },
   });
+
+  // Mistral always runs through the full-duplex Pipecat runtime.
+  const isMistral = agent.voiceProvider === VoiceProvider.MistralVoice;
 
   const stopTimer = useCallback(() => {
     if (timerIntervalRef.current) {
@@ -167,7 +170,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         }
 
         isMistralSessionActiveRef.current = true;
-        await startMistralVoiceSession({
+        await startPipecatSession({
           transportUrl: signedUrlResult.transportUrl,
           token: signedUrlResult.token,
         });
@@ -222,7 +225,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     conversation,
     getSignedUrlMutation,
     onAlreadyAttempted,
-    startMistralVoiceSession,
+    startPipecatSession,
     startConversationMutation,
     startTimer,
     stopMicrophone,
@@ -231,9 +234,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const handleEnd = useCallback(async () => {
     try {
       stopTimer();
-      if (agent.voiceProvider === VoiceProvider.MistralVoice) {
+      if (isMistral) {
         isMistralSessionActiveRef.current = false;
-        await endMistralVoiceSession();
+        await endPipecatSession();
       } else {
         await conversation.endSession();
       }
@@ -259,7 +262,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     agent.voiceProvider,
     currentConversationId,
     conversation,
-    endMistralVoiceSession,
+    endPipecatSession,
+    isMistral,
     endConversationMutation,
     onComplete,
     stopMicrophone,
@@ -271,8 +275,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     handleEndRef.current = handleEnd;
   }, [handleEnd]);
 
-  const activeStatus =
-    agent.voiceProvider === VoiceProvider.MistralVoice ? mistralVoiceStatus : conversation.status;
+  const activeStatus = isMistral ? pipecatStatus : conversation.status;
+  const agentIsSpeaking = isMistral ? pipecatIsSpeaking : conversation.isSpeaking;
+  const voiceIsListening = pipecatIsListening;
   const isSessionActive = activeStatus === 'connected';
   const isConnecting = activeStatus === 'connecting';
   const isLoading = getSignedUrlMutation.isPending;
@@ -346,33 +351,21 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
               <span className="text-muted-foreground text-sm">Agent Speaking:</span>
               <span
                 className={`font-medium ${
-                  (
-                    agent.voiceProvider === VoiceProvider.MistralVoice
-                      ? mistralVoiceIsSpeaking
-                      : conversation.isSpeaking
-                  )
-                    ? 'text-green-500'
-                    : 'text-muted-foreground'
+                  agentIsSpeaking ? 'text-green-500' : 'text-muted-foreground'
                 }`}
               >
-                {(
-                  agent.voiceProvider === VoiceProvider.MistralVoice
-                    ? mistralVoiceIsSpeaking
-                    : conversation.isSpeaking
-                )
-                  ? 'Yes'
-                  : 'No'}
+                {agentIsSpeaking ? 'Yes' : 'No'}
               </span>
             </div>
-            {agent.voiceProvider === VoiceProvider.MistralVoice && (
+            {isMistral && (
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground text-sm">Listening:</span>
                 <span
                   className={`font-medium ${
-                    mistralIsListening ? 'text-green-500' : 'text-muted-foreground'
+                    voiceIsListening ? 'text-green-500' : 'text-muted-foreground'
                   }`}
                 >
-                  {mistralIsListening ? 'Yes' : 'No'}
+                  {voiceIsListening ? 'Yes' : 'No'}
                 </span>
               </div>
             )}
