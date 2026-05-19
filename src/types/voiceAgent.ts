@@ -30,6 +30,7 @@ export enum SpellingPatience {
 }
 
 export enum ConversationStatus {
+  Reserved = 'reserved',
   InProgress = 'in_progress',
   Completed = 'completed',
   Failed = 'failed',
@@ -248,7 +249,26 @@ export interface VoiceConversation {
   durationSeconds: number | null;
   status: ConversationStatus;
   transcript: TranscriptMessage[];
+  runtimeMetrics?: VoiceRuntimeMetrics;
   createdAt: string;
+}
+
+export interface VoiceRuntimeMetrics {
+  runtime?: string;
+  transportMode?: 'webrtc' | 'websocket';
+  sttModel?: string;
+  sttTargetDelayMs?: number;
+  ttsModel?: string;
+  ttsVoice?: string;
+  startup?: {
+    totalSecs?: number;
+    clientConnectedSecs?: number;
+  };
+  latency?: {
+    firstBotSpeechSecs?: number;
+    lastUserToBotSecs?: number;
+  };
+  breakdowns?: string[][];
 }
 
 export interface VoiceConversationListItem {
@@ -284,6 +304,9 @@ export interface SignedUrlResponse {
   agentId?: string;
   sessionId?: string;
   transportUrl?: string;
+  webrtcUrl?: string;
+  transportMode?: 'webrtc' | 'websocket';
+  iceServers?: string[];
   token?: string;
   expiresAt?: string;
 }

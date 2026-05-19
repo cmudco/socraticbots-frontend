@@ -187,6 +187,29 @@ export const useEndConversation = () => {
 };
 
 /**
+ * Cancel an unfinished voice conversation
+ */
+export const useCancelConversation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      agentId,
+      conversationId,
+      endedReason,
+    }: {
+      agentId: number;
+      conversationId: string;
+      endedReason: string;
+    }) => voiceAgentService.cancelConversation(agentId, conversationId, endedReason),
+    onSuccess: (_, { agentId }) => {
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.detail(agentId) });
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.conversations() });
+    },
+  });
+};
+
+/**
  * Get ElevenLabs agents (for import)
  */
 export const useElevenLabsAgents = (enabled: boolean = true) => {

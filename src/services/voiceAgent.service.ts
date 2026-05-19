@@ -86,6 +86,18 @@ class VoiceAgentService {
     });
   }
 
+  async cancelConversation(
+    agentId: number,
+    conversationId: string,
+    endedReason: string
+  ): Promise<VoiceConversation> {
+    return baseRequest<VoiceConversation>({
+      url: `voice/agents/${agentId}/cancel_conversation/`,
+      method: METHOD.POST,
+      data: { conversationId, endedReason },
+    });
+  }
+
   // ============ Conversations ============
 
   async getConversations(): Promise<VoiceConversationListItem[]> {
