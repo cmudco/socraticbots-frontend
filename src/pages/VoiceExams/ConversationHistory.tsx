@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ConversationStatus } from '@/types/voiceAgent';
 
 const STATUS_STYLES: { [K in ConversationStatus]: string } = {
+  [ConversationStatus.Reserved]: 'bg-muted text-muted-foreground',
   [ConversationStatus.Completed]:
     'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
   [ConversationStatus.InProgress]:

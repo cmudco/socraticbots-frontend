@@ -26,6 +26,7 @@ import {
 } from '@/types/voiceAgent';
 
 const STATUS_STYLES: { [K in ConversationStatus]: string } = {
+  [ConversationStatus.Reserved]: 'bg-muted text-muted-foreground',
   [ConversationStatus.Completed]:
     'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
   [ConversationStatus.InProgress]:
@@ -59,6 +60,8 @@ const ConversationDetail: React.FC = () => {
   };
 
   const hasTranscript = conversation?.transcript && conversation.transcript.length > 0;
+  const runtimeMetrics = conversation?.runtimeMetrics;
+  const hasRuntimeMetrics = runtimeMetrics && Object.keys(runtimeMetrics).length > 0;
 
   if (isLoading) {
     return (
@@ -163,6 +166,79 @@ const ConversationDetail: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {hasRuntimeMetrics && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Runtime Metrics</CardTitle>
+            <CardDescription>Latency details captured by the voice runtime</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 grid gap-4 sm:grid-cols-3">
+              <div>
+                <p className="text-muted-foreground text-sm">Transport</p>
+                <p className="text-foreground font-semibold">
+                  {runtimeMetrics.transportMode ? runtimeMetrics.transportMode.toUpperCase() : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Runtime</p>
+                <p className="text-foreground font-semibold">
+                  {runtimeMetrics.runtime ? runtimeMetrics.runtime : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">STT Target Delay</p>
+                <p className="text-foreground font-semibold">
+                  {runtimeMetrics.sttTargetDelayMs !== undefined
+                    ? `${runtimeMetrics.sttTargetDelayMs}ms`
+                    : '-'}
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-4 border-t pt-4 sm:grid-cols-3">
+              <div>
+                <p className="text-muted-foreground text-sm">Startup</p>
+                <p className="text-foreground font-semibold">
+                  {runtimeMetrics.startup?.totalSecs !== undefined
+                    ? `${runtimeMetrics.startup.totalSecs.toFixed(2)}s`
+                    : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">First Bot Speech</p>
+                <p className="text-foreground font-semibold">
+                  {runtimeMetrics.latency?.firstBotSpeechSecs !== undefined
+                    ? `${runtimeMetrics.latency.firstBotSpeechSecs.toFixed(2)}s`
+                    : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Last User-to-Bot</p>
+                <p className="text-foreground font-semibold">
+                  {runtimeMetrics.latency?.lastUserToBotSecs !== undefined
+                    ? `${runtimeMetrics.latency.lastUserToBotSecs.toFixed(2)}s`
+                    : '-'}
+                </p>
+              </div>
+            </div>
+            {runtimeMetrics.breakdowns && runtimeMetrics.breakdowns.length > 0 && (
+              <div className="mt-4 border-t pt-4">
+                <p className="text-muted-foreground mb-2 text-sm">Latest Breakdown</p>
+                <div className="space-y-1">
+                  {runtimeMetrics.breakdowns[runtimeMetrics.breakdowns.length - 1].map(
+                    (event, index) => (
+                      <p key={`${event}-${index}`} className="text-muted-foreground text-xs">
+                        {event}
+                      </p>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Transcript */}
       <Card>
