@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 
-import { AgentStatus, SpellingPatience, TurnEagerness, VoiceProvider } from '@/types/voiceAgent';
+import {
+  AgentStatus,
+  SpellingPatience,
+  TurnEagerness,
+  VoiceEagerness,
+  VoiceProvider,
+} from '@/types/voiceAgent';
 import type { VoiceAgent } from '@/types/voiceAgent';
 
 type VoiceAgentValidationField = 'name' | 'systemPrompt';
@@ -9,6 +15,7 @@ type VoiceAgentErrorState = Partial<{ [K in VoiceAgentValidationField]: string }
 type VoiceAgentNumericField =
   | 'temperature'
   | 'maxDurationSeconds'
+  | 'voiceTurnTimeoutSecs'
   | 'turnTimeout'
   | 'ttsStability'
   | 'ttsSpeed'
@@ -41,6 +48,10 @@ export interface VoiceAgentFormState {
   language: string;
   temperature: number;
   maxDurationSeconds: number;
+
+  // Mistral-side advanced settings (consumed by the Pipecat runtime).
+  voiceEagerness: VoiceEagerness;
+  voiceTurnTimeoutSecs: number;
 
   // Advanced ElevenLabs Settings - Turn
   turnEagerness: TurnEagerness;
@@ -91,6 +102,8 @@ export interface VoiceAgentFormData {
   language: string;
   temperature: number;
   maxDurationSeconds: number;
+  voiceEagerness: VoiceEagerness;
+  voiceTurnTimeoutSecs: number;
   conversationConfig?: {
     turn: {
       turnEagerness: TurnEagerness;
@@ -137,6 +150,10 @@ const initialFormState = {
   language: 'en',
   temperature: 0.7,
   maxDurationSeconds: 1800,
+
+  // Mistral advanced (sensible defaults)
+  voiceEagerness: VoiceEagerness.Normal,
+  voiceTurnTimeoutSecs: 7,
 
   // Advanced - Turn
   turnEagerness: TurnEagerness.Normal,
@@ -234,6 +251,10 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       temperature: agent.temperature ?? 0.7,
       maxDurationSeconds: agent.maxDurationSeconds ?? 1800,
 
+      // Mistral advanced
+      voiceEagerness: agent.voiceEagerness ?? VoiceEagerness.Normal,
+      voiceTurnTimeoutSecs: agent.voiceTurnTimeoutSecs ?? 7,
+
       // Advanced - Turn
       turnEagerness: config?.turn?.turnEagerness ?? TurnEagerness.Normal,
       turnTimeout: config?.turn?.turnTimeout ?? 7,
@@ -298,6 +319,8 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       language: state.language,
       temperature: state.temperature,
       maxDurationSeconds: state.maxDurationSeconds,
+      voiceEagerness: state.voiceEagerness,
+      voiceTurnTimeoutSecs: state.voiceTurnTimeoutSecs,
     };
 
     // Only include conversationConfig if advanced settings are shown

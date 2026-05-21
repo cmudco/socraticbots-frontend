@@ -48,6 +48,7 @@ import {
   AdvancedSettingsSection,
   BasicInfoSection,
   ExamConfigSection,
+  MistralAdvancedSection,
   ProviderSection,
 } from '@/components/voice-agents/sections';
 
@@ -293,6 +294,7 @@ const VoiceAgentDetail: React.FC = () => {
           <BasicInfoSection showAccessCode={canManageAccess} />
           <ExamConfigSection />
           <AIConfigSection />
+          <MistralAdvancedSection />
           <AdvancedSettingsSection collapsible defaultOpen />
 
           {/* Actions */}

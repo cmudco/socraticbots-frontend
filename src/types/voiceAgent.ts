@@ -16,6 +16,12 @@ export enum VoiceProvider {
   MistralVoice = 'mistral_pipecat',
 }
 
+export enum VoiceEagerness {
+  Low = 'low',
+  Normal = 'normal',
+  High = 'high',
+}
+
 export enum TurnEagerness {
   Low = 'low',
   Normal = 'normal',
@@ -172,6 +178,8 @@ export interface VoiceAgent {
   firstMessage: string;
   temperature: number;
   maxDurationSeconds: number;
+  voiceEagerness: VoiceEagerness;
+  voiceTurnTimeoutSecs: number;
   examTitle: string;
   examInstructions: string;
   status: AgentStatus;
@@ -209,6 +217,8 @@ export interface VoiceAgentCreateData {
   firstMessage?: string;
   temperature?: number;
   maxDurationSeconds?: number;
+  voiceEagerness?: VoiceEagerness;
+  voiceTurnTimeoutSecs?: number;
   examTitle?: string;
   examInstructions?: string;
   status?: AgentStatus;
@@ -227,6 +237,8 @@ export interface VoiceAgentUpdateData {
   firstMessage?: string;
   temperature?: number;
   maxDurationSeconds?: number;
+  voiceEagerness?: VoiceEagerness;
+  voiceTurnTimeoutSecs?: number;
   examTitle?: string;
   examInstructions?: string;
   status?: AgentStatus;
@@ -316,6 +328,21 @@ export interface ElevenLabsVoice {
   name: string;
   previewUrl?: string | null;
   category?: string | null;
+}
+
+/** Normalized Mistral Voxtral voice from /api/voice/mistral-voices/. */
+export interface MistralVoice {
+  slug: string;
+  label: string;
+  locale: string; // e.g. "en-US", "en-GB", "fr-FR"
+  gender: 'male' | 'female' | '';
+  description: string;
+  tags: string[];
+}
+
+export interface MistralVoicesResponse {
+  voices: MistralVoice[];
+  total: number;
 }
 
 // ElevenLabs agent from their API (not synced to local DB yet)

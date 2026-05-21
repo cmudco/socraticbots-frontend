@@ -19,6 +19,8 @@ import { formatTimeInCall } from '@/utils/formatters';
 
 import { VoiceAgent, VoiceProvider } from '@/types/voiceAgent';
 
+import { DiagnosticPlayback } from './DiagnosticPlayback';
+
 interface VoiceInterfaceProps {
   agent: VoiceAgent;
   onComplete?: () => void;
@@ -43,6 +45,12 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // Snapshot of the captured WebRTC recording after the exam ends, so the
+  // diagnostic panel can survive subsequent re-renders / state changes.
+  const [diagnosticRecording, setDiagnosticRecording] = useState<{
+    url: string;
+    mime: string;
+  } | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const isMistralSessionActiveRef = useRef(false);
   const mistralTransportRef = useRef<MistralTransport>('webrtc');
@@ -189,12 +197,24 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     },
   });
 
+  // Diagnostic: capture what the browser actually decodes from the
+  // WebRTC track so it can be downloaded and compared to the raw
+  // Mistral MP3. Force-enabled while we triangulate the mid-utterance
+  // choking — revert to env-gating (VITE_VOICE_DEBUG_RECORD) before
+  // open-sourcing.
+  const debugRecordAgentAudio = true;
+  const debugUseHttpTtsPlayback = true;
+
   const {
     status: pipecatWebRTCStatus,
     isSpeaking: pipecatWebRTCIsSpeaking,
     isListening: pipecatWebRTCIsListening,
     startSession: startPipecatWebRTCSession,
     endSession: endPipecatWebRTCSession,
+    downloadAgentRecording: downloadWebRTCAgentRecording,
+    downloadWebRTCStats,
+    getRecordedAudioBlobUrl: getWebRTCRecordingBlob,
+    fetchRawUtterances: fetchWebRTCRawUtterances,
   } = usePipecatWebRTCSession({
     onConnect: () => {
       setLocalError(null);
@@ -204,6 +224,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       console.error('Pipecat WebRTC runtime error:', err);
       setLocalError(err.message || 'An error occurred');
     },
+    recordAgentAudio: debugRecordAgentAudio,
+    playDebugTtsAudio: debugUseHttpTtsPlayback,
   });
 
   // Mistral always runs through the full-duplex Pipecat runtime.
@@ -374,6 +396,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       if (!hasActiveSession && !conversationId) return;
 
       isEndingRef.current = true;
+      // Captured once after the WebRTC session ends, reused for both
+      // stashing into state and the onComplete-deferral decision below.
+      let webrtcRecordingSnapshot: { url: string; mime: string } | null = null;
       try {
         stopTimer();
         if (isMistral) {
@@ -383,6 +408,15 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
               endedReason,
               shouldCancelProviderSession ? 'cancel' : 'end'
             );
+            // Diagnostic: snapshot the recorded WebRTC playback into
+            // component state so the side-by-side panel can render it
+            // even after the session-active UI swaps out.
+            if (debugRecordAgentAudio) {
+              webrtcRecordingSnapshot = getWebRTCRecordingBlob?.() ?? null;
+              if (webrtcRecordingSnapshot) {
+                setDiagnosticRecording(webrtcRecordingSnapshot);
+              }
+            }
           } else {
             await endPipecatSession(endedReason, shouldCancelProviderSession ? 'cancel' : 'end');
           }
@@ -408,7 +442,11 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         }
 
         setActiveConversationId(null);
-        if (shouldNotifyComplete) {
+        // When the diagnostic panel will render, defer onComplete so the
+        // parent doesn't unmount this component before the panel can be
+        // used. The panel's "Continue" button calls onComplete itself.
+        const willShowDiagnostic = !!webrtcRecordingSnapshot;
+        if (shouldNotifyComplete && !willShowDiagnostic) {
           onComplete?.();
         }
       } catch (err) {
@@ -432,6 +470,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       agent.voiceProvider,
       cancelConversationMutation,
       conversation,
+      debugRecordAgentAudio,
+      getWebRTCRecordingBlob,
       endPipecatSession,
       endPipecatWebRTCSession,
       isMistral,
@@ -584,6 +624,34 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
             End Exam
           </button>
         </div>
+        {debugRecordAgentAudio && (
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => downloadWebRTCAgentRecording?.()}
+              className="cursor-pointer rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-4 py-2 text-xs font-semibold text-yellow-300 transition-colors hover:bg-yellow-500/20"
+            >
+              Download agent audio debug
+            </button>
+            <button
+              type="button"
+              onClick={() => downloadWebRTCStats?.()}
+              className="cursor-pointer rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-4 py-2 text-xs font-semibold text-yellow-300 transition-colors hover:bg-yellow-500/20"
+            >
+              Download WebRTC stats debug
+            </button>
+          </div>
+        )}
+        {debugRecordAgentAudio && diagnosticRecording && (
+          <DiagnosticPlayback
+            recordedAudio={diagnosticRecording}
+            fetchRawUtterances={fetchWebRTCRawUtterances}
+            onContinue={() => {
+              setDiagnosticRecording(null);
+              onComplete?.();
+            }}
+          />
+        )}
       </div>
 
       {/* Live Transcript */}

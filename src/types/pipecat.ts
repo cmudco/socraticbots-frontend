@@ -18,7 +18,12 @@ export interface PipecatVoiceMessage {
   isFinal?: boolean;
   reason?: string;
   error?: string;
+  fatal?: boolean;
   isFatal?: boolean;
+  sourceWavName?: string;
+  webrtcWavName?: string;
+  sourceSampleRate?: number;
+  webrtcSampleRate?: number;
 }
 
 export const isPipecatRuntimeReadyMessage = (message: PipecatVoiceMessage): boolean =>
