@@ -8,6 +8,7 @@ import { baseRequest } from '@/utils/baseRequest';
 import {
   AgentMembersResponse,
   ElevenLabsAgentItem,
+  MistralVoicesResponse,
   SignedUrlResponse,
   StudentAttemptInfo,
   VoiceAgent,
@@ -236,6 +237,16 @@ class VoiceAgentService {
       url: `voice/agents/${agentId}/grant-retake/`,
       method: METHOD.POST,
       data: { email, maxAttempts },
+    });
+  }
+
+  // ============ Catalog (provider-side reference data) ============
+
+  /** Live Mistral Voxtral voice catalog (server-proxied + cached). */
+  async getMistralVoices(): Promise<MistralVoicesResponse> {
+    return baseRequest<MistralVoicesResponse>({
+      url: 'voice/mistral-voices/',
+      method: METHOD.GET,
     });
   }
 }
