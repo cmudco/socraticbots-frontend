@@ -22,14 +22,14 @@
 ## What is SocraticBooks?
 
 SocraticBooks (also referred to as Socratic Bots) is an open-source, AI-powered educational platform
-built on top of [DARE](../../dare_app/dare-backend/). It pairs structured learning content — books,
+built on top of [DARE](https://github.com/cmudco/dare-backend). It pairs structured learning content — books,
 chapters, and notes — with conversational AI tutors that use the Socratic method to guide students
 toward understanding rather than handing them answers. SocraticBooks delegates authentication, LLM
 access, and file processing to DARE, and adds the educational layer on top: progress tracking,
 access-code enrollment, and bot/tutor configuration.
 
 **This repository is the SocraticBooks web frontend** — the student- and instructor-facing React app.
-It talks to the [SocraticBooks backend](../socraticbooks-backend/) for all platform data and
+It talks to the [SocraticBooks backend](https://github.com/cmudco/socraticbots-backend) for all platform data and
 connects to the DARE backend over Socket.IO for real-time chat. Features include:
 
 - **Socratic chat** — real-time, streaming dialogue with AI tutors
@@ -39,7 +39,7 @@ connects to the DARE backend over Socket.IO for real-time chat. Features include
 - **Voice tutoring** — optional spoken sessions via the separate voice-agent-runtime
 
 > **Requires DARE.** SocraticBooks runs on top of DARE. To use it you must also have the
-> [DARE backend](../../dare_app/dare-backend/) running (and the SocraticBooks backend in front of it),
+> [DARE backend](https://github.com/cmudco/dare-backend) running (and the SocraticBooks backend in front of it),
 > because authentication, LLM access, and file processing all come from DARE. The reverse is not true:
 > DARE runs standalone and does not require SocraticBooks.
 
@@ -75,8 +75,8 @@ sessions are negotiated with the standalone voice runtime.
 
 ## Quick Start
 
-**Prerequisites:** Node.js 18+, a running [SocraticBooks backend](../socraticbooks-backend/)
-(default `http://localhost:8001`), and the [DARE backend](../../dare_app/dare-backend/) it proxies to
+**Prerequisites:** Node.js 18+, a running [SocraticBooks backend](https://github.com/cmudco/socraticbots-backend)
+(default `http://localhost:8001`), and the [DARE backend](https://github.com/cmudco/dare-backend) it proxies to
 (default `http://localhost:8000`).
 
 ```bash
@@ -84,7 +84,7 @@ sessions are negotiated with the standalone voice runtime.
 npm install
 
 # 2. Configure environment
-cp .env .env.local   # or edit .env directly
+cp .env.example .env.local
 # VITE_API_URL          -> SocraticBooks backend API (default http://localhost:8001/api)
 # VITE_DARE_SOCKET_URL  -> DARE backend for Socket.IO (default http://localhost:8000)
 
@@ -119,6 +119,9 @@ npm run preview     # serves ./dist locally for verification
 | ---------------------- | ------------------------------------------------------ |
 | [CLAUDE.md](CLAUDE.md) | Architecture, state management, and component patterns |
 | [rules.md](rules.md)   | Frontend coding standards and conventions              |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution and validation checklist |
+| [SECURITY.md](SECURITY.md) | Private reporting and configuration guidance |
+| [CHANGELOG.md](CHANGELOG.md) | Unreleased onboarding changes |
 | [BRAND.md](BRAND.md)   | Brand and trademark usage policy                       |
 
 ## Tech Stack
@@ -143,8 +146,8 @@ npm run preview     # serves ./dist locally for verification
 
 ## What is not included in this repo?
 
-- [socraticbooks-backend](../socraticbooks-backend/) — the Django API this app depends on (run it separately)
-- [dare-backend](../../dare_app/dare-backend/) — the DARE backend that SocraticBooks proxies for auth, AI, and files
+- [socraticbooks-backend](https://github.com/cmudco/socraticbots-backend) — the Django API this app depends on (run it separately)
+- [dare-backend](https://github.com/cmudco/dare-backend) — the DARE backend that SocraticBooks proxies for auth, AI, and files
 - [voice-agent-runtime](../voice-agent-runtime/) — the standalone Pipecat/WebRTC voice runtime used for spoken tutoring
 
 ## Stay in touch
@@ -155,7 +158,7 @@ npm run preview     # serves ./dist locally for verification
 ## Acknowledgements
 
 SocraticBooks is developed at the Dietrich College of Humanities and Social Sciences, Carnegie Mellon
-University, and is built on the [DARE](../../dare_app/dare-backend/) platform.
+University, and is built on the [DARE](https://github.com/cmudco/dare-backend) platform.
 
 "DARE" (Dietrich Analysis Research Education Platform) and "SocraticBots" are trademarks of Carnegie
 Mellon University. See [BRAND.md](BRAND.md) for the brand usage policy. For trademark, licensing, or
