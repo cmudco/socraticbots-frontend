@@ -267,7 +267,6 @@ export interface VoiceConversation {
 
 export interface VoiceRuntimeMetrics {
   runtime?: string;
-  transportMode?: 'webrtc' | 'websocket';
   sttModel?: string;
   sttTargetDelayMs?: number;
   ttsModel?: string;
@@ -315,9 +314,7 @@ export interface SignedUrlResponse {
   signedUrl?: string;
   agentId?: string;
   sessionId?: string;
-  transportUrl?: string;
   webrtcUrl?: string;
-  transportMode?: 'webrtc' | 'websocket';
   iceServers?: string[];
   token?: string;
   expiresAt?: string;
