@@ -13,22 +13,13 @@ import {
   useExportAllTranscripts,
 } from '@/hooks/queries/useVoiceConversations';
 
+import { formatConversationStatus, getConversationStatusStyle } from '@/utils/conversationStatus';
 import { formatDate } from '@/utils/formatters';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { ConversationStatus } from '@/types/voiceAgent';
-
-const STATUS_STYLES: { [K in ConversationStatus]: string } = {
-  [ConversationStatus.Reserved]: 'bg-muted text-muted-foreground',
-  [ConversationStatus.Completed]:
-    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  [ConversationStatus.InProgress]:
-    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  [ConversationStatus.Failed]: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-  [ConversationStatus.Cancelled]: 'bg-muted text-muted-foreground',
-};
 
 const ConversationHistory: React.FC = () => {
   const { agentId: agentIdParam } = useParams<{ agentId: string }>();
@@ -48,8 +39,10 @@ const ConversationHistory: React.FC = () => {
 
   const getStatusBadge = (status: ConversationStatus) => {
     return (
-      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[status]}`}>
-        {status.replace('_', ' ')}
+      <span
+        className={`rounded-full px-2 py-0.5 text-xs font-medium ${getConversationStatusStyle(status)}`}
+      >
+        {formatConversationStatus(status)}
       </span>
     );
   };

@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { METHOD } from '@/constants/requests';
+
+import { baseRequest } from '@/utils/baseRequest';
+
 import {
   PipecatEndControlType,
   PipecatVoiceMessage,
@@ -33,6 +37,12 @@ interface UsePipecatWebRTCSessionOptions {
 }
 
 const ICE_GATHERING_TIMEOUT_MS = 3000;
+const DATA_CHANNEL_OPEN_STATE: RTCDataChannelState = 'open';
+const FAILED_CONNECTION_STATE: RTCPeerConnectionState = 'failed';
+const DISCONNECT_CONNECTION_STATES = new Set<RTCPeerConnectionState>(['closed', 'disconnected']);
+
+const isDisconnectedPeerConnectionState = (state: RTCPeerConnectionState) =>
+  DISCONNECT_CONNECTION_STATES.has(state);
 
 const waitForIceGatheringComplete = (
   peerConnection: RTCPeerConnection,
@@ -119,12 +129,13 @@ export const usePipecatWebRTCSession = ({
         const url = buildRuntimeUtteranceUrl(name);
         if (!url) continue;
         try {
-          const response = await fetch(url);
-          if (!response.ok) {
-            console.warn(`[runtime-tts] failed to fetch ${name} (${response.status})`);
-            continue;
-          }
-          const objectUrl = URL.createObjectURL(await response.blob());
+          const { blob } = await baseRequest({
+            url,
+            method: METHOD.GET,
+            responseType: 'blob',
+            includeAuthToken: false,
+          });
+          const objectUrl = URL.createObjectURL(blob);
           runtimePlaybackObjectUrlRef.current = objectUrl;
           await new Promise<void>(resolve => {
             const audio = new Audio(objectUrl);
@@ -187,7 +198,7 @@ export const usePipecatWebRTCSession = ({
 
   const sendControlMessage = useCallback((message: PipecatVoiceMessage) => {
     const channel = dataChannelRef.current;
-    if (channel?.readyState !== 'open') return;
+    if (channel?.readyState !== DATA_CHANNEL_OPEN_STATE) return;
     channel.send(JSON.stringify(message));
   }, []);
 
@@ -195,7 +206,7 @@ export const usePipecatWebRTCSession = ({
     if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
     pingIntervalRef.current = setInterval(() => {
       const channel = dataChannelRef.current;
-      if (channel?.readyState === 'open') {
+      if (channel?.readyState === DATA_CHANNEL_OPEN_STATE) {
         channel.send(`ping:${Date.now()}`);
       }
     }, 1000);
@@ -302,13 +313,10 @@ export const usePipecatWebRTCSession = ({
           };
 
           peerConnection.onconnectionstatechange = () => {
-            if (peerConnection.connectionState === 'failed') {
+            if (peerConnection.connectionState === FAILED_CONNECTION_STATE) {
               settleRejected(new Error('Pipecat WebRTC connection failed'));
             }
-            if (
-              peerConnection.connectionState === 'closed' ||
-              peerConnection.connectionState === 'disconnected'
-            ) {
+            if (isDisconnectedPeerConnectionState(peerConnection.connectionState)) {
               cleanup();
               setStatus('disconnected');
               onDisconnect?.();
@@ -320,18 +328,15 @@ export const usePipecatWebRTCSession = ({
         await peerConnection.setLocalDescription(offer);
         await waitForIceGatheringComplete(peerConnection);
 
-        const response = await fetch(`${webrtcUrl}?token=${encodeURIComponent(token)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const answer = await baseRequest<WebRTCAnswerResponse>({
+          url: `${webrtcUrl}?token=${encodeURIComponent(token)}`,
+          method: METHOD.POST,
+          data: {
             sdp: peerConnection.localDescription?.sdp,
             type: peerConnection.localDescription?.type,
-          }),
+          },
+          includeAuthToken: false,
         });
-        if (!response.ok) {
-          throw new Error(`Pipecat WebRTC offer failed (${response.status})`);
-        }
-        const answer = (await response.json()) as WebRTCAnswerResponse;
         await peerConnection.setRemoteDescription(answer);
 
         await connectedPromise;

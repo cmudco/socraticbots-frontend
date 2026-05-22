@@ -6,6 +6,7 @@ import config from '@/lib/config';
 import { getErrorMessage } from './errorHandler';
 
 const BASE_URL = config.apiUrl;
+const ABSOLUTE_URL_PATTERN = /^https?:\/\//i;
 
 interface BaseRequestParams {
   url: string;
@@ -37,7 +38,7 @@ export async function baseRequest<T>({
   responseType = 'json',
 }: BaseRequestParams): Promise<T | BlobResponse> {
   const axiosOptions: AxiosRequestConfig = {
-    url: `${BASE_URL}/${url}`,
+    url: ABSOLUTE_URL_PATTERN.test(url) ? url : `${BASE_URL}/${url}`,
     method,
     headers: {
       'Content-Type': 'application/json',

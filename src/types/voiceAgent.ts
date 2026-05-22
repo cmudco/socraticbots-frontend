@@ -261,25 +261,7 @@ export interface VoiceConversation {
   durationSeconds: number | null;
   status: ConversationStatus;
   transcript: TranscriptMessage[];
-  runtimeMetrics?: VoiceRuntimeMetrics;
   createdAt: string;
-}
-
-export interface VoiceRuntimeMetrics {
-  runtime?: string;
-  sttModel?: string;
-  sttTargetDelayMs?: number;
-  ttsModel?: string;
-  ttsVoice?: string;
-  startup?: {
-    totalSecs?: number;
-    clientConnectedSecs?: number;
-  };
-  latency?: {
-    firstBotSpeechSecs?: number;
-    lastUserToBotSecs?: number;
-  };
-  breakdowns?: string[][];
 }
 
 export interface VoiceConversationListItem {
