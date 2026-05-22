@@ -12,7 +12,6 @@ import {
   useGetSignedUrl,
   useStartConversation,
 } from '@/hooks/queries/useVoiceAgents';
-import { usePipecatVoiceSession } from '@/hooks/usePipecatVoiceSession';
 import { usePipecatWebRTCSession } from '@/hooks/usePipecatWebRTCSession';
 
 import { formatTimeInCall } from '@/utils/formatters';
@@ -37,15 +36,12 @@ interface EndSessionOptions {
   cancelProviderSession?: boolean;
 }
 
-type MistralTransport = 'webrtc' | 'websocket';
-
 export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceInterfaceProps) {
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const isMistralSessionActiveRef = useRef(false);
-  const mistralTransportRef = useRef<MistralTransport>('webrtc');
   const currentConversationIdRef = useRef<string | null>(null);
   const isEndingRef = useRef(false);
   const examStartTimeRef = useRef<number | null>(null);
@@ -173,23 +169,6 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   );
 
   const {
-    status: pipecatStatus,
-    isSpeaking: pipecatIsSpeaking,
-    isListening: pipecatIsListening,
-    startSession: startPipecatSession,
-    endSession: endPipecatSession,
-  } = usePipecatVoiceSession({
-    onConnect: () => {
-      setLocalError(null);
-    },
-    onMessage: handlePipecatMessage,
-    onError: err => {
-      console.error('Pipecat voice runtime error:', err);
-      setLocalError(err.message || 'An error occurred');
-    },
-  });
-
-  const {
     status: pipecatWebRTCStatus,
     isSpeaking: pipecatWebRTCIsSpeaking,
     isListening: pipecatWebRTCIsListening,
@@ -267,36 +246,17 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
         isMistralSessionActiveRef.current = true;
         setActiveConversationId(signedUrlResult.sessionId);
-        if (signedUrlResult.transportMode === 'webrtc' && signedUrlResult.webrtcUrl) {
-          try {
-            mistralTransportRef.current = 'webrtc';
-            await startPipecatWebRTCSession({
-              webrtcUrl: signedUrlResult.webrtcUrl,
-              token: signedUrlResult.token,
-              iceServers: signedUrlResult.iceServers,
-            });
-            return;
-          } catch (webrtcError) {
-            if (!signedUrlResult.transportUrl) {
-              throw webrtcError;
-            }
-            console.warn('Pipecat WebRTC failed; falling back to WebSocket', webrtcError);
-            setLocalError(null);
-          }
-        }
-
-        if (signedUrlResult.transportUrl) {
-          mistralTransportRef.current = 'websocket';
-          await startPipecatSession({
-            transportUrl: signedUrlResult.transportUrl,
+        if (signedUrlResult.webrtcUrl) {
+          await startPipecatWebRTCSession({
+            webrtcUrl: signedUrlResult.webrtcUrl,
             token: signedUrlResult.token,
+            iceServers: signedUrlResult.iceServers,
           });
+          return;
         } else {
-          setLocalError('Failed to get Mistral voice transport details');
+          setLocalError('Failed to get Mistral WebRTC session details');
           return;
         }
-
-        return;
       }
 
       if (!signedUrlResult?.signedUrl) {
@@ -355,7 +315,6 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     getSignedUrlMutation,
     onAlreadyAttempted,
     setActiveConversationId,
-    startPipecatSession,
     startPipecatWebRTCSession,
     startConversationMutation,
     startTimer,
@@ -379,14 +338,10 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         stopTimer();
         if (isMistral) {
           isMistralSessionActiveRef.current = false;
-          if (mistralTransportRef.current === 'webrtc') {
-            await endPipecatWebRTCSession(
-              endedReason,
-              shouldCancelProviderSession ? 'cancel' : 'end'
-            );
-          } else {
-            await endPipecatSession(endedReason, shouldCancelProviderSession ? 'cancel' : 'end');
-          }
+          await endPipecatWebRTCSession(
+            endedReason,
+            shouldCancelProviderSession ? 'cancel' : 'end'
+          );
         } else {
           await conversation.endSession();
         }
@@ -433,7 +388,6 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       agent.voiceProvider,
       cancelConversationMutation,
       conversation,
-      endPipecatSession,
       endPipecatWebRTCSession,
       isMistral,
       endConversationMutation,
@@ -449,20 +403,14 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     handleEndRef.current = handleEnd;
   }, [handleEnd]);
 
-  const activeMistralStatus =
-    mistralTransportRef.current === 'webrtc' ? pipecatWebRTCStatus : pipecatStatus;
+  const activeMistralStatus = pipecatWebRTCStatus;
   const activeStatus = isMistral ? activeMistralStatus : conversation.status;
   const isMistralSessionOpen = isMistral && activeMistralStatus !== 'disconnected';
   const isMistralExamActive = isMistral && activeMistralStatus === 'active';
   const isMistralStarting =
     isMistral && ['connecting', 'runtimeReady'].includes(activeMistralStatus);
-  const agentIsSpeaking = isMistral
-    ? mistralTransportRef.current === 'webrtc'
-      ? pipecatWebRTCIsSpeaking
-      : pipecatIsSpeaking
-    : conversation.isSpeaking;
-  const voiceIsListening =
-    mistralTransportRef.current === 'webrtc' ? pipecatWebRTCIsListening : pipecatIsListening;
+  const agentIsSpeaking = isMistral ? pipecatWebRTCIsSpeaking : conversation.isSpeaking;
+  const voiceIsListening = pipecatWebRTCIsListening;
   const isSessionActive = isMistral ? isMistralExamActive : activeStatus === 'connected';
   const hasOpenSession = isMistral ? isMistralSessionOpen : activeStatus === 'connected';
   const isConnecting = isMistral ? isMistralStarting : activeStatus === 'connecting';

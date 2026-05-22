@@ -174,13 +174,7 @@ const ConversationDetail: React.FC = () => {
             <CardDescription>Latency details captured by the voice runtime</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 grid gap-4 sm:grid-cols-3">
-              <div>
-                <p className="text-muted-foreground text-sm">Transport</p>
-                <p className="text-foreground font-semibold">
-                  {runtimeMetrics.transportMode ? runtimeMetrics.transportMode.toUpperCase() : '-'}
-                </p>
-              </div>
+            <div className="mb-4 grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-muted-foreground text-sm">Runtime</p>
                 <p className="text-foreground font-semibold">
