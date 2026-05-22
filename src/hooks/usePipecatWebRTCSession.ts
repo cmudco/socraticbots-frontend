@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { METHOD } from '@/constants/requests';
-
-import { baseRequest } from '@/utils/baseRequest';
-
 import {
   PipecatEndControlType,
   PipecatVoiceMessage,
@@ -129,13 +125,15 @@ export const usePipecatWebRTCSession = ({
         const url = buildRuntimeUtteranceUrl(name);
         if (!url) continue;
         try {
-          const { blob } = await baseRequest({
-            url,
-            method: METHOD.GET,
-            responseType: 'blob',
-            includeAuthToken: false,
-          });
-          const objectUrl = URL.createObjectURL(blob);
+          // Runtime utterance URLs are absolute, signed FastAPI URLs, not
+          // Django API routes. Use fetch directly so playback does not pick up
+          // the app-wide base URL or bearer-token behavior from baseRequest.
+          const response = await fetch(url);
+          if (!response.ok) {
+            console.warn(`[runtime-tts] failed to fetch ${name} (${response.status})`);
+            continue;
+          }
+          const objectUrl = URL.createObjectURL(await response.blob());
           runtimePlaybackObjectUrlRef.current = objectUrl;
           await new Promise<void>(resolve => {
             const audio = new Audio(objectUrl);
@@ -328,15 +326,21 @@ export const usePipecatWebRTCSession = ({
         await peerConnection.setLocalDescription(offer);
         await waitForIceGatheringComplete(peerConnection);
 
-        const answer = await baseRequest<WebRTCAnswerResponse>({
-          url: `${webrtcUrl}?token=${encodeURIComponent(token)}`,
-          method: METHOD.POST,
-          data: {
+        // The WebRTC offer goes to the standalone FastAPI runtime, not the
+        // Django REST API. Keep fetch here so this handshake remains isolated
+        // from baseRequest auth/header/base-url behavior.
+        const response = await fetch(`${webrtcUrl}?token=${encodeURIComponent(token)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             sdp: peerConnection.localDescription?.sdp,
             type: peerConnection.localDescription?.type,
-          },
-          includeAuthToken: false,
+          }),
         });
+        if (!response.ok) {
+          throw new Error(`Pipecat WebRTC offer failed (${response.status})`);
+        }
+        const answer = (await response.json()) as WebRTCAnswerResponse;
         await peerConnection.setRemoteDescription(answer);
 
         await connectedPromise;
