@@ -47,6 +47,36 @@ export const formatTimeInCall = (seconds?: number): string => {
 };
 
 /**
+ * Format a timestamp as a short local time.
+ */
+export const formatTime = (dateString: string): string => {
+  return new Date(dateString).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+/**
+ * Format bot access source labels.
+ */
+export const getAccessTypeLabel = (accessType: string): string => {
+  switch (accessType) {
+    case 'direct_bot':
+      return 'Direct Bot Access';
+    case 'bot_group':
+      return 'Bot Group Access';
+    case 'bot_group_owner':
+      return 'Bot Group Owner';
+    case 'bot_group_collaborator':
+      return 'Bot Group Collaborator';
+    case 'bot_creator':
+      return 'Bot Creator';
+    default:
+      return accessType;
+  }
+};
+
+/**
  * Format a USD amount for the wallet UI.
  *
  * Behavior:
