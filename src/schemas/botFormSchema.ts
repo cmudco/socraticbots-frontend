@@ -9,8 +9,9 @@ export const basicInfoSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   subject: z.string().min(1, 'Subject is required'),
   topic: z.string().min(1, 'Topic is required'),
-  chatModelDareId: z.number().nullable(),
-  trackingModelDareId: z.number().nullable(),
+  // Opaque DARE picker id ("42" or "litellm:<key>:<name>"). See PickerModel.
+  chatModelDareId: z.string().min(1).nullable(),
+  trackingModelDareId: z.string().min(1).nullable(),
   isActive: z.boolean(),
   webSearchEnabled: z.boolean(),
   isAdvanced: z.boolean(),
@@ -119,8 +120,8 @@ export function mapBotToFormData(bot: {
   subject?: string;
   topic?: string;
   modelPreference?: {
-    chatModelDareId?: number | null;
-    trackingModelDareId?: number | null;
+    chatModelDareId?: string | null;
+    trackingModelDareId?: string | null;
   } | null;
   isActive?: boolean;
   webSearchEnabled?: boolean;
@@ -149,7 +150,7 @@ export function mapBotToFormData(bot: {
   } | null;
   accessCode?: { code?: string; limit?: number } | null;
   isPubliclyDeployed?: boolean;
-  budget?: number | string;
+  budget?: number | string | null;
 }): BotFormData {
   return {
     // Basic Info

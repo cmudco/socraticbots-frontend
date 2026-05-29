@@ -95,7 +95,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
     const value = e.target.value;
     const numValue = parseFloat(value);
 
-    if (value === '' || isNaN(numValue) || numValue < 1) {
+    if (value === '' || Number.isNaN(numValue) || numValue < 1) {
       updateBudget('1');
     } else if (numValue > 20) {
       updateBudget('20');
@@ -161,7 +161,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
           {isPubliclyDeployed && (
             <div className="space-y-4 border-t pt-4">
               <div className="space-y-2">
-                <Label htmlFor="budget">Budget (USD)</Label>
+                <Label htmlFor="budget">Budget Limit (USD)</Label>
                 <Input
                   id="budget"
                   type="number"
@@ -175,7 +175,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
                   required
                 />
                 <p className="text-muted-foreground text-sm">
-                  Set a budget limit for public usage (minimum $1, maximum $20).
+                  Set a budget limit for anonymous public usage (minimum $1, maximum $20).
                 </p>
               </div>
 
