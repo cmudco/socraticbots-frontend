@@ -25,6 +25,7 @@ const toListItem = (agent: VoiceAgent): VoiceAgentListItem => ({
   description: agent.description,
   team: agent.team,
   teamName: agent.teamName,
+  voiceProvider: agent.voiceProvider,
   status: agent.status,
   examTitle: agent.examTitle,
   accessLevel: agent.permissions.accessLevel,
@@ -180,6 +181,29 @@ export const useEndConversation = () => {
       // Invalidate agent detail to refresh conversation count
       queryClient.invalidateQueries({ queryKey: voiceAgentKeys.detail(agentId) });
       // Invalidate conversations list
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.conversations() });
+    },
+  });
+};
+
+/**
+ * Cancel an unfinished voice conversation
+ */
+export const useCancelConversation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      agentId,
+      conversationId,
+      endedReason,
+    }: {
+      agentId: number;
+      conversationId: string;
+      endedReason: string;
+    }) => voiceAgentService.cancelConversation(agentId, conversationId, endedReason),
+    onSuccess: (_, { agentId }) => {
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.detail(agentId) });
       queryClient.invalidateQueries({ queryKey: voiceAgentKeys.conversations() });
     },
   });

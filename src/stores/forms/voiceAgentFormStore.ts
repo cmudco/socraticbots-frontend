@@ -1,7 +1,28 @@
 import { create } from 'zustand';
 
-import { AgentStatus, SpellingPatience, TurnEagerness } from '@/types/voiceAgent';
+import {
+  AgentStatus,
+  SpellingPatience,
+  TurnEagerness,
+  VoiceEagerness,
+  VoiceProvider,
+} from '@/types/voiceAgent';
 import type { VoiceAgent } from '@/types/voiceAgent';
+
+type VoiceAgentValidationField = 'name' | 'systemPrompt';
+type VoiceAgentTouchedState = Partial<{ [K in VoiceAgentValidationField]: boolean }>;
+type VoiceAgentErrorState = Partial<{ [K in VoiceAgentValidationField]: string }>;
+type VoiceAgentNumericField =
+  | 'temperature'
+  | 'maxDurationSeconds'
+  | 'voiceTurnTimeoutSecs'
+  | 'turnTimeout'
+  | 'ttsStability'
+  | 'ttsSpeed'
+  | 'ttsSimilarityBoost';
+
+const isValidationField = (field: string): field is VoiceAgentValidationField =>
+  field === 'name' || field === 'systemPrompt';
 
 export interface VoiceAgentFormState {
   // Form mode
@@ -23,8 +44,14 @@ export interface VoiceAgentFormState {
   systemPrompt: string;
   firstMessage: string;
   voiceId: string;
+  voiceProvider: VoiceProvider;
+  language: string;
   temperature: number;
   maxDurationSeconds: number;
+
+  // Mistral-side advanced settings (consumed by the Pipecat runtime).
+  voiceEagerness: VoiceEagerness;
+  voiceTurnTimeoutSecs: number;
 
   // Advanced ElevenLabs Settings - Turn
   turnEagerness: TurnEagerness;
@@ -40,8 +67,8 @@ export interface VoiceAgentFormState {
   llmModel: string;
 
   // Validation
-  touched: Record<string, boolean>;
-  errors: Record<string, string>;
+  touched: VoiceAgentTouchedState;
+  errors: VoiceAgentErrorState;
 
   // Actions
   setSubmitting: (submitting: boolean) => void;
@@ -51,11 +78,11 @@ export interface VoiceAgentFormState {
     field: K,
     value: VoiceAgentFormState[K]
   ) => void;
-  updateNumericField: (field: string, value: number) => void;
+  updateNumericField: (field: VoiceAgentNumericField, value: number) => void;
   initNewAgent: () => void;
   initEditAgent: (agent: VoiceAgent) => void;
   resetForm: () => void;
-  setFieldTouched: (field: string, touched: boolean) => void;
+  setFieldTouched: (field: VoiceAgentValidationField, touched: boolean) => void;
   validateForm: () => boolean;
   getFormData: () => VoiceAgentFormData;
 }
@@ -71,8 +98,12 @@ export interface VoiceAgentFormData {
   systemPrompt: string;
   firstMessage: string;
   voiceId: string;
+  voiceProvider: VoiceProvider;
+  language: string;
   temperature: number;
   maxDurationSeconds: number;
+  voiceEagerness: VoiceEagerness;
+  voiceTurnTimeoutSecs: number;
   conversationConfig?: {
     turn: {
       turnEagerness: TurnEagerness;
@@ -115,8 +146,14 @@ const initialFormState = {
   systemPrompt: '',
   firstMessage: '',
   voiceId: '',
+  voiceProvider: VoiceProvider.ElevenLabs,
+  language: 'en',
   temperature: 0.7,
   maxDurationSeconds: 1800,
+
+  // Mistral advanced (sensible defaults)
+  voiceEagerness: VoiceEagerness.Normal,
+  voiceTurnTimeoutSecs: 7,
 
   // Advanced - Turn
   turnEagerness: TurnEagerness.Normal,
@@ -133,11 +170,11 @@ const initialFormState = {
 };
 
 const initialValidationState = {
-  touched: {} as Record<string, boolean>,
-  errors: {} as Record<string, string>,
+  touched: {} as VoiceAgentTouchedState,
+  errors: {} as VoiceAgentErrorState,
 };
 
-const validateFieldValue = (field: string, value: string): string => {
+const validateFieldValue = (field: VoiceAgentValidationField, value: string): string => {
   switch (field) {
     case 'name':
       return !value.trim() ? 'Agent name is required' : '';
@@ -161,17 +198,22 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
   setShowAdvanced: (show: boolean) => set({ showAdvanced: show }),
 
   updateField: (field, value) => {
-    const error = typeof value === 'string' ? validateFieldValue(field as string, value) : '';
+    const nextState: Partial<VoiceAgentFormState> = { [field]: value };
+
+    if (typeof value === 'string' && isValidationField(field as string)) {
+      nextState.errors = {
+        ...get().errors,
+        [field]: validateFieldValue(field as VoiceAgentValidationField, value),
+      };
+    }
+
     set(state => ({
-      [field]: value,
-      errors: {
-        ...state.errors,
-        [field]: error,
-      },
+      ...state,
+      ...nextState,
     }));
   },
 
-  updateNumericField: (field: string, value: number) => {
+  updateNumericField: (field: VoiceAgentNumericField, value: number) => {
     set({ [field]: value });
   },
 
@@ -204,8 +246,14 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       systemPrompt: agent.systemPrompt || '',
       firstMessage: agent.firstMessage || '',
       voiceId: agent.voiceId || '',
+      voiceProvider: agent.voiceProvider || VoiceProvider.ElevenLabs,
+      language: agent.language || 'en',
       temperature: agent.temperature ?? 0.7,
       maxDurationSeconds: agent.maxDurationSeconds ?? 1800,
+
+      // Mistral advanced
+      voiceEagerness: agent.voiceEagerness ?? VoiceEagerness.Normal,
+      voiceTurnTimeoutSecs: agent.voiceTurnTimeoutSecs ?? 7,
 
       // Advanced - Turn
       turnEagerness: config?.turn?.turnEagerness ?? TurnEagerness.Normal,
@@ -232,7 +280,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       ...initialValidationState,
     }),
 
-  setFieldTouched: (field: string, touched: boolean) => {
+  setFieldTouched: (field: VoiceAgentValidationField, touched: boolean) => {
     set(state => ({
       touched: {
         ...state.touched,
@@ -243,7 +291,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
 
   validateForm: (): boolean => {
     const state = get();
-    const newErrors: Record<string, string> = {};
+    const newErrors: VoiceAgentErrorState = {};
 
     newErrors.name = validateFieldValue('name', state.name);
     newErrors.systemPrompt = validateFieldValue('systemPrompt', state.systemPrompt);
@@ -267,8 +315,12 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       systemPrompt: state.systemPrompt,
       firstMessage: state.firstMessage,
       voiceId: state.voiceId,
+      voiceProvider: state.voiceProvider,
+      language: state.language,
       temperature: state.temperature,
       maxDurationSeconds: state.maxDurationSeconds,
+      voiceEagerness: state.voiceEagerness,
+      voiceTurnTimeoutSecs: state.voiceTurnTimeoutSecs,
     };
 
     // Only include conversationConfig if advanced settings are shown

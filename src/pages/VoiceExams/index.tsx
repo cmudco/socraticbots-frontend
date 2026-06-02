@@ -1,7 +1,7 @@
 /**
  * VoiceExams list page.
  * Shows all voice agents the user can access via any role.
- * Admins/managers can create new agents, import from ElevenLabs, and manage.
+ * Admins/managers can create/import agents and manage exams.
  * Students see an access code input to unlock exams.
  */
 import React, { useState } from 'react';
@@ -21,20 +21,22 @@ import ImportSection from './ImportSection';
 import RedeemAccessCodeForm from './RedeemAccessCodeForm';
 
 const DESCRIPTIONS = {
-  admin: 'Create and manage voice-based exams powered by ElevenLabs AI',
-  student: 'Take voice-based exams powered by ElevenLabs AI',
+  admin: 'Create, configure, and launch voice agents for exams',
+  student: 'Take voice-based exams',
   redeemUnlock: 'Enter another access code to unlock a different voice exam.',
   redeemFirst: 'Enter the access code provided by your instructor to unlock your exam.',
   emptyPrompt: 'Use the access code below to unlock your exam.',
+  setupUnavailable:
+    'Voice agent setup is available to Creator, supervisor, and voice team manager accounts.',
 } as const;
 
 const VoiceExamsList: React.FC = () => {
   const user = useUser();
   const { data: agents, isLoading } = useVoiceAgents();
 
-  const canCreate = user?.hasSupervisorAccessForVoiceAgent || user?.isVoiceTeamManager || false;
-  const canRedeemAccessCode =
-    !!user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager;
+  const canCreate =
+    user?.isCreator || user?.hasSupervisorAccessForVoiceAgent || user?.isVoiceTeamManager || false;
+  const canRedeemAccessCode = !!user && !canCreate;
 
   // Hide draft exams from students — only creators/managers see drafts
   const visibleAgents = canCreate
@@ -186,6 +188,9 @@ const VoiceExamsList: React.FC = () => {
             <>
               <h3 className="text-foreground mb-2 text-lg font-medium">No Exams Unlocked Yet</h3>
               <p className="text-muted-foreground mb-6 text-center">{DESCRIPTIONS.emptyPrompt}</p>
+              <p className="text-muted-foreground mb-6 max-w-md text-center text-sm">
+                {DESCRIPTIONS.setupUnavailable}
+              </p>
               {canRedeemAccessCode && (
                 <RedeemAccessCodeForm
                   title={redeemTitle}
