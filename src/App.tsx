@@ -68,7 +68,7 @@ const App: React.FC = () => {
             <Route path="voice-exams/:id/exam" element={<StudentExam />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
