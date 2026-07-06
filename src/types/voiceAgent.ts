@@ -309,21 +309,6 @@ export interface ElevenLabsVoice {
   category?: string | null;
 }
 
-/** Normalized Mistral Voxtral voice from /api/voice/mistral-voices/. */
-export interface MistralVoice {
-  slug: string;
-  label: string;
-  locale: string; // e.g. "en-US", "en-GB", "fr-FR"
-  gender: 'male' | 'female' | '';
-  description: string;
-  tags: string[];
-}
-
-export interface MistralVoicesResponse {
-  voices: MistralVoice[];
-  total: number;
-}
-
 // ElevenLabs agent from their API (not synced to local DB yet)
 export interface ElevenLabsAgentItem {
   agentId: string;
