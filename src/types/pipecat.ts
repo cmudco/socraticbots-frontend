@@ -14,6 +14,7 @@ export interface PipecatVoiceMessage {
   content?: string;
   isSpeaking?: boolean;
   isListening?: boolean;
+  isProcessing?: boolean;
   turnId?: number;
   isFinal?: boolean;
   reason?: string;
@@ -24,6 +25,9 @@ export interface PipecatVoiceMessage {
   webrtcWavName?: string;
   sourceSampleRate?: number;
   webrtcSampleRate?: number;
+  // On runtime_ready: "webrtc" = play the live WebRTC audio track (streaming),
+  // "http" (or absent) = fetch pre-rendered WAVs. Default is HTTP.
+  ttsTransport?: 'webrtc' | 'http';
 }
 
 export const isPipecatRuntimeReadyMessage = (message: PipecatVoiceMessage): boolean =>

@@ -5,6 +5,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useConversation } from '@elevenlabs/react';
+import {
+  Activity,
+  CheckCircle2,
+  Clock3,
+  Loader2,
+  Mic,
+  Radio,
+  Square,
+  TimerReset,
+  Volume2,
+} from 'lucide-react';
 
 import {
   useCancelConversation,
@@ -13,6 +24,8 @@ import {
   useStartConversation,
 } from '@/hooks/queries/useVoiceAgents';
 import { usePipecatWebRTCSession } from '@/hooks/usePipecatWebRTCSession';
+
+import { cn } from '@/lib/utils';
 
 import { formatTimeInCall } from '@/utils/formatters';
 
@@ -29,6 +42,7 @@ interface TranscriptMessage {
   content: string;
   timestamp: Date;
   turnId?: number;
+  isFinal?: boolean;
 }
 
 interface EndSessionOptions {
@@ -40,6 +54,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [isProcessingResponse, setIsProcessingResponse] = useState(false);
+  const [lastResponseGapMs, setLastResponseGapMs] = useState<number | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const isMistralSessionActiveRef = useRef(false);
   const currentConversationIdRef = useRef<string | null>(null);
@@ -50,6 +66,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const transcriptScrollRef = useRef<HTMLDivElement | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
   const shouldAutoScrollTranscriptRef = useRef(true);
+  const lastUserFinalAtRef = useRef<number | null>(null);
   const handleEndRef = useRef<
     ((endedReason?: string, options?: EndSessionOptions) => Promise<void>) | null
   >(null);
@@ -125,9 +142,26 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       message?: string;
       content?: string;
       turnId?: number;
+      isFinal?: boolean;
+      isProcessing?: boolean;
     }) => {
       if (message.type === 'agent_audio_started') {
         startTimerRef.current?.();
+        setIsProcessingResponse(false);
+        if (lastUserFinalAtRef.current) {
+          setLastResponseGapMs(Date.now() - lastUserFinalAtRef.current);
+          lastUserFinalAtRef.current = null;
+        }
+        return;
+      }
+
+      if (message.type === 'processing') {
+        setIsProcessingResponse(Boolean(message.isProcessing));
+        return;
+      }
+
+      if (message.type === 'interrupt') {
+        setIsProcessingResponse(false);
         return;
       }
 
@@ -135,16 +169,22 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       if (!content) return;
       const role = message.role === 'user' ? 'user' : 'agent';
 
-      if (message.type === 'transcript_update' && role === 'agent' && message.turnId) {
+      if (message.type === 'transcript_update' && role === 'user' && message.isFinal) {
+        lastUserFinalAtRef.current = Date.now();
+        setIsProcessingResponse(true);
+      }
+
+      if (message.type === 'transcript_update' && message.turnId) {
         setMessages(prev => {
           const existingIndex = prev.findIndex(
-            item => item.role === 'agent' && item.turnId === message.turnId
+            item => item.role === role && item.turnId === message.turnId
           );
           const updatedMessage: TranscriptMessage = {
-            role: 'agent',
+            role,
             content,
             timestamp: new Date(),
             turnId: message.turnId,
+            isFinal: message.isFinal,
           };
 
           if (existingIndex === -1) {
@@ -234,6 +274,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       shouldAutoScrollTranscriptRef.current = true;
       setMessages([]);
       setLocalError(null);
+      setIsProcessingResponse(false);
+      setLastResponseGapMs(null);
+      lastUserFinalAtRef.current = null;
 
       // Check eligibility first (signed URL request will fail if already attempted)
       const signedUrlResult = await getSignedUrlMutation.mutateAsync(agent.id);
@@ -418,157 +461,240 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const progress = maxDuration > 0 ? Math.min(elapsedSeconds / maxDuration, 1) : 0;
   const progressColor =
     progress < 0.75 ? 'bg-green-500' : progress < 0.9 ? 'bg-yellow-500' : 'bg-red-500';
+  const minutesRemaining =
+    maxDuration > 0 ? Math.max(0, Math.ceil((maxDuration - elapsedSeconds) / 60)) : null;
+  const loopState = agentIsSpeaking
+    ? 'speaking'
+    : isProcessingResponse
+      ? 'thinking'
+      : voiceIsListening
+        ? 'listening'
+        : isConnecting
+          ? 'connecting'
+          : isSessionActive
+            ? 'ready'
+            : 'idle';
+  const loopLabel: Record<typeof loopState, string> = {
+    speaking: 'Examiner speaking',
+    thinking: 'Preparing response',
+    listening: 'Listening live',
+    connecting: 'Connecting audio',
+    ready: 'Ready',
+    idle: 'Not started',
+  };
+  const loopIcon = {
+    speaking: Volume2,
+    thinking: Loader2,
+    listening: Mic,
+    connecting: Radio,
+    ready: CheckCircle2,
+    idle: Square,
+  }[loopState];
+  const LoopIcon = loopIcon;
+  const responseGapSeconds =
+    lastResponseGapMs == null ? null : `${(lastResponseGapMs / 1000).toFixed(2)}s`;
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
-      {/* Header */}
-      <div className="border-border bg-card mb-6 rounded-lg border p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-foreground text-xl font-semibold">{agent.examTitle || agent.name}</h2>
-          <div className="flex items-center gap-2">
-            <span
-              className={`h-3 w-3 rounded-full ${
+    <div className="mx-auto w-full max-w-6xl space-y-5">
+      <div className="overflow-hidden rounded-lg border border-slate-700/70 bg-slate-950/60 shadow-xl shadow-black/10">
+        <div className="border-b border-slate-800 bg-slate-950/70 px-5 py-4 sm:px-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-medium tracking-[0.16em] text-slate-400 uppercase">
+                <span>Voice exam</span>
+                {isMistral && (
+                  <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-emerald-300">
+                    Voxtral realtime STT
+                  </span>
+                )}
+                <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-violet-300">
+                  Kokoro TTS
+                </span>
+              </div>
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl">
+                {agent.examTitle || agent.name}
+              </h2>
+            </div>
+            <div
+              className={cn(
+                'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium',
                 isSessionActive
-                  ? 'bg-green-500 shadow-[0_0_8px_#22c55e]'
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
                   : isConnecting
-                    ? 'animate-pulse bg-yellow-500'
-                    : 'bg-muted'
-              }`}
-            />
-            <span className="text-muted-foreground text-sm">
+                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                    : 'border-slate-700 bg-slate-900 text-slate-300'
+              )}
+            >
+              <span
+                className={cn(
+                  'h-2.5 w-2.5 rounded-full',
+                  isSessionActive
+                    ? 'bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.9)]'
+                    : isConnecting
+                      ? 'animate-pulse bg-amber-400'
+                      : 'bg-slate-500'
+                )}
+              />
               {activeStatus === 'runtimeReady' ? 'starting audio' : activeStatus}
-            </span>
+            </div>
           </div>
         </div>
 
         {/* Instructions */}
         {agent.examInstructions && !hasOpenSession && (
-          <div className="bg-muted mb-4 rounded-lg p-4">
-            <h4 className="text-foreground/80 mb-2 text-sm font-medium">Instructions</h4>
-            <p className="text-muted-foreground text-sm whitespace-pre-wrap">
-              {agent.examInstructions}
-            </p>
+          <div className="mx-5 mt-5 rounded-md border border-slate-800 bg-slate-900/70 p-4 sm:mx-6">
+            <h4 className="mb-2 text-sm font-medium text-slate-200">Instructions</h4>
+            <p className="text-sm whitespace-pre-wrap text-slate-400">{agent.examInstructions}</p>
           </div>
         )}
 
         {/* Error Display */}
         {localError && (
-          <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-400">
+          <div className="mx-5 mt-5 rounded-md border border-red-500/40 bg-red-500/10 p-4 text-red-200 sm:mx-6">
             {localError}
           </div>
         )}
 
-        {/* Exam Timer */}
-        {isSessionActive && (
-          <div className="border-border bg-muted mb-4 rounded-lg border p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-foreground text-sm font-medium">
+        <div className="grid gap-4 p-5 sm:p-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-md border border-slate-800 bg-slate-900/70 p-4">
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-200">
+                <Clock3 className="h-4 w-4 text-slate-400" />
                 {formatTimeInCall(elapsedSeconds)} / {formatTimeInCall(maxDuration)}
-              </span>
-              {progress >= 0.9 && (
-                <span className="animate-pulse text-sm font-semibold text-red-500">
-                  Time running out!
-                </span>
+              </div>
+              {minutesRemaining != null && (
+                <span className="text-xs text-slate-400">{minutesRemaining} min left</span>
               )}
             </div>
-            <div className="bg-muted-foreground/20 h-2 w-full overflow-hidden rounded-full">
+            <div className="h-2 overflow-hidden rounded-full bg-slate-800">
               <div
                 className={`h-full rounded-full transition-all duration-1000 ${progressColor}`}
                 style={{ width: `${progress * 100}%` }}
               />
             </div>
-          </div>
-        )}
-
-        {/* Speaking Indicator */}
-        {isSessionActive && (
-          <div className="bg-muted mb-4 flex items-center gap-4 rounded-lg p-4">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-sm">Agent Speaking:</span>
-              <span
-                className={`font-medium ${
-                  agentIsSpeaking ? 'text-green-500' : 'text-muted-foreground'
-                }`}
-              >
-                {agentIsSpeaking ? 'Yes' : 'No'}
-              </span>
-            </div>
-            {isMistral && (
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">Listening:</span>
-                <span
-                  className={`font-medium ${
-                    voiceIsListening ? 'text-green-500' : 'text-muted-foreground'
-                  }`}
-                >
-                  {voiceIsListening ? 'Yes' : 'No'}
-                </span>
-              </div>
+            {progress >= 0.9 && (
+              <div className="mt-3 text-sm font-medium text-red-300">Time running out</div>
             )}
           </div>
-        )}
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div
+              className={cn(
+                'rounded-md border p-4',
+                loopState === 'listening'
+                  ? 'border-blue-500/40 bg-blue-500/10'
+                  : loopState === 'thinking'
+                    ? 'border-amber-500/40 bg-amber-500/10'
+                    : loopState === 'speaking'
+                      ? 'border-emerald-500/40 bg-emerald-500/10'
+                      : 'border-slate-800 bg-slate-900/70'
+              )}
+            >
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-300">
+                <LoopIcon className={cn('h-4 w-4', loopState === 'thinking' && 'animate-spin')} />
+                Live state
+              </div>
+              <div className="text-lg font-semibold text-slate-50">{loopLabel[loopState]}</div>
+            </div>
+            <div className="rounded-md border border-slate-800 bg-slate-900/70 p-4">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-300">
+                <Activity className="h-4 w-4 text-slate-400" />
+                Response gap
+              </div>
+              <div className="text-lg font-semibold text-slate-50">
+                {responseGapSeconds ?? 'waiting'}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Control Buttons */}
-        <div className="flex gap-4">
+        <div className="flex gap-3 border-t border-slate-800 bg-slate-950/50 p-5 sm:p-6">
           <button
             onClick={handleStart}
             disabled={hasOpenSession || isLoading}
-            className={`flex-1 rounded-lg px-6 py-3 font-semibold transition-all ${
+            className={`inline-flex flex-1 items-center justify-center gap-2 rounded-md px-6 py-3 font-semibold transition-all ${
               hasOpenSession || isLoading
-                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer'
+                ? 'cursor-not-allowed bg-slate-800 text-slate-500'
+                : 'cursor-pointer bg-emerald-500 text-slate-950 hover:bg-emerald-400'
             }`}
           >
+            <Mic className="h-4 w-4" />
             {isLoading ? 'Preparing...' : isConnecting ? 'Starting...' : 'Start Exam'}
           </button>
           <button
             onClick={() => void handleEnd()}
             disabled={!hasOpenSession}
-            className={`flex-1 rounded-lg px-6 py-3 font-semibold transition-all ${
+            className={`inline-flex flex-1 items-center justify-center gap-2 rounded-md px-6 py-3 font-semibold transition-all ${
               !hasOpenSession
-                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'cursor-pointer bg-red-600 text-white hover:bg-red-700'
+                ? 'cursor-not-allowed bg-slate-800 text-slate-500'
+                : 'cursor-pointer bg-red-500 text-white hover:bg-red-400'
             }`}
           >
+            <TimerReset className="h-4 w-4" />
             End Exam
           </button>
         </div>
       </div>
 
       {/* Live Transcript */}
-      <div className="border-border overflow-hidden rounded-lg border">
-        <div className="border-border bg-muted border-b px-4 py-3">
-          <h4 className="text-foreground/80 text-sm font-medium">Live Transcript</h4>
+      <div className="overflow-hidden rounded-lg border border-slate-700/70 bg-slate-950/60 shadow-xl shadow-black/10">
+        <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/70 px-5 py-4">
+          <div>
+            <h4 className="text-sm font-semibold tracking-[0.14em] text-slate-300 uppercase">
+              Live Transcript
+            </h4>
+            <p className="mt-1 text-xs text-slate-500">
+              Student speech streams live; examiner text updates when audio begins.
+            </p>
+          </div>
+          {isProcessingResponse && (
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-200">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              preparing reply
+            </div>
+          )}
         </div>
         <div
           ref={transcriptScrollRef}
           onScroll={handleTranscriptScroll}
-          className="bg-background h-[400px] space-y-3 overflow-y-auto p-4"
+          className="h-[520px] space-y-4 overflow-y-auto bg-slate-950/30 p-5"
         >
           {messages.length === 0 ? (
-            <p className="text-muted-foreground text-sm italic">
-              Click "Start Exam" to begin. The transcript will appear here.
-            </p>
+            <div className="flex h-full items-center justify-center text-center">
+              <div>
+                <Radio className="mx-auto mb-3 h-8 w-8 text-slate-600" />
+                <p className="text-sm text-slate-500">
+                  Start the exam to open the live transcript.
+                </p>
+              </div>
+            </div>
           ) : (
             messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`rounded-lg border-l-4 p-3 ${
+                className={`group rounded-md border p-4 shadow-sm ${
                   msg.role === 'user'
-                    ? 'border-l-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-l-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                    ? 'ml-auto max-w-[86%] border-blue-500/30 bg-blue-500/10'
+                    : 'mr-auto max-w-[92%] border-violet-500/30 bg-violet-500/10'
                 }`}
               >
-                <div
-                  className={`mb-1 text-xs font-medium ${
-                    msg.role === 'user'
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-purple-600 dark:text-purple-400'
-                  }`}
-                >
-                  {msg.role === 'user' ? 'You' : 'Examiner'}
+                <div className="mb-2 flex items-center justify-between gap-4">
+                  <div
+                    className={`text-xs font-semibold tracking-[0.12em] uppercase ${
+                      msg.role === 'user' ? 'text-blue-300' : 'text-violet-300'
+                    }`}
+                  >
+                    {msg.role === 'user' ? 'You' : 'Examiner'}
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    {msg.timestamp.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
                 </div>
-                <div className="text-foreground text-sm">{msg.content}</div>
+                <div className="text-[15px] leading-7 text-slate-100">{msg.content}</div>
               </div>
             ))
           )}

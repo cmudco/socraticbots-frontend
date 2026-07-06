@@ -85,6 +85,9 @@ export const usePipecatWebRTCSession = ({
   const runtimePlaybackObjectUrlRef = useRef<string | null>(null);
   const runtimePlaybackResolveRef = useRef<(() => void) | null>(null);
   const runtimePlaybackActiveRef = useRef(false);
+  // Set true when the runtime reports ttsTransport="webrtc": agent audio is the
+  // live WebRTC track (streamed, in-sync with transcript), not HTTP WAVs.
+  const webrtcAudioModeRef = useRef(false);
 
   const sessionWebrtcUrlRef = useRef<string | null>(null);
   const sessionTokenRef = useRef<string | null>(null);
@@ -164,6 +167,9 @@ export const usePipecatWebRTCSession = ({
 
   const enqueueRuntimeTtsPlayback = useCallback(
     (message: PipecatVoiceMessage) => {
+      // In WebRTC audio mode the agent speaks over the live track, so never
+      // queue HTTP WAVs (the runtime doesn't send them, but guard regardless).
+      if (webrtcAudioModeRef.current) return;
       if (!playRuntimeTtsAudio || message.type !== 'tts_utterance_ready') return;
       const name = message.sourceWavName || message.webrtcWavName;
       if (!name) return;
@@ -179,6 +185,7 @@ export const usePipecatWebRTCSession = ({
       pingIntervalRef.current = null;
     }
     stopRuntimeTtsPlayback();
+    webrtcAudioModeRef.current = false;
     dataChannelRef.current?.close();
     dataChannelRef.current = null;
     peerConnectionRef.current?.close();
@@ -300,6 +307,14 @@ export const usePipecatWebRTCSession = ({
               settleRejected(err);
               onError?.(err);
               return;
+            }
+            if (message.type === 'runtime_ready' && message.ttsTransport === 'webrtc') {
+              // Streaming mode: play the live WebRTC audio track instead of
+              // fetching WAVs. Unmute the remote track (it starts muted so HTTP
+              // playback is the default) and stop any queued WAV playback.
+              webrtcAudioModeRef.current = true;
+              if (remoteAudioRef.current) remoteAudioRef.current.muted = false;
+              stopRuntimeTtsPlayback();
             }
             if (isPipecatRuntimeReadyMessage(message)) settleRuntimeReady();
             if (isPipecatActiveMessage(message)) setStatus('active');
