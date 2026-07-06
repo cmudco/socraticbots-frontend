@@ -32,7 +32,7 @@ interface UsePipecatWebRTCSessionOptions {
   playRuntimeTtsAudio?: boolean;
 }
 
-const ICE_GATHERING_TIMEOUT_MS = 3000;
+const ICE_GATHERING_TIMEOUT_MS = 750;
 const DATA_CHANNEL_OPEN_STATE: RTCDataChannelState = 'open';
 const FAILED_CONNECTION_STATE: RTCPeerConnectionState = 'failed';
 const DISCONNECT_CONNECTION_STATES = new Set<RTCPeerConnectionState>(['closed', 'disconnected']);

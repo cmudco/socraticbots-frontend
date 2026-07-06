@@ -7,6 +7,8 @@ export type PipecatVoiceStatus =
 
 export type PipecatEndControlType = 'end' | 'cancel';
 
+export type PipecatProcessingStage = 'llm' | 'tts';
+
 export interface PipecatVoiceMessage {
   type?: string;
   role?: 'user' | 'agent';
@@ -15,8 +17,16 @@ export interface PipecatVoiceMessage {
   isSpeaking?: boolean;
   isListening?: boolean;
   isProcessing?: boolean;
+  // On processing: which pipeline phase the runtime is waiting on. Not emitted
+  // by the runtime yet; the UI falls back to a generic "preparing" state.
+  stage?: PipecatProcessingStage;
   turnId?: number;
   isFinal?: boolean;
+  // On agent_audio_started: per-turn latency metrics. Not emitted by the
+  // runtime yet; when absent the UI shows only the client-measured reply time.
+  llmLatencySeconds?: number;
+  ttsLatencySeconds?: number;
+  totalLatencySeconds?: number;
   reason?: string;
   error?: string;
   fatal?: boolean;
