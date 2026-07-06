@@ -26,8 +26,12 @@ interface UsePipecatWebRTCSessionOptions {
   onMessage?: (message: PipecatVoiceMessage) => void;
   onError?: (error: Error) => void;
   /**
-   * Plays runtime-generated TTS WAV artifacts over HTTP instead of using
-   * WebRTC as the audible output path. WebRTC remains the mic/control lane.
+   * Enables the HTTP WAV playback path for agent speech: runtime-rendered
+   * utterances are fetched and played through an HTMLAudioElement. This is
+   * the starting assumption for every session; when the runtime reports
+   * ttsTransport="webrtc" in runtime_ready (the Kokoro production
+   * configuration), the hook switches to the live WebRTC audio track and no
+   * WAVs are fetched. WebRTC is always the mic/control lane either way.
    */
   playRuntimeTtsAudio?: boolean;
 }
