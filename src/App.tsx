@@ -23,7 +23,6 @@ import ConversationHistory from './pages/VoiceExams/ConversationHistory';
 import StudentExam from './pages/VoiceExams/StudentExam';
 import VoiceAgentCreate from './pages/VoiceExams/VoiceAgentCreate';
 import VoiceAgentDetail from './pages/VoiceExams/VoiceAgentDetail';
-import VoiceLab from './pages/VoiceLab';
 import { ThemeProvider } from './providers/ThemeProvider';
 
 const App: React.FC = () => {
@@ -67,7 +66,6 @@ const App: React.FC = () => {
             <Route path="voice-exams/:agentId/conversations/:id" element={<ConversationDetail />} />
             <Route path="voice-exams/:id" element={<VoiceAgentDetail />} />
             <Route path="voice-exams/:id/exam" element={<StudentExam />} />
-            <Route path="voice-lab" element={<VoiceLab />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
