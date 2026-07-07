@@ -158,3 +158,32 @@
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 }
+
+/* Voice exam live indicators (color comes from currentColor, stays theme-agnostic) */
+@keyframes voice-bar {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes thinking-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@theme inline {
+  --animate-voice-bar: voice-bar 0.9s ease-in-out infinite;
+  --animate-thinking-dot: thinking-dot 1.1s ease-in-out infinite;
+}

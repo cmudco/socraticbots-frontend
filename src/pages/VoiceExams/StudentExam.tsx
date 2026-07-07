@@ -10,6 +10,7 @@ import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { useVoiceAgent } from '@/hooks/queries/useVoiceAgents';
 
 import VoiceInterface from '@/components/VoiceExam/VoiceInterface';
+import { Button } from '@/components/ui/button';
 
 import { AgentStatus } from '@/types/voiceAgent';
 
@@ -49,12 +50,9 @@ const StudentExam: React.FC = () => {
           <p className="text-muted-foreground mt-2">
             The exam you're looking for doesn't exist or is not available.
           </p>
-          <button
-            onClick={() => navigate('/voice-exams')}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 mt-4 rounded-lg px-4 py-2"
-          >
+          <Button className="mt-4" onClick={() => navigate('/voice-exams')}>
             Back to Voice Exams
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -68,12 +66,9 @@ const StudentExam: React.FC = () => {
           <p className="text-muted-foreground mt-2">
             This exam is currently in draft mode and not available for taking.
           </p>
-          <button
-            onClick={() => navigate('/voice-exams')}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 mt-4 rounded-lg px-4 py-2"
-          >
+          <Button className="mt-4" onClick={() => navigate('/voice-exams')}>
             Back to Voice Exams
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -82,18 +77,13 @@ const StudentExam: React.FC = () => {
   if (alreadyAttempted) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="border-border bg-card rounded-lg border p-8 text-center">
-          <CheckCircle className="mx-auto mb-4 h-16 w-16 text-blue-500" />
+        <div className="border-border bg-card animate-in fade-in zoom-in-95 rounded-xl border p-8 text-center shadow-sm duration-300">
+          <CheckCircle className="text-primary mx-auto mb-4 h-16 w-16" />
           <h1 className="text-foreground mb-2 text-2xl font-bold">Exam Already Completed</h1>
           <p className="text-muted-foreground mb-6">
             You have reached the maximum number of attempts for this exam.
           </p>
-          <button
-            onClick={() => navigate('/voice-exams')}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2"
-          >
-            Back to Voice Exams
-          </button>
+          <Button onClick={() => navigate('/voice-exams')}>Back to Voice Exams</Button>
         </div>
       </div>
     );
@@ -102,27 +92,19 @@ const StudentExam: React.FC = () => {
   if (isCompleted) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="border-border bg-card rounded-lg border p-8 text-center">
-          <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-500" />
+        <div className="border-border bg-card animate-in fade-in zoom-in-95 rounded-xl border p-8 text-center shadow-sm duration-300">
+          <CheckCircle className="text-primary mx-auto mb-4 h-16 w-16" />
           <h1 className="text-foreground mb-2 text-2xl font-bold">Exam Completed!</h1>
           <p className="text-muted-foreground mb-6">
             Thank you for completing the exam. Your responses have been recorded.
           </p>
           <div className="flex justify-center gap-4">
             {isStaff && (
-              <button
-                onClick={() => setIsCompleted(false)}
-                className="border-border text-foreground hover:bg-accent rounded-lg border px-6 py-2"
-              >
+              <Button variant="outline" onClick={() => setIsCompleted(false)}>
                 Take Again
-              </button>
+              </Button>
             )}
-            <button
-              onClick={() => navigate('/voice-exams')}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2"
-            >
-              Back to Voice Exams
-            </button>
+            <Button onClick={() => navigate('/voice-exams')}>Back to Voice Exams</Button>
           </div>
         </div>
       </div>
@@ -130,16 +112,18 @@ const StudentExam: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto w-full max-w-6xl">
       {/* Header */}
-      <div className="mb-8">
-        <button
+      <div className="mb-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground -ml-2"
           onClick={() => navigate(`/voice-exams/${agent.id}`)}
-          className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Agent Details
-        </button>
+        </Button>
       </div>
 
       {/* Voice Interface */}

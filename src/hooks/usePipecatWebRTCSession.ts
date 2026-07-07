@@ -26,13 +26,17 @@ interface UsePipecatWebRTCSessionOptions {
   onMessage?: (message: PipecatVoiceMessage) => void;
   onError?: (error: Error) => void;
   /**
-   * Plays runtime-generated TTS WAV artifacts over HTTP instead of using
-   * WebRTC as the audible output path. WebRTC remains the mic/control lane.
+   * Enables the HTTP WAV playback path for agent speech: runtime-rendered
+   * utterances are fetched and played through an HTMLAudioElement. This is
+   * the starting assumption for every session; when the runtime reports
+   * ttsTransport="webrtc" in runtime_ready (the Kokoro production
+   * configuration), the hook switches to the live WebRTC audio track and no
+   * WAVs are fetched. WebRTC is always the mic/control lane either way.
    */
   playRuntimeTtsAudio?: boolean;
 }
 
-const ICE_GATHERING_TIMEOUT_MS = 3000;
+const ICE_GATHERING_TIMEOUT_MS = 750;
 const DATA_CHANNEL_OPEN_STATE: RTCDataChannelState = 'open';
 const FAILED_CONNECTION_STATE: RTCPeerConnectionState = 'failed';
 const DISCONNECT_CONNECTION_STATES = new Set<RTCPeerConnectionState>(['closed', 'disconnected']);
@@ -85,6 +89,9 @@ export const usePipecatWebRTCSession = ({
   const runtimePlaybackObjectUrlRef = useRef<string | null>(null);
   const runtimePlaybackResolveRef = useRef<(() => void) | null>(null);
   const runtimePlaybackActiveRef = useRef(false);
+  // Set true when the runtime reports ttsTransport="webrtc": agent audio is the
+  // live WebRTC track (streamed, in-sync with transcript), not HTTP WAVs.
+  const webrtcAudioModeRef = useRef(false);
 
   const sessionWebrtcUrlRef = useRef<string | null>(null);
   const sessionTokenRef = useRef<string | null>(null);
@@ -164,6 +171,9 @@ export const usePipecatWebRTCSession = ({
 
   const enqueueRuntimeTtsPlayback = useCallback(
     (message: PipecatVoiceMessage) => {
+      // In WebRTC audio mode the agent speaks over the live track, so never
+      // queue HTTP WAVs (the runtime doesn't send them, but guard regardless).
+      if (webrtcAudioModeRef.current) return;
       if (!playRuntimeTtsAudio || message.type !== 'tts_utterance_ready') return;
       const name = message.sourceWavName || message.webrtcWavName;
       if (!name) return;
@@ -179,6 +189,7 @@ export const usePipecatWebRTCSession = ({
       pingIntervalRef.current = null;
     }
     stopRuntimeTtsPlayback();
+    webrtcAudioModeRef.current = false;
     dataChannelRef.current?.close();
     dataChannelRef.current = null;
     peerConnectionRef.current?.close();
@@ -300,6 +311,14 @@ export const usePipecatWebRTCSession = ({
               settleRejected(err);
               onError?.(err);
               return;
+            }
+            if (message.type === 'runtime_ready' && message.ttsTransport === 'webrtc') {
+              // Streaming mode: play the live WebRTC audio track instead of
+              // fetching WAVs. Unmute the remote track (it starts muted so HTTP
+              // playback is the default) and stop any queued WAV playback.
+              webrtcAudioModeRef.current = true;
+              if (remoteAudioRef.current) remoteAudioRef.current.muted = false;
+              stopRuntimeTtsPlayback();
             }
             if (isPipecatRuntimeReadyMessage(message)) settleRuntimeReady();
             if (isPipecatActiveMessage(message)) setStatus('active');
