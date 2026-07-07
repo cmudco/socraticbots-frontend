@@ -254,6 +254,13 @@ export const usePipecatWebRTCSession = ({
 
         const dataChannel = peerConnection.createDataChannel('app');
         dataChannelRef.current = dataChannel;
+        dataChannel.onopen = () => {
+          // Announce the channel is open so the runtime re-sends runtime_ready.
+          // The copy the runtime sends at ICE-connect can be dropped inside
+          // pipecat when the channel opens after the pipeline starts (always
+          // the case on real-network RTT), leaving the remote track muted.
+          sendControlMessage({ type: 'client_ready' });
+        };
 
         const remoteStream = new MediaStream();
         const remoteAudio = new Audio();
@@ -379,6 +386,7 @@ export const usePipecatWebRTCSession = ({
       onError,
       onMessage,
       playRuntimeTtsAudio,
+      sendControlMessage,
       startKeepAlive,
       stopRuntimeTtsPlayback,
     ]
