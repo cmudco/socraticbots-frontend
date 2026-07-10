@@ -1,0 +1,499 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { Loader2, Mic, Square } from 'lucide-react';
+
+import { usePipecatWebRTCSession } from '@/hooks/usePipecatWebRTCSession';
+
+import { voiceAgentService } from '@/services/voiceAgent.service';
+
+import { Button } from '@/components/ui/button';
+
+import { PipecatVoiceMessage } from '@/types/pipecat';
+
+/**
+ * STT Lab — isolated mic → runtime → Voxtral test bench.
+ *
+ * When someone reports gibberish / wrong-language / missing transcriptions,
+ * this page removes every other variable: no exam, no LLM, no TTS. Pick a
+ * microphone, connect, talk. Side-by-side meters show what the browser
+ * captures vs. what the server hears; the transcript pane streams interims
+ * and finals with detected language + latency; the console shows every
+ * runtime event and error, none swallowed.
+ */
+
+type LabMessage = PipecatVoiceMessage & Record<string, unknown>;
+
+interface ConsoleEntry {
+  at: string;
+  kind: 'info' | 'vad' | 'stt' | 'error' | 'transcript';
+  text: string;
+}
+
+interface LabTurn {
+  turnId: number;
+  text: string;
+  isFinal: boolean;
+  language?: string | null;
+  latencyMs?: number | null;
+}
+
+interface ServerLevels {
+  peak: number;
+  rms: number;
+  vadVolume: number;
+  gateMinVolume: number;
+}
+
+const MAX_CONSOLE_ENTRIES = 400;
+
+const now = () => new Date().toLocaleTimeString(undefined, { hour12: false });
+
+/** Enumerate audio inputs; labels require mic permission, so ask once. */
+const useMicrophones = () => {
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedId, setSelectedId] = useState<string>('');
+  const [permission, setPermission] = useState<'pending' | 'granted' | 'denied'>('pending');
+
+  const refresh = useCallback(async () => {
+    const all = await navigator.mediaDevices.enumerateDevices();
+    setDevices(all.filter(device => device.kind === 'audioinput' && device.deviceId));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        if (!cancelled) setPermission('granted');
+      } catch {
+        if (!cancelled) setPermission('denied');
+      }
+      if (!cancelled) await refresh();
+    })();
+    navigator.mediaDevices.addEventListener('devicechange', refresh);
+    return () => {
+      cancelled = true;
+      navigator.mediaDevices.removeEventListener('devicechange', refresh);
+    };
+  }, [refresh]);
+
+  return { devices, selectedId, setSelectedId, permission };
+};
+
+/** Live level of the selected mic as the browser captures it (pre-network). */
+const useLocalMicLevel = (deviceId: string, enabled: boolean) => {
+  const [level, setLevel] = useState({ peak: 0, rms: 0 });
+
+  useEffect(() => {
+    if (!enabled) return;
+    let stream: MediaStream | null = null;
+    let audioContext: AudioContext | null = null;
+    let rafId = 0;
+    let lastPublish = 0;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+          },
+        });
+        if (cancelled) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+        audioContext = new AudioContext();
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        source.connect(analyser);
+        const samples = new Float32Array(analyser.fftSize);
+
+        const tick = (time: number) => {
+          analyser.getFloatTimeDomainData(samples);
+          if (time - lastPublish > 100) {
+            lastPublish = time;
+            let peak = 0;
+            let sumSquares = 0;
+            for (const sample of samples) {
+              const magnitude = Math.abs(sample);
+              if (magnitude > peak) peak = magnitude;
+              sumSquares += sample * sample;
+            }
+            setLevel({ peak, rms: Math.sqrt(sumSquares / samples.length) });
+          }
+          rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+      } catch {
+        setLevel({ peak: 0, rms: 0 });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      stream?.getTracks().forEach(track => track.stop());
+      void audioContext?.close();
+    };
+  }, [deviceId, enabled]);
+
+  return level;
+};
+
+const LevelMeter = ({
+  label,
+  value,
+  detail,
+  gate,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+  gate?: number;
+}) => (
+  <div className="flex flex-col gap-1">
+    <div className="flex items-baseline justify-between">
+      <span className="text-sm font-medium">{label}</span>
+      <span className="text-muted-foreground font-mono text-xs">{detail}</span>
+    </div>
+    <div className="bg-muted relative h-3 overflow-hidden rounded-full">
+      <div
+        className={`h-full rounded-full transition-[width] duration-100 ${
+          gate !== undefined && value < gate ? 'bg-amber-500' : 'bg-emerald-500'
+        }`}
+        style={{ width: `${Math.min(100, Math.round(value * 100))}%` }}
+      />
+      {gate !== undefined && (
+        <div
+          className="absolute top-0 h-full w-0.5 bg-red-500/80"
+          style={{ left: `${Math.round(gate * 100)}%` }}
+          title={`VAD gate (min_volume=${gate}) — speech below this line is ignored`}
+        />
+      )}
+    </div>
+  </div>
+);
+
+const SttLab = () => {
+  const { devices, selectedId, setSelectedId, permission } = useMicrophones();
+  const [serverLevels, setServerLevels] = useState<ServerLevels | null>(null);
+  const [labConfig, setLabConfig] = useState<Record<string, unknown> | null>(null);
+  const [vadSpeaking, setVadSpeaking] = useState(false);
+  const [turns, setTurns] = useState<LabTurn[]>([]);
+  const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+  const consoleEndRef = useRef<HTMLDivElement | null>(null);
+
+  const log = useCallback((kind: ConsoleEntry['kind'], text: string) => {
+    setConsoleEntries(previous =>
+      [...previous, { at: now(), kind, text }].slice(-MAX_CONSOLE_ENTRIES)
+    );
+  }, []);
+
+  const handleMessage = useCallback(
+    (raw: PipecatVoiceMessage) => {
+      const message = raw as LabMessage;
+      switch (message.type) {
+        case 'lab_config':
+          setLabConfig(message);
+          log('info', `config: ${JSON.stringify({ ...message, type: undefined })}`);
+          break;
+        case 'lab_levels':
+          setServerLevels({
+            peak: Number(message.peak ?? 0),
+            rms: Number(message.rms ?? 0),
+            vadVolume: Number(message.vadVolume ?? 0),
+            gateMinVolume: Number(message.gateMinVolume ?? 0.35),
+          });
+          break;
+        case 'lab_vad':
+          setVadSpeaking(Boolean(message.speaking));
+          log('vad', message.speaking ? 'voice detected — turn open' : 'silence — turn closed');
+          break;
+        case 'lab_stt': {
+          const { event, ...rest } = message;
+          delete rest.type;
+          log('stt', `${String(event)} ${JSON.stringify(rest)}`);
+          break;
+        }
+        case 'lab_error':
+        case 'error':
+          log('error', String(message.error ?? 'unknown error'));
+          break;
+        case 'transcript_update': {
+          const turnId = Number(message.turnId ?? 0);
+          const turn: LabTurn = {
+            turnId,
+            text: String(message.message ?? ''),
+            isFinal: Boolean(message.isFinal),
+            language: (message.language as string | null | undefined) ?? null,
+            latencyMs: (message.latencyMs as number | null | undefined) ?? null,
+          };
+          setTurns(previous => {
+            const next = previous.filter(existing => existing.turnId !== turnId);
+            next.push(turn);
+            return next.sort((a, b) => a.turnId - b.turnId);
+          });
+          if (turn.isFinal) {
+            log(
+              'transcript',
+              `turn ${turnId} FINAL (${turn.language ?? 'lang?'}${
+                turn.latencyMs != null ? `, ${turn.latencyMs}ms` : ''
+              }): ${turn.text}`
+            );
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    [log]
+  );
+
+  const { status, startSession, endSession } = usePipecatWebRTCSession({
+    onMessage: handleMessage,
+    onError: error => log('error', error.message),
+    onDisconnect: () => log('info', 'session disconnected'),
+    playRuntimeTtsAudio: false,
+  });
+
+  const live = status === 'runtimeReady' || status === 'active';
+  const localLevel = useLocalMicLevel(selectedId, permission === 'granted');
+
+  const connect = useCallback(async () => {
+    setStarting(true);
+    setStartError(null);
+    setTurns([]);
+    setServerLevels(null);
+    log('info', 'requesting lab session…');
+    try {
+      const session = await voiceAgentService.startSttLabSession();
+      if (!session.webrtcUrl || !session.token) {
+        throw new Error('Lab session response is missing webrtcUrl/token');
+      }
+      log('info', `lab session ${session.sessionId ?? '?'} — connecting`);
+      await startSession({
+        webrtcUrl: session.webrtcUrl,
+        token: session.token,
+        iceServers: session.iceServers,
+        audioDeviceId: selectedId || undefined,
+      });
+      log('info', 'connected — speak whenever you like');
+    } catch (error) {
+      const messageText = error instanceof Error ? error.message : 'Failed to start lab session';
+      setStartError(messageText);
+      log('error', messageText);
+    } finally {
+      setStarting(false);
+    }
+  }, [log, selectedId, startSession]);
+
+  const disconnect = useCallback(() => {
+    void endSession('end');
+  }, [endSession]);
+
+  useEffect(() => {
+    consoleEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [consoleEntries]);
+
+  const statusLabel = useMemo(() => {
+    if (starting || status === 'connecting') return 'Connecting…';
+    if (live) return vadSpeaking ? 'Hearing you' : 'Listening';
+    return 'Not connected';
+  }, [live, starting, status, vadSpeaking]);
+
+  return (
+    <div className="mx-auto flex max-w-6xl flex-col gap-6 p-6">
+      <header className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold">Speech-to-Text Lab</h1>
+        <p className="text-muted-foreground text-sm">
+          Isolated mic → runtime → Voxtral. No exam, no AI tutor — just your voice and the
+          transcription engine, with every level, event, and error visible.
+        </p>
+      </header>
+
+      <section className="bg-card flex flex-wrap items-end gap-4 rounded-xl border p-4">
+        <div className="flex min-w-64 flex-1 flex-col gap-1">
+          <label htmlFor="stt-lab-mic" className="text-sm font-medium">
+            Microphone
+          </label>
+          <select
+            id="stt-lab-mic"
+            className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+            value={selectedId}
+            onChange={event => setSelectedId(event.target.value)}
+            disabled={live || starting}
+          >
+            <option value="">System default</option>
+            {devices.map(device => (
+              <option key={device.deviceId} value={device.deviceId}>
+                {device.label || `Microphone ${device.deviceId.slice(0, 6)}`}
+              </option>
+            ))}
+          </select>
+          {permission === 'denied' && (
+            <p className="text-destructive text-xs">
+              Microphone permission denied — allow mic access in the browser and reload.
+            </p>
+          )}
+        </div>
+        {live ? (
+          <Button variant="destructive" onClick={disconnect}>
+            <Square className="size-4" /> Stop session
+          </Button>
+        ) : (
+          <Button onClick={connect} disabled={starting || permission !== 'granted'}>
+            {starting ? <Loader2 className="size-4 animate-spin" /> : <Mic className="size-4" />}
+            {starting ? 'Starting…' : 'Start lab session'}
+          </Button>
+        )}
+        <div
+          className={`rounded-full px-3 py-1 text-sm font-medium ${
+            live
+              ? vadSpeaking
+                ? 'bg-emerald-500/15 text-emerald-600'
+                : 'bg-sky-500/15 text-sky-600'
+              : 'bg-muted text-muted-foreground'
+          }`}
+        >
+          {statusLabel}
+        </div>
+      </section>
+
+      {startError && (
+        <div className="border-destructive/50 bg-destructive/10 text-destructive rounded-lg border p-3 text-sm">
+          {startError}
+        </div>
+      )}
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <div className="bg-card flex flex-col gap-4 rounded-xl border p-4">
+          <h2 className="text-sm font-semibold tracking-wide uppercase">Your browser hears</h2>
+          <LevelMeter
+            label="Mic level"
+            value={localLevel.peak}
+            detail={`peak ${localLevel.peak.toFixed(3)} · rms ${localLevel.rms.toFixed(4)}`}
+          />
+          <p className="text-muted-foreground text-xs">
+            Live from the selected microphone, before anything is sent. If this stays flat while you
+            talk, the problem is the mic or browser permissions — not our servers.
+          </p>
+        </div>
+        <div className="bg-card flex flex-col gap-4 rounded-xl border p-4">
+          <h2 className="text-sm font-semibold tracking-wide uppercase">The server hears</h2>
+          {serverLevels ? (
+            <LevelMeter
+              label="VAD volume vs. gate"
+              value={serverLevels.vadVolume}
+              gate={serverLevels.gateMinVolume}
+              detail={`vol ${serverLevels.vadVolume.toFixed(2)} · peak ${serverLevels.peak.toFixed(3)} · gate ${serverLevels.gateMinVolume}`}
+            />
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              {live ? 'Waiting for the first level report…' : 'Connect to see server-side levels.'}
+            </p>
+          )}
+          <p className="text-muted-foreground text-xs">
+            Measured by the runtime on the audio it actually received. Speech under the red gate
+            line is ignored by voice detection. Comparing the two panels isolates network/WebRTC
+            loss from mic problems.
+          </p>
+        </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <div className="bg-card flex h-96 flex-col rounded-xl border">
+          <div className="flex items-center justify-between border-b p-3">
+            <h2 className="text-sm font-semibold tracking-wide uppercase">Live transcript</h2>
+            {labConfig != null && (
+              <span className="text-muted-foreground font-mono text-xs">
+                {String(labConfig.sttModel ?? '')}
+              </span>
+            )}
+          </div>
+          <div className="flex-1 space-y-3 overflow-y-auto p-4">
+            {turns.length === 0 && (
+              <p className="text-muted-foreground text-sm">
+                Say something — interim words stream in gray, finals turn solid with the detected
+                language and turn latency.
+              </p>
+            )}
+            {turns.map(turn => (
+              <div key={turn.turnId} className="flex flex-col gap-1">
+                <div className="text-muted-foreground flex gap-2 font-mono text-[11px]">
+                  <span>turn {turn.turnId}</span>
+                  {turn.isFinal && turn.language && <span>lang: {turn.language}</span>}
+                  {turn.isFinal && turn.latencyMs != null && <span>{turn.latencyMs}ms</span>}
+                </div>
+                <p className={turn.isFinal ? 'text-sm' : 'text-muted-foreground text-sm italic'}>
+                  {turn.text || '…'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-card flex h-96 flex-col rounded-xl border">
+          <div className="flex items-center justify-between border-b p-3">
+            <h2 className="text-sm font-semibold tracking-wide uppercase">Runtime console</h2>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  void navigator.clipboard.writeText(
+                    consoleEntries
+                      .map(entry => `${entry.at} [${entry.kind}] ${entry.text}`)
+                      .join('\n')
+                  )
+                }
+              >
+                Copy
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setConsoleEntries([])}>
+                Clear
+              </Button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 font-mono text-xs leading-5">
+            {consoleEntries.length === 0 && (
+              <p className="text-muted-foreground">
+                Every runtime event lands here: VAD activity, STT socket lifecycle (request ids,
+                stalls, rebuilds, recoveries), levels config, and all errors.
+              </p>
+            )}
+            {consoleEntries.map((entry, index) => (
+              <div
+                key={`${entry.at}-${index}`}
+                className={
+                  entry.kind === 'error'
+                    ? 'text-red-500'
+                    : entry.kind === 'stt'
+                      ? 'text-amber-600'
+                      : entry.kind === 'vad'
+                        ? 'text-sky-600'
+                        : entry.kind === 'transcript'
+                          ? 'text-emerald-600'
+                          : 'text-muted-foreground'
+                }
+              >
+                {entry.at} [{entry.kind}] {entry.text}
+              </div>
+            ))}
+            <div ref={consoleEndRef} />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default SttLab;

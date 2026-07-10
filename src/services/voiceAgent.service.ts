@@ -70,6 +70,13 @@ class VoiceAgentService {
     });
   }
 
+  async startSttLabSession(): Promise<SignedUrlResponse> {
+    return baseRequest<SignedUrlResponse>({
+      url: 'voice/lab/session/',
+      method: METHOD.POST,
+    });
+  }
+
   async startConversation(agentId: number, conversationId: string): Promise<VoiceConversation> {
     return baseRequest<VoiceConversation>({
       url: `voice/agents/${agentId}/start_conversation/`,
