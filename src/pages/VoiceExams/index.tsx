@@ -68,6 +68,14 @@ const VoiceExamsList: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-3">
+          <Link
+            to="/voice-exams/stt-lab"
+            className="border-border text-foreground hover:bg-accent flex items-center gap-2 rounded-lg border px-4 py-2"
+            title="Isolated mic → transcription test bench for debugging speech recognition"
+          >
+            <Mic className="h-4 w-4" />
+            STT Lab
+          </Link>
           {canCreate && (
             <>
               <button

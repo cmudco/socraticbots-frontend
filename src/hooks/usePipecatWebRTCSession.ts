@@ -12,6 +12,8 @@ interface PipecatWebRTCStartOptions {
   webrtcUrl: string;
   token: string;
   iceServers?: string[];
+  /** Capture from a specific microphone (MediaDeviceInfo.deviceId). */
+  audioDeviceId?: string;
 }
 
 interface WebRTCAnswerResponse {
@@ -222,7 +224,12 @@ export const usePipecatWebRTCSession = ({
   }, []);
 
   const startSession = useCallback(
-    async ({ webrtcUrl, token, iceServers }: PipecatWebRTCStartOptions): Promise<void> => {
+    async ({
+      webrtcUrl,
+      token,
+      iceServers,
+      audioDeviceId,
+    }: PipecatWebRTCStartOptions): Promise<void> => {
       setStatus('connecting');
       sessionWebrtcUrlRef.current = webrtcUrl;
       sessionTokenRef.current = token;
@@ -234,6 +241,7 @@ export const usePipecatWebRTCSession = ({
             echoCancellation: true,
             noiseSuppression: true,
             autoGainControl: true,
+            ...(audioDeviceId ? { deviceId: { exact: audioDeviceId } } : {}),
           },
         });
         mediaStreamRef.current = stream;
