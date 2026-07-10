@@ -312,12 +312,40 @@ const SttLab = () => {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 p-6">
-      <header className="flex flex-col gap-1">
+      <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">Speech-to-Text Lab</h1>
         <p className="text-muted-foreground text-sm">
           Isolated mic → runtime → Voxtral. No exam, no AI tutor — just your voice and the
           transcription engine, with every level, event, and error visible.
         </p>
+        <details className="bg-card rounded-lg border">
+          <summary className="cursor-pointer px-4 py-2 text-sm font-medium">
+            How to read this page
+          </summary>
+          <div className="text-muted-foreground space-y-2 border-t px-4 py-3 text-sm">
+            <p>
+              <b className="text-foreground">Numbers:</b> <b>loudest</b> is the strongest instant in
+              the last second (0–1; near 1.0 means clipping). <b>average</b> is overall loudness —
+              quiet rooms sit near 0.00x, normal speech around 0.02–0.1. <b>speech</b> is loudness
+              the way the voice detector measures it, and <b>gate</b> (the red line) is the cutoff:
+              speech quieter than the gate is deliberately ignored.
+            </p>
+            <p>
+              <b className="text-foreground">Diagnosing in one glance:</b> if the left meter stays
+              flat while you talk → microphone or browser permission. Left moves but right stays
+              flat → audio is lost in transit (network/WebRTC). Both move, speech stays under the
+              red line → too quiet for voice detection. Both healthy but no transcript → the
+              transcription provider — watch the console for{' '}
+              <span className="font-mono text-xs">stalled / rebuild / recovered</span> events and
+              copy them into the bug report.
+            </p>
+            <p>
+              <b className="text-foreground">Transcript chips:</b> <b>language</b> is what Voxtral
+              believes it heard (wrong language = that turn's text is suspect); the <b>ms value</b>{' '}
+              is how long the final text took after you stopped talking.
+            </p>
+          </div>
+        </details>
       </header>
 
       <section className="bg-card flex flex-wrap items-end gap-4 rounded-xl border p-4">
@@ -380,7 +408,7 @@ const SttLab = () => {
           <LevelMeter
             label="Mic level"
             value={localLevel.peak}
-            detail={`peak ${localLevel.peak.toFixed(3)} · rms ${localLevel.rms.toFixed(4)}`}
+            detail={`loudest ${localLevel.peak.toFixed(3)} · average ${localLevel.rms.toFixed(4)}`}
           />
           <p className="text-muted-foreground text-xs">
             Live from the selected microphone, before anything is sent. If this stays flat while you
@@ -391,10 +419,10 @@ const SttLab = () => {
           <h2 className="text-sm font-semibold tracking-wide uppercase">The server hears</h2>
           {serverLevels ? (
             <LevelMeter
-              label="VAD volume vs. gate"
+              label="Speech volume vs. gate"
               value={serverLevels.vadVolume}
               gate={serverLevels.gateMinVolume}
-              detail={`vol ${serverLevels.vadVolume.toFixed(2)} · peak ${serverLevels.peak.toFixed(3)} · gate ${serverLevels.gateMinVolume}`}
+              detail={`speech ${serverLevels.vadVolume.toFixed(2)} · loudest ${serverLevels.peak.toFixed(3)} · gate ${serverLevels.gateMinVolume}`}
             />
           ) : (
             <p className="text-muted-foreground text-sm">
@@ -430,8 +458,16 @@ const SttLab = () => {
               <div key={turn.turnId} className="flex flex-col gap-1">
                 <div className="text-muted-foreground flex gap-2 font-mono text-[11px]">
                   <span>turn {turn.turnId}</span>
-                  {turn.isFinal && turn.language && <span>lang: {turn.language}</span>}
-                  {turn.isFinal && turn.latencyMs != null && <span>{turn.latencyMs}ms</span>}
+                  {turn.isFinal && (
+                    <span title="Language Voxtral believes it heard — if this is not your language, that turn's text is suspect">
+                      language: {turn.language ?? 'auto (not reported)'}
+                    </span>
+                  )}
+                  {turn.isFinal && turn.latencyMs != null && (
+                    <span title="Time from when you stopped talking to the final text">
+                      {turn.latencyMs}ms
+                    </span>
+                  )}
                 </div>
                 <p className={turn.isFinal ? 'text-sm' : 'text-muted-foreground text-sm italic'}>
                   {turn.text || '…'}
