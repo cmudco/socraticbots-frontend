@@ -3,12 +3,14 @@ import { useParams } from 'react-router-dom';
 
 import {
   AlertCircle,
+  AlertTriangle,
   Bot as BotIcon,
   ChevronLeft,
   ChevronRight,
   Loader2,
   Moon,
   Sun,
+  Trash2,
 } from 'lucide-react';
 
 import { useGetOrCreateConversation, usePublicBotInfo } from '@/hooks/queries/usePublicBot';
@@ -18,19 +20,29 @@ import { usePublicBotStore } from '@/stores/core/publicBotStore';
 import { usePublicWebSocketStore } from '@/stores/core/publicWebSocketStore';
 import { useThemeStore } from '@/stores/ui/themeStore';
 
-import { getOrCreateAnonymousSession } from '@/lib/anonymousSession';
+import { clearAnonymousSession, getOrCreateAnonymousSession } from '@/lib/anonymousSession';
 
 import PublicChatInput from '@/components/chat/public/PublicChatInput';
 import PublicMessageList from '@/components/chat/public/PublicMessageList';
 import PublicTrackingSidebar from '@/components/chat/public/PublicTrackingSidebar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 import type { PublicBotConversation } from '@/types/publicBot';
 
 const PublicBotChat: React.FC = () => {
   const { botId } = useParams<{ botId: string }>();
   const [isProgressSidebarVisible, setProgressSidebarVisible] = useState(true);
+  const [isResetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   // Zustand stores
   const {
@@ -155,7 +167,7 @@ const PublicBotChat: React.FC = () => {
       };
 
       // LLM and context settings (matching conversationStore.ts structure exactly)
-      payload.llm_id = botInfo.modelPreference?.chatModelDareId;
+      payload.model_id = botInfo.modelPreference?.chatModelDareId;
       payload.embedding_ids = botInfo.dareFileIds || [];
       payload.file_owner_id = botInfo.createdByDareId;
       payload.progress_llm_id = botInfo.modelPreference?.trackingModelDareId;
@@ -182,6 +194,22 @@ const PublicBotChat: React.FC = () => {
     },
     [activeConversation, botInfo, setIsTyping, sendWebSocketMessage]
   );
+
+  // Reset conversation: drop the anonymous session and start a fresh one.
+  // The conversation-create and socket effects re-run automatically once
+  // activeConversation is cleared and the session id changes.
+  const handleResetConversation = useCallback(() => {
+    usePublicWebSocketStore.getState().disconnect();
+    clearAnonymousSession();
+    const newSession = getOrCreateAnonymousSession();
+    usePublicBotStore.setState({
+      messages: [],
+      activeConversation: null,
+      isTyping: false,
+      anonymousSessionId: newSession,
+    });
+    setResetConfirmOpen(false);
+  }, []);
 
   // Loading state
   const isLoading = isLoadingBotInfo || isCreatingConversation;
@@ -248,6 +276,15 @@ const PublicBotChat: React.FC = () => {
               <div className="text-xs">Budget Remaining</div>
             </div>
           )}
+          {/* Reset Conversation */}
+          <button
+            onClick={() => setResetConfirmOpen(true)}
+            className="text-destructive hover:bg-destructive/10 border-border/60 bg-background/80 flex h-10 w-10 items-center justify-center rounded-lg border shadow-sm transition-colors"
+            aria-label="Reset conversation"
+            title="Reset conversation and learning progress"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
           {/* Dark/Light Mode Toggle */}
           <button
             onClick={toggleDarkMode}
@@ -308,6 +345,33 @@ const PublicBotChat: React.FC = () => {
           </Card>
         </main>
       </div>
+
+      {/* Reset confirmation dialog */}
+      <Dialog open={isResetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="bg-destructive/10 flex h-10 w-10 items-center justify-center rounded-full">
+                <AlertTriangle className="text-destructive h-5 w-5" />
+              </div>
+              <DialogTitle className="text-lg font-semibold">Reset Conversation</DialogTitle>
+            </div>
+            <DialogDescription className="text-muted-foreground pt-2">
+              This will clear all messages and learning progress and start a brand-new conversation.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => setResetConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleResetConversation}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Reset
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Footer - Uses global theme */}
       <footer className="bg-background/95 supports-[backdrop-filter]:bg-background/60 flex-shrink-0 border-t backdrop-blur">

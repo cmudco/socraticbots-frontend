@@ -1,13 +1,14 @@
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import type { BotFormData } from '@/schemas/botFormSchema';
 
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 
 const BotPromptsStep: React.FC = () => {
-  const { register } = useFormContext<BotFormData>();
+  const { register, control } = useFormContext<BotFormData>();
 
   return (
     <div className="space-y-6">
@@ -64,6 +65,24 @@ const BotPromptsStep: React.FC = () => {
           rows={4}
         />
       </div>
+
+      {/* Advanced Prompt */}
+      <Controller
+        name="isAdvanced"
+        control={control}
+        render={({ field }) => (
+          <div className="flex items-center justify-between border-t pt-4">
+            <div>
+              <Label htmlFor="isAdvanced">Advanced Prompt</Label>
+              <p className="text-muted-foreground text-xs">
+                Uses an expanded system prompt that includes conversation history, subject/topic,
+                learning goals, and relevant content for deeper responses
+              </p>
+            </div>
+            <Switch id="isAdvanced" checked={field.value} onCheckedChange={field.onChange} />
+          </div>
+        )}
+      />
     </div>
   );
 };
