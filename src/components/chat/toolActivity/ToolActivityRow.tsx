@@ -23,7 +23,7 @@ const STATUS_LABELS: Record<string, string> = {
 const statusIcon = (status: ChatToolCall['status']) => {
   switch (status) {
     case 'completed':
-      return <CheckCircle2 size={14} className="shrink-0 text-green-600" />;
+      return <CheckCircle2 size={14} className="shrink-0 text-green-600 dark:text-green-400" />;
     case 'failed':
       return <XCircle size={14} className="text-destructive shrink-0" />;
     default:
