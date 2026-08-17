@@ -8,6 +8,7 @@ import {
 } from '@/services/conversation.service';
 
 import type { Bot } from '@/types/bot';
+import type { ChatToolCall } from '@/types/toolCalls';
 
 import { useWebSocketStore } from './websocketStore';
 
@@ -37,6 +38,10 @@ export interface ConversationState {
   conversationHistory: DareMessage[];
   lastMessageId: string | null;
   messageCount: number;
+
+  // Live tool-call activity for the in-flight turn, keyed by message id.
+  // Historical messages carry their own toolCalls from the history payload.
+  toolCallsByMessage: Record<string, ChatToolCall[]>;
 }
 
 export interface ConversationActions {
@@ -53,6 +58,9 @@ export interface ConversationActions {
   // Conversation tracking
   updateConversationStats: () => void;
   setConversationHistory: (messages: DareMessage[]) => void;
+
+  // Tool-call activity
+  upsertToolCall: (messageId: string, toolCall: Partial<ChatToolCall>) => void;
 
   // UI state
   setIsTyping: (isTyping: boolean) => void;
@@ -87,6 +95,7 @@ export const useConversationStore = create<ConversationStore>()(
     conversationHistory: [],
     lastMessageId: null,
     messageCount: 0,
+    toolCallsByMessage: {},
 
     // Actions
     setActiveBot: async (bot: Bot) => {
@@ -288,6 +297,22 @@ export const useConversationStore = create<ConversationStore>()(
         messages: messages,
         messageCount: messages.length,
         lastMessageId: messages.length > 0 ? messages[messages.length - 1].id : null,
+        // History messages carry persisted toolCalls; drop the live buffer
+        toolCallsByMessage: {},
+      });
+    },
+
+    upsertToolCall: (messageId: string, toolCall: Partial<ChatToolCall>) => {
+      if (!toolCall.toolCallId) return;
+      set(state => {
+        const key = String(messageId);
+        const existing = state.toolCallsByMessage[key] || [];
+        const index = existing.findIndex(tc => tc.toolCallId === toolCall.toolCallId);
+        const next =
+          index === -1
+            ? [...existing, toolCall as ChatToolCall]
+            : existing.map((tc, i) => (i === index ? { ...tc, ...toolCall } : tc));
+        return { toolCallsByMessage: { ...state.toolCallsByMessage, [key]: next } };
       });
     },
 

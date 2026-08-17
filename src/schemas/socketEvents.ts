@@ -42,6 +42,43 @@ export const socketEventSchemas: Record<string, z.ZodTypeAny> = {
   stream_end: baseEvent.extend({
     messageId,
   }),
+  // Tool-loop events (unified vocabulary shared with DARE chat).
+  // Correlation key is messageId; payloads are camelized by the backend.
+  tool_call_pending: baseEvent.extend({
+    messageId: messageId.optional(),
+    toolCallId: z.string(),
+    toolName: z.string(),
+    round: z.number().optional(),
+    status: z.string().optional(),
+  }),
+  tool_call_args_progress: baseEvent.extend({
+    messageId: messageId.optional(),
+    toolCallId: z.string(),
+    argsChars: z.number().optional(),
+  }),
+  tool_call_executing: baseEvent.extend({
+    messageId: messageId.optional(),
+    toolCallId: z.string(),
+    toolName: z.string(),
+    round: z.number().optional(),
+    arguments: z.record(z.string(), z.unknown()).optional(),
+  }),
+  tool_call_result: baseEvent.extend({
+    messageId: messageId.optional(),
+    toolCallId: z.string(),
+    toolName: z.string(),
+    round: z.number().optional(),
+    status: z.string(),
+    error: z.string().nullish(),
+  }),
+  tool_rounds_capped: baseEvent.extend({
+    messageId: messageId.optional(),
+    round: z.number().optional(),
+  }),
+  context_trace: baseEvent.extend({
+    messageId: messageId.optional(),
+    trace: z.record(z.string(), z.unknown()).optional(),
+  }),
   progress_start: baseEvent,
   progress_token: baseEvent.extend({ token: z.string().optional() }),
   progress_stream: baseEvent.extend({ chunk: z.string().optional() }),

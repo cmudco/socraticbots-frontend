@@ -76,6 +76,12 @@ export interface ChatSocketCoreConfig<TMessage extends ChatMessageLike> {
   onCompleteAssistantMessage?: () => void;
   /** Public surface: clear stale progress when a new AI response starts streaming. */
   onStreamStart?: () => void;
+  /**
+   * Tool-loop events (tool_call_pending/args_progress/executing/result,
+   * tool_rounds_capped, context_trace). Surfaces that render tool activity
+   * hook in here; others simply drop the events.
+   */
+  onToolEvent?: (data: SocketMessage) => void;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -252,6 +258,20 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
             case 'stream_end': {
               target.updateMessage(data.messageId!, { streaming: false } as Partial<TMessage>);
               target.setIsTyping(false);
+              break;
+            }
+
+            // ────────────────────────────────────────────────────────────────
+            // Tool-Loop Events (unified vocabulary shared with DARE chat)
+            // ────────────────────────────────────────────────────────────────
+
+            case 'tool_call_pending':
+            case 'tool_call_args_progress':
+            case 'tool_call_executing':
+            case 'tool_call_result':
+            case 'tool_rounds_capped':
+            case 'context_trace': {
+              config.onToolEvent?.(data);
               break;
             }
 
