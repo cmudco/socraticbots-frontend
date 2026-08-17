@@ -213,6 +213,10 @@ export const useConversationStore = create<ConversationStore>()(
           payload.file_owner_id = currentBot.createdByDareId;
           payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
           payload.web_search_enabled = Boolean(currentBot.webSearchEnabled || false);
+          // Retrieval strategy for DARE's shared tool loop; 'agentic' lets the
+          // model call search_documents on demand (authenticated surface only —
+          // DARE downgrades anonymous sessions server-side).
+          payload.rag_mode = currentBot.ragMode || 'advanced';
 
           if (currentBot.maxContextSnippets !== undefined) {
             payload.max_context_snippets = currentBot.maxContextSnippets;

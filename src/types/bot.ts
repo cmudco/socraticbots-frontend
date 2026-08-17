@@ -48,11 +48,14 @@ export interface BotQuickPrompt {
   updatedAt: string;
 }
 
+export type BotRagMode = 'naive' | 'advanced' | 'agentic';
+
 export interface Bot {
   id: number;
   isAdvanced?: boolean;
   isActive?: boolean;
   webSearchEnabled?: boolean;
+  ragMode?: BotRagMode;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
   isPubliclyDeployed?: boolean;
@@ -91,6 +94,7 @@ export interface CreateBotRequest {
   accessCode?: string;
   isActive?: boolean;
   webSearchEnabled?: boolean;
+  ragMode?: BotRagMode;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
   accessCodeLimit?: number;
@@ -103,6 +107,7 @@ export interface UpdateBotRequest {
   accessCode?: string;
   isActive?: boolean;
   webSearchEnabled?: boolean;
+  ragMode?: BotRagMode;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
   accessCodeLimit?: number;

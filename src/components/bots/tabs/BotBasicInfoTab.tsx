@@ -51,10 +51,12 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
       trackingModelDareId,
       isActive,
       webSearchEnabled,
+      ragMode,
       updateField,
       updateModelField,
       setIsActive,
       setWebSearchEnabled,
+      setRagMode,
     } = useBotFormStore();
 
     const {
@@ -285,6 +287,35 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                     onCheckedChange={setWebSearchEnabled}
                     disabled={viewOnly}
                   />
+                </div>
+              </div>
+
+              {/* Document Retrieval Mode */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col">
+                    <label htmlFor="ragMode" className="text-foreground text-sm font-medium">
+                      Document Retrieval
+                    </label>
+                    <p className="text-muted-foreground text-xs">
+                      {ragMode === 'agentic'
+                        ? 'The model searches the attached documents on demand'
+                        : 'Relevant document context is pre-loaded on every turn'}
+                    </p>
+                  </div>
+                  <Select
+                    value={ragMode === 'agentic' ? 'agentic' : 'advanced'}
+                    onValueChange={value => setRagMode(value as 'advanced' | 'agentic')}
+                    disabled={viewOnly}
+                  >
+                    <SelectTrigger id="ragMode" className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="advanced">Classic</SelectItem>
+                      <SelectItem value="agentic">Agentic</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </Form>
