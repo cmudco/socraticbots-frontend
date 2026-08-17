@@ -102,18 +102,6 @@ class ConversationService {
     });
   }
 
-  /**
-   * Send message through DARE backend (non-streaming)
-   * For streaming, we'll use direct WebSocket connection to DARE
-   */
-  async sendMessage(conversationId: string, message: string): Promise<DareMessage> {
-    return baseRequest<DareMessage>({
-      url: `conversations/${conversationId}/send/`,
-      method: METHOD.POST,
-      data: { message },
-    });
-  }
-
   // getConversationHistory removed - WebSocket handles message history automatically
 
   /**
