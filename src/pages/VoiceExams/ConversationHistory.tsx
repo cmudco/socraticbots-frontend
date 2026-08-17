@@ -13,10 +13,13 @@ import {
   useExportAllTranscripts,
 } from '@/hooks/queries/useVoiceConversations';
 
+import { formatConversationStatus, getConversationStatusStyle } from '@/utils/conversationStatus';
 import { formatDate } from '@/utils/formatters';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+import { ConversationStatus } from '@/types/voiceAgent';
 
 const ConversationHistory: React.FC = () => {
   const { agentId: agentIdParam } = useParams<{ agentId: string }>();
@@ -34,19 +37,12 @@ const ConversationHistory: React.FC = () => {
     return `${mins}m ${secs}s`;
   };
 
-  const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-      cancelled: 'bg-muted text-muted-foreground',
-    };
-
+  const getStatusBadge = (status: ConversationStatus) => {
     return (
       <span
-        className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles[status] || styles.cancelled}`}
+        className={`rounded-full px-2 py-0.5 text-xs font-medium ${getConversationStatusStyle(status)}`}
       >
-        {status.replace('_', ' ')}
+        {formatConversationStatus(status)}
       </span>
     );
   };

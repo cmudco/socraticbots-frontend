@@ -1,6 +1,6 @@
 import type { VoiceAccessLevel } from '@/types/voiceAgent';
 
-export const ROLE_BADGE_STYLES: Record<VoiceAccessLevel, string> = {
+export const ROLE_BADGE_STYLES: { [K in VoiceAccessLevel]: string } = {
   supervisor: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
   owner: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   manager: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
