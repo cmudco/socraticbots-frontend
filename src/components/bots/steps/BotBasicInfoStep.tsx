@@ -207,6 +207,36 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
             </div>
           )}
         />
+
+        {/* Document Retrieval Mode */}
+        <Controller
+          name="ragMode"
+          control={control}
+          render={({ field }) => (
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="ragMode">Document Retrieval</Label>
+                <p className="text-muted-foreground text-xs">
+                  {field.value === 'agentic'
+                    ? 'The model searches the attached documents on demand'
+                    : 'Relevant document context is pre-loaded on every turn'}
+                </p>
+              </div>
+              <Select
+                value={field.value === 'agentic' ? 'agentic' : 'advanced'}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger id="ragMode" className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="advanced">Classic</SelectItem>
+                  <SelectItem value="agentic">Agentic</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        />
       </div>
     </div>
   );
