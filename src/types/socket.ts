@@ -67,6 +67,13 @@ export type SocketMessageType =
   | 'stream_chunk'
   | 'stream_end'
   | 'edit_message'
+  // Tool loop (unified vocabulary shared with DARE chat)
+  | 'tool_call_pending'
+  | 'tool_call_args_progress'
+  | 'tool_call_executing'
+  | 'tool_call_result'
+  | 'tool_rounds_capped'
+  | 'context_trace'
   // Socratic Books specific - Learning Progress
   | 'progress_start'
   | 'progress_token'
@@ -159,6 +166,8 @@ export interface ConversationHistoryMessage {
   isEdited?: boolean;
   isRegenerated?: boolean;
   originalMessage?: string | null;
+  /** Tool calls made during this message's turn (camelized by DARE). */
+  toolCalls?: Array<Record<string, unknown>>;
 }
 
 /**

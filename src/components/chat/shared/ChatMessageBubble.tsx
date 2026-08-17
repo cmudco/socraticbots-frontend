@@ -10,7 +10,10 @@ import React, { useState } from 'react';
 
 import { Loader2, Trash2 } from 'lucide-react';
 
+import ToolActivity from '@/components/chat/toolActivity/ToolActivity';
 import { Button } from '@/components/ui/button';
+
+import type { ChatToolCall } from '@/types/toolCalls';
 
 import MessageMarkdown from './MessageMarkdown';
 
@@ -29,6 +32,8 @@ interface ChatMessageBubbleProps {
   roundedClass?: string;
   /** Renders a hover delete action when provided (authenticated chat). */
   onDelete?: (messageId: string) => Promise<void>;
+  /** Tool-loop activity for this message (agentic retrieval etc.). */
+  toolCalls?: ChatToolCall[];
 }
 
 const variantClasses = {
@@ -52,6 +57,7 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
   variant = 'app',
   roundedClass = 'rounded-2xl',
   onDelete,
+  toolCalls,
 }) => {
   const isUser = message.senderType === 'USER';
   const [showActions, setShowActions] = useState(false);
@@ -93,6 +99,8 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
               {isStreaming && <Loader2 className="text-primary h-3 w-3 animate-spin" />}
             </div>
           )}
+
+          {!isUser && toolCalls && toolCalls.length > 0 && <ToolActivity toolCalls={toolCalls} />}
 
           <div className={`${classes.prose} max-w-none ${isStreaming ? 'animate-pulse' : ''}`}>
             <MessageMarkdown

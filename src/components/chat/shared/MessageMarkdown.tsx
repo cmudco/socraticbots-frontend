@@ -131,7 +131,11 @@ const MessageMarkdown: React.FC<MessageMarkdownProps> = ({
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm, remarkMath]}
-      rehypePlugins={[rehypeKatex, rehypeHighlight, rehypeRaw]}
+      // Skip syntax highlighting while streaming (mirrors DARE's renderer);
+      // the final re-render highlights once the message settles.
+      rehypePlugins={
+        streaming ? [rehypeKatex, rehypeRaw] : [rehypeKatex, rehypeHighlight, rehypeRaw]
+      }
       components={{
         table({ children, ...props }) {
           return (
@@ -152,7 +156,7 @@ const MessageMarkdown: React.FC<MessageMarkdownProps> = ({
         p({ children, ...props }) {
           return (
             <p
-              className={`m-0 leading-relaxed break-words whitespace-pre-wrap ${size === 'sm' ? 'text-sm' : ''}`}
+              className={`break-words ${size === 'sm' ? 'text-sm' : ''}`}
               style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
               {...props}
             >
@@ -164,8 +168,10 @@ const MessageMarkdown: React.FC<MessageMarkdownProps> = ({
           return (
             <a
               href={href}
-              className="text-primary hover:text-primary/80 break-all"
+              className="break-all"
               style={{ wordBreak: 'break-all', overflowWrap: 'break-word' }}
+              target="_blank"
+              rel="noopener noreferrer"
               {...props}
             >
               {children}
@@ -183,7 +189,7 @@ const MessageMarkdown: React.FC<MessageMarkdownProps> = ({
           }
           return (
             <code
-              className="not-prose border-border bg-muted text-foreground rounded border px-1 py-0.5 text-sm break-all"
+              className="not-prose border-border bg-muted text-foreground hover:bg-muted/80 rounded-sm border px-1 break-all transition-colors"
               style={{ wordBreak: 'break-all', overflowWrap: 'break-word' }}
               {...props}
             >
@@ -191,41 +197,9 @@ const MessageMarkdown: React.FC<MessageMarkdownProps> = ({
             </code>
           );
         },
-        h1({ children, ...props }) {
-          return (
-            <h1 className="text-foreground mb-2 text-lg font-bold" {...props}>
-              {children}
-            </h1>
-          );
-        },
-        h2({ children, ...props }) {
-          return (
-            <h2 className="text-foreground mb-2 text-base font-semibold" {...props}>
-              {children}
-            </h2>
-          );
-        },
-        h3({ children, ...props }) {
-          return (
-            <h3 className="text-foreground mb-1 text-sm font-medium" {...props}>
-              {children}
-            </h3>
-          );
-        },
-        blockquote({ children, ...props }) {
-          return (
-            <blockquote
-              className="border-border text-muted-foreground my-2 border-l-4 pl-4 italic"
-              {...props}
-            >
-              {children}
-            </blockquote>
-          );
-        },
-        ...listComponents,
       }}
     >
-      {streaming ? `${content}▋` : content}
+      {streaming ? `${content}\u258b` : content}
     </ReactMarkdown>
   );
 };

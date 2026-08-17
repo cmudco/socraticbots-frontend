@@ -13,6 +13,7 @@ import type { DareMessage } from '@/services/conversation.service';
 import { authenticatedSocketService } from '@/services/socket.service';
 
 import type { ConversationHistoryMessage, SocketMessage } from '@/types/socket';
+import { type ChatToolCall, toolCallFromHistory } from '@/types/toolCalls';
 
 import {
   type ChatSocketCoreActions,
@@ -63,7 +64,44 @@ const mapToDareMessage = (
   isEdited: msg.isEdited,
   isRegenerated: msg.isRegenerated,
   originalMessage: msg.originalMessage ?? undefined,
+  toolCalls: Array.isArray(msg.toolCalls) ? msg.toolCalls.map(toolCallFromHistory) : undefined,
 });
+
+/** Map a tool-loop socket event to a partial ChatToolCall for upserting. */
+const mapToolEvent = (data: SocketMessage): Partial<ChatToolCall> | null => {
+  const base = {
+    toolCallId: data.toolCallId as string,
+    toolName: data.toolName as string | undefined,
+    serverSlug: data.serverSlug as string | undefined,
+    origin: data.origin as string | undefined,
+    round: data.round as number | undefined,
+  };
+  switch (data.type) {
+    case 'tool_call_pending':
+      return { ...base, status: 'pending' };
+    case 'tool_call_args_progress':
+      return { toolCallId: base.toolCallId, argsChars: data.argsChars as number };
+    case 'tool_call_executing':
+      return {
+        ...base,
+        status: 'executing',
+        arguments: data.arguments as Record<string, unknown> | undefined,
+      };
+    case 'tool_call_result':
+      return {
+        ...base,
+        status: data.status === 'failed' ? 'failed' : 'completed',
+        error: (data.error as string | null | undefined) ?? undefined,
+        result:
+          (data.dareResult as Record<string, unknown>) ??
+          (data.providerResult as Record<string, unknown>) ??
+          (data.mcpResult as Record<string, unknown>) ??
+          null,
+      };
+    default:
+      return null;
+  }
+};
 
 // ════════════════════════════════════════════════════════════════════════════
 // Store
@@ -86,6 +124,14 @@ export const useWebSocketStore = create<WebSocketStore>()(
         };
       },
       mapMessage: mapToDareMessage,
+      onToolEvent: data => {
+        if (data.messageId == null || !data.toolCallId) return;
+        const partial = mapToolEvent(data);
+        if (!partial) return;
+        import('./conversationStore').then(({ useConversationStore }) => {
+          useConversationStore.getState().upsertToolCall(String(data.messageId), partial);
+        });
+      },
     });
 
     return {

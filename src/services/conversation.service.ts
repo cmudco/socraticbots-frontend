@@ -50,6 +50,7 @@ export interface DareMessage {
   cost?: string | null;
   inputTokens?: number | null;
   outputTokens?: number | null;
+  toolCalls?: import('@/types/toolCalls').ChatToolCall[];
 }
 
 export interface BotConversationResponse {
