@@ -12,6 +12,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import type { DareMessage } from '@/services/conversation.service';
 import { authenticatedSocketService } from '@/services/socket.service';
 
+import type { ContextTrace } from '@/types/contextTrace';
 import type { ConversationHistoryMessage, SocketMessage } from '@/types/socket';
 import { type ChatToolCall, toolCallFromHistory } from '@/types/toolCalls';
 
@@ -65,6 +66,7 @@ const mapToDareMessage = (
   isRegenerated: msg.isRegenerated,
   originalMessage: msg.originalMessage ?? undefined,
   toolCalls: Array.isArray(msg.toolCalls) ? msg.toolCalls.map(toolCallFromHistory) : undefined,
+  contextTrace: (msg.contextTrace as unknown as ContextTrace | null | undefined) ?? undefined,
 });
 
 /** Map a tool-loop socket event to a partial ChatToolCall for upserting. */
@@ -125,11 +127,20 @@ export const useWebSocketStore = create<WebSocketStore>()(
       },
       mapMessage: mapToDareMessage,
       onToolEvent: data => {
-        if (data.messageId == null || !data.toolCallId) return;
-        const partial = mapToolEvent(data);
-        if (!partial) return;
+        if (data.messageId == null) return;
         import('./conversationStore').then(({ useConversationStore }) => {
-          useConversationStore.getState().upsertToolCall(String(data.messageId), partial);
+          const store = useConversationStore.getState();
+          if (data.type === 'context_trace') {
+            if (data.trace) {
+              store.setContextTrace(String(data.messageId), data.trace as ContextTrace);
+            }
+            return;
+          }
+          if (!data.toolCallId) return;
+          const partial = mapToolEvent(data);
+          if (partial) {
+            store.upsertToolCall(String(data.messageId), partial);
+          }
         });
       },
     });

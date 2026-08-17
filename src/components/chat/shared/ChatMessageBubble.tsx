@@ -10,9 +10,11 @@ import React, { useState } from 'react';
 
 import { Loader2, Trash2 } from 'lucide-react';
 
+import ContextTraceChip from '@/components/chat/toolActivity/ContextTraceChip';
 import ToolActivity from '@/components/chat/toolActivity/ToolActivity';
 import { Button } from '@/components/ui/button';
 
+import type { ContextTrace } from '@/types/contextTrace';
 import type { ChatToolCall } from '@/types/toolCalls';
 
 import MessageMarkdown from './MessageMarkdown';
@@ -34,6 +36,8 @@ interface ChatMessageBubbleProps {
   onDelete?: (messageId: string) => Promise<void>;
   /** Tool-loop activity for this message (agentic retrieval etc.). */
   toolCalls?: ChatToolCall[];
+  /** Context-assembly trace for this message's turn. */
+  contextTrace?: ContextTrace;
 }
 
 const variantClasses = {
@@ -61,6 +65,7 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
   roundedClass = 'rounded-2xl',
   onDelete,
   toolCalls,
+  contextTrace,
 }) => {
   const isUser = message.senderType === 'USER';
   const [showActions, setShowActions] = useState(false);
@@ -103,6 +108,7 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
             </div>
           )}
 
+          {!isUser && contextTrace && <ContextTraceChip trace={contextTrace} />}
           {!isUser && toolCalls && toolCalls.length > 0 && <ToolActivity toolCalls={toolCalls} />}
 
           <div

@@ -22,7 +22,8 @@ interface BotMessageListProps {
 const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
   const messages = useMessages();
   const isLoadingBot = useIsLoadingBot();
-  const { isLoadingMessages, isTyping, deleteMessage, toolCallsByMessage } = useConversationStore();
+  const { isLoadingMessages, isTyping, deleteMessage, toolCallsByMessage, contextTraceByMessage } =
+    useConversationStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
   const hasInitialScrolledRef = useRef<boolean>(false);
@@ -178,6 +179,7 @@ const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
                   ? message.toolCalls
                   : toolCallsByMessage[String(message.id)]
               }
+              contextTrace={message.contextTrace ?? contextTraceByMessage[String(message.id)]}
             />
           );
         })}
