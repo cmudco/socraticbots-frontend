@@ -41,13 +41,16 @@ const variantClasses = {
     radius: 'rounded-2xl',
     user: 'from-primary to-primary/80 text-primary-foreground ml-4 bg-gradient-to-r shadow-md',
     assistant: 'border-border bg-background text-foreground mr-4 border shadow-sm',
-    prose: 'prose prose-sm',
+    prose: 'prose prose-sm dark:prose-invert',
+    // User bubbles sit on the primary gradient: always light-on-dark prose
+    proseUser: 'prose prose-sm prose-invert',
   },
   botTheme: {
     radius: '',
     user: 'bg-bot-primary ml-4 text-white shadow-md',
     assistant: 'bg-bot-accent text-bot-fg border-bot-accent mr-4 border shadow-sm',
-    prose: 'prose',
+    prose: 'prose prose-bot',
+    proseUser: 'prose prose-invert',
   },
 };
 
@@ -102,7 +105,9 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
 
           {!isUser && toolCalls && toolCalls.length > 0 && <ToolActivity toolCalls={toolCalls} />}
 
-          <div className={`${classes.prose} max-w-none ${isStreaming ? 'animate-pulse' : ''}`}>
+          <div
+            className={`${isUser ? classes.proseUser : classes.prose} max-w-none ${isStreaming ? 'animate-pulse' : ''}`}
+          >
             <MessageMarkdown
               content={message.message}
               streaming={isStreaming}
