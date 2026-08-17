@@ -51,6 +51,7 @@ export interface DareMessage {
   inputTokens?: number | null;
   outputTokens?: number | null;
   toolCalls?: import('@/types/toolCalls').ChatToolCall[];
+  contextTrace?: import('@/types/contextTrace').ContextTrace;
 }
 
 export interface BotConversationResponse {

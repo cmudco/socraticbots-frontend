@@ -168,6 +168,8 @@ export interface ConversationHistoryMessage {
   originalMessage?: string | null;
   /** Tool calls made during this message's turn (camelized by DARE). */
   toolCalls?: Array<Record<string, unknown>>;
+  /** Context-assembly trace persisted for this message's turn. */
+  contextTrace?: Record<string, unknown> | null;
 }
 
 /**

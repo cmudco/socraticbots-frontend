@@ -8,6 +8,7 @@ import {
 } from '@/services/conversation.service';
 
 import type { Bot } from '@/types/bot';
+import type { ContextTrace } from '@/types/contextTrace';
 import type { ChatToolCall } from '@/types/toolCalls';
 
 import { useWebSocketStore } from './websocketStore';
@@ -42,6 +43,7 @@ export interface ConversationState {
   // Live tool-call activity for the in-flight turn, keyed by message id.
   // Historical messages carry their own toolCalls from the history payload.
   toolCallsByMessage: Record<string, ChatToolCall[]>;
+  contextTraceByMessage: Record<string, ContextTrace>;
 }
 
 export interface ConversationActions {
@@ -61,6 +63,7 @@ export interface ConversationActions {
 
   // Tool-call activity
   upsertToolCall: (messageId: string, toolCall: Partial<ChatToolCall>) => void;
+  setContextTrace: (messageId: string, trace: ContextTrace) => void;
 
   // UI state
   setIsTyping: (isTyping: boolean) => void;
@@ -96,6 +99,7 @@ export const useConversationStore = create<ConversationStore>()(
     lastMessageId: null,
     messageCount: 0,
     toolCallsByMessage: {},
+    contextTraceByMessage: {},
 
     // Actions
     setActiveBot: async (bot: Bot) => {
@@ -297,9 +301,16 @@ export const useConversationStore = create<ConversationStore>()(
         messages: messages,
         messageCount: messages.length,
         lastMessageId: messages.length > 0 ? messages[messages.length - 1].id : null,
-        // History messages carry persisted toolCalls; drop the live buffer
+        // History messages carry persisted toolCalls/traces; drop live buffers
         toolCallsByMessage: {},
+        contextTraceByMessage: {},
       });
+    },
+
+    setContextTrace: (messageId: string, trace: ContextTrace) => {
+      set(state => ({
+        contextTraceByMessage: { ...state.contextTraceByMessage, [String(messageId)]: trace },
+      }));
     },
 
     upsertToolCall: (messageId: string, toolCall: Partial<ChatToolCall>) => {
