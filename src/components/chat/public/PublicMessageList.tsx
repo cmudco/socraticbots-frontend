@@ -10,7 +10,7 @@ import {
 
 import { scrollManager } from '@/utils/scrollManager';
 
-import PublicMessageBubble from './PublicMessageBubble';
+import ChatMessageBubble from '@/components/chat/shared/ChatMessageBubble';
 
 interface PublicMessageListProps {
   className?: string;
@@ -175,10 +175,11 @@ const PublicMessageList: React.FC<PublicMessageListProps> = ({
       <div className="mx-auto max-w-4xl px-4 py-6">
         {messages.map(message => {
           return (
-            <PublicMessageBubble
+            <ChatMessageBubble
               key={message.id}
               message={message}
               isStreaming={message.streaming}
+              variant="botTheme"
               roundedClass={roundedClass}
             />
           );

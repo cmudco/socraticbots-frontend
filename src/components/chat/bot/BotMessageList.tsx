@@ -10,8 +10,9 @@ import {
 
 import { scrollManager } from '@/utils/scrollManager';
 
+import ChatMessageBubble from '@/components/chat/shared/ChatMessageBubble';
+
 import EmptyState from './EmptyState';
-import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 
 interface BotMessageListProps {
@@ -21,7 +22,7 @@ interface BotMessageListProps {
 const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
   const messages = useMessages();
   const isLoadingBot = useIsLoadingBot();
-  const { isLoadingMessages, isTyping } = useConversationStore();
+  const { isLoadingMessages, isTyping, deleteMessage } = useConversationStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
   const hasInitialScrolledRef = useRef<boolean>(false);
@@ -167,7 +168,12 @@ const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
       <div className="mx-auto max-w-4xl px-4 py-6">
         {messages.map(message => {
           return (
-            <MessageBubble key={message.id} message={message} isStreaming={message.streaming} />
+            <ChatMessageBubble
+              key={message.id}
+              message={message}
+              isStreaming={message.streaming}
+              onDelete={deleteMessage}
+            />
           );
         })}
 
