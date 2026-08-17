@@ -290,7 +290,7 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                 </div>
               </div>
 
-              {/* Document Retrieval Mode */}
+              {/* Document Retrieval Mode (mirrors DARE's RAG modes) */}
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex flex-col">
@@ -299,21 +299,24 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                     </label>
                     <p className="text-muted-foreground text-xs">
                       {ragMode === 'agentic'
-                        ? 'The model searches the attached documents on demand'
-                        : 'Relevant document context is pre-loaded on every turn'}
+                        ? 'Autonomous — the model searches the documents in multiple steps'
+                        : ragMode === 'naive'
+                          ? 'Fast — direct vector lookup pre-loaded each turn'
+                          : 'Thorough — analyzed and reranked context pre-loaded each turn'}
                     </p>
                   </div>
                   <Select
-                    value={ragMode === 'agentic' ? 'agentic' : 'advanced'}
-                    onValueChange={value => setRagMode(value as 'advanced' | 'agentic')}
+                    value={ragMode}
+                    onValueChange={value => setRagMode(value as 'naive' | 'advanced' | 'agentic')}
                     disabled={viewOnly}
                   >
                     <SelectTrigger id="ragMode" className="w-40">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="advanced">Classic</SelectItem>
-                      <SelectItem value="agentic">Agentic</SelectItem>
+                      <SelectItem value="naive">Fast</SelectItem>
+                      <SelectItem value="advanced">Thorough</SelectItem>
+                      <SelectItem value="agentic">Autonomous</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -208,7 +208,7 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
           )}
         />
 
-        {/* Document Retrieval Mode */}
+        {/* Document Retrieval Mode (mirrors DARE's RAG modes) */}
         <Controller
           name="ragMode"
           control={control}
@@ -218,20 +218,20 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
                 <Label htmlFor="ragMode">Document Retrieval</Label>
                 <p className="text-muted-foreground text-xs">
                   {field.value === 'agentic'
-                    ? 'The model searches the attached documents on demand'
-                    : 'Relevant document context is pre-loaded on every turn'}
+                    ? 'Autonomous — the model searches the documents in multiple steps'
+                    : field.value === 'naive'
+                      ? 'Fast — direct vector lookup pre-loaded each turn'
+                      : 'Thorough — analyzed and reranked context pre-loaded each turn'}
                 </p>
               </div>
-              <Select
-                value={field.value === 'agentic' ? 'agentic' : 'advanced'}
-                onValueChange={field.onChange}
-              >
+              <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger id="ragMode" className="w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="advanced">Classic</SelectItem>
-                  <SelectItem value="agentic">Agentic</SelectItem>
+                  <SelectItem value="naive">Fast</SelectItem>
+                  <SelectItem value="advanced">Thorough</SelectItem>
+                  <SelectItem value="agentic">Autonomous</SelectItem>
                 </SelectContent>
               </Select>
             </div>
