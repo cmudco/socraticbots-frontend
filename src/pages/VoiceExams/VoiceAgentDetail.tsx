@@ -170,7 +170,7 @@ const VoiceAgentDetail: React.FC = () => {
             The voice agent you're looking for doesn't exist or has been deleted.
           </p>
           <Button onClick={() => navigate('/voice-exams')} className="mt-4">
-            Back to Voice Exams
+            Back to Voice Assignments
           </Button>
         </div>
       </div>
@@ -186,7 +186,7 @@ const VoiceAgentDetail: React.FC = () => {
           className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Voice Exams
+          Back to Voice Assignments
         </button>
         <div className="flex items-start justify-between">
           <div>
@@ -219,7 +219,7 @@ const VoiceAgentDetail: React.FC = () => {
             {canLaunchExam && (
               <Button onClick={() => navigate(`/voice-exams/${agent.id}/exam`)} variant="default">
                 <Play className="mr-2 h-4 w-4" />
-                Take Exam
+                Start Assignment
               </Button>
             )}
             {canEdit &&
@@ -342,7 +342,7 @@ const VoiceAgentDetail: React.FC = () => {
           {agent.examInstructions && (
             <Card>
               <CardHeader>
-                <CardTitle>Exam Instructions</CardTitle>
+                <CardTitle>Assignment Instructions</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground whitespace-pre-wrap">

@@ -25,7 +25,7 @@ export const ProviderSection: React.FC<ProviderSectionProps> = ({ viewOnly = fal
     <Card>
       <CardHeader>
         <CardTitle>Voice Runtime</CardTitle>
-        <CardDescription>Select which provider powers this voice exam</CardDescription>
+        <CardDescription>Select which provider powers this voice assignment</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">

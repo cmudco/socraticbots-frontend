@@ -72,7 +72,7 @@ const ConversationHistory: React.FC = () => {
             <p className="text-muted-foreground mt-1">
               {agent?.name
                 ? `Conversations for "${agent.name}"`
-                : 'View transcripts from voice exam sessions'}
+                : 'View transcripts from voice assignment sessions'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ const ConversationHistory: React.FC = () => {
             <MessageSquare className="text-muted-foreground mx-auto h-12 w-12" />
             <h3 className="text-foreground mt-4 text-lg font-semibold">No conversations yet</h3>
             <p className="text-muted-foreground mt-2">
-              When students complete this voice exam, their conversations will appear here.
+              When students complete this voice assignment, their conversations will appear here.
             </p>
             <Button onClick={() => navigate(`/voice-exams/${agentId}`)} className="mt-4">
               Back to Agent

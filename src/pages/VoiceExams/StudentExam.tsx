@@ -46,12 +46,12 @@ const StudentExam: React.FC = () => {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="text-center">
-          <h1 className="text-foreground text-2xl font-bold">Exam Not Found</h1>
+          <h1 className="text-foreground text-2xl font-bold">Assignment Not Found</h1>
           <p className="text-muted-foreground mt-2">
-            The exam you're looking for doesn't exist or is not available.
+            The assignment you're looking for doesn't exist or is not available.
           </p>
           <Button className="mt-4" onClick={() => navigate('/voice-exams')}>
-            Back to Voice Exams
+            Back to Voice Assignments
           </Button>
         </div>
       </div>
@@ -62,12 +62,12 @@ const StudentExam: React.FC = () => {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="text-center">
-          <h1 className="text-foreground text-2xl font-bold">Exam Not Available</h1>
+          <h1 className="text-foreground text-2xl font-bold">Assignment Not Available</h1>
           <p className="text-muted-foreground mt-2">
-            This exam is currently in draft mode and not available for taking.
+            This assignment is currently in draft mode and not available yet.
           </p>
           <Button className="mt-4" onClick={() => navigate('/voice-exams')}>
-            Back to Voice Exams
+            Back to Voice Assignments
           </Button>
         </div>
       </div>
@@ -79,11 +79,11 @@ const StudentExam: React.FC = () => {
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="border-border bg-card animate-in fade-in zoom-in-95 rounded-xl border p-8 text-center shadow-sm duration-300">
           <CheckCircle className="text-primary mx-auto mb-4 h-16 w-16" />
-          <h1 className="text-foreground mb-2 text-2xl font-bold">Exam Already Completed</h1>
+          <h1 className="text-foreground mb-2 text-2xl font-bold">Assignment Already Completed</h1>
           <p className="text-muted-foreground mb-6">
-            You have reached the maximum number of attempts for this exam.
+            You have reached the maximum number of attempts for this assignment.
           </p>
-          <Button onClick={() => navigate('/voice-exams')}>Back to Voice Exams</Button>
+          <Button onClick={() => navigate('/voice-exams')}>Back to Voice Assignments</Button>
         </div>
       </div>
     );
@@ -94,9 +94,9 @@ const StudentExam: React.FC = () => {
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="border-border bg-card animate-in fade-in zoom-in-95 rounded-xl border p-8 text-center shadow-sm duration-300">
           <CheckCircle className="text-primary mx-auto mb-4 h-16 w-16" />
-          <h1 className="text-foreground mb-2 text-2xl font-bold">Exam Completed!</h1>
+          <h1 className="text-foreground mb-2 text-2xl font-bold">Assignment Completed!</h1>
           <p className="text-muted-foreground mb-6">
-            Thank you for completing the exam. Your responses have been recorded.
+            Thank you for completing the assignment. Your responses have been recorded.
           </p>
           <div className="flex justify-center gap-4">
             {isStaff && (
@@ -104,7 +104,7 @@ const StudentExam: React.FC = () => {
                 Take Again
               </Button>
             )}
-            <Button onClick={() => navigate('/voice-exams')}>Back to Voice Exams</Button>
+            <Button onClick={() => navigate('/voice-exams')}>Back to Voice Assignments</Button>
           </div>
         </div>
       </div>
