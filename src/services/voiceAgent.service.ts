@@ -15,6 +15,7 @@ import {
   VoiceAgentListItem,
   VoiceAgentMembership,
   VoiceAgentUpdateData,
+  VoiceBrainModelsResponse,
   VoiceConversation,
   VoiceConversationListItem,
   VoiceTeamMembership,
@@ -27,6 +28,13 @@ class VoiceAgentService {
   async getVoiceAgents(): Promise<VoiceAgentListItem[]> {
     return baseRequest<VoiceAgentListItem[]>({
       url: 'voice/agents/',
+      method: METHOD.GET,
+    });
+  }
+
+  async getBrainModels(): Promise<VoiceBrainModelsResponse> {
+    return baseRequest<VoiceBrainModelsResponse>({
+      url: 'voice/brain-models/',
       method: METHOD.GET,
     });
   }
