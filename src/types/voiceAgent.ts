@@ -329,7 +329,7 @@ export interface ElevenLabsAgentItem {
 }
 
 /** Mirrors the backend default for VoiceAgent.llm_model. */
-export const DEFAULT_BRAIN_MODEL = 'mistral-large-latest';
+export const DEFAULT_BRAIN_MODEL = 'gemini-3.1-flash-lite';
 
 export interface VoiceBrainModel {
   id: string;
