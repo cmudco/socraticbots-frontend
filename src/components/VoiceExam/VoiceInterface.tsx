@@ -74,14 +74,14 @@ const LIVE_STATE_META: Record<
   { label: string; caption: string; tint: string; iconWrap: string }
 > = {
   speaking: {
-    label: 'Examiner speaking',
+    label: 'Agent speaking',
     caption: 'Listen to the question before replying.',
     tint: 'bg-primary/10',
     iconWrap: 'border-primary/30 bg-primary/10 text-primary',
   },
   thinking: {
     label: 'Preparing response',
-    caption: 'The examiner is considering your answer.',
+    caption: 'The agent is considering your answer.',
     tint: 'bg-muted/60',
     iconWrap: 'border-border bg-background text-foreground/70',
   },
@@ -99,13 +99,13 @@ const LIVE_STATE_META: Record<
   },
   ready: {
     label: 'In session',
-    caption: 'The exam is live — speak when you are ready.',
+    caption: 'The session is live — speak when you are ready.',
     tint: '',
     iconWrap: 'border-border bg-background text-muted-foreground',
   },
   idle: {
     label: 'Not started',
-    caption: 'Start the exam when you are ready.',
+    caption: 'Start when you are ready.',
     tint: '',
     iconWrap: 'border-border bg-background text-muted-foreground',
   },
@@ -583,11 +583,11 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   // phase it is waiting on (LLM text vs TTS audio).
   const effectiveStateMeta =
     liveState === 'thinking' && processingStage === 'tts'
-      ? { ...stateMeta, label: 'Preparing voice', caption: 'The examiner is about to speak.' }
+      ? { ...stateMeta, label: 'Preparing voice', caption: 'The agent is about to speak.' }
       : liveState === 'thinking' && processingStage === 'llm'
         ? {
             ...stateMeta,
-            label: 'Examiner thinking',
+            label: 'Agent thinking',
             caption: 'Working out the next question.',
           }
         : stateMeta;
@@ -664,7 +664,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         activeDeviceIdRef.current = previousDeviceId;
         mic.selectDevice(previousDeviceId);
         setLocalError(
-          'Could not switch to that microphone — the exam is still running on the previous one.'
+          'Could not switch to that microphone — the session is still running on the previous one.'
         );
       }
     })();
@@ -677,7 +677,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         <div className="min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-muted-foreground text-[11px] font-semibold tracking-[0.16em] uppercase">
-              Voice exam
+              Voice assignment
             </span>
             {isMistral && (
               <>
@@ -736,7 +736,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
             <div className="min-w-0">
               <h3 className="text-foreground text-sm font-semibold">Live transcript</h3>
               <p className="text-muted-foreground mt-0.5 text-xs">
-                Your speech streams in live; examiner text appears as the audio plays.
+                Your speech streams in live; agent text appears as the audio plays.
               </p>
             </div>
             {isSessionActive && (agentIsSpeaking || voiceIsListening) && (
@@ -754,7 +754,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
           <div
             ref={transcriptScrollRef}
             onScroll={handleTranscriptScroll}
-            aria-label="Exam transcript"
+            aria-label="Session transcript"
             className="h-[52vh] min-h-90 space-y-4 overflow-y-auto px-4 py-5 sm:px-5 lg:h-[calc(100vh-20rem)] lg:min-h-[26rem]"
           >
             {showTranscriptEmptyState ? (
@@ -768,7 +768,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                   <>
                     <VoiceActivityBars active className="text-chart-2 h-5 w-7" />
                     <p className="text-muted-foreground text-sm">
-                      You&apos;re live — the examiner will greet you in a moment.
+                      You&apos;re live — the agent will greet you in a moment.
                     </p>
                   </>
                 ) : (
@@ -777,7 +777,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                       <Mic className="text-muted-foreground h-5 w-5" />
                     </div>
                     <p className="text-muted-foreground max-w-xs text-sm">
-                      Your conversation will appear here once the exam begins.
+                      Your conversation will appear here once the session begins.
                     </p>
                     {agent.examInstructions && (
                       <div className="bg-background/60 mt-3 w-full max-w-md rounded-lg border p-4 text-left shadow-xs">
@@ -812,7 +812,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                             isUser ? 'text-chart-2' : 'text-primary'
                           )}
                         >
-                          {isUser ? 'You' : 'Examiner'}
+                          {isUser ? 'You' : 'Agent'}
                         </span>
                         <span className="text-muted-foreground/70 text-[10px]">
                           {msg.timestamp.toLocaleTimeString([], {
@@ -844,7 +844,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                 {isProcessingResponse && (
                   <div className="animate-in fade-in slide-in-from-bottom-2 flex flex-col items-start gap-1 duration-300">
                     <span className="text-primary px-1 text-[11px] font-semibold tracking-wider uppercase">
-                      Examiner
+                      Agent
                     </span>
                     <div className="border-border bg-muted/40 flex items-center gap-2.5 rounded-lg rounded-tl-sm border px-4 py-3 shadow-xs">
                       <ThinkingDots className="text-muted-foreground" />
@@ -954,7 +954,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                 disabled={isConnecting || isEndingSession}
                 hint={
                   hasOpenSession
-                    ? 'Changing this switches the live exam over straight away.'
+                    ? 'Changing this switches the live session over straight away.'
                     : 'Plug in a headset and we switch to it for you.'
                 }
               />
@@ -971,7 +971,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                     disabled={isLoading || isConnecting}
                   >
                     {isLoading || isConnecting ? <Loader2 className="animate-spin" /> : <Mic />}
-                    {isLoading ? 'Preparing…' : isConnecting ? 'Starting…' : 'Start exam'}
+                    {isLoading ? 'Preparing…' : isConnecting ? 'Starting…' : 'Start'}
                   </Button>
                   <p className="text-muted-foreground text-center text-[11px]">
                     Your browser will ask for microphone access.
@@ -987,7 +987,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                     disabled={isEndingSession}
                   >
                     {isEndingSession ? <Loader2 className="animate-spin" /> : <Square />}
-                    {isEndingSession ? 'Ending…' : isSessionActive ? 'End exam' : 'Cancel'}
+                    {isEndingSession ? 'Ending…' : isSessionActive ? 'End session' : 'Cancel'}
                   </Button>
                   <p className="text-muted-foreground text-center text-[11px]">
                     {isSessionActive

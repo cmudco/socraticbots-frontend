@@ -41,7 +41,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
   },
   {
     path: '/voice-exams',
-    label: 'Voice Exams',
+    label: 'Voice Assignments',
     icon: Mic,
   },
   {

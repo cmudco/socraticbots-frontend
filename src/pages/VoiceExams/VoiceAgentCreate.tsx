@@ -99,10 +99,12 @@ const VoiceAgentCreate: React.FC = () => {
           className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Voice Exams
+          Back to Voice Assignments
         </button>
         <h1 className="text-foreground text-2xl font-bold">Create Voice Agent</h1>
-        <p className="text-muted-foreground mt-1">Configure a new voice agent for exams</p>
+        <p className="text-muted-foreground mt-1">
+          Configure a new voice agent for homework, reflections, or exams
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

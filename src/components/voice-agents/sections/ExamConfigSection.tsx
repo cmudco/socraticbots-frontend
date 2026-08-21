@@ -17,28 +17,28 @@ export const ExamConfigSection: React.FC<ExamConfigSectionProps> = ({ viewOnly =
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Exam Configuration</CardTitle>
+        <CardTitle>Assignment Configuration</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="examTitle">Exam Title</Label>
+          <Label htmlFor="examTitle">Assignment Title</Label>
           <Input
             id="examTitle"
             value={examTitle}
             onChange={e => updateField('examTitle', e.target.value)}
             disabled={viewOnly}
-            placeholder="e.g., Introduction to Philosophy - Midterm"
+            placeholder="e.g., Introduction to Philosophy - Week 3 Reflection"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="examInstructions">Instructions for Exam Takers</Label>
+          <Label htmlFor="examInstructions">Instructions for Students</Label>
           <Textarea
             id="examInstructions"
             value={examInstructions}
             onChange={e => updateField('examInstructions', e.target.value)}
             disabled={viewOnly}
-            placeholder="Instructions shown to users before starting the exam..."
+            placeholder="Instructions shown to students before starting the assignment..."
             rows={3}
           />
         </div>
