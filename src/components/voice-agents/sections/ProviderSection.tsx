@@ -39,8 +39,8 @@ export const ProviderSection: React.FC<ProviderSectionProps> = ({ viewOnly = fal
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value={VoiceProvider.MistralVoice}>Mistral Voice (preferred)</SelectItem>
               <SelectItem value={VoiceProvider.ElevenLabs}>ElevenLabs</SelectItem>
-              <SelectItem value={VoiceProvider.MistralVoice}>Mistral Voice</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import {
   AgentStatus,
+  DEFAULT_BRAIN_MODEL,
   SpellingPatience,
   TurnEagerness,
   VoiceEagerness,
@@ -52,6 +53,9 @@ export interface VoiceAgentFormState {
   // Mistral-side advanced settings (consumed by the Pipecat runtime).
   voiceEagerness: VoiceEagerness;
   voiceTurnTimeoutSecs: number;
+  // Brain model for the Pipecat runtime. Distinct from the ElevenLabs-only
+  // `llmModel` below, which lives inside conversationConfig.
+  brainModel: string;
 
   // Advanced ElevenLabs Settings - Turn
   turnEagerness: TurnEagerness;
@@ -104,6 +108,7 @@ export interface VoiceAgentFormData {
   maxDurationSeconds: number;
   voiceEagerness: VoiceEagerness;
   voiceTurnTimeoutSecs: number;
+  llmModel: string;
   conversationConfig?: {
     turn: {
       turnEagerness: TurnEagerness;
@@ -146,7 +151,7 @@ const initialFormState = {
   systemPrompt: '',
   firstMessage: '',
   voiceId: '',
-  voiceProvider: VoiceProvider.ElevenLabs,
+  voiceProvider: VoiceProvider.MistralVoice,
   language: 'en',
   temperature: 0.7,
   maxDurationSeconds: 1800,
@@ -154,6 +159,7 @@ const initialFormState = {
   // Mistral advanced (sensible defaults)
   voiceEagerness: VoiceEagerness.Normal,
   voiceTurnTimeoutSecs: 7,
+  brainModel: DEFAULT_BRAIN_MODEL,
 
   // Advanced - Turn
   turnEagerness: TurnEagerness.Normal,
@@ -254,6 +260,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       // Mistral advanced
       voiceEagerness: agent.voiceEagerness ?? VoiceEagerness.Normal,
       voiceTurnTimeoutSecs: agent.voiceTurnTimeoutSecs ?? 7,
+      brainModel: agent.llmModel || DEFAULT_BRAIN_MODEL,
 
       // Advanced - Turn
       turnEagerness: config?.turn?.turnEagerness ?? TurnEagerness.Normal,
@@ -321,6 +328,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       maxDurationSeconds: state.maxDurationSeconds,
       voiceEagerness: state.voiceEagerness,
       voiceTurnTimeoutSecs: state.voiceTurnTimeoutSecs,
+      llmModel: state.brainModel,
     };
 
     // Only include conversationConfig if advanced settings are shown
