@@ -180,6 +180,8 @@ export interface VoiceAgent {
   maxDurationSeconds: number;
   voiceEagerness: VoiceEagerness;
   voiceTurnTimeoutSecs: number;
+  /** Brain model id for the Mistral Voice runtime; '' = runtime default. */
+  llmModel: string;
   examTitle: string;
   examInstructions: string;
   status: AgentStatus;
@@ -219,6 +221,7 @@ export interface VoiceAgentCreateData {
   maxDurationSeconds?: number;
   voiceEagerness?: VoiceEagerness;
   voiceTurnTimeoutSecs?: number;
+  llmModel?: string;
   examTitle?: string;
   examInstructions?: string;
   status?: AgentStatus;
@@ -239,6 +242,7 @@ export interface VoiceAgentUpdateData {
   maxDurationSeconds?: number;
   voiceEagerness?: VoiceEagerness;
   voiceTurnTimeoutSecs?: number;
+  llmModel?: string;
   examTitle?: string;
   examInstructions?: string;
   status?: AgentStatus;
@@ -322,4 +326,16 @@ export interface ElevenLabsAgentItem {
       firstMessage?: string;
     };
   };
+}
+
+export interface VoiceBrainModel {
+  id: string;
+  label: string;
+  provider: string;
+  description: string;
+}
+
+export interface VoiceBrainModelsResponse {
+  models: VoiceBrainModel[];
+  total: number;
 }

@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { useVoiceBrainModels } from '@/hooks/queries/useVoiceAgents';
+
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +17,10 @@ import { Slider } from '@/components/ui/slider';
 
 import { VoiceEagerness, VoiceProvider } from '@/types/voiceAgent';
 
+// Sentinel for the "use the runtime's configured default" option; the store
+// keeps '' for it because Radix Select cannot represent an empty-string item.
+const RUNTIME_DEFAULT_BRAIN = '__runtime_default__';
+
 interface MistralAdvancedSectionProps {
   viewOnly?: boolean;
 }
@@ -27,12 +33,21 @@ interface MistralAdvancedSectionProps {
 export const MistralAdvancedSection: React.FC<MistralAdvancedSectionProps> = ({
   viewOnly = false,
 }) => {
-  const { voiceProvider, voiceEagerness, voiceTurnTimeoutSecs, updateField, updateNumericField } =
-    useVoiceAgentFormStore();
+  const {
+    voiceProvider,
+    voiceEagerness,
+    voiceTurnTimeoutSecs,
+    brainModel,
+    updateField,
+    updateNumericField,
+  } = useVoiceAgentFormStore();
 
   const isMistral = voiceProvider === VoiceProvider.MistralVoice;
+  const { data: brainModels, isLoading: brainModelsLoading } = useVoiceBrainModels(isMistral);
 
   if (!isMistral) return null;
+
+  const knownBrainModel = !brainModel || brainModels?.models.some(model => model.id === brainModel);
 
   return (
     <Card>
@@ -43,6 +58,34 @@ export const MistralAdvancedSection: React.FC<MistralAdvancedSectionProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Label>Brain Model</Label>
+          <Select
+            value={brainModel || RUNTIME_DEFAULT_BRAIN}
+            onValueChange={value =>
+              updateField('brainModel', value === RUNTIME_DEFAULT_BRAIN ? '' : value)
+            }
+            disabled={viewOnly || brainModelsLoading}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={brainModelsLoading ? 'Loading models…' : undefined} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={RUNTIME_DEFAULT_BRAIN}>Runtime default</SelectItem>
+              {brainModels?.models.map(model => (
+                <SelectItem key={model.id} value={model.id}>
+                  {model.label} — {model.provider}
+                </SelectItem>
+              ))}
+              {!knownBrainModel && <SelectItem value={brainModel}>{brainModel}</SelectItem>}
+            </SelectContent>
+          </Select>
+          <p className="text-muted-foreground text-xs">
+            The language model that thinks up the examiner&apos;s replies. If it stalls, the runtime
+            automatically falls back to the next available model.
+          </p>
+        </div>
+
         <div className="space-y-2">
           <Label>Eagerness</Label>
           <Select

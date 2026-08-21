@@ -43,6 +43,7 @@ export const voiceAgentKeys = {
   conversations: () => [...voiceAgentKeys.all, 'conversations'] as const,
   conversation: (id: number) => [...voiceAgentKeys.conversations(), id] as const,
   students: (agentId: number) => [...voiceAgentKeys.all, 'students', agentId] as const,
+  brainModels: () => [...voiceAgentKeys.all, 'brainModels'] as const,
   members: (agentId: number) => [...voiceAgentKeys.all, 'members', agentId] as const,
 };
 
@@ -58,6 +59,21 @@ export const useVoiceAgents = (enabled: boolean = true) => {
     enabled: enabled && isAuthenticated,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+  });
+};
+
+/**
+ * Brain (LLM) models selectable for Mistral Voice agents.
+ */
+export const useVoiceBrainModels = (enabled: boolean = true) => {
+  const isAuthenticated = useIsAuthenticated();
+
+  return useQuery({
+    queryKey: voiceAgentKeys.brainModels(),
+    queryFn: () => voiceAgentService.getBrainModels(),
+    enabled: enabled && isAuthenticated,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   });
 };
 
