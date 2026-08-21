@@ -17,10 +17,6 @@ import { Slider } from '@/components/ui/slider';
 
 import { VoiceEagerness, VoiceProvider } from '@/types/voiceAgent';
 
-// Sentinel for the "use the runtime's configured default" option; the store
-// keeps '' for it because Radix Select cannot represent an empty-string item.
-const RUNTIME_DEFAULT_BRAIN = '__runtime_default__';
-
 interface MistralAdvancedSectionProps {
   viewOnly?: boolean;
 }
@@ -47,7 +43,7 @@ export const MistralAdvancedSection: React.FC<MistralAdvancedSectionProps> = ({
 
   if (!isMistral) return null;
 
-  const knownBrainModel = !brainModel || brainModels?.models.some(model => model.id === brainModel);
+  const knownBrainModel = brainModels?.models.some(model => model.id === brainModel);
 
   return (
     <Card>
@@ -61,17 +57,14 @@ export const MistralAdvancedSection: React.FC<MistralAdvancedSectionProps> = ({
         <div className="space-y-2">
           <Label>Brain Model</Label>
           <Select
-            value={brainModel || RUNTIME_DEFAULT_BRAIN}
-            onValueChange={value =>
-              updateField('brainModel', value === RUNTIME_DEFAULT_BRAIN ? '' : value)
-            }
+            value={brainModel}
+            onValueChange={value => updateField('brainModel', value)}
             disabled={viewOnly || brainModelsLoading}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder={brainModelsLoading ? 'Loading models…' : undefined} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={RUNTIME_DEFAULT_BRAIN}>Runtime default</SelectItem>
               {brainModels?.models.map(model => (
                 <SelectItem key={model.id} value={model.id}>
                   {model.label} — {model.provider}

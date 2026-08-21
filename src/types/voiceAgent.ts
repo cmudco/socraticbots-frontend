@@ -180,7 +180,7 @@ export interface VoiceAgent {
   maxDurationSeconds: number;
   voiceEagerness: VoiceEagerness;
   voiceTurnTimeoutSecs: number;
-  /** Brain model id for the Mistral Voice runtime; '' = runtime default. */
+  /** Brain model id for the Mistral Voice runtime. */
   llmModel: string;
   examTitle: string;
   examInstructions: string;
@@ -327,6 +327,9 @@ export interface ElevenLabsAgentItem {
     };
   };
 }
+
+/** Mirrors the backend default for VoiceAgent.llm_model. */
+export const DEFAULT_BRAIN_MODEL = 'mistral-large-latest';
 
 export interface VoiceBrainModel {
   id: string;
