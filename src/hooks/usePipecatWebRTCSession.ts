@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { captureVoiceError, tagVoiceSession } from '@/lib/sentry';
+
 import {
   PipecatEndControlType,
   PipecatVoiceMessage,
@@ -240,6 +242,7 @@ export const usePipecatWebRTCSession = ({
       sessionWebrtcUrlRef.current = webrtcUrl;
       sessionTokenRef.current = token;
       sessionIdRef.current = webrtcUrl.match(/\/sessions\/([^/]+)\/webrtc/)?.[1] ?? null;
+      tagVoiceSession(sessionIdRef.current);
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -327,6 +330,7 @@ export const usePipecatWebRTCSession = ({
                 return;
               }
               const err = new Error(message.error || 'Pipecat voice runtime error');
+              captureVoiceError(err, { source: 'runtime_message' });
               settleRejected(err);
               onError?.(err);
               return;
@@ -386,6 +390,7 @@ export const usePipecatWebRTCSession = ({
         cleanup();
         setStatus('disconnected');
         const err = error instanceof Error ? error : new Error('Failed to start WebRTC session');
+        captureVoiceError(err, { source: 'start' });
         onError?.(err);
         throw err;
       }
