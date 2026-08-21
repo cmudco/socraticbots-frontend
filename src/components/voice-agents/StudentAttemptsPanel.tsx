@@ -85,7 +85,7 @@ const StudentAttemptsPanel: React.FC<StudentAttemptsPanelProps> = ({ agentId }) 
               Student Attempts
             </CardTitle>
             <CardDescription>
-              View student exam attempts and grant retakes to selected students.
+              View student attempts and grant retakes to selected students.
             </CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
@@ -97,7 +97,7 @@ const StudentAttemptsPanel: React.FC<StudentAttemptsPanelProps> = ({ agentId }) 
       <CardContent className="space-y-4">
         {!students || students.length === 0 ? (
           <p className="text-muted-foreground py-4 text-center text-sm">
-            No students have redeemed access to this exam yet.
+            No students have redeemed access to this assignment yet.
           </p>
         ) : (
           <div className="space-y-2">

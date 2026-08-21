@@ -8,7 +8,7 @@ import { PipecatProcessingStage } from '@/types/pipecat';
 export type ReplyPendingStage = PipecatProcessingStage | 'generic';
 
 export const REPLY_PENDING_LABELS: Record<ReplyPendingStage, string> = {
-  llm: 'Examiner is thinking…',
+  llm: 'Agent is thinking…',
   tts: 'Preparing voice…',
   generic: 'Preparing response…',
 };

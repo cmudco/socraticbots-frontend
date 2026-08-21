@@ -42,7 +42,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
             onChange={e => updateField('name', e.target.value)}
             onBlur={() => setFieldTouched('name', true)}
             disabled={viewOnly}
-            placeholder="e.g., Philosophy Exam Agent"
+            placeholder="e.g., Philosophy Reflection Agent"
             aria-invalid={touched.name && !!errors.name}
           />
           {touched.name && errors.name && <p className="text-destructive text-sm">{errors.name}</p>}
@@ -88,10 +88,10 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
               value={accessCode}
               onChange={e => updateField('accessCode', e.target.value)}
               disabled={viewOnly}
-              placeholder="e.g., EXAM2024 (leave blank for no code)"
+              placeholder="e.g., PHIL2024 (leave blank for no code)"
             />
             <p className="text-muted-foreground text-xs">
-              Students must enter this code to unlock the exam
+              Students must enter this code to unlock the assignment
             </p>
           </div>
         )}

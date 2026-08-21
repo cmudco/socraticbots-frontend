@@ -54,7 +54,7 @@ const RedeemAccessCodeForm: React.FC<RedeemAccessCodeFormProps> = ({
           disabled={redeemCode.isPending || !accessCode.trim()}
           className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-2 disabled:opacity-50"
         >
-          {redeemCode.isPending ? 'Unlocking...' : 'Unlock Exam'}
+          {redeemCode.isPending ? 'Unlocking...' : 'Unlock Assignment'}
         </button>
       </div>
     </div>

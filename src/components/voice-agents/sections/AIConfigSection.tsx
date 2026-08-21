@@ -39,7 +39,7 @@ export const AIConfigSection: React.FC<AIConfigSectionProps> = ({ viewOnly = fal
             onChange={e => updateField('systemPrompt', e.target.value)}
             onBlur={() => setFieldTouched('systemPrompt', true)}
             disabled={viewOnly}
-            placeholder="You are an examiner conducting an oral exam on philosophy. Ask questions about the student's understanding of key concepts..."
+            placeholder="You are a voice agent guiding a student through a philosophy assignment. Ask questions about the student's understanding of key concepts..."
             rows={6}
             className="font-mono text-sm"
             aria-invalid={touched.systemPrompt && !!errors.systemPrompt}
@@ -48,7 +48,7 @@ export const AIConfigSection: React.FC<AIConfigSectionProps> = ({ viewOnly = fal
             <p className="text-destructive text-sm">{errors.systemPrompt}</p>
           )}
           <p className="text-muted-foreground text-xs">
-            Instructions for the AI agent's behavior and exam content
+            Instructions for the AI agent's behavior and assignment content
           </p>
         </div>
 
@@ -59,11 +59,11 @@ export const AIConfigSection: React.FC<AIConfigSectionProps> = ({ viewOnly = fal
             value={firstMessage}
             onChange={e => updateField('firstMessage', e.target.value)}
             disabled={viewOnly}
-            placeholder="Hello! I'll be conducting your exam today. Are you ready to begin?"
+            placeholder="Hello! I'll be guiding you through today's assignment. Are you ready to begin?"
             rows={2}
           />
           <p className="text-muted-foreground text-xs">
-            The agent's opening message when the exam starts
+            The agent's opening message when the session starts
           </p>
         </div>
 

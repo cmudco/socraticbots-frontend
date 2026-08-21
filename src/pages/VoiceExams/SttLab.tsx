@@ -311,7 +311,7 @@ const SttLab = () => {
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">Speech-to-Text Lab</h1>
         <p className="text-muted-foreground text-sm">
-          Isolated mic → runtime → Voxtral. No exam, no AI tutor — just your voice and the
+          Isolated mic → runtime → Voxtral. No assignment, no AI agent — just your voice and the
           transcription engine, with every level, event, and error visible.
         </p>
         <details className="bg-card rounded-lg border">
