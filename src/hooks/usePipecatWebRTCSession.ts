@@ -39,6 +39,12 @@ interface UsePipecatWebRTCSessionOptions {
 }
 
 const ICE_GATHERING_TIMEOUT_MS = 750;
+/** Capture settings every microphone this session opens is held to. */
+const MIC_CONSTRAINTS: MediaTrackConstraints = {
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true,
+};
 const DATA_CHANNEL_OPEN_STATE: RTCDataChannelState = 'open';
 const FAILED_CONNECTION_STATE: RTCPeerConnectionState = 'failed';
 const DISCONNECT_CONNECTION_STATES = new Set<RTCPeerConnectionState>(['closed', 'disconnected']);
@@ -238,9 +244,7 @@ export const usePipecatWebRTCSession = ({
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
+            ...MIC_CONSTRAINTS,
             ...(audioDeviceId ? { deviceId: { exact: audioDeviceId } } : {}),
           },
         });
@@ -400,6 +404,45 @@ export const usePipecatWebRTCSession = ({
     ]
   );
 
+  /**
+   * Point the live session at a different microphone without reconnecting.
+   *
+   * The new track replaces the old one on the existing sender, so the
+   * transceiver — and therefore the runtime's inbound track and its STT
+   * socket — is untouched; the swap costs a brief gap in audio, not a
+   * renegotiation. Called with no session open it is a no-op: the next
+   * startSession picks the device up through audioDeviceId.
+   */
+  const switchAudioDevice = useCallback(async (audioDeviceId?: string): Promise<void> => {
+    const peerConnection = peerConnectionRef.current;
+    if (!peerConnection) return;
+    const sender = peerConnection.getSenders().find(candidate => candidate.track?.kind === 'audio');
+    if (!sender) return;
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        ...MIC_CONSTRAINTS,
+        ...(audioDeviceId ? { deviceId: { exact: audioDeviceId } } : {}),
+      },
+    });
+    const track = stream.getAudioTracks()[0];
+    if (!track) {
+      stream.getTracks().forEach(candidate => candidate.stop());
+      throw new Error('Selected microphone provided no audio track');
+    }
+
+    try {
+      await sender.replaceTrack(track);
+    } catch (error) {
+      stream.getTracks().forEach(candidate => candidate.stop());
+      throw error instanceof Error ? error : new Error('Failed to switch microphone');
+    }
+
+    // Only release the previous microphone once the new one is carrying audio.
+    mediaStreamRef.current?.getTracks().forEach(candidate => candidate.stop());
+    mediaStreamRef.current = stream;
+  }, []);
+
   const endSession = useCallback(
     async (reason = 'client_ended', controlType: PipecatEndControlType = 'end'): Promise<void> => {
       setStatus('disconnecting');
@@ -419,5 +462,6 @@ export const usePipecatWebRTCSession = ({
     isListening,
     startSession,
     endSession,
+    switchAudioDevice,
   };
 };

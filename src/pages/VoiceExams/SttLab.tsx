@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Loader2, Mic, Square } from 'lucide-react';
 
+import { useMicrophoneDevices } from '@/hooks/useMicrophoneDevices';
 import { usePipecatWebRTCSession } from '@/hooks/usePipecatWebRTCSession';
 
 import { voiceAgentService } from '@/services/voiceAgent.service';
 
+import MicrophoneSelect from '@/components/VoiceExam/MicrophoneSelect';
 import { Button } from '@/components/ui/button';
 
 import { PipecatVoiceMessage } from '@/types/pipecat';
@@ -47,39 +49,6 @@ interface ServerLevels {
 const MAX_CONSOLE_ENTRIES = 400;
 
 const now = () => new Date().toLocaleTimeString(undefined, { hour12: false });
-
-/** Enumerate audio inputs; labels require mic permission, so ask once. */
-const useMicrophones = () => {
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [selectedId, setSelectedId] = useState<string>('');
-  const [permission, setPermission] = useState<'pending' | 'granted' | 'denied'>('pending');
-
-  const refresh = useCallback(async () => {
-    const all = await navigator.mediaDevices.enumerateDevices();
-    setDevices(all.filter(device => device.kind === 'audioinput' && device.deviceId));
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop());
-        if (!cancelled) setPermission('granted');
-      } catch {
-        if (!cancelled) setPermission('denied');
-      }
-      if (!cancelled) await refresh();
-    })();
-    navigator.mediaDevices.addEventListener('devicechange', refresh);
-    return () => {
-      cancelled = true;
-      navigator.mediaDevices.removeEventListener('devicechange', refresh);
-    };
-  }, [refresh]);
-
-  return { devices, selectedId, setSelectedId, permission };
-};
 
 /** Live level of the selected mic as the browser captures it (pre-network). */
 const useLocalMicLevel = (deviceId: string, enabled: boolean) => {
@@ -181,7 +150,10 @@ const LevelMeter = ({
 );
 
 const SttLab = () => {
-  const { devices, selectedId, setSelectedId, permission } = useMicrophones();
+  // The lab exists to be pointed at a microphone, so asking for access up
+  // front (and getting readable device names) is the whole point here.
+  const mic = useMicrophoneDevices({ probeOnMount: true });
+  const { selectedId, permission } = mic;
   const [serverLevels, setServerLevels] = useState<ServerLevels | null>(null);
   const [labConfig, setLabConfig] = useState<Record<string, unknown> | null>(null);
   const [vadSpeaking, setVadSpeaking] = useState(false);
@@ -190,6 +162,8 @@ const SttLab = () => {
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const consoleEndRef = useRef<HTMLDivElement | null>(null);
+  /** Device the live session is capturing from; null when not connected. */
+  const activeDeviceIdRef = useRef<string | null>(null);
 
   const log = useCallback((kind: ConsoleEntry['kind'], text: string) => {
     setConsoleEntries(previous =>
@@ -258,7 +232,7 @@ const SttLab = () => {
     [log]
   );
 
-  const { status, startSession, endSession } = usePipecatWebRTCSession({
+  const { status, startSession, endSession, switchAudioDevice } = usePipecatWebRTCSession({
     onMessage: handleMessage,
     onError: error => log('error', error.message),
     onDisconnect: () => log('info', 'session disconnected'),
@@ -280,6 +254,7 @@ const SttLab = () => {
         throw new Error('Lab session response is missing webrtcUrl/token');
       }
       log('info', `lab session ${session.sessionId ?? '?'} — connecting`);
+      activeDeviceIdRef.current = selectedId;
       await startSession({
         webrtcUrl: session.webrtcUrl,
         token: session.token,
@@ -288,6 +263,7 @@ const SttLab = () => {
       });
       log('info', 'connected — speak whenever you like');
     } catch (error) {
+      activeDeviceIdRef.current = null;
       const messageText = error instanceof Error ? error.message : 'Failed to start lab session';
       setStartError(messageText);
       log('error', messageText);
@@ -297,8 +273,28 @@ const SttLab = () => {
   }, [log, selectedId, startSession]);
 
   const disconnect = useCallback(() => {
+    activeDeviceIdRef.current = null;
     void endSession('end');
   }, [endSession]);
+
+  // Swapping microphones mid-run is how you A/B two of them against the same
+  // meters, so the lab hot-swaps instead of forcing a reconnect.
+  useEffect(() => {
+    if (!live) return;
+    const previousDeviceId = activeDeviceIdRef.current;
+    if (previousDeviceId === null || previousDeviceId === selectedId) return;
+    activeDeviceIdRef.current = selectedId;
+    void (async () => {
+      try {
+        await switchAudioDevice(selectedId || undefined);
+        log('info', `microphone switched to ${selectedId || 'system default'}`);
+      } catch (error) {
+        activeDeviceIdRef.current = previousDeviceId;
+        mic.selectDevice(previousDeviceId);
+        log('error', `microphone switch failed: ${(error as Error).message}`);
+      }
+    })();
+  }, [live, log, mic, selectedId, switchAudioDevice]);
 
   useEffect(() => {
     consoleEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -349,30 +345,16 @@ const SttLab = () => {
       </header>
 
       <section className="bg-card flex flex-wrap items-end gap-4 rounded-xl border p-4">
-        <div className="flex min-w-64 flex-1 flex-col gap-1">
-          <label htmlFor="stt-lab-mic" className="text-sm font-medium">
-            Microphone
-          </label>
-          <select
-            id="stt-lab-mic"
-            className="border-input bg-background h-9 rounded-md border px-3 text-sm"
-            value={selectedId}
-            onChange={event => setSelectedId(event.target.value)}
-            disabled={live || starting}
-          >
-            <option value="">System default</option>
-            {devices.map(device => (
-              <option key={device.deviceId} value={device.deviceId}>
-                {device.label || `Microphone ${device.deviceId.slice(0, 6)}`}
-              </option>
-            ))}
-          </select>
-          {permission === 'denied' && (
-            <p className="text-destructive text-xs">
-              Microphone permission denied — allow mic access in the browser and reload.
-            </p>
-          )}
-        </div>
+        <MicrophoneSelect
+          mic={mic}
+          disabled={starting}
+          hint={
+            live
+              ? 'Switching mid-run swaps the mic without dropping the session.'
+              : 'Plug in a headset and the lab switches to it for you.'
+          }
+          className="min-w-64 flex-1"
+        />
         {live ? (
           <Button variant="destructive" onClick={disconnect}>
             <Square className="size-4" /> Stop session

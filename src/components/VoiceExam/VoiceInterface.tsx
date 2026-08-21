@@ -14,12 +14,14 @@ import {
   useGetSignedUrl,
   useStartConversation,
 } from '@/hooks/queries/useVoiceAgents';
+import { useMicrophoneDevices } from '@/hooks/useMicrophoneDevices';
 import { usePipecatWebRTCSession } from '@/hooks/usePipecatWebRTCSession';
 
 import { cn } from '@/lib/utils';
 
 import { formatTimeInCall } from '@/utils/formatters';
 
+import MicrophoneSelect from '@/components/VoiceExam/MicrophoneSelect';
 import ReplyLatencyBreakdown from '@/components/VoiceExam/ReplyLatencyBreakdown';
 import { ThinkingDots, VoiceActivityBars } from '@/components/VoiceExam/indicators';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +50,24 @@ interface EndSessionOptions {
 }
 
 type LiveState = 'speaking' | 'thinking' | 'listening' | 'connecting' | 'ready' | 'idle';
+
+interface ElevenLabsInputFormat {
+  format: 'pcm' | 'ulaw';
+  sampleRate: number;
+}
+
+/**
+ * ElevenLabs reports the negotiated capture format as e.g. "pcm_16000". Its
+ * mid-call device switch rebuilds the input at whatever format we hand it, so
+ * this has to be the live value, not a guess.
+ */
+const ELEVENLABS_DEFAULT_INPUT_FORMAT: ElevenLabsInputFormat = { format: 'pcm', sampleRate: 16000 };
+
+const parseElevenLabsInputFormat = (value?: string): ElevenLabsInputFormat | null => {
+  const match = /^(pcm|ulaw)_(\d+)$/.exec(value ?? '');
+  if (!match) return null;
+  return { format: match[1] as 'pcm' | 'ulaw', sampleRate: Number(match[2]) };
+};
 
 const LIVE_STATE_META: Record<
   LiveState,
@@ -119,8 +139,16 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const handleEndRef = useRef<
     ((endedReason?: string, options?: EndSessionOptions) => Promise<void>) | null
   >(null);
+  const elevenLabsInputFormatRef = useRef<ElevenLabsInputFormat>(ELEVENLABS_DEFAULT_INPUT_FORMAT);
+  /** Device the live session is actually capturing from; null when idle. */
+  const activeDeviceIdRef = useRef<string | null>(null);
 
   const maxDuration = agent.maxDurationSeconds;
+
+  // Never prompts on mount: the exam only touches the microphone once the
+  // student's eligibility is confirmed. Where access was granted before, the
+  // device names are readable straight away.
+  const mic = useMicrophoneDevices();
 
   // TanStack Query mutations
   const getSignedUrlMutation = useGetSignedUrl();
@@ -145,6 +173,10 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const conversation = useConversation({
     onConnect: () => {
       setLocalError(null);
+    },
+    onConversationMetadata: metadata => {
+      const parsed = parseElevenLabsInputFormat(metadata?.user_input_audio_format);
+      if (parsed) elevenLabsInputFormatRef.current = parsed;
     },
     onDisconnect: () => {
       // Connection ended
@@ -268,6 +300,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     isListening: pipecatWebRTCIsListening,
     startSession: startPipecatWebRTCSession,
     endSession: endPipecatWebRTCSession,
+    switchAudioDevice: switchPipecatAudioDevice,
   } = usePipecatWebRTCSession({
     onConnect: () => {
       setLocalError(null);
@@ -346,11 +379,16 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         isMistralSessionActiveRef.current = true;
         setActiveConversationId(signedUrlResult.sessionId);
         if (signedUrlResult.webrtcUrl) {
+          activeDeviceIdRef.current = mic.selectedId;
           await startPipecatWebRTCSession({
             webrtcUrl: signedUrlResult.webrtcUrl,
             token: signedUrlResult.token,
             iceServers: signedUrlResult.iceServers,
+            audioDeviceId: mic.selectedId || undefined,
           });
+          // Permission has just been granted at the latest, so device labels
+          // are readable now even if they were not when the page loaded.
+          void mic.refresh();
           return;
         } else {
           setLocalError('Failed to get Mistral WebRTC session details');
@@ -364,12 +402,17 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
 
       // Only request microphone after confirming eligibility
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: mic.selectedId ? { deviceId: { exact: mic.selectedId } } : true,
+      });
       mediaStreamRef.current = stream;
+      void mic.refresh();
 
       // Start ElevenLabs session with signed URL
+      activeDeviceIdRef.current = mic.selectedId;
       const conversationIdResult = await conversation.startSession({
         signedUrl: signedUrlResult.signedUrl,
+        inputDeviceId: mic.selectedId || undefined,
       });
 
       if (conversationIdResult) {
@@ -395,6 +438,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
       isMistralSessionActiveRef.current = false;
       setActiveConversationId(null);
+      activeDeviceIdRef.current = null;
       stopMicrophone();
       const message = err instanceof Error ? err.message : 'Failed to start session';
       // Check if this is an "already attempted" error from the backend
@@ -412,6 +456,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     cancelConversationMutation,
     conversation,
     getSignedUrlMutation,
+    mic,
     onAlreadyAttempted,
     setActiveConversationId,
     startPipecatWebRTCSession,
@@ -434,6 +479,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
       isEndingRef.current = true;
       setIsEnding(true);
+      activeDeviceIdRef.current = null;
       try {
         stopTimer();
         if (isMistral) {
@@ -586,6 +632,43 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
             pulse: false,
           };
   const showTranscriptEmptyState = messages.length === 0 && !isProcessingResponse;
+
+  // Carry a microphone change into the live session — whether the student
+  // picked it or the hardware followed a plug-in. The session already opened on
+  // activeDeviceIdRef's device, so only a real difference triggers a swap.
+  useEffect(() => {
+    if (!hasOpenSession) return;
+    const previousDeviceId = activeDeviceIdRef.current;
+    if (previousDeviceId === null || previousDeviceId === mic.selectedId) return;
+
+    const deviceId = mic.selectedId;
+    activeDeviceIdRef.current = deviceId;
+
+    void (async () => {
+      try {
+        if (isMistral) {
+          await switchPipecatAudioDevice(deviceId || undefined);
+        } else {
+          const { format, sampleRate } = elevenLabsInputFormatRef.current;
+          await conversation.changeInputDevice({
+            format,
+            sampleRate,
+            inputDeviceId: deviceId || undefined,
+          });
+        }
+        setLocalError(null);
+      } catch (error) {
+        console.error('Failed to switch microphone mid-session:', error);
+        // Put the picker back on the microphone that is actually carrying the
+        // exam, so what is shown and what is recorded never disagree.
+        activeDeviceIdRef.current = previousDeviceId;
+        mic.selectDevice(previousDeviceId);
+        setLocalError(
+          'Could not switch to that microphone — the exam is still running on the previous one.'
+        );
+      }
+    })();
+  }, [conversation, hasOpenSession, isMistral, mic, switchPipecatAudioDevice]);
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -862,6 +945,19 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                   />
                 </div>
               )}
+            </div>
+
+            {/* Microphone */}
+            <div className="border-b px-5 py-4">
+              <MicrophoneSelect
+                mic={mic}
+                disabled={isConnecting || isEndingSession}
+                hint={
+                  hasOpenSession
+                    ? 'Changing this switches the live exam over straight away.'
+                    : 'Plug in a headset and we switch to it for you.'
+                }
+              />
             </div>
 
             {/* Controls */}
