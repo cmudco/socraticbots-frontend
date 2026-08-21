@@ -70,6 +70,13 @@ class VoiceAgentService {
     });
   }
 
+  async startSttLabSession(): Promise<SignedUrlResponse> {
+    return baseRequest<SignedUrlResponse>({
+      url: 'voice/lab/session/',
+      method: METHOD.POST,
+    });
+  }
+
   async startConversation(agentId: number, conversationId: string): Promise<VoiceConversation> {
     return baseRequest<VoiceConversation>({
       url: `voice/agents/${agentId}/start_conversation/`,
@@ -83,6 +90,18 @@ class VoiceAgentService {
       url: `voice/agents/${agentId}/end_conversation/`,
       method: METHOD.POST,
       data: { conversationId },
+    });
+  }
+
+  async cancelConversation(
+    agentId: number,
+    conversationId: string,
+    endedReason: string
+  ): Promise<VoiceConversation> {
+    return baseRequest<VoiceConversation>({
+      url: `voice/agents/${agentId}/cancel_conversation/`,
+      method: METHOD.POST,
+      data: { conversationId, endedReason },
     });
   }
 

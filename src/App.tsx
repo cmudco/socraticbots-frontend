@@ -20,6 +20,7 @@ import Settings from './pages/Settings';
 import VoiceExamsList from './pages/VoiceExams';
 import ConversationDetail from './pages/VoiceExams/ConversationDetail';
 import ConversationHistory from './pages/VoiceExams/ConversationHistory';
+import SttLab from './pages/VoiceExams/SttLab';
 import StudentExam from './pages/VoiceExams/StudentExam';
 import VoiceAgentCreate from './pages/VoiceExams/VoiceAgentCreate';
 import VoiceAgentDetail from './pages/VoiceExams/VoiceAgentDetail';
@@ -61,6 +62,7 @@ const App: React.FC = () => {
             <Route path="chat" element={<Chat />} />
             <Route path="chat/:botId" element={<Chat />} />
             <Route path="voice-exams" element={<VoiceExamsList />} />
+            <Route path="voice-exams/stt-lab" element={<SttLab />} />
             <Route path="voice-exams/create" element={<VoiceAgentCreate />} />
             <Route path="voice-exams/:agentId/conversations" element={<ConversationHistory />} />
             <Route path="voice-exams/:agentId/conversations/:id" element={<ConversationDetail />} />
@@ -68,7 +70,7 @@ const App: React.FC = () => {
             <Route path="voice-exams/:id/exam" element={<StudentExam />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

@@ -1,6 +1,6 @@
 /**
  * Create Voice Agent page.
- * Form for creating a new ElevenLabs voice agent.
+ * Form for creating a new voice agent.
  */
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -18,6 +18,8 @@ import {
   AdvancedSettingsSection,
   BasicInfoSection,
   ExamConfigSection,
+  MistralAdvancedSection,
+  ProviderSection,
 } from '@/components/voice-agents/sections';
 
 const VoiceAgentCreate: React.FC = () => {
@@ -25,6 +27,8 @@ const VoiceAgentCreate: React.FC = () => {
   const user = useUser();
   const createAgent = useCreateVoiceAgent();
   const { data: myTeams } = useMyTeams();
+  const canCreate =
+    user?.isCreator || user?.hasSupervisorAccessForVoiceAgent || user?.isVoiceTeamManager || false;
 
   const {
     initNewAgent,
@@ -52,12 +56,12 @@ const VoiceAgentCreate: React.FC = () => {
     }
   }, [myTeams, team, updateField]);
 
-  // Redirect if not a supervisor or voice team manager
+  // Redirect if the account cannot configure voice agents.
   useEffect(() => {
-    if (user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager) {
+    if (user && !canCreate) {
       navigate('/voice-exams');
     }
-  }, [user, navigate]);
+  }, [user, canCreate, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +86,7 @@ const VoiceAgentCreate: React.FC = () => {
     }
   };
 
-  if (user && !user.hasSupervisorAccessForVoiceAgent && !user.isVoiceTeamManager) {
+  if (user && !canCreate) {
     return null;
   }
 
@@ -98,15 +102,15 @@ const VoiceAgentCreate: React.FC = () => {
           Back to Voice Exams
         </button>
         <h1 className="text-foreground text-2xl font-bold">Create Voice Agent</h1>
-        <p className="text-muted-foreground mt-1">
-          Configure a new ElevenLabs voice agent for exams
-        </p>
+        <p className="text-muted-foreground mt-1">Configure a new voice agent for exams</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <ProviderSection />
         <BasicInfoSection showAccessCode />
         <ExamConfigSection />
         <AIConfigSection />
+        <MistralAdvancedSection />
         <AdvancedSettingsSection collapsible />
 
         {/* Submit Button */}

@@ -11,6 +11,10 @@ export const useUserInfo = () => {
     retry: () => {
       return false;
     },
+    // Without this, an unauthenticated visitor on the landing page loops forever:
+    // the errored query refetches whenever a component mounts an observer,
+    // flipping ProtectedRoute between loading and error states
+    retryOnMount: false,
     refetchOnWindowFocus: true, // Refresh when user comes back
   });
 };

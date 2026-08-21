@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 
-import { SpellingPatience, TurnEagerness } from '@/types/voiceAgent';
+import { SpellingPatience, TurnEagerness, VoiceProvider } from '@/types/voiceAgent';
 
 interface AdvancedSettingsSectionProps {
   viewOnly?: boolean;
@@ -31,6 +31,7 @@ export const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = (
 }) => {
   const {
     showAdvanced,
+    voiceProvider,
     toggleAdvanced,
     setShowAdvanced,
     turnEagerness,
@@ -50,6 +51,10 @@ export const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = (
       setShowAdvanced(true);
     }
   }, [defaultOpen, setShowAdvanced, showAdvanced]);
+
+  if (voiceProvider !== VoiceProvider.ElevenLabs) {
+    return null;
+  }
 
   const content = (
     <div className="space-y-6">
