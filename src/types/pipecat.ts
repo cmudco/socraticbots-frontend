@@ -31,6 +31,8 @@ export interface PipecatVoiceMessage {
   error?: string;
   fatal?: boolean;
   isFatal?: boolean;
+  /** RTVI-shaped errors nest the payload under `data`. */
+  data?: { error?: string; fatal?: boolean };
   sourceWavName?: string;
   webrtcWavName?: string;
   sourceSampleRate?: number;
