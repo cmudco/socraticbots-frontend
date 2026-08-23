@@ -62,3 +62,9 @@ export interface PaginatedNotificationResponse {
   previous: string | null;
   results: Notification[];
 }
+
+export interface GetNotificationsParams {
+  status?: NotificationStatus;
+  excludeExpired?: boolean;
+  includeRead?: boolean;
+}

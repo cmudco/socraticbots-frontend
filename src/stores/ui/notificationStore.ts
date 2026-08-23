@@ -34,7 +34,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await notificationService.getNotifications();
+      const response = await notificationService.getNotifications({ includeRead: true });
       const notifications = response.results || [];
 
       // Filter panel notifications and count unread
