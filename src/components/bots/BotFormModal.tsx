@@ -20,6 +20,7 @@ import {
 
 import { Bot as BotType } from '@/types/bot';
 
+import BotFormTabs from './BotFormTabs';
 import BotBasicInfoTab from './tabs/BotBasicInfoTab';
 import BotDeploymentTab from './tabs/BotDeploymentTab';
 import BotFilesTab from './tabs/BotFilesTab';
@@ -374,24 +375,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         )}
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-shrink-0 border-b px-6">
-            <div className="bg-muted flex rounded-md p-1">
-              {tabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 rounded-sm px-3 py-2 text-sm font-medium transition-all ${
-                    activeTab === tab.id
-                      ? 'bg-background text-primary shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
+          <BotFormTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
           <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
         </div>
 
