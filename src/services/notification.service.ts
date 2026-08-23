@@ -6,15 +6,11 @@ import { METHOD } from '@/constants/requests';
 import { baseRequest } from '@/utils/baseRequest';
 
 import type {
+  GetNotificationsParams,
   Notification,
   NotificationStats,
   PaginatedNotificationResponse,
 } from '@/types/notification';
-
-interface GetNotificationsParams {
-  status?: string;
-  exclude_expired?: boolean;
-}
 
 class NotificationService {
   /**
@@ -23,8 +19,11 @@ class NotificationService {
   async getNotifications(params?: GetNotificationsParams): Promise<PaginatedNotificationResponse> {
     const queryParams = new URLSearchParams();
     if (params?.status) queryParams.append('status', params.status);
-    if (params?.exclude_expired !== undefined) {
-      queryParams.append('exclude_expired', params.exclude_expired.toString());
+    if (params?.excludeExpired !== undefined) {
+      queryParams.append('exclude_expired', params.excludeExpired.toString());
+    }
+    if (params?.includeRead !== undefined) {
+      queryParams.append('include_read', params.includeRead.toString());
     }
 
     const url = `users/notifications/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;

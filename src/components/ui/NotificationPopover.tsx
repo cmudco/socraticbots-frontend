@@ -2,7 +2,7 @@
  * NotificationPopover - Notification bell with dropdown popover
  * Adapted from DARE's NotificationPopover with Zustand instead of Redux
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { formatDistanceToNow } from 'date-fns';
 import { AlertCircle, AlertTriangle, Bell, Check, Info, Trash2 } from 'lucide-react';
@@ -41,6 +41,7 @@ interface NotificationPopoverProps {
 }
 
 const NotificationPopover: React.FC<NotificationPopoverProps> = ({ className }) => {
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const {
     notifications,
     unreadCount,
@@ -55,6 +56,11 @@ const NotificationPopover: React.FC<NotificationPopoverProps> = ({ className }) 
   const panelNotifications = notifications.filter(
     notification => notification.deliveryType === NotificationDeliveryType.PANEL
   );
+  const visiblePanelNotifications = showUnreadOnly
+    ? panelNotifications.filter(
+        notification => notification.effectiveStatus === NotificationStatus.UNREAD
+      )
+    : panelNotifications;
 
   // Fetch notifications on mount
   useEffect(() => {
@@ -105,19 +111,21 @@ const NotificationPopover: React.FC<NotificationPopoverProps> = ({ className }) 
           <span className="sr-only">Notifications</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      <PopoverContent className="w-[min(34rem,calc(100vw-2rem))] p-0" align="end">
         <div className="flex items-center justify-between p-4 pb-2">
           <h3 className="text-sm font-semibold">Notifications</h3>
           {panelNotifications.length > 0 && (
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleMarkAllAsRead}
-                className="text-muted-foreground hover:text-foreground h-7 px-2 text-xs"
-              >
-                Mark all read
-              </Button>
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleMarkAllAsRead}
+                  className="text-muted-foreground hover:text-foreground h-7 px-2 text-xs"
+                >
+                  Mark all read
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -130,23 +138,46 @@ const NotificationPopover: React.FC<NotificationPopoverProps> = ({ className }) 
           )}
         </div>
 
+        <div role="group" className="flex gap-1 px-4 pb-3" aria-label="Filter notifications">
+          <Button
+            variant={showUnreadOnly ? 'ghost' : 'secondary'}
+            size="sm"
+            className="h-7 px-3 text-xs"
+            aria-pressed={!showUnreadOnly}
+            onClick={() => setShowUnreadOnly(false)}
+          >
+            All
+          </Button>
+          <Button
+            variant={showUnreadOnly ? 'secondary' : 'ghost'}
+            size="sm"
+            className="h-7 px-3 text-xs"
+            aria-pressed={showUnreadOnly}
+            onClick={() => setShowUnreadOnly(true)}
+          >
+            Unread
+          </Button>
+        </div>
+
         <div className="border-t" />
 
-        <div className="max-h-80 overflow-y-auto">
+        <div className="h-[min(29rem,60vh)] overflow-y-auto">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="border-primary h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
               <p className="text-muted-foreground mt-2 text-sm">Loading...</p>
             </div>
-          ) : panelNotifications.length === 0 ? (
+          ) : visiblePanelNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bell className="text-muted-foreground/50 mb-2 h-8 w-8" />
-              <p className="text-muted-foreground text-sm">No notifications</p>
+              <p className="text-muted-foreground text-sm">
+                {showUnreadOnly ? 'No unread notifications' : 'No notifications'}
+              </p>
               <p className="text-muted-foreground/70 mt-1 text-xs">You're all caught up!</p>
             </div>
           ) : (
             <div className="py-1">
-              {panelNotifications.map((notification, index) => (
+              {visiblePanelNotifications.map((notification, index) => (
                 <div
                   key={notification.id}
                   className={cn(
@@ -173,8 +204,8 @@ const NotificationPopover: React.FC<NotificationPopoverProps> = ({ className }) 
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <p className="line-clamp-1 text-sm leading-tight font-medium">
+                      <div className="mb-1 flex items-start justify-between gap-2">
+                        <p className="text-sm leading-5 font-medium break-words">
                           {notification.title}
                         </p>
                         {notification.effectiveStatus === NotificationStatus.UNREAD && (
@@ -190,7 +221,7 @@ const NotificationPopover: React.FC<NotificationPopoverProps> = ({ className }) 
                       </div>
 
                       {notification.message !== notification.title && (
-                        <p className="text-muted-foreground mb-2 line-clamp-2 text-xs">
+                        <p className="text-muted-foreground mb-2 text-sm leading-5 break-words whitespace-pre-wrap">
                           {notification.message}
                         </p>
                       )}
@@ -205,7 +236,9 @@ const NotificationPopover: React.FC<NotificationPopoverProps> = ({ className }) 
                     </div>
                   </div>
 
-                  {index < panelNotifications.length - 1 && <div className="mt-3 border-t" />}
+                  {index < visiblePanelNotifications.length - 1 && (
+                    <div className="mt-3 border-t" />
+                  )}
                 </div>
               ))}
             </div>
