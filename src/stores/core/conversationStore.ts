@@ -172,6 +172,25 @@ export const useConversationStore = create<ConversationStore>()(
 
       try {
         set({ inputMessage: '', isTyping: true });
+        get().addMessage({
+          id: `pending-${crypto.randomUUID()}`,
+          message,
+          senderType: 'USER',
+          senderName: '',
+          isSender: true,
+          date: new Date().toISOString(),
+          streaming: false,
+        });
+        websocketStore.setError(null);
+
+        const selectedModelId = currentBot?.modelPreference?.chatModelDareId;
+        if (!selectedModelId) {
+          websocketStore.setError(
+            'This bot does not have an AI model selected. Please ask the bot owner to choose a model.'
+          );
+          set({ isTyping: false });
+          return;
+        }
 
         const payload: Record<string, unknown> = {
           message: message,
@@ -189,7 +208,7 @@ export const useConversationStore = create<ConversationStore>()(
           //
           // `progress_llm_id` is the SB-specific tracker field; DARE
           // accepts the same opaque-string contract on this one.
-          payload.model_id = currentBot.modelPreference?.chatModelDareId;
+          payload.model_id = selectedModelId;
           payload.embedding_ids = currentBot.dareFileIds || [];
           payload.file_owner_id = currentBot.createdByDareId;
           payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
@@ -248,7 +267,7 @@ export const useConversationStore = create<ConversationStore>()(
           newMessages[index] = { ...newMessages[index], ...updates };
           return {
             messages: newMessages,
-            lastMessageId: messageId,
+            lastMessageId: updates.id ?? messageId,
           };
         }
         return state;
