@@ -12,7 +12,8 @@ interface ExamConfigSectionProps {
 }
 
 export const ExamConfigSection: React.FC<ExamConfigSectionProps> = ({ viewOnly = false }) => {
-  const { examTitle, examInstructions, updateField } = useVoiceAgentFormStore();
+  const { examTitle, examInstructions, defaultMaxAttempts, updateField, updateNumericField } =
+    useVoiceAgentFormStore();
 
   return (
     <Card>
@@ -41,6 +42,25 @@ export const ExamConfigSection: React.FC<ExamConfigSectionProps> = ({ viewOnly =
             placeholder="Instructions shown to students before starting the assignment..."
             rows={3}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="defaultMaxAttempts">Default Maximum Attempts</Label>
+          <Input
+            id="defaultMaxAttempts"
+            type="number"
+            min={1}
+            step={1}
+            value={defaultMaxAttempts}
+            onChange={e =>
+              updateNumericField('defaultMaxAttempts', Math.max(1, Number(e.target.value) || 1))
+            }
+            disabled={viewOnly}
+          />
+          <p className="text-muted-foreground text-sm">
+            Applied when a student first unlocks this assignment. Individual limits can be changed
+            later.
+          </p>
         </div>
       </CardContent>
     </Card>

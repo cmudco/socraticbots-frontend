@@ -184,6 +184,7 @@ export interface VoiceAgent {
   llmModel: string;
   examTitle: string;
   examInstructions: string;
+  defaultMaxAttempts: number;
   status: AgentStatus;
   conversationConfig: ConversationConfig | null;
   conversationCount: number;
@@ -224,6 +225,7 @@ export interface VoiceAgentCreateData {
   llmModel?: string;
   examTitle?: string;
   examInstructions?: string;
+  defaultMaxAttempts?: number;
   status?: AgentStatus;
   conversationConfig?: ConversationConfig;
   accessCode?: string;
@@ -245,6 +247,7 @@ export interface VoiceAgentUpdateData {
   llmModel?: string;
   examTitle?: string;
   examInstructions?: string;
+  defaultMaxAttempts?: number;
   status?: AgentStatus;
   conversationConfig?: ConversationConfig;
   accessCode?: string;
