@@ -8,6 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Clock,
+  Copy,
   Edit2,
   MessageSquare,
   Play,
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react';
 
 import {
+  useCloneVoiceAgent,
   useDeleteVoiceAgent,
   useSyncFromElevenLabs,
   useUpdateVoiceAgent,
@@ -61,6 +63,7 @@ const VoiceAgentDetail: React.FC = () => {
 
   const { data: agent, isLoading } = useVoiceAgent(agentId);
   const updateAgent = useUpdateVoiceAgent();
+  const cloneAgent = useCloneVoiceAgent();
   const deleteAgent = useDeleteVoiceAgent();
   const syncFromElevenLabs = useSyncFromElevenLabs();
 
@@ -127,6 +130,17 @@ const VoiceAgentDetail: React.FC = () => {
     if (!agent) return;
     await deleteAgent.mutateAsync(agent.id);
     navigate('/voice-exams');
+  };
+
+  const handleClone = async () => {
+    if (!agent) return;
+    try {
+      const clone = await cloneAgent.mutateAsync(agent.id);
+      toast.success('Voice agent cloned as a draft');
+      navigate(`/voice-exams/${clone.id}`);
+    } catch {
+      toast.error('Failed to clone voice agent');
+    }
   };
 
   const handleCancelEdit = () => {
@@ -237,6 +251,12 @@ const VoiceAgentDetail: React.FC = () => {
                   {syncFromElevenLabs.isPending ? 'Syncing...' : 'Sync from ElevenLabs'}
                 </Button>
               )}
+            {canEdit && !isEditing && (
+              <Button onClick={handleClone} variant="outline" disabled={cloneAgent.isPending}>
+                <Copy className="mr-2 h-4 w-4" />
+                {cloneAgent.isPending ? 'Cloning...' : 'Clone'}
+              </Button>
+            )}
             {canEdit && !isEditing && (
               <Button onClick={handleStartEdit} variant="outline">
                 <Edit2 className="mr-2 h-4 w-4" />

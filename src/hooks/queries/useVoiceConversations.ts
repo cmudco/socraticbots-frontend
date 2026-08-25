@@ -7,6 +7,8 @@ import { voiceAgentService } from '@/services/voiceAgent.service';
 
 import { VoiceConversation, VoiceConversationListItem } from '@/types/voiceAgent';
 
+import { voiceAgentKeys } from './useVoiceAgents';
+
 // Query keys
 const CONVERSATION_KEYS = {
   all: ['voice-conversations'] as const,
@@ -44,6 +46,30 @@ export function useVoiceConversation(id: number) {
     queryKey: CONVERSATION_KEYS.detail(id),
     queryFn: () => voiceAgentService.getConversationById(id),
     enabled: id > 0,
+  });
+}
+
+/**
+ * Delete a completed voice attempt from the visible history.
+ */
+export function useDeleteVoiceConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, { id: number; agentId: number }>({
+    mutationFn: ({ id }) => voiceAgentService.deleteConversation(id),
+    onSuccess: (_, { id, agentId }) => {
+      queryClient.setQueryData<VoiceConversationListItem[]>(
+        CONVERSATION_KEYS.byAgent(agentId),
+        conversations => conversations?.filter(conversation => conversation.id !== id) ?? []
+      );
+      queryClient.setQueryData<VoiceConversationListItem[]>(
+        CONVERSATION_KEYS.list(),
+        conversations => conversations?.filter(conversation => conversation.id !== id) ?? []
+      );
+      queryClient.removeQueries({ queryKey: CONVERSATION_KEYS.detail(id) });
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.detail(agentId) });
+      queryClient.invalidateQueries({ queryKey: voiceAgentKeys.students(agentId) });
+    },
   });
 }
 
