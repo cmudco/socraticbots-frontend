@@ -69,6 +69,13 @@ class VoiceAgentService {
     });
   }
 
+  async cloneVoiceAgent(id: number): Promise<VoiceAgent> {
+    return baseRequest<VoiceAgent>({
+      url: `voice/agents/${id}/clone/`,
+      method: METHOD.POST,
+    });
+  }
+
   // ============ Signed URL & Sessions ============
 
   async getSignedUrl(agentId: number): Promise<SignedUrlResponse> {
@@ -133,6 +140,13 @@ class VoiceAgentService {
     return baseRequest<VoiceConversation>({
       url: `voice/conversations/${id}/`,
       method: METHOD.GET,
+    });
+  }
+
+  async deleteConversation(id: number): Promise<void> {
+    await baseRequest<void>({
+      url: `voice/conversations/${id}/`,
+      method: METHOD.DELETE,
     });
   }
 

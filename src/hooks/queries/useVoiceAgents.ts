@@ -166,6 +166,24 @@ export const useDeleteVoiceAgent = () => {
 };
 
 /**
+ * Clone a voice agent into a new draft.
+ */
+export const useCloneVoiceAgent = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => voiceAgentService.cloneVoiceAgent(id),
+    onSuccess: (clonedAgent: VoiceAgent) => {
+      queryClient.setQueryData<VoiceAgentListItem[]>(voiceAgentKeys.list(), oldAgents => {
+        const listItem = toListItem(clonedAgent);
+        return oldAgents ? [listItem, ...oldAgents] : [listItem];
+      });
+      queryClient.setQueryData(voiceAgentKeys.detail(clonedAgent.id), clonedAgent);
+    },
+  });
+};
+
+/**
  * Get signed URL for voice conversation
  */
 export const useGetSignedUrl = () => {
