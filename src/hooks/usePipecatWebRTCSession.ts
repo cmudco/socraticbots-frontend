@@ -294,13 +294,9 @@ export const usePipecatWebRTCSession = ({
 
         const connectedPromise = new Promise<void>((resolve, reject) => {
           let settled = false;
-          const connectionTimer = window.setTimeout(() => {
-            settleRejected(new Error('Pipecat WebRTC connection timed out'));
-          }, 15000);
           const settleRuntimeReady = () => {
             if (settled) return;
             settled = true;
-            window.clearTimeout(connectionTimer);
             setStatus('runtimeReady');
             startKeepAlive();
             onConnect?.();
@@ -309,7 +305,6 @@ export const usePipecatWebRTCSession = ({
           const settleRejected = (error: Error) => {
             if (settled) return;
             settled = true;
-            window.clearTimeout(connectionTimer);
             reject(error);
           };
 
@@ -359,6 +354,9 @@ export const usePipecatWebRTCSession = ({
               settleRejected(new Error('Pipecat WebRTC connection failed'));
             }
             if (isDisconnectedPeerConnectionState(peerConnection.connectionState)) {
+              settleRejected(
+                new Error('Pipecat WebRTC connection closed before the runtime was ready')
+              );
               cleanup();
               setStatus('disconnected');
               onDisconnect?.();
