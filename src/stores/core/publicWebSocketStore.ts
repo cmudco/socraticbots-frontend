@@ -176,7 +176,7 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
             }
 
             case 'message': {
-              const senderType = data.senderType === 1 ? 'USER' : 'ASSISTANT';
+              const senderType: 'USER' | 'ASSISTANT' = data.senderType === 1 ? 'USER' : 'ASSISTANT';
 
               if (data.regenerate) {
                 publicBotStore.updateMessage(data.id!, {
@@ -204,7 +204,7 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
                   });
                 }
 
-                publicBotStore.addMessage({
+                const message = {
                   id: data.id!,
                   message: data.message || '',
                   senderType,
@@ -221,7 +221,19 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
                   isEdited: data.isEdited,
                   isRegenerated: data.isRegenerated,
                   originalMessage: data.originalMessage,
-                });
+                };
+                const pendingMessage = publicBotStore.messages.find(
+                  item =>
+                    item.id.startsWith('pending-') &&
+                    item.senderType === senderType &&
+                    item.message === message.message
+                );
+
+                if (pendingMessage) {
+                  publicBotStore.updateMessage(pendingMessage.id, message);
+                } else {
+                  publicBotStore.addMessage(message);
+                }
               }
 
               // Clear typing state when message is not streaming
@@ -303,6 +315,15 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
                 streaming: false,
               });
               // Clear typing state when streaming ends
+              publicBotStore.setIsTyping(false);
+              break;
+            }
+
+            case 'error': {
+              set({
+                error: data.errorMessage || data.message || 'An unexpected chat error occurred.',
+                isProgressStreaming: false,
+              });
               publicBotStore.setIsTyping(false);
               break;
             }
@@ -418,7 +439,12 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
       }
 
       // Send message (fire-and-forget with error callback)
-      publicSocketService.sendMessage(payload, error => set({ error }));
+      publicSocketService.sendMessage(payload, error => {
+        set({ error });
+        import('./publicBotStore').then(({ usePublicBotStore }) => {
+          usePublicBotStore.getState().setIsTyping(false);
+        });
+      });
     },
   }))
 );

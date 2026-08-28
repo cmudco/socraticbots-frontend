@@ -22,6 +22,7 @@ import { useThemeStore } from '@/stores/ui/themeStore';
 
 import { clearAnonymousSession, getOrCreateAnonymousSession } from '@/lib/anonymousSession';
 
+import ChatErrorAlert from '@/components/chat/ChatErrorAlert';
 import PublicChatInput from '@/components/chat/public/PublicChatInput';
 import PublicMessageList from '@/components/chat/public/PublicMessageList';
 import PublicTrackingSidebar from '@/components/chat/public/PublicTrackingSidebar';
@@ -50,6 +51,7 @@ const PublicBotChat: React.FC = () => {
     setActiveConversation,
     setAnonymousSessionId,
     setIsTyping,
+    addMessage,
     anonymousSessionId,
     botInfo,
     activeConversation,
@@ -68,7 +70,11 @@ const PublicBotChat: React.FC = () => {
   const isTrackingEnabled = botInfo?.modelPreference?.trackingModelDareId != null;
 
   // Public WebSocket store - Socket.IO (session-based auth)
-  const { sendMessage: sendWebSocketMessage } = usePublicWebSocketStore();
+  const {
+    sendMessage: sendWebSocketMessage,
+    error: socketError,
+    setError: setSocketError,
+  } = usePublicWebSocketStore();
 
   // React Query hooks
   const {
@@ -154,7 +160,26 @@ const PublicBotChat: React.FC = () => {
     (message: string) => {
       if (!activeConversation || !botInfo) return;
 
+      setSocketError(null);
       setIsTyping(true);
+      addMessage({
+        id: `pending-${crypto.randomUUID()}`,
+        message,
+        senderType: 'USER',
+        senderName: '',
+        isSender: true,
+        date: new Date().toISOString(),
+        streaming: false,
+      });
+
+      const selectedModelId = botInfo.modelPreference?.chatModelDareId;
+      if (!selectedModelId) {
+        setIsTyping(false);
+        setSocketError(
+          'This bot does not have an AI model selected. Please ask the bot owner to choose a model.'
+        );
+        return;
+      }
 
       // Build payload exactly like authenticated bot chat
       // conversationId is REQUIRED - backend uses it to route the message
@@ -167,7 +192,7 @@ const PublicBotChat: React.FC = () => {
       };
 
       // LLM and context settings (matching conversationStore.ts structure exactly)
-      payload.model_id = botInfo.modelPreference?.chatModelDareId;
+      payload.model_id = selectedModelId;
       payload.embedding_ids = botInfo.dareFileIds || [];
       payload.file_owner_id = botInfo.createdByDareId;
       payload.progress_llm_id = botInfo.modelPreference?.trackingModelDareId;
@@ -192,7 +217,7 @@ const PublicBotChat: React.FC = () => {
 
       sendWebSocketMessage(payload);
     },
-    [activeConversation, botInfo, setIsTyping, sendWebSocketMessage]
+    [activeConversation, addMessage, botInfo, setIsTyping, sendWebSocketMessage, setSocketError]
   );
 
   // Reset conversation: drop the anonymous session and start a fresh one.
@@ -338,6 +363,10 @@ const PublicBotChat: React.FC = () => {
                 className={`min-h-0 flex-1 ${spacingClass}`}
                 roundedClass={roundedClass}
               />
+
+              {socketError && (
+                <ChatErrorAlert message={socketError} onDismiss={() => setSocketError(null)} />
+              )}
 
               {/* Input - Fixed at bottom */}
               <PublicChatInput onSendMessage={handleSendMessage} roundedClass={roundedClass} />
