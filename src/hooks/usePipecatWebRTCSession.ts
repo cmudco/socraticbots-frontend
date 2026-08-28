@@ -324,12 +324,14 @@ export const usePipecatWebRTCSession = ({
             if (!message) return;
 
             if (message.type === 'error') {
-              if (message.isFatal === false || message.fatal === false) {
-                console.warn('Recoverable Pipecat WebRTC runtime error:', message.error);
+              const errorText = message.error ?? message.data?.error;
+              const fatal = message.isFatal ?? message.fatal ?? message.data?.fatal ?? false;
+              if (!fatal) {
+                console.warn('Recoverable Pipecat WebRTC runtime error:', errorText);
                 onMessage?.(message);
                 return;
               }
-              const err = new Error(message.error || 'Pipecat voice runtime error');
+              const err = new Error(errorText || 'Pipecat voice runtime error');
               captureVoiceError(err, { source: 'runtime_message' });
               settleRejected(err);
               onError?.(err);
