@@ -223,6 +223,7 @@ export const useWebSocketStore = create<WebSocketStore>()(
 
             case 'message': {
               const senderType = data.senderType === 1 ? 'USER' : 'ASSISTANT';
+              const message = mapToDareMessage(data, senderType);
 
               if (data.regenerate) {
                 conversationStore.updateMessage(data.id!, {
@@ -231,7 +232,18 @@ export const useWebSocketStore = create<WebSocketStore>()(
                   streaming: false,
                 });
               } else {
-                conversationStore.addMessage(mapToDareMessage(data, senderType));
+                const pendingMessage = conversationStore.messages.find(
+                  item =>
+                    item.id.startsWith('pending-') &&
+                    item.senderType === senderType &&
+                    item.message === message.message
+                );
+
+                if (pendingMessage) {
+                  conversationStore.updateMessage(pendingMessage.id, message);
+                } else {
+                  conversationStore.addMessage(message);
+                }
               }
 
               // Clear typing state when message is not streaming
@@ -294,6 +306,14 @@ export const useWebSocketStore = create<WebSocketStore>()(
                 streaming: false,
               });
               // Clear typing state when streaming ends
+              conversationStore.setIsTyping(false);
+              break;
+
+            case 'error':
+              set({
+                error: data.errorMessage || data.message || 'An unexpected chat error occurred.',
+                isProgressStreaming: false,
+              });
               conversationStore.setIsTyping(false);
               break;
 
@@ -410,7 +430,12 @@ export const useWebSocketStore = create<WebSocketStore>()(
       // Add conversation ID to payload and send (fire-and-forget with error callback)
       authenticatedSocketService.sendMessage(
         { ...payload, conversationId: currentConversationId },
-        error => set({ error })
+        error => {
+          set({ error });
+          import('./conversationStore').then(({ useConversationStore }) => {
+            useConversationStore.getState().setIsTyping(false);
+          });
+        }
       );
     },
   }))

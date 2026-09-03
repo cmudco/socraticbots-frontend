@@ -16,6 +16,7 @@ type VoiceAgentErrorState = Partial<{ [K in VoiceAgentValidationField]: string }
 type VoiceAgentNumericField =
   | 'temperature'
   | 'maxDurationSeconds'
+  | 'defaultMaxAttempts'
   | 'voiceTurnTimeoutSecs'
   | 'turnTimeout'
   | 'ttsStability'
@@ -40,6 +41,7 @@ export interface VoiceAgentFormState {
   // Exam fields
   examTitle: string;
   examInstructions: string;
+  defaultMaxAttempts: number;
 
   // AI Configuration
   systemPrompt: string;
@@ -99,6 +101,7 @@ export interface VoiceAgentFormData {
   team?: number | null;
   examTitle: string;
   examInstructions: string;
+  defaultMaxAttempts: number;
   systemPrompt: string;
   firstMessage: string;
   voiceId: string;
@@ -146,6 +149,7 @@ const initialFormState = {
   // Exam
   examTitle: '',
   examInstructions: '',
+  defaultMaxAttempts: 1,
 
   // AI Config
   systemPrompt: '',
@@ -247,6 +251,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       // Exam
       examTitle: agent.examTitle || '',
       examInstructions: agent.examInstructions || '',
+      defaultMaxAttempts: agent.defaultMaxAttempts ?? 1,
 
       // AI Config
       systemPrompt: agent.systemPrompt || '',
@@ -319,6 +324,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       ...(state.team !== null && { team: state.team }),
       examTitle: state.examTitle,
       examInstructions: state.examInstructions,
+      defaultMaxAttempts: state.defaultMaxAttempts,
       systemPrompt: state.systemPrompt,
       firstMessage: state.firstMessage,
       voiceId: state.voiceId,

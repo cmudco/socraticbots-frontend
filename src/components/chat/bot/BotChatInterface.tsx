@@ -5,7 +5,9 @@ import { Loader2 } from 'lucide-react';
 import { useUserInfo } from '@/hooks/queries/useUser';
 
 import { useConversationStore } from '@/stores/core/conversationStore';
+import { useWebSocketError, useWebSocketStore } from '@/stores/core/websocketStore';
 
+import ChatErrorAlert from '@/components/chat/ChatErrorAlert';
 import { Card } from '@/components/ui/card';
 
 import BotChatInput from './BotChatInput';
@@ -24,6 +26,8 @@ const BotChatInterface: React.FC<BotChatInterfaceProps> = ({ className = '' }) =
     isLoadingMessages,
     clearActiveConversation,
   } = useConversationStore();
+  const socketError = useWebSocketError();
+  const clearSocketError = useWebSocketStore(state => state.setError);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -65,6 +69,9 @@ const BotChatInterface: React.FC<BotChatInterfaceProps> = ({ className = '' }) =
 
       {/* Input - fixed at bottom */}
       <div className="flex-shrink-0">
+        {socketError && (
+          <ChatErrorAlert message={socketError} onDismiss={() => clearSocketError(null)} />
+        )}
         <BotChatInput />
       </div>
     </div>

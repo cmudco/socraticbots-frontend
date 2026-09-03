@@ -294,13 +294,9 @@ export const usePipecatWebRTCSession = ({
 
         const connectedPromise = new Promise<void>((resolve, reject) => {
           let settled = false;
-          const connectionTimer = window.setTimeout(() => {
-            settleRejected(new Error('Pipecat WebRTC connection timed out'));
-          }, 15000);
           const settleRuntimeReady = () => {
             if (settled) return;
             settled = true;
-            window.clearTimeout(connectionTimer);
             setStatus('runtimeReady');
             startKeepAlive();
             onConnect?.();
@@ -309,7 +305,6 @@ export const usePipecatWebRTCSession = ({
           const settleRejected = (error: Error) => {
             if (settled) return;
             settled = true;
-            window.clearTimeout(connectionTimer);
             reject(error);
           };
 
@@ -324,12 +319,14 @@ export const usePipecatWebRTCSession = ({
             if (!message) return;
 
             if (message.type === 'error') {
-              if (message.isFatal === false || message.fatal === false) {
-                console.warn('Recoverable Pipecat WebRTC runtime error:', message.error);
+              const errorText = message.error ?? message.data?.error;
+              const fatal = message.isFatal ?? message.fatal ?? message.data?.fatal ?? false;
+              if (!fatal) {
+                console.warn('Recoverable Pipecat WebRTC runtime error:', errorText);
                 onMessage?.(message);
                 return;
               }
-              const err = new Error(message.error || 'Pipecat voice runtime error');
+              const err = new Error(errorText || 'Pipecat voice runtime error');
               captureVoiceError(err, { source: 'runtime_message' });
               settleRejected(err);
               onError?.(err);
@@ -357,6 +354,9 @@ export const usePipecatWebRTCSession = ({
               settleRejected(new Error('Pipecat WebRTC connection failed'));
             }
             if (isDisconnectedPeerConnectionState(peerConnection.connectionState)) {
+              settleRejected(
+                new Error('Pipecat WebRTC connection closed before the runtime was ready')
+              );
               cleanup();
               setStatus('disconnected');
               onDisconnect?.();
