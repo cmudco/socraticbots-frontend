@@ -2,7 +2,8 @@
  * VoiceExams list page.
  * Shows all voice agents the user can access via any role.
  * Admins/managers can create/import agents and manage exams.
- * Students see an access code input to unlock exams.
+ * All scoped users can unlock assignments with an access code.
+ * Supervisors are excluded because they already see every assignment.
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -36,7 +37,7 @@ const VoiceExamsList: React.FC = () => {
 
   const canCreate =
     user?.isCreator || user?.hasSupervisorAccessForVoiceAgent || user?.isVoiceTeamManager || false;
-  const canRedeemAccessCode = !!user && !canCreate;
+  const canRedeemAccessCode = !!user && !user.hasSupervisorAccessForVoiceAgent;
 
   // Hide draft exams from students — only creators/managers see drafts
   const visibleAgents = canCreate
@@ -165,7 +166,7 @@ const VoiceExamsList: React.FC = () => {
             </Link>
           ))}
 
-          {/* Redeem card inside grid when user already has agents */}
+          {/* Scoped users can subscribe to assignments regardless of their creator/team role. */}
           {canRedeemAccessCode && (
             <RedeemAccessCodeForm
               title={redeemTitle}
@@ -178,37 +179,34 @@ const VoiceExamsList: React.FC = () => {
         /* Empty state */
         <div className="border-border flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-16">
           <Mic className="text-muted-foreground mb-4 h-12 w-12" />
-          {canCreate ? (
-            <>
-              <h3 className="text-foreground mb-2 text-lg font-medium">No Voice Agents Yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Create your first voice agent to get started
-              </p>
-              <Link
-                to="/voice-exams/create"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2"
-              >
-                <Plus className="h-4 w-4" />
-                Create Agent
-              </Link>
-            </>
-          ) : (
-            <>
-              <h3 className="text-foreground mb-2 text-lg font-medium">
-                No Assignments Unlocked Yet
-              </h3>
-              <p className="text-muted-foreground mb-6 text-center">{DESCRIPTIONS.emptyPrompt}</p>
-              <p className="text-muted-foreground mb-6 max-w-md text-center text-sm">
-                {DESCRIPTIONS.setupUnavailable}
-              </p>
-              {canRedeemAccessCode && (
-                <RedeemAccessCodeForm
-                  title={redeemTitle}
-                  description={redeemDescription}
-                  className="w-full max-w-sm"
-                />
-              )}
-            </>
+          <h3 className="text-foreground mb-2 text-lg font-medium">
+            {canCreate ? 'No Voice Agents Yet' : 'No Assignments Unlocked Yet'}
+          </h3>
+          <p className="text-muted-foreground mb-6 text-center">
+            {canCreate
+              ? 'Create your first voice agent or unlock one shared by another creator.'
+              : DESCRIPTIONS.emptyPrompt}
+          </p>
+          {canCreate && (
+            <Link
+              to="/voice-exams/create"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 mb-6 flex items-center gap-2 rounded-lg px-4 py-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create Agent
+            </Link>
+          )}
+          {!canCreate && (
+            <p className="text-muted-foreground mb-6 max-w-md text-center text-sm">
+              {DESCRIPTIONS.setupUnavailable}
+            </p>
+          )}
+          {canRedeemAccessCode && (
+            <RedeemAccessCodeForm
+              title={redeemTitle}
+              description={redeemDescription}
+              className="w-full max-w-sm"
+            />
           )}
         </div>
       )}
