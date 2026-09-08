@@ -234,7 +234,6 @@ export const useWebSocketStore = create<WebSocketStore>()(
               } else {
                 const pendingMessage = conversationStore.messages.find(
                   item =>
-                    typeof item.id === 'string' &&
                     item.id.startsWith('pending-') &&
                     item.senderType === senderType &&
                     item.message === message.message
