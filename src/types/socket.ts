@@ -33,6 +33,10 @@ export interface ClientToServerEvents {
     data: Record<string, unknown>,
     callback: (response: SocketResponse) => void
   ) => void;
+  stop_generation: (
+    data: { conversationId: string },
+    callback: (response: SocketResponse) => void
+  ) => void;
   edit_message: (
     data: { conversationId: string; messageId: string; message: string },
     callback: (response: SocketResponse) => void
@@ -92,8 +96,8 @@ export interface SocketMessage {
   type: SocketMessageType;
 
   // Message identification
-  id?: string;
-  messageId?: string;
+  id?: string | number;
+  messageId?: string | number;
 
   // Message content
   message?: string;
@@ -107,6 +111,7 @@ export interface SocketMessage {
 
   // Timestamps
   date?: string;
+  createdAt?: string;
 
   // Streaming state
   streaming?: boolean;
@@ -150,12 +155,13 @@ export interface SocketMessage {
  * Message in conversation history
  */
 export interface ConversationHistoryMessage {
-  id: string;
+  id: string | number;
   message: string;
   senderType: number;
   senderName?: string;
   isSender?: boolean;
   date?: string;
+  createdAt?: string;
   streaming?: boolean;
   llmId?: number;
   cost?: number;

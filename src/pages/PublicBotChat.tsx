@@ -193,6 +193,7 @@ const PublicBotChat: React.FC = () => {
 
       // LLM and context settings (matching conversationStore.ts structure exactly)
       payload.model_id = selectedModelId;
+      payload.rag_mode = botInfo.ragMode || 'advanced';
       payload.embedding_ids = botInfo.dareFileIds || [];
       payload.file_owner_id = botInfo.createdByDareId;
       payload.progress_llm_id = botInfo.modelPreference?.trackingModelDareId;

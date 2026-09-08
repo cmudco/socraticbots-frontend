@@ -218,20 +218,25 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
                 <Label htmlFor="ragMode">Document Retrieval</Label>
                 <p className="text-muted-foreground text-xs">
                   {field.value === 'agentic'
-                    ? 'Autonomous — the model searches the documents in multiple steps'
+                    ? 'Autonomous — searches documents in multiple steps. Public chats use Advanced retrieval.'
                     : field.value === 'naive'
                       ? 'Fast — direct vector lookup pre-loaded each turn'
                       : 'Thorough — analyzed and reranked context pre-loaded each turn'}
                 </p>
               </div>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger id="ragMode" className="w-40">
+              <Select
+                value={field.value}
+                onValueChange={value => {
+                  if (value) field.onChange(value);
+                }}
+              >
+                <SelectTrigger id="ragMode" className="w-56">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="naive">Fast</SelectItem>
-                  <SelectItem value="advanced">Thorough</SelectItem>
-                  <SelectItem value="agentic">Autonomous</SelectItem>
+                  <SelectItem value="naive">Classic (Fast)</SelectItem>
+                  <SelectItem value="advanced">Advanced (Thorough)</SelectItem>
+                  <SelectItem value="agentic">Agentic (Autonomous)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

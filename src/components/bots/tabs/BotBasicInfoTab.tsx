@@ -299,7 +299,7 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                     </label>
                     <p className="text-muted-foreground text-xs">
                       {ragMode === 'agentic'
-                        ? 'Autonomous — the model searches the documents in multiple steps'
+                        ? 'Autonomous — searches documents in multiple steps. Public chats use Advanced retrieval.'
                         : ragMode === 'naive'
                           ? 'Fast — direct vector lookup pre-loaded each turn'
                           : 'Thorough — analyzed and reranked context pre-loaded each turn'}
@@ -307,16 +307,18 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                   </div>
                   <Select
                     value={ragMode}
-                    onValueChange={value => setRagMode(value as 'naive' | 'advanced' | 'agentic')}
+                    onValueChange={value => {
+                      if (value) setRagMode(value as 'naive' | 'advanced' | 'agentic');
+                    }}
                     disabled={viewOnly}
                   >
-                    <SelectTrigger id="ragMode" className="w-40">
+                    <SelectTrigger id="ragMode" className="w-56">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="naive">Fast</SelectItem>
-                      <SelectItem value="advanced">Thorough</SelectItem>
-                      <SelectItem value="agentic">Autonomous</SelectItem>
+                      <SelectItem value="naive">Classic (Fast)</SelectItem>
+                      <SelectItem value="advanced">Advanced (Thorough)</SelectItem>
+                      <SelectItem value="agentic">Agentic (Autonomous)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

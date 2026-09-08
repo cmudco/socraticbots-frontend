@@ -13,13 +13,18 @@ import type { SocketService } from '@/services/socket.service';
 
 import { scrollManager } from '@/utils/scrollManager';
 
+import type { ContextTrace } from '@/types/contextTrace';
 import type { ConversationHistoryMessage, SocketMessage } from '@/types/socket';
+import { type ChatToolCall, mapToolEvent } from '@/types/toolCalls';
 
 // ════════════════════════════════════════════════════════════════════════════
 // Types
 // ════════════════════════════════════════════════════════════════════════════
 
 export interface ChatSocketState {
+  isStopping: boolean;
+  toolCallsByMessage: { [messageId: string]: ChatToolCall[] };
+  contextTraceByMessage: { [messageId: string]: ContextTrace };
   isConnected: boolean;
   isConnecting: boolean;
   error: string | null;
@@ -32,6 +37,8 @@ export interface ChatSocketState {
 }
 
 export interface ChatSocketCoreActions {
+  stopResponse: () => void;
+  clearChatActivity: () => void;
   setError: (error: string | null) => void;
   handleSocketMessage: (data: SocketMessage) => void;
 
@@ -72,16 +79,8 @@ export interface ChatSocketCoreConfig<TMessage extends ChatMessageLike> {
     senderType: 'USER' | 'ASSISTANT',
     context: MessageMapContext
   ) => TMessage;
-  /** Public surface: reset progress and show the tracker loading on a completed assistant message. */
-  onCompleteAssistantMessage?: () => void;
   /** Public surface: clear stale progress when a new AI response starts streaming. */
   onStreamStart?: () => void;
-  /**
-   * Tool-loop events (tool_call_pending/args_progress/executing/result,
-   * tool_rounds_capped, context_trace). Surfaces that render tool activity
-   * hook in here; others simply drop the events.
-   */
-  onToolEvent?: (data: SocketMessage) => void;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -89,6 +88,9 @@ export interface ChatSocketCoreConfig<TMessage extends ChatMessageLike> {
 // ════════════════════════════════════════════════════════════════════════════
 
 export const chatSocketInitialState: ChatSocketState = {
+  isStopping: false,
+  toolCallsByMessage: {},
+  contextTraceByMessage: {},
   isConnected: false,
   isConnecting: false,
   error: null,
@@ -120,12 +122,40 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
   const { service } = config;
 
   return {
+    clearChatActivity: () => {
+      set({ isStopping: false, error: null, toolCallsByMessage: {}, contextTraceByMessage: {} });
+    },
+
+    stopResponse: () => {
+      const { currentConversationId, isStopping } = get();
+      if (!currentConversationId || isStopping) return;
+      set({ isStopping: true, error: null });
+      service.stopGeneration(currentConversationId, error => {
+        if (get().currentConversationId !== currentConversationId) return;
+        set({ isStopping: false, ...(error ? { error } : {}) });
+      });
+    },
+
     wireService: () => {
       service.onMessage(data => {
         get().handleSocketMessage(data);
       });
 
       service.onConnectionChange(connected => {
+        if (!connected) {
+          const conversationId = get().currentConversationId;
+          set({ isStopping: false, isProgressStreaming: false });
+          config.resolveTarget().then(target => {
+            if (get().currentConversationId !== conversationId) return;
+            target
+              .getMessages()
+              .filter(message => message.streaming)
+              .forEach(message =>
+                target.updateMessage(message.id, { streaming: false } as Partial<TMessage>)
+              );
+            target.setIsTyping(false);
+          });
+        }
         set({
           isConnected: connected,
           isConnecting: false,
@@ -150,14 +180,25 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
     // Message Handling
     // ──────────────────────────────────────────────────────────────────────
 
-    handleSocketMessage: (data: SocketMessage) => {
-      validateSocketEvent(data);
+    handleSocketMessage: (event: SocketMessage) => {
+      validateSocketEvent(event);
+      const conversationId = get().currentConversationId;
+      if (event.conversationId && event.conversationId !== conversationId) return;
+      // Normalize wire IDs once: DARE emits numeric IDs while UI stores use strings.
+      const data: SocketMessage & { id?: string; messageId?: string } = {
+        ...event,
+        id: event.id == null ? undefined : String(event.id),
+        messageId: event.messageId == null ? undefined : String(event.messageId),
+      };
 
       config
         .resolveTarget()
         .then(target => {
+          if (get().currentConversationId !== conversationId) return;
           switch (data.type) {
             case 'conversation_history': {
+              get().clearChatActivity();
+              target.setIsTyping(Boolean(data.conversationHistory?.some(msg => msg.streaming)));
               if (data.conversationHistory) {
                 target.setHistory(
                   data.conversationHistory.map(msg =>
@@ -172,14 +213,19 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
               const senderType = data.senderType === 1 ? 'USER' : 'ASSISTANT';
 
               if (data.regenerate) {
+                if (data.streaming && data.id) {
+                  set(state => ({
+                    toolCallsByMessage: { ...state.toolCallsByMessage, [data.id!]: [] },
+                    contextTraceByMessage: Object.fromEntries(
+                      Object.entries(state.contextTraceByMessage).filter(([id]) => id !== data.id)
+                    ),
+                  }));
+                }
                 target.updateMessage(data.id!, {
                   ...config.mapMessage(data, senderType, 'event'),
-                  streaming: false,
+                  streaming: Boolean(data.streaming),
                 });
               } else {
-                if (senderType === 'ASSISTANT' && !data.streaming) {
-                  config.onCompleteAssistantMessage?.();
-                }
                 const message = config.mapMessage(data, senderType, 'event');
                 const pendingMessage = target
                   .getMessages()
@@ -197,13 +243,15 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
                 }
               }
 
-              if (!data.streaming) {
-                target.setIsTyping(false);
+              if (senderType === 'ASSISTANT') {
+                target.setIsTyping(Boolean(data.streaming));
+                if (!data.streaming) set({ isStopping: false });
               }
               break;
             }
 
             case 'ai_stream': {
+              data.streaming = data.isComplete === true ? false : (data.streaming ?? true);
               const senderType = data.senderType === 1 ? 'USER' : 'ASSISTANT';
 
               if (data.regenerate) {
@@ -229,8 +277,9 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
                 scrollManager.triggerScroll();
               }
 
-              if (!data.streaming) {
-                target.setIsTyping(false);
+              if (senderType === 'ASSISTANT') {
+                target.setIsTyping(Boolean(data.streaming));
+                if (!data.streaming) set({ isStopping: false });
               }
               break;
             }
@@ -248,14 +297,22 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
 
             case 'error': {
               set({
+                isStopping: false,
                 error: data.errorMessage || data.message || 'An unexpected chat error occurred.',
                 isProgressStreaming: false,
               });
+              target
+                .getMessages()
+                .filter(msg => msg.streaming)
+                .forEach(msg =>
+                  target.updateMessage(msg.id, { streaming: false } as Partial<TMessage>)
+                );
               target.setIsTyping(false);
               break;
             }
 
             case 'stream_end': {
+              set({ isStopping: false });
               target.updateMessage(data.messageId!, { streaming: false } as Partial<TMessage>);
               target.setIsTyping(false);
               break;
@@ -271,7 +328,35 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
             case 'tool_call_result':
             case 'tool_rounds_capped':
             case 'context_trace': {
-              config.onToolEvent?.(data);
+              if (!data.messageId) break;
+              const messageId = data.messageId;
+              if (data.type === 'context_trace') {
+                if (data.trace)
+                  set(state => ({
+                    contextTraceByMessage: {
+                      ...state.contextTraceByMessage,
+                      [messageId]: data.trace as ContextTrace,
+                    },
+                  }));
+              } else {
+                const partial = mapToolEvent(data);
+                if (partial?.toolCallId)
+                  set(state => {
+                    const calls = state.toolCallsByMessage[messageId] || [];
+                    const exists = calls.some(call => call.toolCallId === partial.toolCallId);
+                    const defined = Object.fromEntries(
+                      Object.entries(partial).filter(([, value]) => value !== undefined)
+                    );
+                    const next = exists
+                      ? calls.map(call =>
+                          call.toolCallId === partial.toolCallId ? { ...call, ...defined } : call
+                        )
+                      : [...calls, { toolName: '', status: 'pending', ...defined } as ChatToolCall];
+                    return {
+                      toolCallsByMessage: { ...state.toolCallsByMessage, [messageId]: next },
+                    };
+                  });
+              }
               break;
             }
 
@@ -280,8 +365,8 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
             // ────────────────────────────────────────────────────────────────
 
             case 'progress_start': {
-              set({ isProgressStreaming: true });
               get().clearProgressTokens();
+              set({ isProgressStreaming: true });
               break;
             }
 

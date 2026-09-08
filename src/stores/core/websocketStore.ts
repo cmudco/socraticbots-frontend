@@ -14,7 +14,7 @@ import { authenticatedSocketService } from '@/services/socket.service';
 
 import type { ContextTrace } from '@/types/contextTrace';
 import type { ConversationHistoryMessage, SocketMessage } from '@/types/socket';
-import { type ChatToolCall, toolCallFromHistory } from '@/types/toolCalls';
+import { toolCallFromHistory } from '@/types/toolCalls';
 
 import {
   type ChatSocketCoreActions,
@@ -49,12 +49,12 @@ const mapToDareMessage = (
   msg: SocketMessage | ConversationHistoryMessage,
   senderType: 'USER' | 'ASSISTANT'
 ): DareMessage => ({
-  id: msg.id as string,
+  id: String(msg.id),
   message: msg.message || '',
   senderType,
   senderName: msg.senderName || '',
   isSender: msg.isSender || false,
-  date: msg.date || new Date().toISOString(),
+  date: msg.date || msg.createdAt || new Date().toISOString(),
   streaming: msg.streaming || false,
   llmId: msg.llmId,
   cost: msg.cost != null ? String(msg.cost) : undefined,
@@ -68,42 +68,6 @@ const mapToDareMessage = (
   toolCalls: Array.isArray(msg.toolCalls) ? msg.toolCalls.map(toolCallFromHistory) : undefined,
   contextTrace: (msg.contextTrace as unknown as ContextTrace | null | undefined) ?? undefined,
 });
-
-/** Map a tool-loop socket event to a partial ChatToolCall for upserting. */
-const mapToolEvent = (data: SocketMessage): Partial<ChatToolCall> | null => {
-  const base = {
-    toolCallId: data.toolCallId as string,
-    toolName: data.toolName as string | undefined,
-    serverSlug: data.serverSlug as string | undefined,
-    origin: data.origin as string | undefined,
-    round: data.round as number | undefined,
-  };
-  switch (data.type) {
-    case 'tool_call_pending':
-      return { ...base, status: 'pending' };
-    case 'tool_call_args_progress':
-      return { toolCallId: base.toolCallId, argsChars: data.argsChars as number };
-    case 'tool_call_executing':
-      return {
-        ...base,
-        status: 'executing',
-        arguments: data.arguments as Record<string, unknown> | undefined,
-      };
-    case 'tool_call_result':
-      return {
-        ...base,
-        status: data.status === 'failed' ? 'failed' : 'completed',
-        error: (data.error as string | null | undefined) ?? undefined,
-        result:
-          (data.dareResult as Record<string, unknown>) ??
-          (data.providerResult as Record<string, unknown>) ??
-          (data.mcpResult as Record<string, unknown>) ??
-          null,
-      };
-    default:
-      return null;
-  }
-};
 
 // ════════════════════════════════════════════════════════════════════════════
 // Store
@@ -126,23 +90,6 @@ export const useWebSocketStore = create<WebSocketStore>()(
         };
       },
       mapMessage: mapToDareMessage,
-      onToolEvent: data => {
-        if (data.messageId == null) return;
-        import('./conversationStore').then(({ useConversationStore }) => {
-          const store = useConversationStore.getState();
-          if (data.type === 'context_trace') {
-            if (data.trace) {
-              store.setContextTrace(String(data.messageId), data.trace as ContextTrace);
-            }
-            return;
-          }
-          if (!data.toolCallId) return;
-          const partial = mapToolEvent(data);
-          if (partial) {
-            store.upsertToolCall(String(data.messageId), partial);
-          }
-        });
-      },
     });
 
     return {
@@ -186,6 +133,7 @@ export const useWebSocketStore = create<WebSocketStore>()(
 
         // Clear previous state for new conversation
         get().clearProgressTokens();
+        get().clearChatActivity();
         set({ currentConversationId: conversationId });
 
         // Subscribe to new conversation (fire-and-forget with error callback)

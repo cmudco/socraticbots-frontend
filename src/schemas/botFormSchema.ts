@@ -14,8 +14,8 @@ export const basicInfoSchema = z.object({
   trackingModelDareId: z.string().min(1).nullable(),
   isActive: z.boolean(),
   webSearchEnabled: z.boolean(),
-  // 'naive'/'advanced' both mean classic pre-injected retrieval for Socratic
-  // bots; 'agentic' lets the model search documents on demand via tools.
+  // Retrieval strategy is independent of the Socratic teaching prompt.
+  // Classic uses direct lookup, Advanced uses DARE's RAG pipeline, Agentic uses tools.
   ragMode: z.enum(['naive', 'advanced', 'agentic']),
   isAdvanced: z.boolean(),
 });

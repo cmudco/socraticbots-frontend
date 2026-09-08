@@ -7,6 +7,7 @@ import {
   useIsLoadingBot,
   useMessages,
 } from '@/stores/core/conversationStore';
+import { useWebSocketStore } from '@/stores/core/websocketStore';
 
 import { scrollManager } from '@/utils/scrollManager';
 
@@ -22,8 +23,8 @@ interface BotMessageListProps {
 const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
   const messages = useMessages();
   const isLoadingBot = useIsLoadingBot();
-  const { isLoadingMessages, isTyping, deleteMessage, toolCallsByMessage, contextTraceByMessage } =
-    useConversationStore();
+  const { isLoadingMessages, isTyping, deleteMessage } = useConversationStore();
+  const { toolCallsByMessage, contextTraceByMessage } = useWebSocketStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
   const hasInitialScrolledRef = useRef<boolean>(false);

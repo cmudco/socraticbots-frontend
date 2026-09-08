@@ -7,6 +7,7 @@ import {
   usePublicIsTyping,
   usePublicMessages,
 } from '@/stores/core/publicBotStore';
+import { usePublicWebSocketStore } from '@/stores/core/publicWebSocketStore';
 
 import { scrollManager } from '@/utils/scrollManager';
 
@@ -22,6 +23,7 @@ const PublicMessageList: React.FC<PublicMessageListProps> = ({
   roundedClass = 'rounded-2xl',
 }) => {
   const messages = usePublicMessages();
+  const { toolCallsByMessage, contextTraceByMessage } = usePublicWebSocketStore();
   const isTyping = usePublicIsTyping();
   const { isLoadingBot, botInfo } = usePublicBotStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -179,6 +181,10 @@ const PublicMessageList: React.FC<PublicMessageListProps> = ({
               key={message.id}
               message={message}
               isStreaming={message.streaming}
+              toolCalls={
+                message.toolCalls?.length ? message.toolCalls : toolCallsByMessage[message.id]
+              }
+              contextTrace={message.contextTrace ?? contextTraceByMessage[message.id]}
               variant="botTheme"
               roundedClass={roundedClass}
             />

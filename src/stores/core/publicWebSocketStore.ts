@@ -13,8 +13,10 @@ import { subscribeWithSelector } from 'zustand/middleware';
 
 import { publicSocketService } from '@/services/socket.service';
 
+import type { ContextTrace } from '@/types/contextTrace';
 import type { PublicBotMessage } from '@/types/publicBot';
 import type { ConversationHistoryMessage, SocketMessage } from '@/types/socket';
+import { toolCallFromHistory } from '@/types/toolCalls';
 
 import {
   type ChatSocketCoreActions,
@@ -60,13 +62,13 @@ const mapToPublicBotMessage = (
   senderType: 'USER' | 'ASSISTANT',
   context: MessageMapContext
 ): PublicBotMessage => ({
-  id: msg.id as string,
+  id: String(msg.id),
   message: msg.message || '',
   senderType,
   // Streamed AI responses historically defaulted the name to 'AI Assistant'
   senderName: msg.senderName || (context === 'stream' ? 'AI Assistant' : ''),
   isSender: msg.isSender || false,
-  date: msg.date || new Date().toISOString(),
+  date: msg.date || msg.createdAt || new Date().toISOString(),
   streaming: context === 'event' ? msg.streaming || false : msg.streaming,
   llmId: msg.llmId,
   cost: msg.cost,
@@ -77,6 +79,8 @@ const mapToPublicBotMessage = (
   isEdited: msg.isEdited,
   isRegenerated: msg.isRegenerated,
   originalMessage: msg.originalMessage,
+  toolCalls: Array.isArray(msg.toolCalls) ? msg.toolCalls.map(toolCallFromHistory) : undefined,
+  contextTrace: msg.contextTrace as ContextTrace | undefined,
 });
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -100,15 +104,6 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
         };
       },
       mapMessage: mapToPublicBotMessage,
-      // A completed assistant message means a fresh assessment is coming:
-      // clear old progress and show the tracker loading state
-      onCompleteAssistantMessage: () => {
-        set({
-          progressTokens: [],
-          progressContent: '',
-          isProgressStreaming: true,
-        });
-      },
       // A new AI response starting invalidates the previous assessment
       onStreamStart: () => {
         get().clearProgressTokens();

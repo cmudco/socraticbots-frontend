@@ -223,6 +223,23 @@ class SocketService {
     });
   }
 
+  /** Cancel through DARE; the final message event carries the saved partial reply. */
+  stopGeneration(conversationId: string, onResult: (error: string | null) => void): void {
+    if (!this.socket?.connected) {
+      onResult('Not connected. Reconnect before stopping the response.');
+      return;
+    }
+    this.socket.timeout(10000).emit('stop_generation', { conversationId }, (error, response) => {
+      if (error) {
+        onResult('The stop request was not acknowledged. Please try again.');
+      } else if (!response.success) {
+        onResult(response.error || 'The response could not be stopped. Please try again.');
+      } else {
+        onResult(null);
+      }
+    });
+  }
+
   /**
    * Edit an existing message
    * Fire-and-forget with optional error callback

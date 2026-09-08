@@ -1,13 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 
-import { Loader2, Send } from 'lucide-react';
+import { Loader2, Send, Square } from 'lucide-react';
 
 import {
   usePublicBotStore,
   usePublicInputMessage,
   usePublicIsTyping,
 } from '@/stores/core/publicBotStore';
-import { useIsPublicWebSocketConnected } from '@/stores/core/publicWebSocketStore';
+import {
+  useIsPublicWebSocketConnected,
+  usePublicWebSocketStore,
+} from '@/stores/core/publicWebSocketStore';
 
 import QuickPromptPills from '@/components/chat/QuickPromptPills';
 import { Button } from '@/components/ui/button';
@@ -22,6 +25,7 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({
   roundedClass = 'rounded-2xl',
 }) => {
   const inputMessage = usePublicInputMessage();
+  const { stopResponse, isStopping } = usePublicWebSocketStore();
   const isTyping = usePublicIsTyping();
   const isWebSocketConnected = useIsPublicWebSocketConnected();
   const { setInputMessage, activeConversation, botInfo } = usePublicBotStore();
@@ -121,20 +125,42 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({
             )}
           </div>
 
-          {/* Send Button */}
-          <Button
-            type="submit"
-            disabled={!canSend}
-            size="lg"
-            className={`h-12 w-12 p-0 transition-all duration-200 ${roundedClass} ${
-              canSend
-                ? 'from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 bg-gradient-to-r shadow-md hover:shadow-lg'
-                : 'bg-muted text-muted-foreground cursor-not-allowed'
-            } `}
-            aria-label="Send message"
-          >
-            {isTyping ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-          </Button>
+          {/* Send or stop the active DARE generation. */}
+          {isTyping ? (
+            <Button
+              type="button"
+              onClick={stopResponse}
+              disabled={isStopping || !isConnected}
+              aria-label={isStopping ? 'Stopping response' : 'Stop generating'}
+              variant="outline"
+              size="lg"
+              className={`h-12 w-12 p-0 ${roundedClass}`}
+            >
+              {isStopping ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Square className="h-5 w-5" />
+              )}
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              disabled={!canSend}
+              size="lg"
+              className={`h-12 w-12 p-0 transition-all duration-200 ${roundedClass} ${
+                canSend
+                  ? 'from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 bg-gradient-to-r shadow-md hover:shadow-lg'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              } `}
+              aria-label="Send message"
+            >
+              {isTyping ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Send className="h-5 w-5" />
+              )}
+            </Button>
+          )}
         </form>
 
         {/* Helper Text */}
