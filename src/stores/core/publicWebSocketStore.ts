@@ -224,6 +224,7 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
                 };
                 const pendingMessage = publicBotStore.messages.find(
                   item =>
+                    typeof item.id === 'string' &&
                     item.id.startsWith('pending-') &&
                     item.senderType === senderType &&
                     item.message === message.message
