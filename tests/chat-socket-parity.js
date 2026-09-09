@@ -24,7 +24,23 @@ export async function runChatSocketParityTests() {
         socket.getState().handleSocketMessage({
           type: 'conversation_history',
           conversationHistory: [
-            { id: userId, message: 'hi', senderType: 1, createdAt: '2026-08-01T09:00:00Z' },
+            {
+              id: userId,
+              message: 'hi',
+              senderType: 1,
+              createdAt: '2026-08-01T09:00:00Z',
+              snippets: [
+                {
+                  id: 1,
+                  text: 'Evidence',
+                  file: { id: 1, name: 'Notes' },
+                  chunkIndex: 0,
+                  similarityScore: 0.7,
+                },
+              ],
+              retrievalTrace: { traces: [] },
+              webSearchSources: [{ id: 1, title: 'Source', url: 'https://example.com' }],
+            },
           ],
         });
         await settle();
@@ -32,6 +48,20 @@ export async function runChatSocketParityTests() {
           chat.getState().messages[0].date === '2026-08-01T09:00:00Z',
           `${name}: history timestamp changed`
         );
+        if (name === 'authenticated') {
+          assert(
+            chat.getState().messages[0].snippets?.[0].text === 'Evidence',
+            'History snippets were discarded'
+          );
+          assert(
+            chat.getState().messages[0].retrievalTrace?.traces.length === 0,
+            'History trace was discarded'
+          );
+          assert(
+            chat.getState().messages[0].webSearchSources?.[0].title === 'Source',
+            'Web sources were discarded'
+          );
+        }
         chat.setState({ isTyping: true });
         socket.getState().handleSocketMessage({
           type: 'ai_stream',

@@ -22,6 +22,8 @@ import { useThemeStore } from '@/stores/ui/themeStore';
 
 import { clearAnonymousSession, getOrCreateAnonymousSession } from '@/lib/anonymousSession';
 
+import { isProgressTrackingConfigured } from '@/utils/progressTracking';
+
 import ChatErrorAlert from '@/components/chat/ChatErrorAlert';
 import PublicChatInput from '@/components/chat/public/PublicChatInput';
 import PublicMessageList from '@/components/chat/public/PublicMessageList';
@@ -67,7 +69,7 @@ const PublicBotChat: React.FC = () => {
   );
 
   // Check if tracking is enabled for the current bot
-  const isTrackingEnabled = botInfo?.modelPreference?.trackingModelDareId != null;
+  const isTrackingEnabled = isProgressTrackingConfigured(botInfo);
 
   // Public WebSocket store - Socket.IO (session-based auth)
   const {
@@ -187,7 +189,7 @@ const PublicBotChat: React.FC = () => {
         conversationId: activeConversation.dareConversationId,
         message: message,
         sender_type: 1, // USER
-        enable_progress: true, // Enable progress tracking for public bots
+        enable_progress: isProgressTrackingConfigured(botInfo),
         is_advanced: Boolean(botInfo.isAdvanced || false),
       };
 

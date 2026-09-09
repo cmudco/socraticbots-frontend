@@ -7,6 +7,8 @@ import {
   conversationService,
 } from '@/services/conversation.service';
 
+import { isProgressTrackingConfigured } from '@/utils/progressTracking';
+
 import type { Bot } from '@/types/bot';
 
 import { useWebSocketStore } from './websocketStore';
@@ -199,7 +201,7 @@ export const useConversationStore = create<ConversationStore>()(
 
         const payload: Record<string, unknown> = {
           message: message,
-          enable_progress: true,
+          enable_progress: isProgressTrackingConfigured(currentBot),
           is_advanced: Boolean(currentBot?.isAdvanced || false),
         };
 

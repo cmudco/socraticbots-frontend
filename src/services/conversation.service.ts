@@ -3,6 +3,7 @@ import { METHOD } from '@/constants/requests';
 import { baseRequest } from '@/utils/baseRequest';
 
 import type { Bot } from '@/types/bot';
+import type { MessageDiagnostics } from '@/types/messageDetails';
 
 // Interface for bot groups response from API
 export interface BotGroup {
@@ -33,7 +34,7 @@ export interface DareConversation {
   selectedFileIds?: number[];
 }
 
-export interface DareMessage {
+export interface DareMessage extends MessageDiagnostics {
   id: string;
   message: string;
   senderType: 'USER' | 'ASSISTANT';

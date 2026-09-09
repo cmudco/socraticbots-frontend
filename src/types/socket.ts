@@ -1,3 +1,5 @@
+import type { MessageDiagnostics } from './messageDetails';
+
 /**
  * Socket.IO Type Definitions for Socratic Books
  *
@@ -92,7 +94,7 @@ export type SocketMessageType =
 /**
  * Base socket message with all possible fields
  */
-export interface SocketMessage {
+export interface SocketMessage extends MessageDiagnostics {
   type: SocketMessageType;
 
   // Message identification
@@ -154,7 +156,7 @@ export interface SocketMessage {
 /**
  * Message in conversation history
  */
-export interface ConversationHistoryMessage {
+export interface ConversationHistoryMessage extends MessageDiagnostics {
   id: string | number;
   message: string;
   senderType: number;

@@ -23,3 +23,9 @@ Verified against local Socratic and DARE APIs with separate SQLite databases and
 The provider and external document-search boundary used deterministic local fixtures. Authentication, routing, DTO construction, tool execution, sockets, serializers, database persistence, and UI were real. This does not validate live provider credentials, production vector indexes, or deployment configuration. DARE's full 770-test suite and Socratic backend's full 18-test suite passed.
 
 Deploy the accompanying DARE changes and Socratic backend migration `bots.0016_bot_rag_mode` before this frontend. No deployment or merge was performed during verification.
+
+## Message diagnostics and optional tracking (2026-09-09)
+
+`await (await import('/tests/message-details.tsx')).runMessageDetailsChecks()` verifies the creator-only footer control, absence for subscribers/public viewers, removal of inline context, and tracking prerequisites. The socket regressions also check that stored snippets, retrieval traces, and web sources survive mapping.
+
+Verified the drawer against real saved OOP responses: retrieval stages, 12 document snippets, tokens and cost remain available after reload. A real provider reply with tracking unconfigured completed without a learning-progress exception. The local stack uses the normal DARE PostgreSQL database and existing Socratic database. No invitation emails were sent. Code generation/redemption, duplicate use, capacity and subscriber restrictions are covered by the Socratic backend API suite (20 tests); DARE's full suite passes 774 tests.

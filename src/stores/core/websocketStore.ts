@@ -50,6 +50,11 @@ const mapToDareMessage = (
   senderType: 'USER' | 'ASSISTANT'
 ): DareMessage => ({
   id: String(msg.id),
+  snippets: msg.snippets,
+  retrievalTrace: msg.retrievalTrace,
+  webSearchSources: msg.webSearchSources,
+  llm: msg.llm,
+  litellmModelName: msg.litellmModelName,
   message: msg.message || '',
   senderType,
   senderName: msg.senderName || '',

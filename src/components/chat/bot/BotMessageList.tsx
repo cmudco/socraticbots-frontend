@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Loader2 } from 'lucide-react';
 
+import { useUser } from '@/hooks/queries/useUser';
+
 import {
   useConversationStore,
   useIsLoadingBot,
@@ -9,6 +11,7 @@ import {
 } from '@/stores/core/conversationStore';
 import { useWebSocketStore } from '@/stores/core/websocketStore';
 
+import { canViewBotMessageDetails } from '@/utils/messageDetailsAccess';
 import { scrollManager } from '@/utils/scrollManager';
 
 import ChatMessageBubble from '@/components/chat/shared/ChatMessageBubble';
@@ -22,6 +25,9 @@ interface BotMessageListProps {
 
 const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
   const messages = useMessages();
+  const user = useUser();
+  const currentBot = useConversationStore(state => state.currentBot);
+  const canViewDetails = canViewBotMessageDetails(currentBot, user);
   const isLoadingBot = useIsLoadingBot();
   const { isLoadingMessages, isTyping, deleteMessage } = useConversationStore();
   const { toolCallsByMessage, contextTraceByMessage } = useWebSocketStore();
@@ -173,6 +179,7 @@ const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
             <ChatMessageBubble
               key={message.id}
               message={message}
+              canViewDetails={canViewDetails}
               isStreaming={message.streaming}
               onDelete={deleteMessage}
               toolCalls={

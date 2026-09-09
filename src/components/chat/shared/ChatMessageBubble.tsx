@@ -8,18 +8,22 @@
  */
 import React, { useState } from 'react';
 
-import { Loader2, Trash2 } from 'lucide-react';
+import { Info, Loader2, Trash2 } from 'lucide-react';
 
-import ContextTraceChip from '@/components/chat/toolActivity/ContextTraceChip';
+import MessageDetailsSheet from '@/components/chat/details/MessageDetailsSheet';
 import ToolActivity from '@/components/chat/toolActivity/ToolActivity';
 import { Button } from '@/components/ui/button';
 
 import type { ContextTrace } from '@/types/contextTrace';
+import type { MessageDiagnostics } from '@/types/messageDetails';
 import type { ChatToolCall } from '@/types/toolCalls';
 
 import MessageMarkdown from './MessageMarkdown';
 
-export interface ChatBubbleMessage {
+export interface ChatBubbleMessage extends MessageDiagnostics {
+  cost?: string | number | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
   id: string;
   message: string;
   senderType: 'USER' | 'ASSISTANT';
@@ -38,6 +42,7 @@ interface ChatMessageBubbleProps {
   toolCalls?: ChatToolCall[];
   /** Context-assembly trace for this message's turn. */
   contextTrace?: ContextTrace;
+  canViewDetails?: boolean;
 }
 
 const variantClasses = {
@@ -66,7 +71,9 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
   onDelete,
   toolCalls,
   contextTrace,
+  canViewDetails = false,
 }) => {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const isUser = message.senderType === 'USER';
   const [showActions, setShowActions] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -108,7 +115,6 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
             </div>
           )}
 
-          {!isUser && contextTrace && <ContextTraceChip trace={contextTrace} />}
           {!isUser && toolCalls && toolCalls.length > 0 && <ToolActivity toolCalls={toolCalls} />}
 
           <div
@@ -128,31 +134,55 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
               {new Date(message.date).toLocaleTimeString()}
             </span>
 
-            {onDelete && (
-              <div className="flex items-center gap-2">
-                <div
-                  className={`transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}
+            <div className="flex items-center gap-2">
+              {!isUser && canViewDetails && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground h-7 w-7 p-0"
+                  aria-label="Message details"
+                  title="Message details"
+                  onClick={() => setDetailsOpen(true)}
                 >
-                  <Button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    variant="ghost"
-                    size="sm"
-                    className={`h-6 w-6 p-0 ${isUser ? 'text-primary-foreground/80 hover:bg-primary-foreground/20 hover:text-primary-foreground' : 'text-muted-foreground hover:bg-destructive/10 hover:text-destructive'}`}
-                    title="Delete message"
+                  <Info className="h-4 w-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`transition-opacity duration-200 ${showActions ? 'opacity-100' : 'opacity-0'}`}
                   >
-                    {isDeleting ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3 w-3" />
-                    )}
-                  </Button>
+                    <Button
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      variant="ghost"
+                      size="sm"
+                      className={`h-6 w-6 p-0 ${isUser ? 'text-primary-foreground/80 hover:bg-primary-foreground/20 hover:text-primary-foreground' : 'text-muted-foreground hover:bg-destructive/10 hover:text-destructive'}`}
+                      title="Delete message"
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
+      {!isUser && canViewDetails && detailsOpen && (
+        <MessageDetailsSheet
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+          message={message}
+          contextTrace={contextTrace}
+          toolCalls={toolCalls}
+        />
+      )}
     </div>
   );
 };
