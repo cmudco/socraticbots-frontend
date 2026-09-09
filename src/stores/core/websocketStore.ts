@@ -13,7 +13,7 @@ import type { DareMessage } from '@/services/conversation.service';
 import { authenticatedSocketService } from '@/services/socket.service';
 
 import type { ContextTrace } from '@/types/contextTrace';
-import type { ConversationHistoryMessage, SocketMessage } from '@/types/socket';
+import type { ConversationHistoryMessage, SendMessagePayload, SocketMessage } from '@/types/socket';
 import { toolCallFromHistory } from '@/types/toolCalls';
 
 import {
@@ -36,7 +36,7 @@ export interface WebSocketActions extends ChatSocketCoreActions {
   subscribeToConversation: (conversationId: string) => void;
   unsubscribeFromConversation: (conversationId: string) => void;
 
-  sendMessage: (payload: Record<string, unknown>) => void;
+  sendMessage: (payload: SendMessagePayload) => void;
 }
 
 type WebSocketStore = WebSocketState & WebSocketActions;
@@ -57,11 +57,11 @@ const mapToDareMessage = (
   litellmModelName: msg.litellmModelName,
   message: msg.message || '',
   senderType,
-  senderName: msg.senderName || '',
+  senderName: msg.senderName || msg.sender || '',
   isSender: msg.isSender || false,
   date: msg.date || msg.createdAt || new Date().toISOString(),
   streaming: msg.streaming || false,
-  llmId: msg.llmId,
+  llmId: msg.llmId ?? msg.llm ?? undefined,
   cost: msg.cost != null ? String(msg.cost) : undefined,
   inputTokens: msg.inputTokens ?? undefined,
   outputTokens: msg.outputTokens ?? undefined,
@@ -162,7 +162,7 @@ export const useWebSocketStore = create<WebSocketStore>()(
       // Message Sending
       // ──────────────────────────────────────────────────────────────────────
 
-      sendMessage: (payload: Record<string, unknown>) => {
+      sendMessage: (payload: SendMessagePayload) => {
         const { isConnected, currentConversationId } = get();
 
         if (!isConnected) {

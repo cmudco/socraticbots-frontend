@@ -15,7 +15,7 @@ import { publicSocketService } from '@/services/socket.service';
 
 import type { ContextTrace } from '@/types/contextTrace';
 import type { PublicBotMessage } from '@/types/publicBot';
-import type { ConversationHistoryMessage, SocketMessage } from '@/types/socket';
+import type { ConversationHistoryMessage, SendMessagePayload, SocketMessage } from '@/types/socket';
 import { toolCallFromHistory } from '@/types/toolCalls';
 
 import {
@@ -39,7 +39,7 @@ export interface PublicWebSocketActions extends ChatSocketCoreActions {
   connect: (conversationId: string, sessionId: string) => void;
   disconnect: () => void;
 
-  sendMessage: (payload: Record<string, unknown>) => void;
+  sendMessage: (payload: SendMessagePayload) => void;
 }
 
 type PublicWebSocketStore = PublicWebSocketState & PublicWebSocketActions;
@@ -63,14 +63,19 @@ const mapToPublicBotMessage = (
   context: MessageMapContext
 ): PublicBotMessage => ({
   id: String(msg.id),
+  snippets: msg.snippets,
+  retrievalTrace: msg.retrievalTrace,
+  webSearchSources: msg.webSearchSources,
+  llm: msg.llm,
+  litellmModelName: msg.litellmModelName,
   message: msg.message || '',
   senderType,
   // Streamed AI responses historically defaulted the name to 'AI Assistant'
-  senderName: msg.senderName || (context === 'stream' ? 'AI Assistant' : ''),
+  senderName: msg.senderName || msg.sender || (context === 'stream' ? 'AI Assistant' : ''),
   isSender: msg.isSender || false,
   date: msg.date || msg.createdAt || new Date().toISOString(),
   streaming: context === 'event' ? msg.streaming || false : msg.streaming,
-  llmId: msg.llmId,
+  llmId: msg.llmId ?? msg.llm ?? undefined,
   cost: msg.cost,
   inputTokens: msg.inputTokens,
   outputTokens: msg.outputTokens,
@@ -148,8 +153,8 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
       // Message Sending
       // ──────────────────────────────────────────────────────────────────────
 
-      sendMessage: (payload: Record<string, unknown>) => {
-        const { isConnected } = get();
+      sendMessage: (payload: SendMessagePayload) => {
+        const { isConnected, currentConversationId } = get();
 
         if (!isConnected) {
           console.error('Cannot send message: WebSocket not connected');
@@ -157,8 +162,10 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
         }
 
         // Send message (fire-and-forget with error callback)
-        publicSocketService.sendMessage(payload, error =>
-          core.handleSocketMessage({ type: 'error', errorMessage: error })
+        if (!currentConversationId) return;
+        publicSocketService.sendMessage(
+          { ...payload, conversationId: currentConversationId },
+          error => core.handleSocketMessage({ type: 'error', errorMessage: error })
         );
       },
     };

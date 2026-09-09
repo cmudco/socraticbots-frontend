@@ -22,6 +22,7 @@ import { useThemeStore } from '@/stores/ui/themeStore';
 
 import { clearAnonymousSession, getOrCreateAnonymousSession } from '@/lib/anonymousSession';
 
+import { buildBotChatPayload } from '@/utils/botChatPayload';
 import { isProgressTrackingConfigured } from '@/utils/progressTracking';
 
 import ChatErrorAlert from '@/components/chat/ChatErrorAlert';
@@ -183,40 +184,7 @@ const PublicBotChat: React.FC = () => {
         return;
       }
 
-      // Build payload exactly like authenticated bot chat
-      // conversationId is REQUIRED - backend uses it to route the message
-      const payload: Record<string, unknown> = {
-        conversationId: activeConversation.dareConversationId,
-        message: message,
-        sender_type: 1, // USER
-        enable_progress: isProgressTrackingConfigured(botInfo),
-        is_advanced: Boolean(botInfo.isAdvanced || false),
-      };
-
-      // LLM and context settings (matching conversationStore.ts structure exactly)
-      payload.model_id = selectedModelId;
-      payload.rag_mode = botInfo.ragMode || 'advanced';
-      payload.embedding_ids = botInfo.dareFileIds || [];
-      payload.file_owner_id = botInfo.createdByDareId;
-      payload.progress_llm_id = botInfo.modelPreference?.trackingModelDareId;
-      payload.web_search_enabled = Boolean(botInfo.webSearchEnabled || false);
-
-      if (botInfo.maxContextSnippets !== undefined) {
-        payload.max_context_snippets = botInfo.maxContextSnippets;
-      }
-      if (botInfo.documentSimilarityThreshold !== undefined) {
-        payload.document_similarity_threshold = botInfo.documentSimilarityThreshold;
-      }
-
-      // Add bot metadata (must match conversationStore.ts payload exactly)
-      payload.bot_meta = {
-        title: botInfo.title,
-        subject: botInfo.subject,
-        topic: botInfo.topic,
-        chat_prompt: botInfo.prompts?.chatPrompt,
-        tracking_prompt: botInfo.prompts?.trackingPrompt,
-        learning_goals: botInfo.prompts?.learningGoals,
-      };
+      const payload = buildBotChatPayload(botInfo, message);
 
       sendWebSocketMessage(payload);
     },

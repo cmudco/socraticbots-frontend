@@ -16,7 +16,12 @@
 import { type SocketAuth, getSocketOptions, getSocketUrl } from '@/config/socket.config';
 import { Socket, io } from 'socket.io-client';
 
-import type { ClientToServerEvents, ServerToClientEvents, SocketMessage } from '@/types/socket';
+import type {
+  ClientToServerEvents,
+  SendMessagePayload,
+  ServerToClientEvents,
+  SocketMessage,
+} from '@/types/socket';
 
 // ════════════════════════════════════════════════════════════════════════════
 // Types
@@ -208,7 +213,7 @@ class SocketService {
    * Send a message to the server
    * Fire-and-forget with optional error callback
    */
-  sendMessage(payload: Record<string, unknown>, onError?: (error: string) => void): void {
+  sendMessage(payload: SendMessagePayload, onError?: (error: string) => void): void {
     if (!this.socket?.connected) {
       console.warn('[SocketService] Cannot send message: not connected');
       onError?.('Not connected');

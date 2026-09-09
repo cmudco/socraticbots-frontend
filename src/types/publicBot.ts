@@ -3,6 +3,7 @@
  */
 import type { Bot } from './bot';
 import type { ContextTrace } from './contextTrace';
+import type { MessageDiagnostics } from './messageDetails';
 import type { ChatToolCall } from './toolCalls';
 
 // Public bot info is the same as regular bot info
@@ -15,7 +16,7 @@ export interface PublicBotConversation {
   botName: string;
 }
 
-export interface PublicBotMessage {
+export interface PublicBotMessage extends MessageDiagnostics {
   id: string;
   message: string;
   senderType: 'USER' | 'ASSISTANT';
@@ -26,9 +27,9 @@ export interface PublicBotMessage {
   toolCalls?: ChatToolCall[];
   contextTrace?: ContextTrace;
   llmId?: number;
-  cost?: number;
-  inputTokens?: number;
-  outputTokens?: number;
+  cost?: number | string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
   feedbackType?: number | null;
   feedbackText?: string | null;
   isEdited?: boolean;

@@ -29,6 +29,9 @@ export async function runChatSocketParityTests() {
               message: 'hi',
               senderType: 1,
               createdAt: '2026-08-01T09:00:00Z',
+              sender: 'History sender',
+              llm: 29,
+              cost: '0.012345',
               snippets: [
                 {
                   id: 1,
@@ -48,7 +51,16 @@ export async function runChatSocketParityTests() {
           chat.getState().messages[0].date === '2026-08-01T09:00:00Z',
           `${name}: history timestamp changed`
         );
-        if (name === 'authenticated') {
+        assert(
+          chat.getState().messages[0].senderName === 'History sender',
+          `${name}: history sender lost`
+        );
+        assert(chat.getState().messages[0].llmId === 29, `${name}: persisted model ID lost`);
+        assert(
+          String(chat.getState().messages[0].cost) === '0.012345',
+          `${name}: decimal cost lost`
+        );
+        {
           assert(
             chat.getState().messages[0].snippets?.[0].text === 'Evidence',
             'History snippets were discarded'

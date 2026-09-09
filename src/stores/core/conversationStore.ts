@@ -7,7 +7,7 @@ import {
   conversationService,
 } from '@/services/conversation.service';
 
-import { isProgressTrackingConfigured } from '@/utils/progressTracking';
+import { buildBotChatPayload } from '@/utils/botChatPayload';
 
 import type { Bot } from '@/types/bot';
 
@@ -199,49 +199,8 @@ export const useConversationStore = create<ConversationStore>()(
           return;
         }
 
-        const payload: Record<string, unknown> = {
-          message: message,
-          enable_progress: isProgressTrackingConfigured(currentBot),
-          is_advanced: Boolean(currentBot?.isAdvanced || false),
-        };
-
-        if (currentBot) {
-          // LLM and context settings.
-          //
-          // `model_id` is the new opaque dispatch field on DARE's chat
-          // socket (replaces the legacy `llm_id`); DARE inverts the
-          // encoding via `parse_model_id` — so a stringified PK ("42") or
-          // a LiteLLM handle ("litellm:<key>:<name>") both work.
-          //
-          // `progress_llm_id` is the SB-specific tracker field; DARE
-          // accepts the same opaque-string contract on this one.
-          payload.model_id = selectedModelId;
-          payload.embedding_ids = currentBot.dareFileIds || [];
-          payload.file_owner_id = currentBot.createdByDareId;
-          payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
-          payload.web_search_enabled = Boolean(currentBot.webSearchEnabled || false);
-          // Retrieval strategy for DARE's shared tool loop; 'agentic' lets the
-          // model call search_documents on demand (authenticated surface only —
-          // DARE downgrades anonymous sessions server-side).
-          payload.rag_mode = currentBot.ragMode || 'advanced';
-
-          if (currentBot.maxContextSnippets !== undefined) {
-            payload.max_context_snippets = currentBot.maxContextSnippets;
-          }
-          if (currentBot.documentSimilarityThreshold !== undefined) {
-            payload.document_similarity_threshold = currentBot.documentSimilarityThreshold;
-          }
-
-          // All Socratic bot data goes in bot_meta (single source of truth)
-          payload.bot_meta = {
-            title: currentBot.title,
-            subject: currentBot.subject,
-            topic: currentBot.topic,
-            chat_prompt: currentBot.prompts?.chatPrompt,
-            tracking_prompt: currentBot.prompts?.trackingPrompt,
-            learning_goals: currentBot.prompts?.learningGoals,
-          };
-        }
+        if (!currentBot) return;
+        const payload = buildBotChatPayload(currentBot, message);
 
         websocketStore.sendMessage(payload);
       } catch {

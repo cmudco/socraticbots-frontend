@@ -1,4 +1,7 @@
+import type { BotRagMode } from './bot';
 import type { MessageDiagnostics } from './messageDetails';
+
+export type { SocketAuth } from '@/config/socket.config';
 
 /**
  * Socket.IO Type Definitions for Socratic Books
@@ -54,7 +57,7 @@ export interface ClientToServerEvents {
 // ════════════════════════════════════════════════════════════════════════════
 
 export interface SocketResponse {
-  success: boolean;
+  success?: boolean;
   error?: string;
   conversationId?: string;
 }
@@ -109,6 +112,7 @@ export interface SocketMessage extends MessageDiagnostics {
   // Sender info
   senderType?: number; // 1 = USER, 2 = ASSISTANT
   senderName?: string;
+  sender?: string;
   isSender?: boolean;
 
   // Timestamps
@@ -121,9 +125,9 @@ export interface SocketMessage extends MessageDiagnostics {
 
   // Message metadata
   llmId?: number;
-  cost?: number;
-  inputTokens?: number;
-  outputTokens?: number;
+  cost?: number | string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
 
   // Feedback
   feedbackType?: number | null;
@@ -161,14 +165,15 @@ export interface ConversationHistoryMessage extends MessageDiagnostics {
   message: string;
   senderType: number;
   senderName?: string;
+  sender?: string;
   isSender?: boolean;
   date?: string;
   createdAt?: string;
   streaming?: boolean;
   llmId?: number;
-  cost?: number;
-  inputTokens?: number;
-  outputTokens?: number;
+  cost?: number | string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
   feedbackType?: number | null;
   feedbackText?: string | null;
   isEdited?: boolean;
@@ -203,13 +208,14 @@ export interface BotMeta {
   topic?: string;
   learning_goals?: string;
   chat_prompt?: string;
+  tracking_prompt?: string;
 }
 
 /**
  * Payload for sending messages
  */
 export interface SendMessagePayload {
-  conversationId: string;
+  conversationId?: string;
   message: string;
   sender_type?: number;
 
@@ -233,6 +239,8 @@ export interface SendMessagePayload {
   // Context configuration
   file_ids?: number[];
   embedding_ids?: number[];
+  file_owner_id?: number;
+  rag_mode?: BotRagMode;
   media_ids?: number[];
   tag_ids?: number[];
   folder_ids?: number[];
@@ -269,10 +277,6 @@ export interface RegeneratePayload {
 /**
  * Authentication options for socket connection
  */
-export type SocketAuth =
-  | { token: string } // JWT for authenticated users
-  | { session_id: string }; // Session ID for public/anonymous users
-
 /**
  * Connection status
  */
