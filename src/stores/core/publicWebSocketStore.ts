@@ -1,3 +1,4 @@
+import { createChatSendPayload, normalizeMessageId } from '@cmudco/chat-socket-contract';
 /**
  * WebSocket Store for Public/Anonymous Users
  *
@@ -62,7 +63,7 @@ const mapToPublicBotMessage = (
   senderType: 'USER' | 'ASSISTANT',
   context: MessageMapContext
 ): PublicBotMessage => ({
-  id: String(msg.id),
+  id: normalizeMessageId(msg.id!),
   snippets: msg.snippets,
   retrievalTrace: msg.retrievalTrace,
   webSearchSources: msg.webSearchSources,
@@ -71,7 +72,7 @@ const mapToPublicBotMessage = (
   message: msg.message || '',
   senderType,
   // Streamed AI responses historically defaulted the name to 'AI Assistant'
-  senderName: msg.senderName || msg.sender || (context === 'stream' ? 'AI Assistant' : ''),
+  senderName: msg.senderName || (context === 'stream' ? 'AI Assistant' : ''),
   isSender: msg.isSender || false,
   date: msg.date || msg.createdAt || new Date().toISOString(),
   streaming: context === 'event' ? msg.streaming || false : msg.streaming,
@@ -164,7 +165,7 @@ export const usePublicWebSocketStore = create<PublicWebSocketStore>()(
         // Send message (fire-and-forget with error callback)
         if (!currentConversationId) return;
         publicSocketService.sendMessage(
-          { ...payload, conversationId: currentConversationId },
+          createChatSendPayload(currentConversationId, payload),
           error => core.handleSocketMessage({ type: 'error', errorMessage: error })
         );
       },

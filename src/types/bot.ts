@@ -1,3 +1,5 @@
+import type { RagMode } from '@cmudco/chat-socket-contract';
+
 export interface BotModelPreference {
   id: number;
   // Opaque DARE picker id — see PickerModel in dareLLMModels.service.
@@ -48,7 +50,7 @@ export interface BotQuickPrompt {
   updatedAt: string;
 }
 
-export type BotRagMode = 'naive' | 'advanced' | 'agentic';
+export type BotRagMode = RagMode;
 
 export interface Bot {
   id: number;

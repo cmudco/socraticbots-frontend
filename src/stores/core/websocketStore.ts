@@ -1,3 +1,4 @@
+import { createChatSendPayload, normalizeMessageId } from '@cmudco/chat-socket-contract';
 /**
  * WebSocket Store for Authenticated Users
  *
@@ -49,7 +50,7 @@ const mapToDareMessage = (
   msg: SocketMessage | ConversationHistoryMessage,
   senderType: 'USER' | 'ASSISTANT'
 ): DareMessage => ({
-  id: String(msg.id),
+  id: normalizeMessageId(msg.id!),
   snippets: msg.snippets,
   retrievalTrace: msg.retrievalTrace,
   webSearchSources: msg.webSearchSources,
@@ -57,7 +58,7 @@ const mapToDareMessage = (
   litellmModelName: msg.litellmModelName,
   message: msg.message || '',
   senderType,
-  senderName: msg.senderName || msg.sender || '',
+  senderName: msg.senderName || '',
   isSender: msg.isSender || false,
   date: msg.date || msg.createdAt || new Date().toISOString(),
   streaming: msg.streaming || false,
@@ -177,7 +178,7 @@ export const useWebSocketStore = create<WebSocketStore>()(
 
         // Add conversation ID to payload and send (fire-and-forget with error callback)
         authenticatedSocketService.sendMessage(
-          { ...payload, conversationId: currentConversationId },
+          createChatSendPayload(currentConversationId, payload),
           error => core.handleSocketMessage({ type: 'error', errorMessage: error })
         );
       },

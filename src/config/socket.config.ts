@@ -1,3 +1,10 @@
+import {
+  CHAT_SOCKET_NAMESPACE,
+  CHAT_SOCKET_PATH,
+  CHAT_TRANSPORTS,
+  type ChatSocketAuth,
+} from '@cmudco/chat-socket-contract';
+
 /**
  * Socket.IO Configuration for Socratic Books
  *
@@ -12,9 +19,7 @@
 // Types
 // ════════════════════════════════════════════════════════════════════════════
 
-export type SocketAuthJWT = { token: string };
-export type SocketAuthSession = { sessionId: string; conversationId: string };
-export type SocketAuth = SocketAuthJWT | SocketAuthSession;
+export type SocketAuth = ChatSocketAuth;
 
 // ════════════════════════════════════════════════════════════════════════════
 // Configuration
@@ -38,18 +43,18 @@ export const socketConfig = {
   /**
    * Socket.IO path (where socket.io server is mounted)
    */
-  path: '/socket.io/',
+  path: CHAT_SOCKET_PATH,
 
   /**
    * Namespace for chat functionality
    */
-  namespace: '/chat',
+  namespace: CHAT_SOCKET_NAMESPACE,
 
   /**
    * Transport methods in order of preference
    * WebSocket is preferred, polling as fallback
    */
-  transports: ['websocket', 'polling'] as const,
+  transports: CHAT_TRANSPORTS,
 
   /**
    * Reconnection settings

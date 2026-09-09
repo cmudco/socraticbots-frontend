@@ -12,9 +12,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:chat-contract": "node --test tests/chat-socket-contract.test.mjs"
   },
   "dependencies": {
+    "@cmudco/chat-socket-contract": "file:vendor/cmudco-chat-socket-contract-0.1.0.tgz",
     "@elevenlabs/react": "^0.13.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",

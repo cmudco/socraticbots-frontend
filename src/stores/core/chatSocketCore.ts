@@ -7,7 +7,7 @@
  * factory owns the protocol handling once — both stores compose it and
  * keep only their surface-specific actions.
  */
-import { validateSocketEvent } from '@/schemas/socketEvents';
+import { normalizeMessageId, parseChatEvent } from '@cmudco/chat-socket-contract';
 
 import type { SocketService } from '@/services/socket.service';
 
@@ -180,15 +180,20 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
     // Message Handling
     // ──────────────────────────────────────────────────────────────────────
 
-    handleSocketMessage: (event: SocketMessage) => {
-      validateSocketEvent(event);
+    handleSocketMessage: (raw: SocketMessage) => {
+      const parsed = parseChatEvent(raw);
+      if (!parsed.success) {
+        console.warn('[socket] Invalid chat event', parsed.issues);
+        return;
+      }
+      const event = parsed.data as SocketMessage;
       const conversationId = get().currentConversationId;
       if (event.conversationId && event.conversationId !== conversationId) return;
       // Normalize wire IDs once: DARE emits numeric IDs while UI stores use strings.
       const data: SocketMessage & { id?: string; messageId?: string } = {
         ...event,
-        id: event.id == null ? undefined : String(event.id),
-        messageId: event.messageId == null ? undefined : String(event.messageId),
+        id: event.id == null ? undefined : normalizeMessageId(event.id),
+        messageId: event.messageId == null ? undefined : normalizeMessageId(event.messageId),
       };
 
       config
@@ -251,7 +256,6 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
             }
 
             case 'ai_stream': {
-              data.streaming = data.isComplete === true ? false : (data.streaming ?? true);
               const senderType = data.senderType === 1 ? 'USER' : 'ASSISTANT';
 
               if (data.regenerate) {

@@ -14,11 +14,12 @@
  * - Session ID (public bots): connectWithSession(sessionId, conversationId)
  */
 import { type SocketAuth, getSocketOptions, getSocketUrl } from '@/config/socket.config';
+import type { ChatSendPayload } from '@cmudco/chat-socket-contract';
 import { Socket, io } from 'socket.io-client';
 
 import type {
   ClientToServerEvents,
-  SendMessagePayload,
+  RegeneratePayload,
   ServerToClientEvents,
   SocketMessage,
 } from '@/types/socket';
@@ -213,7 +214,7 @@ class SocketService {
    * Send a message to the server
    * Fire-and-forget with optional error callback
    */
-  sendMessage(payload: SendMessagePayload, onError?: (error: string) => void): void {
+  sendMessage(payload: ChatSendPayload, onError?: (error: string) => void): void {
     if (!this.socket?.connected) {
       console.warn('[SocketService] Cannot send message: not connected');
       onError?.('Not connected');
@@ -272,7 +273,7 @@ class SocketService {
    * Regenerate a response
    * Fire-and-forget with optional error callback
    */
-  regenerateResponse(payload: Record<string, unknown>, onError?: (error: string) => void): void {
+  regenerateResponse(payload: RegeneratePayload, onError?: (error: string) => void): void {
     if (!this.socket?.connected) {
       onError?.('Not connected');
       return;
