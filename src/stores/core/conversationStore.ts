@@ -111,6 +111,7 @@ export const useConversationStore = create<ConversationStore>()(
         set({
           currentBotId: botId,
           currentBot: bot,
+          activeConversation: null,
           messages: [],
           conversationHistory: [],
           messageCount: 0,
@@ -118,6 +119,7 @@ export const useConversationStore = create<ConversationStore>()(
         });
 
         const conversation = await conversationService.getOrCreateBotConversation(botId);
+        if (get().currentBotId !== botId) return;
         set({ activeConversation: conversation });
 
         // Socket connection is now handled by ProtectedRoute via useSocketConnection hook
