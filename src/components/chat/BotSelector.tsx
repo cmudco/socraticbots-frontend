@@ -57,7 +57,7 @@ const BotSelector: React.FC = () => {
     <div className="w-64">
       <Select value={currentBotId?.toString() || ''} onValueChange={handleBotChange}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select a bot..." />
+          <SelectValue placeholder={<span>Select a bot...</span>} />
         </SelectTrigger>
         <SelectContent>
           {bots && bots.length > 0 ? (
