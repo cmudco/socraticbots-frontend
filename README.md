@@ -87,6 +87,7 @@ npm install
 cp .env.example .env.local
 # VITE_API_URL          -> SocraticBooks backend API (default http://localhost:8001/api)
 # VITE_DARE_SOCKET_URL  -> DARE backend for Socket.IO (default http://localhost:8000)
+# VITE_DARE_FRONTEND_URL -> DARE web app for cross-links (default http://localhost:5173)
 
 # 3. Run the dev server on port 5174 (DARE frontend holds 5173)
 npm run dev -- --port 5174
@@ -148,7 +149,7 @@ npm run preview     # serves ./dist locally for verification
 
 - [socraticbooks-backend](https://github.com/cmudco/socraticbots-backend) — the Django API this app depends on (run it separately)
 - [dare-backend](https://github.com/cmudco/dare-backend) — the DARE backend that SocraticBooks proxies for auth, AI, and files
-- [voice-agent-runtime](../voice-agent-runtime/) — the standalone Pipecat/WebRTC voice runtime used for spoken tutoring
+- [voice-agent-runtime](https://github.com/cmudco/voice-agent-runtime) — the standalone Pipecat/WebRTC voice runtime used for spoken tutoring
 
 ## Stay in touch
 
