@@ -28,6 +28,9 @@ export interface PipecatVoiceMessage {
   ttsLatencySeconds?: number;
   totalLatencySeconds?: number;
   reason?: string;
+  requestId?: string;
+  state?: 'paused' | 'resuming';
+  event?: string;
   error?: string;
   fatal?: boolean;
   isFatal?: boolean;

@@ -93,6 +93,8 @@ export const usePipecatWebRTCSession = ({
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const endAckRef = useRef<{ id: string; resolve: () => void } | null>(null);
+  const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const runtimePlaybackQueueRef = useRef<string[]>([]);
   const runtimePlaybackAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -194,6 +196,9 @@ export const usePipecatWebRTCSession = ({
   );
 
   const cleanup = useCallback(() => {
+    if (disconnectTimerRef.current) clearTimeout(disconnectTimerRef.current);
+    disconnectTimerRef.current = null;
+    if (peerConnectionRef.current) peerConnectionRef.current.onconnectionstatechange = null;
     if (pingIntervalRef.current) {
       clearInterval(pingIntervalRef.current);
       pingIntervalRef.current = null;
@@ -217,8 +222,13 @@ export const usePipecatWebRTCSession = ({
 
   const sendControlMessage = useCallback((message: PipecatVoiceMessage) => {
     const channel = dataChannelRef.current;
-    if (channel?.readyState !== DATA_CHANNEL_OPEN_STATE) return;
-    channel.send(JSON.stringify(message));
+    if (channel?.readyState !== DATA_CHANNEL_OPEN_STATE) return false;
+    try {
+      channel.send(JSON.stringify(message));
+      return true;
+    } catch {
+      return false;
+    }
   }, []);
 
   const startKeepAlive = useCallback(() => {
@@ -317,6 +327,11 @@ export const usePipecatWebRTCSession = ({
               return;
             }
             if (!message) return;
+            if (message.type === 'session_end_ack') {
+              const ack = endAckRef.current;
+              if (ack && ack.id === message.requestId) ack.resolve();
+              return;
+            }
 
             if (message.type === 'error') {
               const errorText = message.error ?? message.data?.error;
@@ -350,16 +365,39 @@ export const usePipecatWebRTCSession = ({
           };
 
           peerConnection.onconnectionstatechange = () => {
-            if (peerConnection.connectionState === FAILED_CONNECTION_STATE) {
-              settleRejected(new Error('Pipecat WebRTC connection failed'));
+            if (peerConnection.connectionState === 'connected') {
+              if (disconnectTimerRef.current) clearTimeout(disconnectTimerRef.current);
+              disconnectTimerRef.current = null;
+              return;
             }
-            if (isDisconnectedPeerConnectionState(peerConnection.connectionState)) {
-              settleRejected(
-                new Error('Pipecat WebRTC connection closed before the runtime was ready')
-              );
+            const finishDisconnected = () => {
+              const reason =
+                peerConnection.connectionState === FAILED_CONNECTION_STATE
+                  ? 'connection_failed'
+                  : 'connection_disconnected';
+              sendControlMessage({ type: 'client_exit', reason });
+              const err = new Error('Voice connection lost. Please reconnect to continue.');
+              const wasReady = settled;
+              settleRejected(err);
               cleanup();
               setStatus('disconnected');
+              if (wasReady) {
+                captureVoiceError(err, { source: reason });
+                onError?.(err);
+              }
               onDisconnect?.();
+            };
+            if (
+              peerConnection.connectionState === FAILED_CONNECTION_STATE ||
+              peerConnection.connectionState === 'closed'
+            ) {
+              finishDisconnected();
+            } else if (
+              isDisconnectedPeerConnectionState(peerConnection.connectionState) &&
+              !disconnectTimerRef.current
+            ) {
+              // A transient network change is not necessarily a failed call.
+              disconnectTimerRef.current = setTimeout(finishDisconnected, 8000);
             }
           };
         });
@@ -449,17 +487,50 @@ export const usePipecatWebRTCSession = ({
   }, []);
 
   const endSession = useCallback(
-    async (reason = 'client_ended', controlType: PipecatEndControlType = 'end'): Promise<void> => {
+    async (
+      reason = 'client_ended',
+      controlType: PipecatEndControlType = 'end'
+    ): Promise<boolean> => {
       setStatus('disconnecting');
-      sendControlMessage({ type: controlType, reason });
-      await new Promise(resolve => window.setTimeout(resolve, 500));
+      const requestId = crypto.randomUUID();
+      let acknowledged = false;
+      await new Promise<void>(resolve => {
+        const finish = () => {
+          window.clearTimeout(timer);
+          endAckRef.current = null;
+          resolve();
+        };
+        const timer = window.setTimeout(finish, 1500);
+        endAckRef.current = {
+          id: requestId,
+          resolve: () => {
+            acknowledged = true;
+            finish();
+          },
+        };
+        if (!sendControlMessage({ type: controlType, reason, requestId })) finish();
+      });
       cleanup();
       setStatus('disconnected');
+      if (!acknowledged && controlType === 'end') {
+        onMessage?.({ type: 'end_unconfirmed' });
+      }
+      return acknowledged;
     },
-    [cleanup, sendControlMessage]
+    [cleanup, sendControlMessage, onMessage]
   );
 
   useEffect(() => cleanup, [cleanup]);
+
+  useEffect(() => {
+    // Best effort only: browsers cannot reliably distinguish refresh, close,
+    // navigation, a crash, or a network loss. Do not claim a specific action.
+    const onPageHide = () => {
+      sendControlMessage({ type: 'client_exit', reason: 'page_hidden_exit' });
+    };
+    window.addEventListener('pagehide', onPageHide);
+    return () => window.removeEventListener('pagehide', onPageHide);
+  }, [sendControlMessage]);
 
   return {
     status,

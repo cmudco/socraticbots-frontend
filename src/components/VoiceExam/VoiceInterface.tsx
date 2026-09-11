@@ -5,6 +5,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { REPLY_PENDING_LABELS, ReplyPendingStage } from '@/constants/voiceExam';
+import {
+  SpeechRecoveryEvent,
+  SpeechRecoveryMessageType,
+  speechRecoveryCaption,
+} from '@/constants/voiceRecovery';
 import { useConversation } from '@elevenlabs/react';
 import { AlertCircle, Clock3, Loader2, Mic, Square } from 'lucide-react';
 
@@ -49,7 +54,15 @@ interface EndSessionOptions {
   cancelProviderSession?: boolean;
 }
 
-type LiveState = 'speaking' | 'thinking' | 'listening' | 'connecting' | 'ready' | 'idle';
+type LiveState =
+  | 'speaking'
+  | 'thinking'
+  | 'listening'
+  | 'connecting'
+  | 'ready'
+  | 'idle'
+  | 'interrupted'
+  | 'resuming';
 
 interface ElevenLabsInputFormat {
   format: 'pcm' | 'ulaw';
@@ -86,7 +99,7 @@ const LIVE_STATE_META: Record<
     iconWrap: 'border-border bg-background text-foreground/70',
   },
   listening: {
-    label: 'Listening',
+    label: 'Your turn — listening',
     caption: 'Speak naturally — your words stream in live.',
     tint: 'bg-chart-2/10',
     iconWrap: 'border-chart-2/30 bg-chart-2/10 text-chart-2',
@@ -98,8 +111,8 @@ const LIVE_STATE_META: Record<
     iconWrap: 'border-border bg-background text-muted-foreground',
   },
   ready: {
-    label: 'In session',
-    caption: 'The session is live — speak when you are ready.',
+    label: 'Your turn',
+    caption: 'The agent has finished speaking and is waiting for you.',
     tint: '',
     iconWrap: 'border-border bg-background text-muted-foreground',
   },
@@ -109,13 +122,30 @@ const LIVE_STATE_META: Record<
     tint: '',
     iconWrap: 'border-border bg-background text-muted-foreground',
   },
+  interrupted: {
+    label: 'Paused — sound detected',
+    caption:
+      'Go ahead if you want to speak. If no words are detected, the agent will retry its reply.',
+    tint: 'bg-muted/60',
+    iconWrap: 'border-border bg-background text-foreground/70',
+  },
+  resuming: {
+    label: 'Resuming the agent’s reply',
+    caption: 'No words were detected. You do not need to repeat your answer.',
+    tint: 'bg-muted/60',
+    iconWrap: 'border-border bg-background text-foreground/70',
+  },
 };
 
 export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceInterfaceProps) {
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [speechRecovery, setSpeechRecovery] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isProcessingResponse, setIsProcessingResponse] = useState(false);
+  const [interruptionState, setInterruptionState] = useState<'interrupted' | 'resuming' | null>(
+    null
+  );
   const [lastResponseGapMs, setLastResponseGapMs] = useState<number | null>(null);
   // Runtime-reported per-turn latencies (null until the runtime emits them on
   // agent_audio_started; the UI then shows the LLM/Voice split).
@@ -217,7 +247,22 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   }, []);
 
   const handlePipecatMessage = useCallback((message: PipecatVoiceMessage) => {
+    if (message.type === 'error') {
+      setLocalError(
+        message.error ??
+          message.data?.error ??
+          'The voice service encountered a problem. Please try again.'
+      );
+      setSpeechRecovery(null);
+      setIsProcessingResponse(false);
+      return;
+    }
+    if (message.type === 'end_unconfirmed') {
+      setLocalError('Connection closed, but the server did not confirm the end of this session.');
+      return;
+    }
     if (message.type === 'agent_audio_started') {
+      setInterruptionState(null);
       startTimerRef.current?.();
       setIsProcessingResponse(false);
       setProcessingStage(null);
@@ -241,6 +286,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     }
 
     if (message.type === 'processing') {
+      if (message.isProcessing) setInterruptionState(null);
       const isProcessing = Boolean(message.isProcessing);
       setIsProcessingResponse(isProcessing);
       setProcessingStage(isProcessing ? (message.stage ?? null) : null);
@@ -251,6 +297,26 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       setIsProcessingResponse(false);
       setProcessingStage(null);
       return;
+    }
+
+    if (message.type === SpeechRecoveryMessageType) {
+      setSpeechRecovery(speechRecoveryCaption(message.event));
+      if (
+        message.event === SpeechRecoveryEvent.FALLBACK_RECOVERED ||
+        message.event === SpeechRecoveryEvent.RECOVERED
+      ) {
+        setLocalError(null);
+      }
+      return;
+    }
+    if (message.type === 'turn_recovery') {
+      setInterruptionState(message.state === 'paused' ? 'interrupted' : 'resuming');
+      setIsProcessingResponse(message.state !== 'paused');
+      return;
+    }
+    if (message.type === 'transcript_update' && message.role === 'user') {
+      setInterruptionState(null);
+      setSpeechRecovery(null);
     }
 
     const content = message.message || message.content;
@@ -306,6 +372,13 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       setLocalError(null);
     },
     onMessage: handlePipecatMessage,
+    onDisconnect: () => {
+      stopTimer();
+      isMistralSessionActiveRef.current = false;
+      setIsProcessingResponse(false);
+      setInterruptionState(null);
+      setSpeechRecovery(null);
+    },
     onError: err => {
       console.error('Pipecat WebRTC runtime error:', err);
       setLocalError(err.message || 'An error occurred');
@@ -333,7 +406,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       const elapsed = Math.floor((Date.now() - examStartTimeRef.current) / 1000);
       setElapsedSeconds(elapsed);
       if (maxDuration > 0 && elapsed >= maxDuration) {
-        handleEndRef.current?.();
+        handleEndRef.current?.('time_limit');
       }
     }, 1000);
   }, [maxDuration, stopTimer]);
@@ -361,6 +434,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       shouldAutoScrollTranscriptRef.current = true;
       setMessages([]);
       setLocalError(null);
+      setSpeechRecovery(null);
+      setInterruptionState(null);
       setIsProcessingResponse(false);
       setProcessingStage(null);
       setLastResponseGapMs(null);
@@ -468,7 +543,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const handleEnd = useCallback(
     async (endedReason = 'manual_end', options?: EndSessionOptions) => {
       if (isEndingRef.current) return;
-      const shouldNotifyComplete = options?.notifyComplete ?? true;
+      let shouldNotifyComplete = options?.notifyComplete ?? true;
       const shouldCancelProviderSession = options?.cancelProviderSession ?? false;
       const conversationId = currentConversationIdRef.current;
       const hasActiveSession =
@@ -484,10 +559,11 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         stopTimer();
         if (isMistral) {
           isMistralSessionActiveRef.current = false;
-          await endPipecatWebRTCSession(
+          const confirmed = await endPipecatWebRTCSession(
             endedReason,
             shouldCancelProviderSession ? 'cancel' : 'end'
           );
+          if (!confirmed) shouldNotifyComplete = false;
         } else {
           await conversation.endSession();
         }
@@ -567,30 +643,35 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const isTimeCritical = maxDuration > 0 && progress >= 0.9;
   const minutesRemaining =
     maxDuration > 0 ? Math.max(0, Math.ceil((maxDuration - elapsedSeconds) / 60)) : null;
-  const liveState: LiveState = agentIsSpeaking
-    ? 'speaking'
-    : isProcessingResponse
-      ? 'thinking'
-      : voiceIsListening
-        ? 'listening'
-        : isConnecting
-          ? 'connecting'
-          : isSessionActive
-            ? 'ready'
-            : 'idle';
+  const liveState: LiveState =
+    isSessionActive && interruptionState
+      ? interruptionState
+      : agentIsSpeaking
+        ? 'speaking'
+        : isProcessingResponse
+          ? 'thinking'
+          : voiceIsListening
+            ? 'listening'
+            : isConnecting
+              ? 'connecting'
+              : isSessionActive
+                ? 'ready'
+                : 'idle';
   const stateMeta = LIVE_STATE_META[liveState];
   // Refine the generic "thinking" state when the runtime says which pipeline
   // phase it is waiting on (LLM text vs TTS audio).
   const effectiveStateMeta =
-    liveState === 'thinking' && processingStage === 'tts'
-      ? { ...stateMeta, label: 'Preparing voice', caption: 'The agent is about to speak.' }
-      : liveState === 'thinking' && processingStage === 'llm'
-        ? {
-            ...stateMeta,
-            label: 'Agent thinking',
-            caption: 'Working out the next question.',
-          }
-        : stateMeta;
+    isSessionActive && speechRecovery
+      ? { ...stateMeta, label: 'Recovering speech recognition', caption: speechRecovery }
+      : liveState === 'thinking' && processingStage === 'tts'
+        ? { ...stateMeta, label: 'Preparing voice', caption: 'The agent is about to speak.' }
+        : liveState === 'thinking' && processingStage === 'llm'
+          ? {
+              ...stateMeta,
+              label: 'Agent thinking',
+              caption: 'Working out the next question.',
+            }
+          : stateMeta;
   const totalReplySeconds = lastResponseGapMs == null ? null : lastResponseGapMs / 1000;
   const replyLlmSeconds = lastReplyLatency?.llmSeconds ?? null;
   const replyTtsSeconds = lastReplyLatency?.ttsSeconds ?? null;
@@ -892,7 +973,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
               </div>
               <div className="min-w-0">
                 <div className="text-foreground text-sm font-semibold">
-                  {effectiveStateMeta.label}
+                  <span role="status" aria-live="polite">
+                    {effectiveStateMeta.label}
+                  </span>
                 </div>
                 <div className="text-muted-foreground mt-0.5 text-xs">
                   {effectiveStateMeta.caption}
