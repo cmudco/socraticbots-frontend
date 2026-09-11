@@ -202,67 +202,73 @@ const VoiceAgentDetail: React.FC = () => {
           <ArrowLeft className="h-4 w-4" />
           Back to Voice Assignments
         </button>
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-foreground text-2xl font-bold">{agent.name}</h1>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  agent.status === AgentStatus.Active
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {agent.status}
-              </span>
-            </div>
+        <div className="space-y-5">
+          <div className="min-w-0 space-y-2">
+            <h1 className="text-foreground text-3xl leading-tight font-bold break-words">
+              {agent.name}
+            </h1>
             {agent.examTitle && (
-              <p className="text-muted-foreground mt-1 text-lg">{agent.examTitle}</p>
+              <p className="text-muted-foreground max-w-2xl text-lg leading-relaxed">
+                {agent.examTitle}
+              </p>
             )}
           </div>
-          <div className="flex gap-2">
-            {canViewTranscripts && agent.conversationCount > 0 && (
-              <Button
-                onClick={() => navigate(`/voice-exams/${agent.id}/conversations`)}
-                variant="outline"
-              >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                View Conversations
-              </Button>
-            )}
-            {canLaunchExam && (
-              <Button onClick={() => navigate(`/voice-exams/${agent.id}/exam`)} variant="default">
-                <Play className="mr-2 h-4 w-4" />
-                Start Assignment
-              </Button>
-            )}
-            {canEdit &&
-              !isEditing &&
-              agent.voiceProvider === VoiceProvider.ElevenLabs &&
-              agent.elevenlabsAgentId && (
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span
+              className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                agent.status === AgentStatus.Active
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              {agent.status}
+            </span>
+
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              {canViewTranscripts && agent.conversationCount > 0 && (
                 <Button
-                  onClick={handleSyncFromElevenLabs}
+                  onClick={() => navigate(`/voice-exams/${agent.id}/conversations`)}
                   variant="outline"
-                  disabled={syncFromElevenLabs.isPending}
                 >
-                  <RefreshCw
-                    className={`mr-2 h-4 w-4 ${syncFromElevenLabs.isPending ? 'animate-spin' : ''}`}
-                  />
-                  {syncFromElevenLabs.isPending ? 'Syncing...' : 'Sync from ElevenLabs'}
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  View Conversations
                 </Button>
               )}
-            {canEdit && !isEditing && (
-              <Button onClick={handleClone} variant="outline" disabled={cloneAgent.isPending}>
-                <Copy className="mr-2 h-4 w-4" />
-                {cloneAgent.isPending ? 'Cloning...' : 'Clone'}
-              </Button>
-            )}
-            {canEdit && !isEditing && (
-              <Button onClick={handleStartEdit} variant="outline">
-                <Edit2 className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            )}
+              {canLaunchExam && (
+                <Button onClick={() => navigate(`/voice-exams/${agent.id}/exam`)} variant="default">
+                  <Play className="mr-2 h-4 w-4" />
+                  Start Assignment
+                </Button>
+              )}
+              {canEdit &&
+                !isEditing &&
+                agent.voiceProvider === VoiceProvider.ElevenLabs &&
+                agent.elevenlabsAgentId && (
+                  <Button
+                    onClick={handleSyncFromElevenLabs}
+                    variant="outline"
+                    disabled={syncFromElevenLabs.isPending}
+                  >
+                    <RefreshCw
+                      className={`mr-2 h-4 w-4 ${syncFromElevenLabs.isPending ? 'animate-spin' : ''}`}
+                    />
+                    {syncFromElevenLabs.isPending ? 'Syncing...' : 'Sync from ElevenLabs'}
+                  </Button>
+                )}
+              {canEdit && !isEditing && (
+                <Button onClick={handleClone} variant="outline" disabled={cloneAgent.isPending}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  {cloneAgent.isPending ? 'Cloning...' : 'Clone'}
+                </Button>
+              )}
+              {canEdit && !isEditing && (
+                <Button onClick={handleStartEdit} variant="outline">
+                  <Edit2 className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
