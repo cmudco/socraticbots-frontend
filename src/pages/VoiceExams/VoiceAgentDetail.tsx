@@ -30,6 +30,7 @@ import {
 
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
 
+import { getErrorMessage } from '@/utils/errorHandler';
 import { formatDate } from '@/utils/formatters';
 import { toast } from '@/utils/toast';
 
@@ -121,6 +122,7 @@ const VoiceAgentDetail: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to update agent:', error);
+      toast.error(getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }

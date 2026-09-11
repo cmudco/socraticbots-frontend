@@ -9,6 +9,7 @@ import { useIsAuthenticated } from '@/hooks/queries/useUser';
 import { useLogin } from '@/hooks/useLogin';
 
 import { getErrorMessage } from '@/utils/errorHandler';
+import { consumePostLoginRedirect } from '@/utils/postLoginRedirect';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -57,7 +58,12 @@ const Login: React.FC = () => {
   const handleSubmit = async (values: FormValues) => {
     try {
       await loginMutation.mutateAsync({ email: values.email, password: values.password });
-      navigate(redirectPath, { replace: true });
+      // A voice-code sign-up remembers its assignment across the email-verification
+      // round trip; an explicit "from" location still wins.
+      const rememberedPath = consumePostLoginRedirect();
+      navigate(locationState?.from?.pathname || rememberedPath || redirectPath, {
+        replace: true,
+      });
     } catch {
       // Error is handled by the mutation
     }

@@ -23,10 +23,27 @@ export interface ProfessorRegistrationRequest {
   confirm_password: string;
 }
 
+export interface VoiceAssignmentSummary {
+  id: number;
+  name: string;
+  examTitle: string;
+}
+
+export const RegistrationUserType = {
+  USER: 'user',
+  RESEARCHER: 'researcher',
+} as const;
+
+export type RegistrationUserType = (typeof RegistrationUserType)[keyof typeof RegistrationUserType];
+
 export interface RegistrationResponse {
   message: string;
   name: string;
-  next_steps: string[];
+  userType: RegistrationUserType;
+  nextSteps: string[];
+  hasBotAccess: boolean;
+  hasVoiceAccess: boolean;
+  voiceAssignments: VoiceAssignmentSummary[];
 }
 
 class AuthService {
