@@ -10,6 +10,7 @@ import {
   SpeechRecoveryMessageType,
   speechRecoveryCaption,
 } from '@/constants/voiceRecovery';
+import { VOICE_STAGE_COPY } from '@/constants/voiceStages';
 import { useConversation } from '@elevenlabs/react';
 import { AlertCircle, Clock3, Loader2, Mic, Square } from 'lucide-react';
 
@@ -21,11 +22,13 @@ import {
 } from '@/hooks/queries/useVoiceAgents';
 import { useMicrophoneDevices } from '@/hooks/useMicrophoneDevices';
 import { usePipecatWebRTCSession } from '@/hooks/usePipecatWebRTCSession';
+import { useVoiceFeedback } from '@/hooks/useVoiceFeedback';
 
 import { cn } from '@/lib/utils';
 
 import { formatTimeInCall } from '@/utils/formatters';
 
+import BackupSpeechControl from '@/components/VoiceExam/BackupSpeechControl';
 import MicrophoneSelect from '@/components/VoiceExam/MicrophoneSelect';
 import ReplyLatencyBreakdown from '@/components/VoiceExam/ReplyLatencyBreakdown';
 import { ThinkingDots, VoiceActivityBars } from '@/components/VoiceExam/indicators';
@@ -138,6 +141,7 @@ const LIVE_STATE_META: Record<
 };
 
 export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceInterfaceProps) {
+  const { receive: receiveFeedback, reset: resetFeedback, ...feedback } = useVoiceFeedback();
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [speechRecovery, setSpeechRecovery] = useState<string | null>(null);
@@ -246,119 +250,123 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     }
   }, []);
 
-  const handlePipecatMessage = useCallback((message: PipecatVoiceMessage) => {
-    if (message.type === 'error') {
-      setLocalError(
-        message.error ??
-          message.data?.error ??
-          'The voice service encountered a problem. Please try again.'
-      );
-      setSpeechRecovery(null);
-      setIsProcessingResponse(false);
-      return;
-    }
-    if (message.type === 'end_unconfirmed') {
-      setLocalError('Connection closed, but the server did not confirm the end of this session.');
-      return;
-    }
-    if (message.type === 'agent_audio_started') {
-      setInterruptionState(null);
-      startTimerRef.current?.();
-      setIsProcessingResponse(false);
-      setProcessingStage(null);
-      // Only record a breakdown when the runtime actually reported one.
-      setLastReplyLatency(
-        typeof message.llmLatencySeconds === 'number' ||
-          typeof message.ttsLatencySeconds === 'number'
-          ? {
-              llmSeconds:
-                typeof message.llmLatencySeconds === 'number' ? message.llmLatencySeconds : null,
-              ttsSeconds:
-                typeof message.ttsLatencySeconds === 'number' ? message.ttsLatencySeconds : null,
-            }
-          : null
-      );
-      if (lastUserFinalAtRef.current) {
-        setLastResponseGapMs(Date.now() - lastUserFinalAtRef.current);
-        lastUserFinalAtRef.current = null;
-      }
-      return;
-    }
-
-    if (message.type === 'processing') {
-      if (message.isProcessing) setInterruptionState(null);
-      const isProcessing = Boolean(message.isProcessing);
-      setIsProcessingResponse(isProcessing);
-      setProcessingStage(isProcessing ? (message.stage ?? null) : null);
-      return;
-    }
-
-    if (message.type === 'interrupt') {
-      setIsProcessingResponse(false);
-      setProcessingStage(null);
-      return;
-    }
-
-    if (message.type === SpeechRecoveryMessageType) {
-      setSpeechRecovery(speechRecoveryCaption(message.event));
-      if (
-        message.event === SpeechRecoveryEvent.FALLBACK_RECOVERED ||
-        message.event === SpeechRecoveryEvent.RECOVERED
-      ) {
-        setLocalError(null);
-      }
-      return;
-    }
-    if (message.type === 'turn_recovery') {
-      setInterruptionState(message.state === 'paused' ? 'interrupted' : 'resuming');
-      setIsProcessingResponse(message.state !== 'paused');
-      return;
-    }
-    if (message.type === 'transcript_update' && message.role === 'user') {
-      setInterruptionState(null);
-      setSpeechRecovery(null);
-    }
-
-    const content = message.message || message.content;
-    if (!content) return;
-    const role = message.role === 'user' ? 'user' : 'agent';
-
-    if (message.type === 'transcript_update' && role === 'user' && message.isFinal) {
-      lastUserFinalAtRef.current = Date.now();
-      setIsProcessingResponse(true);
-    }
-
-    if (message.type === 'transcript_update' && message.turnId) {
-      setMessages(prev => {
-        const existingIndex = prev.findIndex(
-          item => item.role === role && item.turnId === message.turnId
+  const handlePipecatMessage = useCallback(
+    (message: PipecatVoiceMessage) => {
+      receiveFeedback(message);
+      if (message.type === 'error') {
+        setLocalError(
+          message.error ??
+            message.data?.error ??
+            'The voice service encountered a problem. Please try again.'
         );
-        const updatedMessage: TranscriptMessage = {
+        setSpeechRecovery(null);
+        setIsProcessingResponse(false);
+        return;
+      }
+      if (message.type === 'end_unconfirmed') {
+        setLocalError('Connection closed, but the server did not confirm the end of this session.');
+        return;
+      }
+      if (message.type === 'agent_audio_started') {
+        setInterruptionState(null);
+        startTimerRef.current?.();
+        setIsProcessingResponse(false);
+        setProcessingStage(null);
+        // Only record a breakdown when the runtime actually reported one.
+        setLastReplyLatency(
+          typeof message.llmLatencySeconds === 'number' ||
+            typeof message.ttsLatencySeconds === 'number'
+            ? {
+                llmSeconds:
+                  typeof message.llmLatencySeconds === 'number' ? message.llmLatencySeconds : null,
+                ttsSeconds:
+                  typeof message.ttsLatencySeconds === 'number' ? message.ttsLatencySeconds : null,
+              }
+            : null
+        );
+        if (lastUserFinalAtRef.current) {
+          setLastResponseGapMs(Date.now() - lastUserFinalAtRef.current);
+          lastUserFinalAtRef.current = null;
+        }
+        return;
+      }
+
+      if (message.type === 'processing') {
+        if (message.isProcessing) setInterruptionState(null);
+        const isProcessing = Boolean(message.isProcessing);
+        setIsProcessingResponse(isProcessing);
+        setProcessingStage(isProcessing ? (message.stage ?? null) : null);
+        return;
+      }
+
+      if (message.type === 'interrupt') {
+        setIsProcessingResponse(false);
+        setProcessingStage(null);
+        return;
+      }
+
+      if (message.type === SpeechRecoveryMessageType) {
+        setSpeechRecovery(speechRecoveryCaption(message.event));
+        if (
+          message.event === SpeechRecoveryEvent.FALLBACK_RECOVERED ||
+          message.event === SpeechRecoveryEvent.RECOVERED
+        ) {
+          setLocalError(null);
+        }
+        return;
+      }
+      if (message.type === 'turn_recovery') {
+        setInterruptionState(message.state === 'paused' ? 'interrupted' : 'resuming');
+        setIsProcessingResponse(message.state !== 'paused');
+        return;
+      }
+      if (message.type === 'transcript_update' && message.role === 'user') {
+        setInterruptionState(null);
+        setSpeechRecovery(null);
+      }
+
+      const content = message.message || message.content;
+      if (!content) return;
+      const role = message.role === 'user' ? 'user' : 'agent';
+
+      if (message.type === 'transcript_update' && role === 'user' && message.isFinal) {
+        lastUserFinalAtRef.current = Date.now();
+        setIsProcessingResponse(true);
+      }
+
+      if (message.type === 'transcript_update' && message.turnId) {
+        setMessages(prev => {
+          const existingIndex = prev.findIndex(
+            item => item.role === role && item.turnId === message.turnId
+          );
+          const updatedMessage: TranscriptMessage = {
+            role,
+            content,
+            timestamp: new Date(),
+            turnId: message.turnId,
+            isFinal: message.isFinal,
+          };
+
+          if (existingIndex === -1) {
+            return [...prev, updatedMessage];
+          }
+
+          return prev.map((item, index) => (index === existingIndex ? updatedMessage : item));
+        });
+        return;
+      }
+
+      setMessages(prev => [
+        ...prev,
+        {
           role,
           content,
           timestamp: new Date(),
-          turnId: message.turnId,
-          isFinal: message.isFinal,
-        };
-
-        if (existingIndex === -1) {
-          return [...prev, updatedMessage];
-        }
-
-        return prev.map((item, index) => (index === existingIndex ? updatedMessage : item));
-      });
-      return;
-    }
-
-    setMessages(prev => [
-      ...prev,
-      {
-        role,
-        content,
-        timestamp: new Date(),
-      },
-    ]);
-  }, []);
+        },
+      ]);
+    },
+    [receiveFeedback]
+  );
 
   const {
     status: pipecatWebRTCStatus,
@@ -367,12 +375,15 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     startSession: startPipecatWebRTCSession,
     endSession: endPipecatWebRTCSession,
     switchAudioDevice: switchPipecatAudioDevice,
+    requestSttFallback,
+    sendControlMessage,
   } = usePipecatWebRTCSession({
     onConnect: () => {
       setLocalError(null);
     },
     onMessage: handlePipecatMessage,
     onDisconnect: () => {
+      resetFeedback();
       stopTimer();
       isMistralSessionActiveRef.current = false;
       setIsProcessingResponse(false);
@@ -431,6 +442,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
   const handleStart = useCallback(async () => {
     try {
+      resetFeedback();
       shouldAutoScrollTranscriptRef.current = true;
       setMessages([]);
       setLocalError(null);
@@ -538,6 +550,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     startConversationMutation,
     startTimer,
     stopMicrophone,
+    resetFeedback,
   ]);
 
   const handleEnd = useCallback(
@@ -663,15 +676,33 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const effectiveStateMeta =
     isSessionActive && speechRecovery
       ? { ...stateMeta, label: 'Recovering speech recognition', caption: speechRecovery }
-      : liveState === 'thinking' && processingStage === 'tts'
-        ? { ...stateMeta, label: 'Preparing voice', caption: 'The agent is about to speak.' }
-        : liveState === 'thinking' && processingStage === 'llm'
-          ? {
-              ...stateMeta,
-              label: 'Agent thinking',
-              caption: 'Working out the next question.',
-            }
-          : stateMeta;
+      : isSessionActive && feedback.stage && !interruptionState
+        ? { ...stateMeta, ...VOICE_STAGE_COPY[feedback.stage] }
+        : liveState === 'thinking' && processingStage === 'tts'
+          ? { ...stateMeta, label: 'Preparing voice', caption: 'The agent is about to speak.' }
+          : liveState === 'thinking' && processingStage === 'llm'
+            ? {
+                ...stateMeta,
+                label: 'Agent thinking',
+                caption: 'Working out the next question.',
+              }
+            : stateMeta;
+  useEffect(() => {
+    if (isSessionActive && feedback.stage && !interruptionState && !speechRecovery) {
+      sendControlMessage({
+        type: 'voice_stage_seen',
+        voiceStage: feedback.stage,
+        sequence: feedback.sequence,
+      });
+    }
+  }, [
+    isSessionActive,
+    feedback.stage,
+    feedback.sequence,
+    interruptionState,
+    speechRecovery,
+    sendControlMessage,
+  ]);
   const totalReplySeconds = lastResponseGapMs == null ? null : lastResponseGapMs / 1000;
   const replyLlmSeconds = lastReplyLatency?.llmSeconds ?? null;
   const replyTtsSeconds = lastReplyLatency?.ttsSeconds ?? null;
@@ -984,6 +1015,15 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
             </div>
 
             {/* Timer */}
+            {isSessionActive && isMistral ? (
+              <div className="border-b px-5 py-4">
+                <BackupSpeechControl
+                  available={feedback.backupAvailable}
+                  provider={feedback.provider}
+                  onSwitch={requestSttFallback}
+                />
+              </div>
+            ) : null}
             <div className="space-y-2.5 border-b px-5 py-4">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-foreground flex items-center gap-1.5 text-sm font-medium tabular-nums">

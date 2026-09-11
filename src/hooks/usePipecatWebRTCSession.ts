@@ -6,6 +6,7 @@ import {
   PipecatEndControlType,
   PipecatVoiceMessage,
   PipecatVoiceStatus,
+  SttProvider,
   isPipecatActiveMessage,
   isPipecatRuntimeReadyMessage,
 } from '@/types/pipecat';
@@ -16,6 +17,7 @@ interface PipecatWebRTCStartOptions {
   iceServers?: string[];
   /** Capture from a specific microphone (MediaDeviceInfo.deviceId). */
   audioDeviceId?: string;
+  sttProvider?: SttProvider;
 }
 
 interface WebRTCAnswerResponse {
@@ -94,6 +96,7 @@ export const usePipecatWebRTCSession = ({
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const endAckRef = useRef<{ id: string; resolve: () => void } | null>(null);
+  const switchAckRef = useRef<{ id: string; resolve: (accepted: boolean) => void } | null>(null);
   const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const runtimePlaybackQueueRef = useRef<string[]>([]);
@@ -196,6 +199,7 @@ export const usePipecatWebRTCSession = ({
   );
 
   const cleanup = useCallback(() => {
+    switchAckRef.current?.resolve(false);
     if (disconnectTimerRef.current) clearTimeout(disconnectTimerRef.current);
     disconnectTimerRef.current = null;
     if (peerConnectionRef.current) peerConnectionRef.current.onconnectionstatechange = null;
@@ -247,6 +251,7 @@ export const usePipecatWebRTCSession = ({
       token,
       iceServers,
       audioDeviceId,
+      sttProvider,
     }: PipecatWebRTCStartOptions): Promise<void> => {
       setStatus('connecting');
       sessionWebrtcUrlRef.current = webrtcUrl;
@@ -327,6 +332,12 @@ export const usePipecatWebRTCSession = ({
               return;
             }
             if (!message) return;
+            if (
+              message.type === 'stt_switch_ack' &&
+              message.requestId === switchAckRef.current?.id
+            ) {
+              switchAckRef.current?.resolve(message.accepted === true);
+            }
             if (message.type === 'session_end_ack') {
               const ack = endAckRef.current;
               if (ack && ack.id === message.requestId) ack.resolve();
@@ -415,6 +426,7 @@ export const usePipecatWebRTCSession = ({
           body: JSON.stringify({
             sdp: peerConnection.localDescription?.sdp,
             type: peerConnection.localDescription?.type,
+            ...(sttProvider ? { sttProvider } : {}),
           }),
         });
         if (!response.ok) {
@@ -520,6 +532,21 @@ export const usePipecatWebRTCSession = ({
     [cleanup, sendControlMessage, onMessage]
   );
 
+  const requestSttFallback = useCallback((): Promise<boolean> => {
+    if (switchAckRef.current) return Promise.resolve(false);
+    return new Promise(resolve => {
+      const id = crypto.randomUUID();
+      const finish = (accepted: boolean) => {
+        window.clearTimeout(timer);
+        switchAckRef.current = null;
+        resolve(accepted);
+      };
+      const timer = window.setTimeout(() => finish(false), 8000);
+      switchAckRef.current = { id, resolve: finish };
+      if (!sendControlMessage({ type: 'stt_switch', requestId: id })) finish(false);
+    });
+  }, [sendControlMessage]);
+
   useEffect(() => cleanup, [cleanup]);
 
   useEffect(() => {
@@ -539,5 +566,7 @@ export const usePipecatWebRTCSession = ({
     startSession,
     endSession,
     switchAudioDevice,
+    requestSttFallback,
+    sendControlMessage,
   };
 };

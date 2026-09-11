@@ -13,8 +13,9 @@ export const SpeechRecoveryMessageType = 'stt_status';
 export const speechRecoveryCaption = (event?: string): string | null => {
   switch (event) {
     case SpeechRecoveryEvent.STALLED:
-      return 'Reconnecting speech recognition — keeping your answer.';
+      return 'Reconnecting speech recognition — trying to recover your answer.';
     case SpeechRecoveryEvent.FALLBACK_STARTED:
+      return 'Backup recognition is selected. Finish speaking and pause to transcribe.';
     case SpeechRecoveryEvent.FALLBACK_PROCESSING:
       return 'Backup speech recognition is processing your answer. This may take a little longer.';
     default:

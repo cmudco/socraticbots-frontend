@@ -4,6 +4,7 @@ import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { usePipecatWebRTCSession } from '@/hooks/usePipecatWebRTCSession';
+import { reduceVoiceFeedback } from '@/hooks/useVoiceFeedback';
 
 import { PipecatVoiceMessage } from '@/types/pipecat';
 
@@ -88,6 +89,67 @@ async function start(options = {}) {
 }
 
 describe('voice session recovery and ending', () => {
+  it('switches only after the matching backup acknowledgement', async () => {
+    const hook = await start();
+    Peer.latest.channel.send.mockImplementation((raw: string) => {
+      const message = JSON.parse(raw);
+      if (message.type === 'stt_switch')
+        Peer.latest.channel.receive({
+          type: 'stt_switch_ack',
+          requestId: message.requestId,
+          accepted: true,
+        });
+    });
+    expect(await hook.result.current.requestSttFallback()).toBe(true);
+    expect(hook.result.current.status).toBe('runtimeReady');
+  });
+
+  it('times out wrong backup acknowledgements without claiming success', async () => {
+    const hook = await start();
+    const switching = hook.result.current.requestSttFallback();
+    Peer.latest.channel.receive({ type: 'stt_switch_ack', requestId: 'wrong', accepted: true });
+    await vi.advanceTimersByTimeAsync(8000);
+    expect(await switching).toBe(false);
+  });
+
+  it('resolves a pending switch on cleanup and rejects a closed channel', async () => {
+    const hook = await start();
+    const switching = hook.result.current.requestSttFallback();
+    hook.unmount();
+    expect(await switching).toBe(false);
+    expect(await hook.result.current.requestSttFallback()).toBe(false);
+  });
+
+  it('sends the lab provider in the offer', async () => {
+    const hook = renderHook(() => usePipecatWebRTCSession({}));
+    await act(async () =>
+      hook.result.current.startSession({
+        webrtcUrl: 'http://localhost/sessions/lab/webrtc/offer',
+        token: 'test',
+        sttProvider: 'whisper',
+      })
+    );
+    expect(JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string).sttProvider).toBe(
+      'whisper'
+    );
+  });
+
+  it('ignores stale or invalid stages and distinguishes selection from successful recognition', () => {
+    const state = { stage: null, sequence: 0, provider: 'mistral' as const, backupAvailable: true };
+    const next = reduceVoiceFeedback(state, {
+      type: 'voice_stage',
+      voiceStage: 'thinking',
+      sequence: 2,
+    });
+    expect(next.stage).toBe('thinking');
+    expect(
+      reduceVoiceFeedback(next, { type: 'voice_stage', voiceStage: 'listening', sequence: 1 })
+    ).toBe(next);
+    expect(reduceVoiceFeedback(next, { type: 'stt_switch_ack', accepted: false })).toBe(next);
+    expect(reduceVoiceFeedback(next, { type: 'stt_switch_ack', accepted: true }).provider).toBe(
+      'whisper'
+    );
+  });
   it('ends only after a matching acknowledgement', async () => {
     const hook = await start();
     Peer.latest.channel.send.mockImplementation((raw: string) => {

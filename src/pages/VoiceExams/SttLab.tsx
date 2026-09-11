@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { speechRecoveryCaption } from '@/constants/voiceRecovery';
 import { Loader2, Mic, Square } from 'lucide-react';
 
+import { useLocalMicLevel } from '@/hooks/useLocalMicLevel';
 import { useMicrophoneDevices } from '@/hooks/useMicrophoneDevices';
 import { usePipecatWebRTCSession } from '@/hooks/usePipecatWebRTCSession';
+import { useVoiceFeedback } from '@/hooks/useVoiceFeedback';
 
 import { voiceAgentService } from '@/services/voiceAgent.service';
 
+import BackupSpeechControl from '@/components/VoiceExam/BackupSpeechControl';
+import { LevelMeter } from '@/components/VoiceExam/LevelMeter';
 import MicrophoneSelect from '@/components/VoiceExam/MicrophoneSelect';
 import { Button } from '@/components/ui/button';
 
-import { PipecatVoiceMessage } from '@/types/pipecat';
+import { PipecatVoiceMessage, SttProvider } from '@/types/pipecat';
 
 /**
  * STT Lab — isolated mic → runtime → Voxtral test bench.
@@ -23,7 +28,16 @@ import { PipecatVoiceMessage } from '@/types/pipecat';
  * runtime event and error, none swallowed.
  */
 
-type LabMessage = PipecatVoiceMessage & Record<string, unknown>;
+interface LabMessage extends PipecatVoiceMessage {
+  peak?: number;
+  rms?: number;
+  vadVolume?: number;
+  gateMinVolume?: number;
+  speaking?: boolean;
+  language?: string | null;
+  latencyMs?: number | null;
+  sttModel?: string;
+}
 
 interface ConsoleEntry {
   at: string;
@@ -50,112 +64,17 @@ const MAX_CONSOLE_ENTRIES = 400;
 
 const now = () => new Date().toLocaleTimeString(undefined, { hour12: false });
 
-/** Live level of the selected mic as the browser captures it (pre-network). */
-const useLocalMicLevel = (deviceId: string, enabled: boolean) => {
-  const [level, setLevel] = useState({ peak: 0, rms: 0 });
-
-  useEffect(() => {
-    if (!enabled) return;
-    let stream: MediaStream | null = null;
-    let audioContext: AudioContext | null = null;
-    let rafId = 0;
-    let lastPublish = 0;
-    let cancelled = false;
-
-    (async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
-          },
-        });
-        if (cancelled) {
-          stream.getTracks().forEach(track => track.stop());
-          return;
-        }
-        audioContext = new AudioContext();
-        const source = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 2048;
-        source.connect(analyser);
-        const samples = new Float32Array(analyser.fftSize);
-
-        const tick = (time: number) => {
-          analyser.getFloatTimeDomainData(samples);
-          if (time - lastPublish > 100) {
-            lastPublish = time;
-            let peak = 0;
-            let sumSquares = 0;
-            for (const sample of samples) {
-              const magnitude = Math.abs(sample);
-              if (magnitude > peak) peak = magnitude;
-              sumSquares += sample * sample;
-            }
-            setLevel({ peak, rms: Math.sqrt(sumSquares / samples.length) });
-          }
-          rafId = requestAnimationFrame(tick);
-        };
-        rafId = requestAnimationFrame(tick);
-      } catch {
-        setLevel({ peak: 0, rms: 0 });
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafId);
-      stream?.getTracks().forEach(track => track.stop());
-      void audioContext?.close();
-    };
-  }, [deviceId, enabled]);
-
-  return level;
-};
-
-const LevelMeter = ({
-  label,
-  value,
-  detail,
-  gate,
-}: {
-  label: string;
-  value: number;
-  detail: string;
-  gate?: number;
-}) => (
-  <div className="flex flex-col gap-1">
-    <div className="flex items-baseline justify-between">
-      <span className="text-sm font-medium">{label}</span>
-      <span className="text-muted-foreground font-mono text-xs">{detail}</span>
-    </div>
-    <div className="bg-muted relative h-3 overflow-hidden rounded-full">
-      <div
-        className={`h-full rounded-full transition-[width] duration-100 ${
-          gate !== undefined && value < gate ? 'bg-amber-500' : 'bg-emerald-500'
-        }`}
-        style={{ width: `${Math.min(100, Math.round(value * 100))}%` }}
-      />
-      {gate !== undefined && (
-        <div
-          className="absolute top-0 h-full w-0.5 bg-red-500/80"
-          style={{ left: `${Math.round(gate * 100)}%` }}
-          title={`VAD gate (min_volume=${gate}) — speech below this line is ignored`}
-        />
-      )}
-    </div>
-  </div>
-);
-
 const SttLab = () => {
+  const { receive: receiveFeedback, reset: resetFeedback, ...feedback } = useVoiceFeedback();
+  const [selectedProvider, setSelectedProvider] = useState<SttProvider>('mistral');
+  const [recognitionMs, setRecognitionMs] = useState<number | null>(null);
+  const [recoveryCaption, setRecoveryCaption] = useState<string | null>(null);
   // The lab exists to be pointed at a microphone, so asking for access up
   // front (and getting readable device names) is the whole point here.
   const mic = useMicrophoneDevices({ probeOnMount: true });
   const { selectedId, permission } = mic;
   const [serverLevels, setServerLevels] = useState<ServerLevels | null>(null);
-  const [labConfig, setLabConfig] = useState<Record<string, unknown> | null>(null);
+  const [labConfig, setLabConfig] = useState<LabMessage | null>(null);
   const [vadSpeaking, setVadSpeaking] = useState(false);
   const [turns, setTurns] = useState<LabTurn[]>([]);
   const [consoleEntries, setConsoleEntries] = useState<ConsoleEntry[]>([]);
@@ -173,6 +92,8 @@ const SttLab = () => {
 
   const handleMessage = useCallback(
     (raw: PipecatVoiceMessage) => {
+      receiveFeedback(raw);
+      if (raw.recognitionMs != null) setRecognitionMs(raw.recognitionMs);
       const message = raw as LabMessage;
       switch (message.type) {
         case 'lab_config':
@@ -192,6 +113,7 @@ const SttLab = () => {
           log('vad', message.speaking ? 'voice detected — turn open' : 'silence — turn closed');
           break;
         case 'lab_stt': {
+          setRecoveryCaption(speechRecoveryCaption(message.event));
           const { event, ...rest } = message;
           delete rest.type;
           log('stt', `${String(event)} ${JSON.stringify(rest)}`);
@@ -229,20 +151,24 @@ const SttLab = () => {
           break;
       }
     },
-    [log]
+    [log, receiveFeedback]
   );
 
-  const { status, startSession, endSession, switchAudioDevice } = usePipecatWebRTCSession({
-    onMessage: handleMessage,
-    onError: error => log('error', error.message),
-    onDisconnect: () => log('info', 'session disconnected'),
-    playRuntimeTtsAudio: false,
-  });
+  const { status, startSession, endSession, switchAudioDevice, requestSttFallback } =
+    usePipecatWebRTCSession({
+      onMessage: handleMessage,
+      onError: error => log('error', error.message),
+      onDisconnect: () => log('info', 'session disconnected'),
+      playRuntimeTtsAudio: false,
+    });
 
   const live = status === 'runtimeReady' || status === 'active';
   const localLevel = useLocalMicLevel(selectedId, permission === 'granted');
 
   const connect = useCallback(async () => {
+    resetFeedback();
+    setRecognitionMs(null);
+    setRecoveryCaption(null);
     setStarting(true);
     setStartError(null);
     setTurns([]);
@@ -260,6 +186,7 @@ const SttLab = () => {
         token: session.token,
         iceServers: session.iceServers,
         audioDeviceId: selectedId || undefined,
+        sttProvider: selectedProvider,
       });
       log('info', 'connected — speak whenever you like');
     } catch (error) {
@@ -270,11 +197,11 @@ const SttLab = () => {
     } finally {
       setStarting(false);
     }
-  }, [log, selectedId, startSession]);
+  }, [log, selectedId, selectedProvider, resetFeedback, startSession]);
 
   const disconnect = useCallback(() => {
     activeDeviceIdRef.current = null;
-    void endSession('end');
+    void endSession('manual_end');
   }, [endSession]);
 
   // Swapping microphones mid-run is how you A/B two of them against the same
@@ -311,8 +238,8 @@ const SttLab = () => {
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">Speech-to-Text Lab</h1>
         <p className="text-muted-foreground text-sm">
-          Isolated mic → runtime → Voxtral. No assignment, no AI agent — just your voice and the
-          transcription engine, with every level, event, and error visible.
+          Isolated mic → runtime → Mistral or self-hosted Whisper. No assignment, no AI agent — just
+          your voice and the transcription engine, with every level, event, and error visible.
         </p>
         <details className="bg-card rounded-lg border">
           <summary className="cursor-pointer px-4 py-2 text-sm font-medium">
@@ -338,13 +265,45 @@ const SttLab = () => {
             <p>
               <b className="text-foreground">Transcript chips:</b> <b>language</b> is what Voxtral
               believes it heard (wrong language = that turn's text is suspect); the <b>ms value</b>{' '}
-              is how long the final text took after you stopped talking.
+              measures Mistral’s final text after you stopped talking. For Whisper it measures batch
+              queueing to final text; recovery before queueing is not included.
             </p>
           </div>
         </details>
       </header>
 
       <section className="bg-card flex flex-wrap items-end gap-4 rounded-xl border p-4">
+        <label className="flex flex-col gap-1 text-sm">
+          Recognition provider
+          <select
+            className="bg-background rounded border p-2"
+            value={selectedProvider}
+            disabled={starting || live}
+            onChange={event =>
+              setSelectedProvider(event.target.value === 'whisper' ? 'whisper' : 'mistral')
+            }
+          >
+            <option value="mistral">Mistral realtime</option>
+            <option value="whisper">Self-hosted Whisper (after each pause)</option>
+          </select>
+        </label>
+        {live ? (
+          <div className="space-y-2">
+            <p className="text-sm">
+              Selected engine: {feedback.provider === 'whisper' ? 'Whisper' : 'Mistral'}
+            </p>
+            {recognitionMs !== null ? (
+              <p className="text-sm">
+                Last backup request: {recognitionMs} ms (request to result; excludes queue wait)
+              </p>
+            ) : null}
+            <BackupSpeechControl
+              available={feedback.backupAvailable}
+              provider={feedback.provider}
+              onSwitch={requestSttFallback}
+            />
+          </div>
+        ) : null}
         <MicrophoneSelect
           mic={mic}
           disabled={starting}
@@ -396,6 +355,11 @@ const SttLab = () => {
             Live from the selected microphone, before anything is sent. If this stays flat while you
             talk, the problem is the mic or browser permissions — not our servers.
           </p>
+          {recoveryCaption ? (
+            <p role="status" className="text-sm">
+              {recoveryCaption}
+            </p>
+          ) : null}
         </div>
         <div className="bg-card flex flex-col gap-4 rounded-xl border p-4">
           <h2 className="text-sm font-semibold tracking-wide uppercase">The server hears</h2>
@@ -425,7 +389,9 @@ const SttLab = () => {
             <h2 className="text-sm font-semibold tracking-wide uppercase">Live transcript</h2>
             {labConfig != null && (
               <span className="text-muted-foreground font-mono text-xs">
-                {String(labConfig.sttModel ?? '')}
+                {feedback.provider === 'whisper'
+                  ? 'Self-hosted Whisper'
+                  : String(labConfig.sttModel ?? '')}
               </span>
             )}
           </div>

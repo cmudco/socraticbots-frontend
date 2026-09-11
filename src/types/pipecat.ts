@@ -8,6 +8,14 @@ export type PipecatVoiceStatus =
 export type PipecatEndControlType = 'end' | 'cancel';
 
 export type PipecatProcessingStage = 'llm' | 'tts';
+export type SttProvider = 'mistral' | 'whisper';
+export type VoiceStage =
+  | 'listening'
+  | 'transcribing'
+  | 'thinking'
+  | 'preparing_voice'
+  | 'speaking'
+  | 'recovering';
 
 export interface PipecatVoiceMessage {
   type?: string;
@@ -29,6 +37,14 @@ export interface PipecatVoiceMessage {
   totalLatencySeconds?: number;
   reason?: string;
   requestId?: string;
+  accepted?: boolean;
+  provider?: SttProvider;
+  sttProvider?: SttProvider;
+  sttFallbackAvailable?: boolean;
+  voiceStage?: VoiceStage;
+  sequence?: number;
+  recognitionMs?: number;
+  audioSeconds?: number;
   state?: 'paused' | 'resuming';
   event?: string;
   error?: string;
