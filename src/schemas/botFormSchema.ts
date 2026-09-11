@@ -14,6 +14,9 @@ export const basicInfoSchema = z.object({
   trackingModelDareId: z.string().min(1).nullable(),
   isActive: z.boolean(),
   webSearchEnabled: z.boolean(),
+  // Retrieval strategy is independent of the Socratic teaching prompt.
+  // Classic uses direct lookup, Advanced uses DARE's RAG pipeline, Agentic uses tools.
+  ragMode: z.enum(['naive', 'advanced', 'agentic']),
   isAdvanced: z.boolean(),
 });
 
@@ -86,6 +89,7 @@ export const DEFAULT_BOT_FORM_VALUES: BotFormData = {
   trackingModelDareId: null,
   isActive: true,
   webSearchEnabled: false,
+  ragMode: 'advanced',
   isAdvanced: false,
   // Prompts
   greeting: '',
@@ -125,6 +129,7 @@ export function mapBotToFormData(bot: {
   } | null;
   isActive?: boolean;
   webSearchEnabled?: boolean;
+  ragMode?: 'naive' | 'advanced' | 'agentic';
   isAdvanced?: boolean;
   prompts?: {
     greeting?: string;
@@ -161,6 +166,7 @@ export function mapBotToFormData(bot: {
     trackingModelDareId: bot.modelPreference?.trackingModelDareId ?? null,
     isActive: bot.isActive ?? true,
     webSearchEnabled: bot.webSearchEnabled ?? false,
+    ragMode: bot.ragMode ?? 'advanced',
     isAdvanced: bot.isAdvanced ?? false,
     // Prompts
     greeting: bot.prompts?.greeting || '',
@@ -202,6 +208,7 @@ export function mapFormDataToPayload(data: BotFormData) {
     trackingModelDareId: data.trackingModelDareId,
     isActive: data.isActive,
     webSearchEnabled: data.webSearchEnabled,
+    ragMode: data.ragMode,
     isAdvanced: data.isAdvanced,
     // Prompts
     greeting: data.greeting || undefined,

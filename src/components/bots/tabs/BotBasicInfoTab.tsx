@@ -51,10 +51,12 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
       trackingModelDareId,
       isActive,
       webSearchEnabled,
+      ragMode,
       updateField,
       updateModelField,
       setIsActive,
       setWebSearchEnabled,
+      setRagMode,
     } = useBotFormStore();
 
     const {
@@ -285,6 +287,40 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                     onCheckedChange={setWebSearchEnabled}
                     disabled={viewOnly}
                   />
+                </div>
+              </div>
+
+              {/* Document Retrieval Mode (mirrors DARE's RAG modes) */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col">
+                    <label htmlFor="ragMode" className="text-foreground text-sm font-medium">
+                      Document Retrieval
+                    </label>
+                    <p className="text-muted-foreground text-xs">
+                      {ragMode === 'agentic'
+                        ? 'Autonomous — searches documents in multiple steps. Public chats use Advanced retrieval.'
+                        : ragMode === 'naive'
+                          ? 'Fast — direct vector lookup pre-loaded each turn'
+                          : 'Thorough — analyzed and reranked context pre-loaded each turn'}
+                    </p>
+                  </div>
+                  <Select
+                    value={ragMode}
+                    onValueChange={value => {
+                      if (value) setRagMode(value as 'naive' | 'advanced' | 'agentic');
+                    }}
+                    disabled={viewOnly}
+                  >
+                    <SelectTrigger id="ragMode" className="w-56">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="naive">Classic (Fast)</SelectItem>
+                      <SelectItem value="advanced">Advanced (Thorough)</SelectItem>
+                      <SelectItem value="agentic">Agentic (Autonomous)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </Form>

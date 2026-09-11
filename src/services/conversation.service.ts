@@ -3,6 +3,7 @@ import { METHOD } from '@/constants/requests';
 import { baseRequest } from '@/utils/baseRequest';
 
 import type { Bot } from '@/types/bot';
+import type { MessageDiagnostics } from '@/types/messageDetails';
 
 // Interface for bot groups response from API
 export interface BotGroup {
@@ -33,7 +34,7 @@ export interface DareConversation {
   selectedFileIds?: number[];
 }
 
-export interface DareMessage {
+export interface DareMessage extends MessageDiagnostics {
   id: string;
   message: string;
   senderType: 'USER' | 'ASSISTANT';
@@ -50,6 +51,8 @@ export interface DareMessage {
   cost?: string | null;
   inputTokens?: number | null;
   outputTokens?: number | null;
+  toolCalls?: import('@/types/toolCalls').ChatToolCall[];
+  contextTrace?: import('@/types/contextTrace').ContextTrace;
 }
 
 export interface BotConversationResponse {
@@ -99,18 +102,6 @@ class ConversationService {
     return baseRequest<BotConversationResponse>({
       url: `conversations/bots/${botId}/conversations/`,
       method: METHOD.POST,
-    });
-  }
-
-  /**
-   * Send message through DARE backend (non-streaming)
-   * For streaming, we'll use direct WebSocket connection to DARE
-   */
-  async sendMessage(conversationId: string, message: string): Promise<DareMessage> {
-    return baseRequest<DareMessage>({
-      url: `conversations/${conversationId}/send/`,
-      method: METHOD.POST,
-      data: { message },
     });
   }
 

@@ -67,7 +67,7 @@ export async function runChatSocketCompletionTests() {
         });
         await settle();
         assert(chat.getState().messages.length === 3, `${name}: duplicate user bubble`);
-        assert(chat.getState().messages[2].id === 103, `${name}: pending ID was not replaced`);
+        assert(chat.getState().messages[2].id === '103', `${name}: pending ID was not replaced`);
         results.push(`${name}: ${typeof userId} history IDs, completion and second send passed`);
       }
     } finally {

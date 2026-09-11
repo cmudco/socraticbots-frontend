@@ -8,7 +8,13 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 
 const BotPromptsStep: React.FC = () => {
-  const { register, control } = useFormContext<BotFormData>();
+  const { register, control, watch } = useFormContext<BotFormData>();
+
+  const [trackingModel, learningGoals, trackingPrompt] = watch([
+    'trackingModelDareId',
+    'learningGoals',
+    'trackingPrompt',
+  ]);
 
   return (
     <div className="space-y-6">
@@ -39,6 +45,13 @@ const BotPromptsStep: React.FC = () => {
           rows={5}
         />
       </div>
+
+      {trackingModel && (!learningGoals?.trim() || !trackingPrompt?.trim()) && (
+        <p role="status" className="bg-muted text-muted-foreground rounded-lg p-3 text-sm">
+          Progress tracking is paused until both a tracking prompt and learning goals are provided.
+          Chat will still work.
+        </p>
+      )}
 
       {/* Tracking Prompt */}
       <div className="space-y-2">

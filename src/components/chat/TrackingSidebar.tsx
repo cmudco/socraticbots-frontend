@@ -14,6 +14,8 @@ import {
 import { useConversationStore } from '@/stores/core/conversationStore';
 import { useIsProgressStreaming, useProgressTokens } from '@/stores/core/websocketStore';
 
+import { isProgressTrackingConfigured } from '@/utils/progressTracking';
+
 import { Badge } from '@/components/ui/badge';
 
 const TrackingSidebar: React.FC = () => {
@@ -32,7 +34,7 @@ const TrackingSidebar: React.FC = () => {
   const progressTokens = useProgressTokens();
 
   // Check if tracking is enabled for the current bot
-  const isTrackingEnabled = currentBot?.modelPreference?.trackingModelDareId != null;
+  const isTrackingEnabled = isProgressTrackingConfigured(currentBot);
 
   // Hide entire sidebar if no tracking model is configured
   if (!isTrackingEnabled) {

@@ -7,10 +7,11 @@ import {
   usePublicIsTyping,
   usePublicMessages,
 } from '@/stores/core/publicBotStore';
+import { usePublicWebSocketStore } from '@/stores/core/publicWebSocketStore';
 
 import { scrollManager } from '@/utils/scrollManager';
 
-import PublicMessageBubble from './PublicMessageBubble';
+import ChatMessageBubble from '@/components/chat/shared/ChatMessageBubble';
 
 interface PublicMessageListProps {
   className?: string;
@@ -22,6 +23,7 @@ const PublicMessageList: React.FC<PublicMessageListProps> = ({
   roundedClass = 'rounded-2xl',
 }) => {
   const messages = usePublicMessages();
+  const { toolCallsByMessage, contextTraceByMessage } = usePublicWebSocketStore();
   const isTyping = usePublicIsTyping();
   const { isLoadingBot, botInfo } = usePublicBotStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -175,10 +177,15 @@ const PublicMessageList: React.FC<PublicMessageListProps> = ({
       <div className="mx-auto max-w-4xl px-4 py-6">
         {messages.map(message => {
           return (
-            <PublicMessageBubble
+            <ChatMessageBubble
               key={message.id}
               message={message}
               isStreaming={message.streaming}
+              toolCalls={
+                message.toolCalls?.length ? message.toolCalls : toolCallsByMessage[message.id]
+              }
+              contextTrace={message.contextTrace ?? contextTraceByMessage[message.id]}
+              variant="botTheme"
               roundedClass={roundedClass}
             />
           );

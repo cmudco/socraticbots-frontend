@@ -1,3 +1,8 @@
+import type { BotRagMode } from './bot';
+import type { MessageDiagnostics } from './messageDetails';
+
+export type { SocketAuth } from '@/config/socket.config';
+
 /**
  * Socket.IO Type Definitions for Socratic Books
  *
@@ -33,6 +38,10 @@ export interface ClientToServerEvents {
     data: Record<string, unknown>,
     callback: (response: SocketResponse) => void
   ) => void;
+  stop_generation: (
+    data: { conversationId: string },
+    callback: (response: SocketResponse) => void
+  ) => void;
   edit_message: (
     data: { conversationId: string; messageId: string; message: string },
     callback: (response: SocketResponse) => void
@@ -48,7 +57,7 @@ export interface ClientToServerEvents {
 // ════════════════════════════════════════════════════════════════════════════
 
 export interface SocketResponse {
-  success: boolean;
+  success?: boolean;
   error?: string;
   conversationId?: string;
 }
@@ -67,6 +76,13 @@ export type SocketMessageType =
   | 'stream_chunk'
   | 'stream_end'
   | 'edit_message'
+  // Tool loop (unified vocabulary shared with DARE chat)
+  | 'tool_call_pending'
+  | 'tool_call_args_progress'
+  | 'tool_call_executing'
+  | 'tool_call_result'
+  | 'tool_rounds_capped'
+  | 'context_trace'
   // Socratic Books specific - Learning Progress
   | 'progress_start'
   | 'progress_token'
@@ -81,12 +97,12 @@ export type SocketMessageType =
 /**
  * Base socket message with all possible fields
  */
-export interface SocketMessage {
+export interface SocketMessage extends MessageDiagnostics {
   type: SocketMessageType;
 
   // Message identification
-  id?: string;
-  messageId?: string;
+  id?: string | number;
+  messageId?: string | number;
 
   // Message content
   message?: string;
@@ -96,10 +112,12 @@ export interface SocketMessage {
   // Sender info
   senderType?: number; // 1 = USER, 2 = ASSISTANT
   senderName?: string;
+  sender?: string;
   isSender?: boolean;
 
   // Timestamps
   date?: string;
+  createdAt?: string;
 
   // Streaming state
   streaming?: boolean;
@@ -107,9 +125,9 @@ export interface SocketMessage {
 
   // Message metadata
   llmId?: number;
-  cost?: number;
-  inputTokens?: number;
-  outputTokens?: number;
+  cost?: number | string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
 
   // Feedback
   feedbackType?: number | null;
@@ -142,23 +160,29 @@ export interface SocketMessage {
 /**
  * Message in conversation history
  */
-export interface ConversationHistoryMessage {
-  id: string;
+export interface ConversationHistoryMessage extends MessageDiagnostics {
+  id: string | number;
   message: string;
   senderType: number;
   senderName?: string;
+  sender?: string;
   isSender?: boolean;
   date?: string;
+  createdAt?: string;
   streaming?: boolean;
   llmId?: number;
-  cost?: number;
-  inputTokens?: number;
-  outputTokens?: number;
+  cost?: number | string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
   feedbackType?: number | null;
   feedbackText?: string | null;
   isEdited?: boolean;
   isRegenerated?: boolean;
   originalMessage?: string | null;
+  /** Tool calls made during this message's turn (camelized by DARE). */
+  toolCalls?: Array<Record<string, unknown>>;
+  /** Context-assembly trace persisted for this message's turn. */
+  contextTrace?: Record<string, unknown> | null;
 }
 
 /**
@@ -184,13 +208,14 @@ export interface BotMeta {
   topic?: string;
   learning_goals?: string;
   chat_prompt?: string;
+  tracking_prompt?: string;
 }
 
 /**
  * Payload for sending messages
  */
 export interface SendMessagePayload {
-  conversationId: string;
+  conversationId?: string;
   message: string;
   sender_type?: number;
 
@@ -214,6 +239,8 @@ export interface SendMessagePayload {
   // Context configuration
   file_ids?: number[];
   embedding_ids?: number[];
+  file_owner_id?: number;
+  rag_mode?: BotRagMode;
   media_ids?: number[];
   tag_ids?: number[];
   folder_ids?: number[];
@@ -250,10 +277,6 @@ export interface RegeneratePayload {
 /**
  * Authentication options for socket connection
  */
-export type SocketAuth =
-  | { token: string } // JWT for authenticated users
-  | { session_id: string }; // Session ID for public/anonymous users
-
 /**
  * Connection status
  */

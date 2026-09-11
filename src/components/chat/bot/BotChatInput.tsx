@@ -7,7 +7,7 @@ import {
   useInputMessage,
   useIsTyping,
 } from '@/stores/core/conversationStore';
-import { useIsWebSocketConnected } from '@/stores/core/websocketStore';
+import { useIsWebSocketConnected, useWebSocketStore } from '@/stores/core/websocketStore';
 
 import QuickPromptPills from '@/components/chat/QuickPromptPills';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ interface BotChatInputProps {
 
 const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
   const inputMessage = useInputMessage();
+  const { stopResponse, isStopping } = useWebSocketStore();
   const isTyping = useIsTyping();
   const isWebSocketConnected = useIsWebSocketConnected();
   const { sendMessage, setInputMessage, activeConversation, currentBot } = useConversationStore();
@@ -32,7 +33,7 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
     setInputMessage(value);
   };
 
-  const handleStopStreaming = () => {};
+  const handleStopStreaming = () => stopResponse();
 
   const isConnected = isWebSocketConnected;
   const disabled = !activeConversation;
@@ -125,9 +126,14 @@ const BotChatInput: React.FC<BotChatInputProps> = ({ className = '' }) => {
               size="lg"
               variant="outline"
               className="border-destructive/20 bg-destructive/10 text-destructive hover:border-destructive/30 hover:bg-destructive/20 h-12 w-12 rounded-2xl p-0"
-              aria-label="Stop generating"
+              disabled={isStopping || !isConnected}
+              aria-label={isStopping ? 'Stopping response' : 'Stop generating'}
             >
-              <Square className="h-5 w-5" />
+              {isStopping ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Square className="h-5 w-5" />
+              )}
             </Button>
           ) : (
             <Button
