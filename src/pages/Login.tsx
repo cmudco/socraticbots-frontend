@@ -134,14 +134,12 @@ const Login: React.FC = () => {
                   className="w-full"
                   disabled={isSubmitting || loginMutation.isPending}
                 >
-                  {isSubmitting || loginMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    'Sign In'
+                  {(isSubmitting || loginMutation.isPending) && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
+                  <span>
+                    {isSubmitting || loginMutation.isPending ? 'Signing in...' : 'Sign In'}
+                  </span>
                 </Button>
               </Form>
             )}

@@ -20,6 +20,7 @@ const Chat: React.FC = () => {
   const {
     currentBotId,
     currentBot,
+    isLoadingBot,
     setActiveBot,
     clearActiveConversation,
     isProgressSidebarVisible,
@@ -39,12 +40,12 @@ const Chat: React.FC = () => {
       return;
     }
 
-    if (!bots || bots.length === 0) return;
+    if (!bots || bots.length === 0 || isLoadingBot) return;
     const selected = bots.find(b => b.id.toString() === botId);
     if (selected && selected.id !== currentBotId) {
       setActiveBot(selected);
     }
-  }, [botId, bots, currentBotId, setActiveBot, clearActiveConversation]);
+  }, [botId, bots, currentBotId, isLoadingBot, setActiveBot, clearActiveConversation]);
 
   // Show loading while fetching user data
   if (isLoading) {

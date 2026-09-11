@@ -19,21 +19,15 @@ import { Bot } from '@/types/bot';
 
 const BotSelector: React.FC = () => {
   const { data: bots, isLoading, error } = useChatBots();
-  const { setActiveBot, currentBotId } = useConversationStore();
+  const { currentBotId } = useConversationStore();
   const user = useUser();
   const navigate = useNavigate();
 
-  const handleBotChange = async (botId: string) => {
-    try {
-      // Find the full bot object and set it directly
-      const selectedBot = bots?.find(bot => bot.id.toString() === botId);
-      if (selectedBot && selectedBot.isActive !== false) {
-        // Only allow selection of active bots
-        await setActiveBot(selectedBot);
-        navigate(`/chat/${botId}`);
-      }
-    } catch (error) {
-      console.error('Error setting active bot:', error);
+  const handleBotChange = (botId: string) => {
+    const selectedBot = bots?.find(bot => bot.id.toString() === botId);
+    if (selectedBot && selectedBot.isActive !== false) {
+      // The chat route owns activation; starting it here races the route effect.
+      navigate(`/chat/${botId}`);
     }
   };
 
@@ -57,7 +51,7 @@ const BotSelector: React.FC = () => {
     <div className="w-64">
       <Select value={currentBotId?.toString() || ''} onValueChange={handleBotChange}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select a bot..." />
+          <SelectValue placeholder={<span>Select a bot...</span>} />
         </SelectTrigger>
         <SelectContent>
           {bots && bots.length > 0 ? (

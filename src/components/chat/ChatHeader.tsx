@@ -63,7 +63,7 @@ const ChatHeader: React.FC = () => {
                         className="border-primary/20 bg-primary/10 text-primary"
                       >
                         <div className="bg-primary mr-1.5 h-1.5 w-1.5 rounded-full"></div>
-                        Active
+                        <span>Active</span>
                       </Badge>
                     ) : (
                       <Badge
@@ -71,7 +71,7 @@ const ChatHeader: React.FC = () => {
                         className="border-border bg-muted text-muted-foreground"
                       >
                         <Clock className="mr-1 h-3 w-3" />
-                        Select Bot
+                        <span>Select Bot</span>
                       </Badge>
                     )}
                   </div>
