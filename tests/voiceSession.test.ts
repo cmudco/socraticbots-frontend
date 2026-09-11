@@ -149,6 +149,11 @@ describe('voice session recovery and ending', () => {
     expect(reduceVoiceFeedback(next, { type: 'stt_switch_ack', accepted: true }).provider).toBe(
       'whisper'
     );
+    const switched = reduceVoiceFeedback(next, { type: 'stt_status', event: 'fallback_started' });
+    expect(switched.provider).toBe('whisper');
+    expect(
+      reduceVoiceFeedback(switched, { type: 'stt_status', event: 'fallback_reverted' }).provider
+    ).toBe('mistral');
   });
   it('ends only after a matching acknowledgement', async () => {
     const hook = await start();

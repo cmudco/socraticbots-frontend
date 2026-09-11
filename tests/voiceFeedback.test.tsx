@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { SpeechRecoveryEvent, speechRecoveryLabel } from '@/constants/voiceRecovery';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -34,5 +35,24 @@ describe('backup recognition control', () => {
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.getByRole('status').textContent).toContain('selected');
     expect(screen.getByRole('status').textContent).toContain('Pause');
+  });
+
+  it('labels the button for assistive tech and announces the pending state', () => {
+    const onSwitch = vi.fn(() => new Promise<boolean>(() => {}));
+    render(<BackupSpeechControl available provider="mistral" onSwitch={onSwitch} />);
+    const button = screen.getByRole('button');
+    const describedBy = button.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    expect(document.getElementById(describedBy!)?.textContent).toContain('words aren’t appearing');
+    fireEvent.click(button);
+    expect(screen.getByRole('button').getAttribute('aria-busy')).toBe('true');
+  });
+
+  it('describes steady-state backup transcription as recognition, not recovery', () => {
+    expect(speechRecoveryLabel(SpeechRecoveryEvent.STALLED)).toContain('Recovering');
+    expect(speechRecoveryLabel(SpeechRecoveryEvent.FALLBACK_PROCESSING)).not.toContain(
+      'Recovering'
+    );
+    expect(speechRecoveryLabel(SpeechRecoveryEvent.FALLBACK_RECOVERED)).toBeNull();
   });
 });

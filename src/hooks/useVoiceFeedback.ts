@@ -28,11 +28,9 @@ export const reduceVoiceFeedback = (
       backupAvailable: message.sttFallbackAvailable === true,
     };
   }
-  if (
-    (message.type === 'stt_status' || message.type === 'lab_stt') &&
-    message.event === 'fallback_started'
-  ) {
-    return { ...state, provider: 'whisper' };
+  if (message.type === 'stt_status' || message.type === 'lab_stt') {
+    if (message.event === 'fallback_started') return { ...state, provider: 'whisper' };
+    if (message.event === 'fallback_reverted') return { ...state, provider: 'mistral' };
   }
   if (message.type === 'stt_switch_ack' && message.accepted === true) {
     return { ...state, provider: 'whisper' };

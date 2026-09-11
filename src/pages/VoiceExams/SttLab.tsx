@@ -61,6 +61,11 @@ interface ServerLevels {
 }
 
 const MAX_CONSOLE_ENTRIES = 400;
+/** The runtime offsets backup batch ids so they never collide with live turn ids. */
+const BACKUP_TURN_ID_OFFSET = 1_000_000;
+
+const turnLabel = (turnId: number) =>
+  turnId >= BACKUP_TURN_ID_OFFSET ? `backup ${turnId - BACKUP_TURN_ID_OFFSET}` : `turn ${turnId}`;
 
 const now = () => new Date().toLocaleTimeString(undefined, { hour12: false });
 
@@ -140,7 +145,7 @@ const SttLab = () => {
           if (turn.isFinal) {
             log(
               'transcript',
-              `turn ${turnId} FINAL (${turn.language ?? 'lang?'}${
+              `${turnLabel(turnId)} FINAL (${turn.language ?? 'lang?'}${
                 turn.latencyMs != null ? `, ${turn.latencyMs}ms` : ''
               }): ${turn.text}`
             );
@@ -405,7 +410,7 @@ const SttLab = () => {
             {turns.map(turn => (
               <div key={turn.turnId} className="flex flex-col gap-1">
                 <div className="text-muted-foreground flex gap-2 font-mono text-[11px]">
-                  <span>turn {turn.turnId}</span>
+                  <span>{turnLabel(turn.turnId)}</span>
                   {turn.isFinal && (
                     <span title="Language Voxtral believes it heard — if this is not your language, that turn's text is suspect">
                       language: {turn.language ?? 'auto (not reported)'}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +17,7 @@ export default function BackupSpeechControl({
 }: BackupSpeechControlProps) {
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
+  const promptId = useId();
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -45,12 +46,14 @@ export default function BackupSpeechControl({
         </p>
       ) : (
         <>
-          <p>Speaking, but your words aren’t appearing?</p>
+          <p id={promptId}>Speaking, but your words aren’t appearing?</p>
           <Button
             type="button"
             variant="outline"
             size="sm"
             disabled={pending}
+            aria-busy={pending}
+            aria-describedby={promptId}
             onClick={() => void switchProvider()}
           >
             {pending ? 'Switching recognition…' : 'Try backup speech recognition'}

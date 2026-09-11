@@ -9,6 +9,7 @@ import {
   SpeechRecoveryEvent,
   SpeechRecoveryMessageType,
   speechRecoveryCaption,
+  speechRecoveryLabel,
 } from '@/constants/voiceRecovery';
 import { VOICE_STAGE_COPY } from '@/constants/voiceStages';
 import { useConversation } from '@elevenlabs/react';
@@ -48,6 +49,7 @@ interface TranscriptMessage {
   role: 'user' | 'agent';
   content: string;
   timestamp: Date;
+  timeInCallSecs?: number;
   turnId?: number;
   isFinal?: boolean;
 }
@@ -144,7 +146,10 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const { receive: receiveFeedback, reset: resetFeedback, ...feedback } = useVoiceFeedback();
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
-  const [speechRecovery, setSpeechRecovery] = useState<string | null>(null);
+  const [speechRecovery, setSpeechRecovery] = useState<{
+    label: string;
+    caption: string;
+  } | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isProcessingResponse, setIsProcessingResponse] = useState(false);
   const [interruptionState, setInterruptionState] = useState<'interrupted' | 'resuming' | null>(
@@ -306,7 +311,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
 
       if (message.type === SpeechRecoveryMessageType) {
-        setSpeechRecovery(speechRecoveryCaption(message.event));
+        const label = speechRecoveryLabel(message.event);
+        const caption = speechRecoveryCaption(message.event);
+        setSpeechRecovery(label && caption ? { label, caption } : null);
         if (
           message.event === SpeechRecoveryEvent.FALLBACK_RECOVERED ||
           message.event === SpeechRecoveryEvent.RECOVERED
@@ -343,6 +350,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
             role,
             content,
             timestamp: new Date(),
+            timeInCallSecs: message.timeInCallSecs ?? prev[existingIndex]?.timeInCallSecs,
             turnId: message.turnId,
             isFinal: message.isFinal,
           };
@@ -362,6 +370,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
           role,
           content,
           timestamp: new Date(),
+          timeInCallSecs: message.timeInCallSecs,
         },
       ]);
     },
@@ -675,7 +684,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   // phase it is waiting on (LLM text vs TTS audio).
   const effectiveStateMeta =
     isSessionActive && speechRecovery
-      ? { ...stateMeta, label: 'Recovering speech recognition', caption: speechRecovery }
+      ? { ...stateMeta, ...speechRecovery }
       : isSessionActive && feedback.stage && !interruptionState
         ? { ...stateMeta, ...VOICE_STAGE_COPY[feedback.stage] }
         : liveState === 'thinking' && processingStage === 'tts'
@@ -927,6 +936,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                           {isUser ? 'You' : 'Agent'}
                         </span>
                         <span className="text-muted-foreground/70 text-[10px]">
+                          {msg.timeInCallSecs != null
+                            ? `${formatTimeInCall(msg.timeInCallSecs)} · `
+                            : ''}
                           {msg.timestamp.toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
