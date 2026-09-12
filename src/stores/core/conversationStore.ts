@@ -8,8 +8,10 @@ import {
 } from '@/services/conversation.service';
 
 import { buildBotChatPayload } from '@/utils/botChatPayload';
+import { imagesForPayload, previewsAsMessageImages } from '@/utils/chatImages';
 
 import type { Bot } from '@/types/bot';
+import type { AttachedImage } from '@/types/chatAttachments';
 
 import { useWebSocketStore } from './websocketStore';
 
@@ -50,7 +52,7 @@ export interface ConversationActions {
   clearActiveConversation: () => void;
 
   // Message handling
-  sendMessage: (message: string) => Promise<void>;
+  sendMessage: (message: string, images?: AttachedImage[]) => Promise<void>;
   addMessage: (message: DareMessage) => void;
   updateMessage: (messageId: string, updates: Partial<DareMessage>) => void;
   setInputMessage: (message: string) => void;
@@ -170,7 +172,7 @@ export const useConversationStore = create<ConversationStore>()(
       });
     },
 
-    sendMessage: async (message: string) => {
+    sendMessage: async (message: string, images: AttachedImage[] = []) => {
       const { activeConversation, currentBot } = get();
       const websocketStore = useWebSocketStore.getState();
 
@@ -189,6 +191,7 @@ export const useConversationStore = create<ConversationStore>()(
           isSender: true,
           date: new Date().toISOString(),
           streaming: false,
+          images: previewsAsMessageImages(images),
         });
         websocketStore.setError(null);
 
@@ -202,7 +205,7 @@ export const useConversationStore = create<ConversationStore>()(
         }
 
         if (!currentBot) return;
-        const payload = buildBotChatPayload(currentBot, message);
+        const payload = buildBotChatPayload(currentBot, message, imagesForPayload(images));
 
         websocketStore.sendMessage(payload);
       } catch {

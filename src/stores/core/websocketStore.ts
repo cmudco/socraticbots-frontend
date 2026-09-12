@@ -12,6 +12,8 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import type { DareMessage } from '@/services/conversation.service';
 import { authenticatedSocketService } from '@/services/socket.service';
 
+import { messageImagesFromFiles } from '@/utils/chatImages';
+
 import type { ContextTrace } from '@/types/contextTrace';
 import type { ConversationHistoryMessage, SendMessagePayload, SocketMessage } from '@/types/socket';
 import { toolCallFromHistory } from '@/types/toolCalls';
@@ -72,6 +74,7 @@ const mapToDareMessage = (
   originalMessage: msg.originalMessage ?? undefined,
   toolCalls: Array.isArray(msg.toolCalls) ? msg.toolCalls.map(toolCallFromHistory) : undefined,
   contextTrace: (msg.contextTrace as unknown as ContextTrace | null | undefined) ?? undefined,
+  images: messageImagesFromFiles(msg.files),
 });
 
 // ════════════════════════════════════════════════════════════════════════════

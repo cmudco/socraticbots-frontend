@@ -2,6 +2,7 @@
  * Public bot types for anonymous chat functionality
  */
 import type { Bot } from './bot';
+import type { MessageImage } from './chatAttachments';
 import type { ContextTrace } from './contextTrace';
 import type { MessageDiagnostics } from './messageDetails';
 import type { ChatToolCall } from './toolCalls';
@@ -35,4 +36,5 @@ export interface PublicBotMessage extends MessageDiagnostics {
   isEdited?: boolean;
   isRegenerated?: boolean;
   originalMessage?: string | null;
+  images?: MessageImage[];
 }

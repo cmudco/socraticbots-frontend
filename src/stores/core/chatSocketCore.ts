@@ -13,6 +13,7 @@ import type { SocketService } from '@/services/socket.service';
 
 import { scrollManager } from '@/utils/scrollManager';
 
+import type { MessageImage } from '@/types/chatAttachments';
 import type { ContextTrace } from '@/types/contextTrace';
 import type { ConversationHistoryMessage, SocketMessage } from '@/types/socket';
 import { type ChatToolCall, mapToolEvent } from '@/types/toolCalls';
@@ -56,6 +57,7 @@ export interface ChatMessageLike {
   message: string;
   senderType: 'USER' | 'ASSISTANT';
   streaming?: boolean;
+  images?: MessageImage[];
 }
 
 /**
@@ -237,7 +239,12 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
                       item.message === message.message
                   );
                 if (pendingMessage) {
-                  target.updateMessage(pendingMessage.id, message);
+                  // DARE echoes persisted files; an anonymous session cannot
+                  // persist them, so keep the composer previews in that case.
+                  target.updateMessage(pendingMessage.id, {
+                    ...message,
+                    images: message.images ?? pendingMessage.images,
+                  });
                 } else {
                   target.addMessage(message);
                 }

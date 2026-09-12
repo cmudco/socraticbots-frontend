@@ -1,4 +1,5 @@
 import type { Bot } from '@/types/bot';
+import type { ImagePayload } from '@/types/chatAttachments';
 import type { SendMessagePayload } from '@/types/socket';
 
 import { isProgressTrackingConfigured } from './progressTracking';
@@ -6,9 +7,14 @@ import { isProgressTrackingConfigured } from './progressTracking';
 /** DARE's socket uses camelCase routing keys and snake_case generation options.
  * Keep this wire boundary shared by authenticated and public Socratic chat.
  */
-export function buildBotChatPayload(bot: Bot, message: string): SendMessagePayload {
+export function buildBotChatPayload(
+  bot: Bot,
+  message: string,
+  images: ImagePayload[] = []
+): SendMessagePayload {
   return {
     message,
+    ...(images.length > 0 ? { images } : {}),
     sender_type: 1,
     model_id: bot.modelPreference?.chatModelDareId,
     rag_mode: bot.ragMode ?? 'advanced',

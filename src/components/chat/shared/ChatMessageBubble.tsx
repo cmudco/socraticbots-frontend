@@ -14,10 +14,12 @@ import MessageDetailsSheet from '@/components/chat/details/MessageDetailsSheet';
 import ToolActivity from '@/components/chat/toolActivity/ToolActivity';
 import { Button } from '@/components/ui/button';
 
+import type { MessageImage } from '@/types/chatAttachments';
 import type { ContextTrace } from '@/types/contextTrace';
 import type { MessageDiagnostics } from '@/types/messageDetails';
 import type { ChatToolCall } from '@/types/toolCalls';
 
+import MessageImages from './MessageImages';
 import MessageMarkdown from './MessageMarkdown';
 
 export interface ChatBubbleMessage extends MessageDiagnostics {
@@ -28,6 +30,7 @@ export interface ChatBubbleMessage extends MessageDiagnostics {
   message: string;
   senderType: 'USER' | 'ASSISTANT';
   date: string;
+  images?: MessageImage[];
 }
 
 interface ChatMessageBubbleProps {
@@ -117,15 +120,19 @@ const ChatMessageBubble: React.FC<ChatMessageBubbleProps> = ({
 
           {!isUser && toolCalls && toolCalls.length > 0 && <ToolActivity toolCalls={toolCalls} />}
 
-          <div
-            className={`${isUser ? classes.proseUser : classes.prose} max-w-none ${isStreaming ? 'animate-pulse' : ''}`}
-          >
-            <MessageMarkdown
-              content={message.message}
-              streaming={isStreaming}
-              size={variant === 'app' ? 'sm' : 'base'}
-            />
-          </div>
+          {message.images && message.images.length > 0 && <MessageImages images={message.images} />}
+
+          {(message.message || !message.images?.length) && (
+            <div
+              className={`${isUser ? classes.proseUser : classes.prose} max-w-none ${isStreaming ? 'animate-pulse' : ''}`}
+            >
+              <MessageMarkdown
+                content={message.message}
+                streaming={isStreaming}
+                size={variant === 'app' ? 'sm' : 'base'}
+              />
+            </div>
+          )}
 
           <div className="mt-2 flex items-center justify-between">
             <span

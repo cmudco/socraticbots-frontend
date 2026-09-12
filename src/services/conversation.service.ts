@@ -53,6 +53,7 @@ export interface DareMessage extends MessageDiagnostics {
   outputTokens?: number | null;
   toolCalls?: import('@/types/toolCalls').ChatToolCall[];
   contextTrace?: import('@/types/contextTrace').ContextTrace;
+  images?: import('@/types/chatAttachments').MessageImage[];
 }
 
 export interface BotConversationResponse {

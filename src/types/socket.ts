@@ -1,4 +1,5 @@
 import type { BotRagMode } from './bot';
+import type { ImagePayload, SocketFile } from './chatAttachments';
 import type { MessageDiagnostics } from './messageDetails';
 
 export type { SocketAuth } from '@/config/socket.config';
@@ -129,6 +130,9 @@ export interface SocketMessage extends MessageDiagnostics {
   inputTokens?: number | null;
   outputTokens?: number | null;
 
+  // Files DARE persisted on the message (attached images among them)
+  files?: SocketFile[];
+
   // Feedback
   feedbackType?: number | null;
   feedbackText?: string | null;
@@ -179,6 +183,7 @@ export interface ConversationHistoryMessage extends MessageDiagnostics {
   isEdited?: boolean;
   isRegenerated?: boolean;
   originalMessage?: string | null;
+  files?: SocketFile[];
   /** Tool calls made during this message's turn (camelized by DARE). */
   toolCalls?: Array<Record<string, unknown>>;
   /** Context-assembly trace persisted for this message's turn. */
@@ -235,6 +240,9 @@ export interface SendMessagePayload {
   prompt_id?: number;
   temperature?: number;
   max_tokens?: number;
+
+  // Images attached in the composer; DARE stores them as message files.
+  images?: ImagePayload[];
 
   // Context configuration
   file_ids?: number[];
