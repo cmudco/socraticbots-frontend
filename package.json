@@ -5,6 +5,8 @@
   "type": "module",
   "license": "AGPL-3.0-only",
   "scripts": {
+    "test": "vitest run",
+    "test:voice": "vitest run tests/voiceSession.test.ts tests/voiceFeedback.test.tsx",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
@@ -74,6 +76,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@testing-library/react": "^16.3.0",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
@@ -87,13 +90,15 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
     "husky": "^9.1.7",
+    "jsdom": "^26.1.0",
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.13",
     "tw-animate-css": "^1.3.4",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vitest": "^4.1.11"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

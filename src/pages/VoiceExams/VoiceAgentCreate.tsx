@@ -12,6 +12,9 @@ import { useCreateVoiceAgent, useMyTeams } from '@/hooks/queries/useVoiceAgents'
 
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
 
+import { getErrorMessage } from '@/utils/errorHandler';
+import { toast } from '@/utils/toast';
+
 import { Button } from '@/components/ui/button';
 import {
   AIConfigSection,
@@ -81,6 +84,7 @@ const VoiceAgentCreate: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to create agent:', error);
+      toast.error(getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }
