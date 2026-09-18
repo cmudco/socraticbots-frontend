@@ -73,6 +73,13 @@ export function runChatWireContractChecks() {
     defaults.rag_mode === 'advanced' && !defaults.enable_progress,
     'Default/optional configuration mismatch'
   );
+  const image = { preview: 'data:image/png;base64,AAAA', name: 'board.png', type: 'image/png' };
+  const withImages = buildBotChatPayload({ title: 'Empty' }, '', [image]);
+  assert(
+    JSON.stringify(withImages.images) === JSON.stringify([image]) && withImages.message === '',
+    'Attached images do not reach the wire unchanged'
+  );
+  assert(!('images' in defaults), 'Empty attachment list leaked an images key');
   assert(getSocketUrl().endsWith('/chat'), 'Wrong namespace');
   const publicAuth = { sessionId: 'session', conversationId: 'room' };
   assert(getSocketOptions(publicAuth).auth === publicAuth, 'Public auth shape changed');

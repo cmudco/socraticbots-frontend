@@ -15,6 +15,7 @@ import {
 
 import { useGetOrCreateConversation, usePublicBotInfo } from '@/hooks/queries/usePublicBot';
 import { useBotTheme } from '@/hooks/useBotTheme';
+import { useImageDropZone } from '@/hooks/useImageDropZone';
 
 import { usePublicBotStore } from '@/stores/core/publicBotStore';
 import { usePublicWebSocketStore } from '@/stores/core/publicWebSocketStore';
@@ -23,12 +24,14 @@ import { useThemeStore } from '@/stores/ui/themeStore';
 import { clearAnonymousSession, getOrCreateAnonymousSession } from '@/lib/anonymousSession';
 
 import { buildBotChatPayload } from '@/utils/botChatPayload';
+import { imagesForPayload, previewsAsMessageImages } from '@/utils/chatImages';
 import { isProgressTrackingConfigured } from '@/utils/progressTracking';
 
 import ChatErrorAlert from '@/components/chat/ChatErrorAlert';
 import PublicChatInput from '@/components/chat/public/PublicChatInput';
 import PublicMessageList from '@/components/chat/public/PublicMessageList';
 import PublicTrackingSidebar from '@/components/chat/public/PublicTrackingSidebar';
+import ImageDropOverlay from '@/components/chat/shared/ImageDropOverlay';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -41,12 +44,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+import type { AttachedImage } from '@/types/chatAttachments';
 import type { PublicBotConversation } from '@/types/publicBot';
 
 const PublicBotChat: React.FC = () => {
   const { botId } = useParams<{ botId: string }>();
   const [isProgressSidebarVisible, setProgressSidebarVisible] = useState(true);
   const [isResetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const { isDragging, dropZoneProps } = useImageDropZone();
 
   // Zustand stores
   const {
@@ -160,7 +165,7 @@ const PublicBotChat: React.FC = () => {
 
   // Handle sending messages
   const handleSendMessage = useCallback(
-    (message: string) => {
+    (message: string, images: AttachedImage[]) => {
       if (!activeConversation || !botInfo) return;
 
       setSocketError(null);
@@ -173,6 +178,7 @@ const PublicBotChat: React.FC = () => {
         isSender: true,
         date: new Date().toISOString(),
         streaming: false,
+        images: previewsAsMessageImages(images),
       });
 
       const selectedModelId = botInfo.modelPreference?.chatModelDareId;
@@ -184,7 +190,7 @@ const PublicBotChat: React.FC = () => {
         return;
       }
 
-      const payload = buildBotChatPayload(botInfo, message);
+      const payload = buildBotChatPayload(botInfo, message, imagesForPayload(images));
 
       sendWebSocketMessage(payload);
     },
@@ -310,7 +316,9 @@ const PublicBotChat: React.FC = () => {
         <main
           id="bot-chat-root"
           className={`relative container mx-auto flex flex-1 flex-col overflow-hidden p-4 ${fontClass} ${textSizeClass}`}
+          {...dropZoneProps}
         >
+          <ImageDropOverlay isVisible={isDragging} />
           {/* Drawer Toggle Button - Top Left of Chat - Only show if tracking is enabled */}
           {isTrackingEnabled && (
             <button

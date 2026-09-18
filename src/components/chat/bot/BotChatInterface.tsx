@@ -3,11 +3,13 @@ import React, { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 import { useUserInfo } from '@/hooks/queries/useUser';
+import { useImageDropZone } from '@/hooks/useImageDropZone';
 
 import { useConversationStore } from '@/stores/core/conversationStore';
 import { useWebSocketError, useWebSocketStore } from '@/stores/core/websocketStore';
 
 import ChatErrorAlert from '@/components/chat/ChatErrorAlert';
+import ImageDropOverlay from '@/components/chat/shared/ImageDropOverlay';
 import { Card } from '@/components/ui/card';
 
 import BotChatInput from './BotChatInput';
@@ -28,6 +30,7 @@ const BotChatInterface: React.FC<BotChatInterfaceProps> = ({ className = '' }) =
   } = useConversationStore();
   const socketError = useWebSocketError();
   const clearSocketError = useWebSocketStore(state => state.setError);
+  const { isDragging, dropZoneProps } = useImageDropZone(Boolean(activeConversation));
 
   // Cleanup on unmount
   useEffect(() => {
@@ -63,7 +66,11 @@ const BotChatInterface: React.FC<BotChatInterfaceProps> = ({ className = '' }) =
   }
 
   return (
-    <div className={`bg-background flex h-full min-h-0 flex-col ${className}`}>
+    <div
+      className={`bg-background relative flex h-full min-h-0 flex-col ${className}`}
+      {...dropZoneProps}
+    >
+      <ImageDropOverlay isVisible={isDragging} />
       {/* Messages - with min-h-0 to allow proper flex shrinking */}
       <BotMessageList className="min-h-0 flex-1" />
 

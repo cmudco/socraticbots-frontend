@@ -13,6 +13,8 @@ import { subscribeWithSelector } from 'zustand/middleware';
 
 import { publicSocketService } from '@/services/socket.service';
 
+import { messageImagesFromFiles } from '@/utils/chatImages';
+
 import type { ContextTrace } from '@/types/contextTrace';
 import type { PublicBotMessage } from '@/types/publicBot';
 import type { ConversationHistoryMessage, SendMessagePayload, SocketMessage } from '@/types/socket';
@@ -86,6 +88,7 @@ const mapToPublicBotMessage = (
   originalMessage: msg.originalMessage,
   toolCalls: Array.isArray(msg.toolCalls) ? msg.toolCalls.map(toolCallFromHistory) : undefined,
   contextTrace: msg.contextTrace as ContextTrace | undefined,
+  images: messageImagesFromFiles(msg.files),
 });
 
 // ════════════════════════════════════════════════════════════════════════════
