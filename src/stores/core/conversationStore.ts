@@ -7,7 +7,11 @@ import {
   conversationService,
 } from '@/services/conversation.service';
 
+import { buildBotChatPayload } from '@/utils/botChatPayload';
+import { imagesForPayload, previewsAsMessageImages } from '@/utils/chatImages';
+
 import type { Bot } from '@/types/bot';
+import type { AttachedImage } from '@/types/chatAttachments';
 
 import { useWebSocketStore } from './websocketStore';
 
@@ -37,6 +41,9 @@ export interface ConversationState {
   conversationHistory: DareMessage[];
   lastMessageId: string | null;
   messageCount: number;
+
+  // Live tool-call activity for the in-flight turn, keyed by message id.
+  // Historical messages carry their own toolCalls from the history payload.
 }
 
 export interface ConversationActions {
@@ -45,7 +52,7 @@ export interface ConversationActions {
   clearActiveConversation: () => void;
 
   // Message handling
-  sendMessage: (message: string) => Promise<void>;
+  sendMessage: (message: string, images?: AttachedImage[]) => Promise<void>;
   addMessage: (message: DareMessage) => void;
   updateMessage: (messageId: string, updates: Partial<DareMessage>) => void;
   setInputMessage: (message: string) => void;
@@ -53,6 +60,8 @@ export interface ConversationActions {
   // Conversation tracking
   updateConversationStats: () => void;
   setConversationHistory: (messages: DareMessage[]) => void;
+
+  // Tool-call activity
 
   // UI state
   setIsTyping: (isTyping: boolean) => void;
@@ -111,6 +120,7 @@ export const useConversationStore = create<ConversationStore>()(
         set({
           currentBotId: botId,
           currentBot: bot,
+          activeConversation: null,
           messages: [],
           conversationHistory: [],
           messageCount: 0,
@@ -118,6 +128,7 @@ export const useConversationStore = create<ConversationStore>()(
         });
 
         const conversation = await conversationService.getOrCreateBotConversation(botId);
+        if (get().currentBotId !== botId) return;
         set({ activeConversation: conversation });
 
         // Socket connection is now handled by ProtectedRoute via useSocketConnection hook
@@ -161,7 +172,7 @@ export const useConversationStore = create<ConversationStore>()(
       });
     },
 
-    sendMessage: async (message: string) => {
+    sendMessage: async (message: string, images: AttachedImage[] = []) => {
       const { activeConversation, currentBot } = get();
       const websocketStore = useWebSocketStore.getState();
 
@@ -180,6 +191,7 @@ export const useConversationStore = create<ConversationStore>()(
           isSender: true,
           date: new Date().toISOString(),
           streaming: false,
+          images: previewsAsMessageImages(images),
         });
         websocketStore.setError(null);
 
@@ -192,45 +204,8 @@ export const useConversationStore = create<ConversationStore>()(
           return;
         }
 
-        const payload: Record<string, unknown> = {
-          message: message,
-          enable_progress: true,
-          is_advanced: Boolean(currentBot?.isAdvanced || false),
-        };
-
-        if (currentBot) {
-          // LLM and context settings.
-          //
-          // `model_id` is the new opaque dispatch field on DARE's chat
-          // socket (replaces the legacy `llm_id`); DARE inverts the
-          // encoding via `parse_model_id` — so a stringified PK ("42") or
-          // a LiteLLM handle ("litellm:<key>:<name>") both work.
-          //
-          // `progress_llm_id` is the SB-specific tracker field; DARE
-          // accepts the same opaque-string contract on this one.
-          payload.model_id = selectedModelId;
-          payload.embedding_ids = currentBot.dareFileIds || [];
-          payload.file_owner_id = currentBot.createdByDareId;
-          payload.progress_llm_id = currentBot.modelPreference?.trackingModelDareId;
-          payload.web_search_enabled = Boolean(currentBot.webSearchEnabled || false);
-
-          if (currentBot.maxContextSnippets !== undefined) {
-            payload.max_context_snippets = currentBot.maxContextSnippets;
-          }
-          if (currentBot.documentSimilarityThreshold !== undefined) {
-            payload.document_similarity_threshold = currentBot.documentSimilarityThreshold;
-          }
-
-          // All Socratic bot data goes in bot_meta (single source of truth)
-          payload.bot_meta = {
-            title: currentBot.title,
-            subject: currentBot.subject,
-            topic: currentBot.topic,
-            chat_prompt: currentBot.prompts?.chatPrompt,
-            tracking_prompt: currentBot.prompts?.trackingPrompt,
-            learning_goals: currentBot.prompts?.learningGoals,
-          };
-        }
+        if (!currentBot) return;
+        const payload = buildBotChatPayload(currentBot, message, imagesForPayload(images));
 
         websocketStore.sendMessage(payload);
       } catch {
@@ -284,6 +259,7 @@ export const useConversationStore = create<ConversationStore>()(
         messages: messages,
         messageCount: messages.length,
         lastMessageId: messages.length > 0 ? messages[messages.length - 1].id : null,
+        // History messages carry persisted toolCalls/traces; drop live buffers
       });
     },
 

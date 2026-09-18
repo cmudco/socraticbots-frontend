@@ -8,6 +8,8 @@ import { useUserInfo } from '@/hooks/queries/useUser';
 
 import { useConversationStore } from '@/stores/core/conversationStore';
 
+import { isProgressTrackingConfigured } from '@/utils/progressTracking';
+
 import ChatHeader from '@/components/chat/ChatHeader';
 import TrackingSidebar from '@/components/chat/TrackingSidebar';
 import BotChatInterface from '@/components/chat/bot/BotChatInterface';
@@ -18,6 +20,7 @@ const Chat: React.FC = () => {
   const {
     currentBotId,
     currentBot,
+    isLoadingBot,
     setActiveBot,
     clearActiveConversation,
     isProgressSidebarVisible,
@@ -27,7 +30,7 @@ const Chat: React.FC = () => {
   const { data: bots } = useChatBots();
 
   // Check if tracking is enabled for the current bot
-  const isTrackingEnabled = currentBot?.modelPreference?.trackingModelDareId != null;
+  const isTrackingEnabled = isProgressTrackingConfigured(currentBot);
 
   useEffect(() => {
     if (!botId) {
@@ -37,12 +40,12 @@ const Chat: React.FC = () => {
       return;
     }
 
-    if (!bots || bots.length === 0) return;
+    if (!bots || bots.length === 0 || isLoadingBot) return;
     const selected = bots.find(b => b.id.toString() === botId);
     if (selected && selected.id !== currentBotId) {
       setActiveBot(selected);
     }
-  }, [botId, bots, currentBotId, setActiveBot, clearActiveConversation]);
+  }, [botId, bots, currentBotId, isLoadingBot, setActiveBot, clearActiveConversation]);
 
   // Show loading while fetching user data
   if (isLoading) {

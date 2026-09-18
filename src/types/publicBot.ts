@@ -2,6 +2,10 @@
  * Public bot types for anonymous chat functionality
  */
 import type { Bot } from './bot';
+import type { MessageImage } from './chatAttachments';
+import type { ContextTrace } from './contextTrace';
+import type { MessageDiagnostics } from './messageDetails';
+import type { ChatToolCall } from './toolCalls';
 
 // Public bot info is the same as regular bot info
 // Backend returns full bot details via BotDetailSerializer
@@ -13,7 +17,7 @@ export interface PublicBotConversation {
   botName: string;
 }
 
-export interface PublicBotMessage {
+export interface PublicBotMessage extends MessageDiagnostics {
   id: string;
   message: string;
   senderType: 'USER' | 'ASSISTANT';
@@ -21,13 +25,16 @@ export interface PublicBotMessage {
   isSender: boolean;
   date: string;
   streaming?: boolean;
+  toolCalls?: ChatToolCall[];
+  contextTrace?: ContextTrace;
   llmId?: number;
-  cost?: number;
-  inputTokens?: number;
-  outputTokens?: number;
+  cost?: number | string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
   feedbackType?: number | null;
   feedbackText?: string | null;
   isEdited?: boolean;
   isRegenerated?: boolean;
   originalMessage?: string | null;
+  images?: MessageImage[];
 }

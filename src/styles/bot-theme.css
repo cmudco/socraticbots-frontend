@@ -75,3 +75,21 @@
 .divide-bot-accent > :not([hidden]) ~ :not([hidden]) {
   border-color: var(--bot-accent);
 }
+
+/* Wire @tailwindcss/typography prose colors to the bot theme so markdown
+   inside themed public-bot bubbles stays readable on any theme color. */
+.prose-bot {
+  --tw-prose-body: var(--bot-fg);
+  --tw-prose-headings: var(--bot-fg);
+  --tw-prose-lead: var(--bot-fg);
+  --tw-prose-bold: var(--bot-fg);
+  --tw-prose-counters: var(--bot-fg);
+  --tw-prose-bullets: var(--bot-fg);
+  --tw-prose-quotes: var(--bot-fg);
+  --tw-prose-quote-borders: var(--bot-accent);
+  --tw-prose-code: var(--bot-fg);
+  --tw-prose-hr: var(--bot-accent);
+  --tw-prose-th-borders: var(--bot-accent);
+  --tw-prose-td-borders: var(--bot-accent);
+  --tw-prose-links: var(--bot-primary);
+}

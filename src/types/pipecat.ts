@@ -8,6 +8,14 @@ export type PipecatVoiceStatus =
 export type PipecatEndControlType = 'end' | 'cancel';
 
 export type PipecatProcessingStage = 'llm' | 'tts';
+export type SttProvider = 'mistral' | 'whisper';
+export type VoiceStage =
+  | 'listening'
+  | 'transcribing'
+  | 'thinking'
+  | 'preparing_voice'
+  | 'speaking'
+  | 'recovering';
 
 export interface PipecatVoiceMessage {
   type?: string;
@@ -21,6 +29,7 @@ export interface PipecatVoiceMessage {
   // by the runtime yet; the UI falls back to a generic "preparing" state.
   stage?: PipecatProcessingStage;
   turnId?: number;
+  timeInCallSecs?: number;
   isFinal?: boolean;
   // On agent_audio_started: per-turn latency metrics. Not emitted by the
   // runtime yet; when absent the UI shows only the client-measured reply time.
@@ -28,6 +37,17 @@ export interface PipecatVoiceMessage {
   ttsLatencySeconds?: number;
   totalLatencySeconds?: number;
   reason?: string;
+  requestId?: string;
+  accepted?: boolean;
+  provider?: SttProvider;
+  sttProvider?: SttProvider;
+  sttFallbackAvailable?: boolean;
+  voiceStage?: VoiceStage;
+  sequence?: number;
+  recognitionMs?: number;
+  audioSeconds?: number;
+  state?: 'paused' | 'resuming';
+  event?: string;
   error?: string;
   fatal?: boolean;
   isFatal?: boolean;

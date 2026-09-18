@@ -1,19 +1,29 @@
 import React, { useEffect, useRef } from 'react';
 
-import { Loader2, Send } from 'lucide-react';
+import { Loader2, Send, Square } from 'lucide-react';
 
+import { useAttachedImages, useChatAttachmentStore } from '@/stores/core/chatAttachmentStore';
 import {
   usePublicBotStore,
   usePublicInputMessage,
   usePublicIsTyping,
 } from '@/stores/core/publicBotStore';
-import { useIsPublicWebSocketConnected } from '@/stores/core/publicWebSocketStore';
+import {
+  useIsPublicWebSocketConnected,
+  usePublicWebSocketStore,
+} from '@/stores/core/publicWebSocketStore';
+
+import { imageFilesFromClipboard } from '@/utils/chatImages';
 
 import QuickPromptPills from '@/components/chat/QuickPromptPills';
+import AttachImageButton from '@/components/chat/shared/AttachImageButton';
+import AttachedImageStrip from '@/components/chat/shared/AttachedImageStrip';
 import { Button } from '@/components/ui/button';
 
+import type { AttachedImage } from '@/types/chatAttachments';
+
 interface PublicChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, images: AttachedImage[]) => void;
   roundedClass?: string;
 }
 
@@ -22,15 +32,28 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({
   roundedClass = 'rounded-2xl',
 }) => {
   const inputMessage = usePublicInputMessage();
+  const { stopResponse, isStopping } = usePublicWebSocketStore();
   const isTyping = usePublicIsTyping();
   const isWebSocketConnected = useIsPublicWebSocketConnected();
   const { setInputMessage, activeConversation, botInfo } = usePublicBotStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const attachedImages = useAttachedImages();
+  const { attach, clear: clearAttachments } = useChatAttachmentStore();
+  const hasContent = inputMessage.trim().length > 0 || attachedImages.length > 0;
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isTyping || !isWebSocketConnected) return;
-    onSendMessage(inputMessage.trim());
+    if (!hasContent || isTyping || !isWebSocketConnected) return;
+    const images = attachedImages;
+    clearAttachments();
+    onSendMessage(inputMessage.trim(), images);
     setInputMessage(''); // Clear input after sending
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = imageFilesFromClipboard(event.clipboardData);
+    if (!files) return;
+    event.preventDefault();
+    void attach(files);
   };
 
   const handleInputChange = (value: string) => {
@@ -48,7 +71,7 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({
     return placeholder || 'Type your message...';
   };
 
-  const canSend = !disabled && !isTyping && isConnected && inputMessage.trim().length > 0;
+  const canSend = !disabled && !isTyping && isConnected && hasContent;
   const inputDisabled = disabled || isTyping || !isConnected;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -88,6 +111,8 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({
           />
         )}
 
+        <AttachedImageStrip disabled={isTyping} />
+
         {/* Input Form */}
         <form
           onSubmit={e => {
@@ -96,6 +121,7 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({
           }}
           className="flex gap-3"
         >
+          <AttachImageButton disabled={inputDisabled} roundedClass={roundedClass} />
           <div className="relative flex-1">
             <textarea
               ref={textareaRef}
@@ -104,6 +130,7 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({
                 handleInputChange(e.target.value)
               }
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder={getPlaceholder()}
               disabled={inputDisabled}
               className={`border-border/60 bg-background placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 disabled:bg-muted disabled:text-muted-foreground w-full resize-none overflow-y-auto px-4 py-3 text-base transition-all duration-200 focus:ring-2 disabled:cursor-not-allowed ${roundedClass} ${!isConnected ? 'border-destructive/20 bg-destructive/5' : ''}`}
@@ -121,20 +148,42 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({
             )}
           </div>
 
-          {/* Send Button */}
-          <Button
-            type="submit"
-            disabled={!canSend}
-            size="lg"
-            className={`h-12 w-12 p-0 transition-all duration-200 ${roundedClass} ${
-              canSend
-                ? 'from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 bg-gradient-to-r shadow-md hover:shadow-lg'
-                : 'bg-muted text-muted-foreground cursor-not-allowed'
-            } `}
-            aria-label="Send message"
-          >
-            {isTyping ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-          </Button>
+          {/* Send or stop the active DARE generation. */}
+          {isTyping ? (
+            <Button
+              type="button"
+              onClick={stopResponse}
+              disabled={isStopping || !isConnected}
+              aria-label={isStopping ? 'Stopping response' : 'Stop generating'}
+              variant="outline"
+              size="lg"
+              className={`h-12 w-12 p-0 ${roundedClass}`}
+            >
+              {isStopping ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Square className="h-5 w-5" />
+              )}
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              disabled={!canSend}
+              size="lg"
+              className={`h-12 w-12 p-0 transition-all duration-200 ${roundedClass} ${
+                canSend
+                  ? 'from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 bg-gradient-to-r shadow-md hover:shadow-lg'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              } `}
+              aria-label="Send message"
+            >
+              {isTyping ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Send className="h-5 w-5" />
+              )}
+            </Button>
+          )}
         </form>
 
         {/* Helper Text */}
@@ -143,7 +192,7 @@ const PublicChatInput: React.FC<PublicChatInputProps> = ({
             {isConnected
               ? isTyping
                 ? 'AI is thinking...'
-                : 'Press Enter to send, Shift+Enter for new line'
+                : 'Press Enter to send, Shift+Enter for new line. Drop, paste, or attach images.'
               : 'Attempting to reconnect...'}
           </span>
 

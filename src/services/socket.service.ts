@@ -16,7 +16,12 @@
 import { type SocketAuth, getSocketOptions, getSocketUrl } from '@/config/socket.config';
 import { Socket, io } from 'socket.io-client';
 
-import type { ClientToServerEvents, ServerToClientEvents, SocketMessage } from '@/types/socket';
+import type {
+  ClientToServerEvents,
+  SendMessagePayload,
+  ServerToClientEvents,
+  SocketMessage,
+} from '@/types/socket';
 
 // ════════════════════════════════════════════════════════════════════════════
 // Types
@@ -208,7 +213,7 @@ class SocketService {
    * Send a message to the server
    * Fire-and-forget with optional error callback
    */
-  sendMessage(payload: Record<string, unknown>, onError?: (error: string) => void): void {
+  sendMessage(payload: SendMessagePayload, onError?: (error: string) => void): void {
     if (!this.socket?.connected) {
       console.warn('[SocketService] Cannot send message: not connected');
       onError?.('Not connected');
@@ -219,6 +224,23 @@ class SocketService {
       if (!response.success) {
         console.error('[SocketService] Send message failed:', response.error);
         onError?.(response.error || 'Send failed');
+      }
+    });
+  }
+
+  /** Cancel through DARE; the final message event carries the saved partial reply. */
+  stopGeneration(conversationId: string, onResult: (error: string | null) => void): void {
+    if (!this.socket?.connected) {
+      onResult('Not connected. Reconnect before stopping the response.');
+      return;
+    }
+    this.socket.timeout(10000).emit('stop_generation', { conversationId }, (error, response) => {
+      if (error) {
+        onResult('The stop request was not acknowledged. Please try again.');
+      } else if (!response.success) {
+        onResult(response.error || 'The response could not be stopped. Please try again.');
+      } else {
+        onResult(null);
       }
     });
   }

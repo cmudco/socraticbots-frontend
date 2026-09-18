@@ -257,7 +257,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       systemPrompt: agent.systemPrompt || '',
       firstMessage: agent.firstMessage || '',
       voiceId: agent.voiceId || '',
-      voiceProvider: agent.voiceProvider || VoiceProvider.ElevenLabs,
+      voiceProvider: agent.voiceProvider || VoiceProvider.MistralVoice,
       language: agent.language || 'en',
       temperature: agent.temperature ?? 0.7,
       maxDurationSeconds: agent.maxDurationSeconds ?? 1800,

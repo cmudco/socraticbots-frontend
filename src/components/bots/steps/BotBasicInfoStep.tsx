@@ -207,6 +207,41 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
             </div>
           )}
         />
+
+        {/* Document Retrieval Mode (mirrors DARE's RAG modes) */}
+        <Controller
+          name="ragMode"
+          control={control}
+          render={({ field }) => (
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="ragMode">Document Retrieval</Label>
+                <p className="text-muted-foreground text-xs">
+                  {field.value === 'agentic'
+                    ? 'Autonomous — searches documents in multiple steps. Public chats use Advanced retrieval.'
+                    : field.value === 'naive'
+                      ? 'Fast — direct vector lookup pre-loaded each turn'
+                      : 'Thorough — analyzed and reranked context pre-loaded each turn'}
+                </p>
+              </div>
+              <Select
+                value={field.value}
+                onValueChange={value => {
+                  if (value) field.onChange(value);
+                }}
+              >
+                <SelectTrigger id="ragMode" className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="naive">Classic (Fast)</SelectItem>
+                  <SelectItem value="advanced">Advanced (Thorough)</SelectItem>
+                  <SelectItem value="agentic">Agentic (Autonomous)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        />
       </div>
     </div>
   );

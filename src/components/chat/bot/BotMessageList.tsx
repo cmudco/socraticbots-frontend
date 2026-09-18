@@ -2,16 +2,21 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Loader2 } from 'lucide-react';
 
+import { useUser } from '@/hooks/queries/useUser';
+
 import {
   useConversationStore,
   useIsLoadingBot,
   useMessages,
 } from '@/stores/core/conversationStore';
+import { useWebSocketStore } from '@/stores/core/websocketStore';
 
+import { canViewBotMessageDetails } from '@/utils/messageDetailsAccess';
 import { scrollManager } from '@/utils/scrollManager';
 
+import ChatMessageBubble from '@/components/chat/shared/ChatMessageBubble';
+
 import EmptyState from './EmptyState';
-import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
 
 interface BotMessageListProps {
@@ -20,8 +25,12 @@ interface BotMessageListProps {
 
 const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
   const messages = useMessages();
+  const user = useUser();
+  const currentBot = useConversationStore(state => state.currentBot);
+  const canViewDetails = canViewBotMessageDetails(currentBot, user);
   const isLoadingBot = useIsLoadingBot();
-  const { isLoadingMessages, isTyping } = useConversationStore();
+  const { isLoadingMessages, isTyping, deleteMessage } = useConversationStore();
+  const { toolCallsByMessage, contextTraceByMessage } = useWebSocketStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
   const hasInitialScrolledRef = useRef<boolean>(false);
@@ -167,7 +176,19 @@ const BotMessageList: React.FC<BotMessageListProps> = ({ className = '' }) => {
       <div className="mx-auto max-w-4xl px-4 py-6">
         {messages.map(message => {
           return (
-            <MessageBubble key={message.id} message={message} isStreaming={message.streaming} />
+            <ChatMessageBubble
+              key={message.id}
+              message={message}
+              canViewDetails={canViewDetails}
+              isStreaming={message.streaming}
+              onDelete={deleteMessage}
+              toolCalls={
+                message.toolCalls?.length
+                  ? message.toolCalls
+                  : toolCallsByMessage[String(message.id)]
+              }
+              contextTrace={message.contextTrace ?? contextTraceByMessage[String(message.id)]}
+            />
           );
         })}
 

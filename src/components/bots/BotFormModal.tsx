@@ -69,6 +69,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     chatModelDareId,
     trackingModelDareId,
     webSearchEnabled,
+    ragMode,
     accessCode,
     accessCodeLimit,
     isPubliclyDeployed,
@@ -209,6 +210,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
         isAdvanced,
         isActive,
         webSearchEnabled,
+        ragMode,
         // Public deployment
         isPubliclyDeployed,
         ...(budget && { budget: parseFloat(budget) }),
@@ -267,6 +269,7 @@ const BotFormModal: React.FC<BotFormModalProps> = ({
     isAdvanced,
     isActive,
     webSearchEnabled,
+    ragMode,
     accessCode,
     accessCodeLimit,
     isPubliclyDeployed,
