@@ -30,6 +30,7 @@ import { voiceAgentService } from '@/services/voiceAgent.service';
 import { confirmVoiceCompletion } from '@/lib/confirmVoiceCompletion';
 import { captureVoiceError, recordVoiceEvent } from '@/lib/sentry';
 import { cn } from '@/lib/utils';
+import { VoiceBrowserDiagnostics } from '@/lib/voiceBrowserDiagnostics';
 import {
   CONNECTION_QUALITY_COPY,
   isExpectedVoiceError,
@@ -47,6 +48,7 @@ import { Button } from '@/components/ui/button';
 
 import { PipecatProcessingStage, PipecatVoiceMessage } from '@/types/pipecat';
 import { VoiceAgent, VoiceProvider } from '@/types/voiceAgent';
+import { VoiceDiagnosticKind, VoiceDiagnosticStage } from '@/types/voiceDiagnostics';
 
 interface VoiceInterfaceProps {
   agent: VoiceAgent;
@@ -153,6 +155,7 @@ const LIVE_STATE_META: Record<
 
 export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceInterfaceProps) {
   const startupRef = useRef(0);
+  const diagnosticsRef = useRef<VoiceBrowserDiagnostics | null>(null);
   const startLockRef = useRef(false);
   const [isStarting, setIsStarting] = useState(false);
   const { receive: receiveFeedback, reset: resetFeedback, ...feedback } = useVoiceFeedback();
@@ -402,10 +405,12 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     sendControlMessage,
   } = usePipecatWebRTCSession({
     onConnect: () => {
+      diagnosticsRef.current?.setStage(VoiceDiagnosticStage.Active);
       setLocalError(null);
     },
     onMessage: handlePipecatMessage,
     onDisconnect: () => {
+      diagnosticsRef.current?.finish();
       resetFeedback();
       stopTimer();
       isMistralSessionActiveRef.current = false;
@@ -455,6 +460,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   // Cleanup active provider session, microphone, and timer on unmount.
   useEffect(() => {
     return () => {
+      diagnosticsRef.current?.record({ kind: VoiceDiagnosticKind.ClientEnd });
+      diagnosticsRef.current?.finish();
       startupRef.current += 1;
       void handleEndRef.current?.('route_change', {
         cancelProviderSession: true,
@@ -468,6 +475,25 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     startLockRef.current = true;
     setIsStarting(true);
     const startup = ++startupRef.current;
+    diagnosticsRef.current?.finish();
+    // Do not replay one user's evidence under another account after logout.
+    const readAuthToken = () => {
+      try {
+        return localStorage.getItem('access_token');
+      } catch {
+        return null;
+      }
+    };
+    const authToken = readAuthToken();
+    const diagnostics = new VoiceBrowserDiagnostics({
+      publish: async body => {
+        if (!authToken || readAuthToken() !== authToken) return;
+        await voiceAgentService.reportBrowserDiagnostics(agent.id, body);
+      },
+      breadcrumb: (event, attemptId) =>
+        recordVoiceEvent('browser_evidence', { ...event, attemptId }),
+    });
+    diagnosticsRef.current = diagnostics;
     let reservedId: string | null = null;
     let preflightStream: MediaStream | null = null;
     const isCurrent = () => startup === startupRef.current;
@@ -512,10 +538,13 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         },
       });
       if (!isCurrent()) return;
+      diagnostics.watchMicrophone(preflightStream);
+      diagnostics.setStage(VoiceDiagnosticStage.Reservation);
       recordVoiceEvent('microphone_permission_ready', { agentId: agent.id });
       const signedUrlResult = await getSignedUrlMutation.mutateAsync(agent.id);
       if (signedUrlResult.provider === VoiceProvider.MistralVoice)
         reservedId = signedUrlResult.sessionId ?? null;
+      if (reservedId) diagnostics.link(reservedId);
       if (!isCurrent()) {
         await cancelReservation();
         return;
@@ -528,6 +557,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
         isMistralSessionActiveRef.current = true;
         setActiveConversationId(signedUrlResult.sessionId);
+        diagnostics.setStage(VoiceDiagnosticStage.Connection);
         if (signedUrlResult.webrtcUrl) {
           activeDeviceIdRef.current = mic.selectedId;
           await startPipecatWebRTCSession({
@@ -536,6 +566,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
             iceServers: signedUrlResult.iceServers,
             audioDeviceId: mic.selectedId || undefined,
             mediaStream: preflightStream,
+            onDiagnostic: signal => diagnostics.record(signal),
+            onMicrophone: stream => diagnostics.watchMicrophone(stream),
           });
           preflightStream = null;
           // Permission has just been granted at the latest, so device labels
@@ -558,6 +590,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
       // Start ElevenLabs session with signed URL
       activeDeviceIdRef.current = mic.selectedId;
+      diagnostics.setStage(VoiceDiagnosticStage.Connection);
       const conversationIdResult = await conversation.startSession({
         signedUrl: signedUrlResult.signedUrl,
         inputDeviceId: mic.selectedId || undefined,
@@ -569,12 +602,20 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
         // Record conversation start in backend (non-blocking so a backend
         // failure doesn't tear down the already-live ElevenLabs session)
-        startConversationMutation.mutate({
-          agentId: agent.id,
-          conversationId: conversationIdResult,
-        });
+        startConversationMutation.mutate(
+          {
+            agentId: agent.id,
+            conversationId: conversationIdResult,
+          },
+          {
+            onSuccess: () => diagnostics.link(conversationIdResult),
+          }
+        );
+        diagnostics.setStage(VoiceDiagnosticStage.Active);
       }
     } catch (err) {
+      if (isCurrent()) diagnostics.error(err);
+      diagnostics.finish();
       await cancelReservation();
       if (!isCurrent()) return;
       if (!isExpectedVoiceError(err))
@@ -629,6 +670,10 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         (!isMistral && conversation.status === 'connected');
 
       if (!hasActiveSession && !conversationId) return;
+
+      diagnosticsRef.current?.setStage(VoiceDiagnosticStage.Ending);
+      diagnosticsRef.current?.record({ kind: VoiceDiagnosticKind.ClientEnd });
+      diagnosticsRef.current?.finish();
 
       isEndingRef.current = true;
       setIsEnding(true);
@@ -1209,6 +1254,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                       if (isSessionActive) {
                         void handleEnd();
                       } else {
+                        diagnosticsRef.current?.record({ kind: VoiceDiagnosticKind.ClientEnd });
+                        diagnosticsRef.current?.finish();
                         startupRef.current += 1;
                         startLockRef.current = false;
                         setIsStarting(false);

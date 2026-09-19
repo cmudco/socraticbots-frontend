@@ -1,4 +1,12 @@
 {
+  "browserEvent": {
+    "sequence": 0,
+    "elapsedMs": 1200,
+    "stage": "microphone",
+    "kind": "microphone_error",
+    "online": true,
+    "errorName": "NotAllowedError"
+  },
   "statusReserved": {
     "status": "reserved",
     "endedReason": null
@@ -33,7 +41,8 @@
     ],
     "createdAt": "2026-09-20T00:00:00Z",
     "endedReason": "page_hidden_exit",
-    "sessionActivity": "conversation"
+    "sessionActivity": "conversation",
+    "browserDiagnostics": []
   },
   "list": [
     {
@@ -47,7 +56,8 @@
       "durationSeconds": 10,
       "status": "cancelled",
       "endedReason": "page_hidden_exit",
-      "sessionActivity": "conversation"
+      "sessionActivity": "conversation",
+      "browserDiagnostics": []
     }
   ]
 }

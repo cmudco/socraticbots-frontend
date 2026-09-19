@@ -16,6 +16,7 @@ import {
   isPipecatActiveMessage,
   isPipecatRuntimeReadyMessage,
 } from '@/types/pipecat';
+import { type VoiceBrowserSignal, VoiceDiagnosticKind } from '@/types/voiceDiagnostics';
 
 interface PipecatWebRTCStartOptions {
   webrtcUrl: string;
@@ -26,6 +27,8 @@ interface PipecatWebRTCStartOptions {
   sttProvider?: SttProvider;
   /** Already acquired by the exam's permission preflight; ownership transfers to this hook. */
   mediaStream?: MediaStream;
+  onDiagnostic?: (signal: VoiceBrowserSignal) => void;
+  onMicrophone?: (stream: MediaStream) => void;
 }
 
 interface WebRTCAnswerResponse {
@@ -104,6 +107,7 @@ export const usePipecatWebRTCSession = ({
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const microphoneObserverRef = useRef<PipecatWebRTCStartOptions['onMicrophone']>(undefined);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const endAckRef = useRef<{ id: string; resolve: (acknowledged: boolean) => void } | null>(null);
@@ -225,6 +229,7 @@ export const usePipecatWebRTCSession = ({
     endAckRef.current?.resolve(false);
     attemptRef.current?.abort();
     attemptRef.current = null;
+    microphoneObserverRef.current = undefined;
     if (statsIntervalRef.current) clearInterval(statsIntervalRef.current);
     statsIntervalRef.current = null;
     switchAckRef.current?.resolve(false);
@@ -292,8 +297,11 @@ export const usePipecatWebRTCSession = ({
       audioDeviceId,
       sttProvider,
       mediaStream,
+      onDiagnostic,
+      onMicrophone,
     }: PipecatWebRTCStartOptions): Promise<void> => {
       cleanup();
+      microphoneObserverRef.current = onMicrophone;
       const attempt = new AbortController();
       attemptRef.current = attempt;
       const isCurrent = () => attemptRef.current === attempt && !attempt.signal.aborted;
@@ -339,6 +347,7 @@ export const usePipecatWebRTCSession = ({
         const stream = await wait(microphone);
         assertCurrent();
         mediaStreamRef.current = stream;
+        onMicrophone?.(stream);
         recordVoiceEvent('microphone_ready');
 
         const peerConnection = new RTCPeerConnection({
@@ -492,6 +501,10 @@ export const usePipecatWebRTCSession = ({
           peerConnection.onconnectionstatechange = () => {
             if (!isCurrent()) return;
             recordVoiceEvent('connection_state', { state: peerConnection.connectionState });
+            onDiagnostic?.({
+              kind: VoiceDiagnosticKind.PeerState,
+              peerState: peerConnection.connectionState,
+            });
             if (peerConnection.connectionState === 'connected') {
               setConnectionQuality('checking');
               if (disconnectTimerRef.current) clearTimeout(disconnectTimerRef.current);
@@ -641,6 +654,7 @@ export const usePipecatWebRTCSession = ({
     // Only release the previous microphone once the new one is carrying audio.
     mediaStreamRef.current?.getTracks().forEach(candidate => candidate.stop());
     mediaStreamRef.current = stream;
+    microphoneObserverRef.current?.(stream);
   }, []);
 
   const endSession = useCallback(

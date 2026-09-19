@@ -23,6 +23,35 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('voice API wire contract (also asserted by Django HTTP tests)', () => {
+  it('sends browser evidence in camelCase and reads the same nested HTTP shape', async () => {
+    const event = voiceConversationSchema.parse({
+      ...contract.detail,
+      browserDiagnostics: [contract.browserEvent],
+    }).browserDiagnostics[0];
+    vi.mocked(axios).mockResolvedValueOnce({ data: undefined });
+    const body = { attemptId: '063ee940-569a-43ca-b1e9-6f7182922333', events: [event] };
+    await voiceAgentService.reportBrowserDiagnostics(37, body);
+    expect(axios).toHaveBeenCalledWith(expect.objectContaining({ data: body, timeout: 5000 }));
+    vi.mocked(axios).mockResolvedValueOnce({
+      data: { ...contract.detail, browserDiagnostics: [contract.browserEvent] },
+    });
+    expect((await voiceAgentService.getConversationById(91)).browserDiagnostics).toEqual([
+      contract.browserEvent,
+    ]);
+  });
+
+  it('accepts older deployments without evidence but rejects malformed evidence', () => {
+    expect(
+      voiceConversationSchema.parse({ ...contract.detail, browserDiagnostics: undefined })
+        .browserDiagnostics
+    ).toEqual([]);
+    expect(() =>
+      voiceConversationSchema.parse({
+        ...contract.detail,
+        browserDiagnostics: [{ ...contract.browserEvent, elapsedMs: '1200' }],
+      })
+    ).toThrow(ZodError);
+  });
   it.each(['statusReserved', 'statusCompleted', 'statusCancelled'] as const)(
     'consumes %s without renaming fields or dropping nulls',
     async key => {

@@ -1,3 +1,7 @@
+import BrowserEvidence from '@/components/VoiceExam/BrowserEvidence';
+
+import type { VoiceBrowserEvent } from '@/types/voiceDiagnostics';
+
 const REASONS: Record<string, string> = {
   manual_end: 'Ended using End session',
   time_limit: 'Time limit reached',
@@ -25,15 +29,18 @@ const ACTIVITY: Record<string, string> = {
 export default function SessionOutcome({
   reason,
   activity,
+  browserDiagnostics = [],
 }: {
   reason?: string | null;
   activity?: string | null;
+  browserDiagnostics?: VoiceBrowserEvent[];
 }) {
-  if (!reason && !activity) return null;
+  if (!reason && !activity && !browserDiagnostics.length) return null;
   return (
     <div className="text-muted-foreground mt-3 space-y-1 text-sm">
       {reason && <p>Ending: {REASONS[reason] ?? 'Ended — exact cause not classified'}</p>}
       {activity && ACTIVITY[activity] && <p>Activity: {ACTIVITY[activity]}</p>}
+      <BrowserEvidence events={browserDiagnostics} />
     </div>
   );
 }

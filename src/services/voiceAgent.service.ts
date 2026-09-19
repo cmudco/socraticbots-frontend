@@ -28,8 +28,20 @@ import {
   VoiceTeamMembership,
   VoiceTeamWithMembers,
 } from '@/types/voiceAgent';
+import type { VoiceBrowserDiagnosticRequest } from '@/types/voiceDiagnostics';
 
 class VoiceAgentService {
+  async reportBrowserDiagnostics(
+    agentId: number,
+    data: VoiceBrowserDiagnosticRequest
+  ): Promise<void> {
+    await baseRequest<unknown>({
+      url: `voice/agents/${agentId}/browser_diagnostics/`,
+      method: METHOD.POST,
+      data,
+      timeoutMs: 5000,
+    });
+  }
   // ============ Voice Agents ============
 
   async getVoiceAgents(): Promise<VoiceAgentListItem[]> {

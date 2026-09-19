@@ -13,6 +13,10 @@ const mocks = vi.hoisted(() => ({
   start: vi.fn(),
   status: 'disconnected',
   refresh: vi.fn(),
+  report: vi.fn(),
+}));
+vi.mock('@/services/voiceAgent.service', () => ({
+  voiceAgentService: { reportBrowserDiagnostics: mocks.report },
 }));
 vi.mock('@/lib/sentry', () => ({ captureVoiceError: vi.fn(), recordVoiceEvent: vi.fn() }));
 vi.mock('@elevenlabs/react', () => ({ useConversation: () => ({ status: 'disconnected' }) }));
@@ -47,7 +51,10 @@ const agent = {
 } as VoiceAgent;
 
 beforeEach(() => {
+  vi.useFakeTimers();
   vi.clearAllMocks();
+  vi.stubGlobal('localStorage', { getItem: () => 'test-token' });
+  mocks.report.mockResolvedValue(undefined);
   mocks.status = 'disconnected';
   mocks.signed.mockResolvedValue({
     provider: VoiceProvider.MistralVoice,
@@ -62,14 +69,22 @@ beforeEach(() => {
     return new Promise(() => {});
   });
   Element.prototype.scrollIntoView = vi.fn();
+  const track = Object.assign(new EventTarget(), { stop: vi.fn(), muted: false });
   Object.defineProperty(navigator, 'mediaDevices', {
     configurable: true,
     value: {
-      getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop: vi.fn() }] }),
+      getUserMedia: vi
+        .fn()
+        .mockResolvedValue({ getTracks: () => [track], getAudioTracks: () => [track] }),
     },
   });
 });
-afterEach(cleanup);
+afterEach(async () => {
+  cleanup();
+  await vi.advanceTimersByTimeAsync(120001);
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
 
 describe('startup UI', () => {
   it('does not reserve an attempt when microphone access is dismissed', async () => {
@@ -81,6 +96,19 @@ describe('startup UI', () => {
     expect(mocks.signed).not.toHaveBeenCalled();
     expect(screen.getByText(/Microphone access is needed/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
+    expect(mocks.report).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        conversationId: undefined,
+        events: [
+          expect.objectContaining({
+            kind: 'microphone_error',
+            errorName: 'NotAllowedError',
+            stage: 'microphone',
+          }),
+        ],
+      })
+    );
   });
 
   it('the connecting Cancel button never submits or opens completion', async () => {

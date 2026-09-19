@@ -1,6 +1,7 @@
 /**
  * TypeScript types for Voice Agent feature.
  */
+import type { VoiceBrowserEvent } from '@/types/voiceDiagnostics';
 
 // ── Enums ──
 
@@ -266,6 +267,7 @@ export interface VoiceSessionStatusResponse {
 }
 
 export interface VoiceConversation {
+  browserDiagnostics: VoiceBrowserEvent[];
   endedReason: string | null;
   sessionActivity: VoiceSessionActivity | null;
   id: number;
@@ -285,6 +287,7 @@ export interface VoiceConversation {
 }
 
 export interface VoiceConversationListItem {
+  browserDiagnostics: VoiceBrowserEvent[];
   endedReason: string | null;
   sessionActivity: VoiceSessionActivity | null;
   id: number;
