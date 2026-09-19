@@ -93,6 +93,46 @@ async function start(options = {}) {
 }
 
 describe('voice session recovery and ending', () => {
+  it('sends route cancellation and waits for its ACK before unmount closes the transport', async () => {
+    const hook = await start({
+      onUnmount: async () => {
+        await hook.result.current.endSession('route_change', 'cancel');
+      },
+    });
+    const peer = Peer.latest;
+    await act(async () => hook.unmount());
+    const sent = peer.channel.send.mock.calls
+      .map(([body]) => JSON.parse(body))
+      .find(message => message.type === 'cancel');
+    expect(sent).toMatchObject({ reason: 'route_change' });
+    expect(peer.close).not.toHaveBeenCalled();
+    await act(async () =>
+      peer.channel.receive({ type: 'session_end_ack', requestId: sent.requestId })
+    );
+    expect(peer.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('still closes after the bounded ACK wait when navigation receives no reply', async () => {
+    const hook = await start({
+      onUnmount: async () => {
+        await hook.result.current.endSession('route_change', 'cancel');
+      },
+    });
+    const peer = Peer.latest;
+    await act(async () => hook.unmount());
+    await act(async () => vi.advanceTimersByTimeAsync(1499));
+    expect(peer.close).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTimeAsync(1));
+    expect(peer.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not invoke navigation shutdown on an idle hook', () => {
+    const onUnmount = vi.fn();
+    const hook = renderHook(() => usePipecatWebRTCSession({ onUnmount }));
+    hook.unmount();
+    expect(onUnmount).not.toHaveBeenCalled();
+  });
+
   it('ignores callbacks retained by an old attempt', async () => {
     const onMessage = vi.fn();
     const hook = await start({ onMessage });

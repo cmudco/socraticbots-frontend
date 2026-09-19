@@ -404,6 +404,12 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     requestSttFallback,
     sendControlMessage,
   } = usePipecatWebRTCSession({
+    onUnmount: async () => {
+      await handleEndRef.current?.('route_change', {
+        cancelProviderSession: true,
+        notifyComplete: false,
+      });
+    },
     onConnect: () => {
       diagnosticsRef.current?.setStage(VoiceDiagnosticStage.Active);
       setLocalError(null);
@@ -463,12 +469,15 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       diagnosticsRef.current?.record({ kind: VoiceDiagnosticKind.ClientEnd });
       diagnosticsRef.current?.finish();
       startupRef.current += 1;
-      void handleEndRef.current?.('route_change', {
-        cancelProviderSession: true,
-        notifyComplete: false,
-      });
+      // Pipecat owns its async shutdown so its transport stays open for the ACK.
+      if (agent.voiceProvider !== VoiceProvider.MistralVoice) {
+        void handleEndRef.current?.('route_change', {
+          cancelProviderSession: true,
+          notifyComplete: false,
+        });
+      }
     };
-  }, []);
+  }, [agent.voiceProvider]);
 
   const handleStart = useCallback(async () => {
     if (startLockRef.current || isMistralSessionActiveRef.current || isEndingRef.current) return;

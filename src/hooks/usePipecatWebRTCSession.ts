@@ -38,6 +38,8 @@ interface WebRTCAnswerResponse {
 }
 
 interface UsePipecatWebRTCSessionOptions {
+  /** Let the owner send and acknowledge its exit before disposing the transport. */
+  onUnmount?: () => Promise<void>;
   onConnect?: () => void;
   onDisconnect?: () => void;
   onMessage?: (message: PipecatVoiceMessage) => void;
@@ -91,6 +93,7 @@ const waitForIceGatheringComplete = (
 };
 
 export const usePipecatWebRTCSession = ({
+  onUnmount,
   onConnect,
   onDisconnect,
   onMessage,
@@ -102,6 +105,10 @@ export const usePipecatWebRTCSession = ({
   const [isListening, setIsListening] = useState(false);
   const [connectionQuality, setConnectionQuality] = useState<ConnectionQuality>('checking');
   const attemptRef = useRef<AbortController | null>(null);
+  const onUnmountRef = useRef(onUnmount);
+  useEffect(() => {
+    onUnmountRef.current = onUnmount;
+  }, [onUnmount]);
   const statsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -708,7 +715,29 @@ export const usePipecatWebRTCSession = ({
     });
   }, [sendControlMessage]);
 
-  useEffect(() => cleanup, [cleanup]);
+  useEffect(
+    () => () => {
+      const abandonedAttempt = attemptRef.current;
+      const shutdown = onUnmountRef.current;
+      if (!abandonedAttempt || !shutdown) {
+        cleanup();
+        return;
+      }
+      // React does not await effect cleanup. The owner uses the bounded end ACK
+      // before closing, rather than racing it with a second immediate cleanup.
+      void Promise.resolve()
+        .then(() => {
+          if (attemptRef.current === abandonedAttempt) return shutdown();
+        })
+        .catch(error => {
+          captureVoiceError(normalizeVoiceError(error), { source: 'navigation_cleanup' });
+        })
+        .finally(() => {
+          if (attemptRef.current === abandonedAttempt) cleanup();
+        });
+    },
+    [cleanup]
+  );
 
   useEffect(() => {
     // Best effort only: browsers cannot reliably distinguish refresh, close,

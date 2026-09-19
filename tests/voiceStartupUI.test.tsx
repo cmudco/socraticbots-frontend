@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   status: 'disconnected',
   refresh: vi.fn(),
   report: vi.fn(),
+  unmount: undefined as (() => Promise<void>) | undefined,
 }));
 vi.mock('@/services/voiceAgent.service', () => ({
   voiceAgentService: { reportBrowserDiagnostics: mocks.report },
@@ -31,15 +32,18 @@ vi.mock('@/hooks/useMicrophoneDevices', () => ({
 }));
 vi.mock('@/components/VoiceExam/MicrophoneSelect', () => ({ default: () => null }));
 vi.mock('@/hooks/usePipecatWebRTCSession', () => ({
-  usePipecatWebRTCSession: () => ({
-    status: mocks.status,
-    connectionQuality: 'checking',
-    startSession: mocks.start,
-    endSession: mocks.end,
-    requestSttFallback: vi.fn(),
-    sendControlMessage: vi.fn(),
-    switchAudioDevice: vi.fn(),
-  }),
+  usePipecatWebRTCSession: (options: { onUnmount: () => Promise<void> }) => {
+    mocks.unmount = options.onUnmount;
+    return {
+      status: mocks.status,
+      connectionQuality: 'checking',
+      startSession: mocks.start,
+      endSession: mocks.end,
+      requestSttFallback: vi.fn(),
+      sendControlMessage: vi.fn(),
+      switchAudioDevice: vi.fn(),
+    };
+  },
 }));
 
 const agent = {
@@ -87,6 +91,21 @@ afterEach(async () => {
 });
 
 describe('startup UI', () => {
+  it('navigation cancels the current attempt without submitting or showing completion', async () => {
+    const complete = vi.fn();
+    mocks.start.mockResolvedValue(undefined);
+    render(<VoiceInterface agent={agent} onComplete={complete} />);
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Start' })));
+    await act(async () => mocks.unmount?.());
+    expect(mocks.end).toHaveBeenCalledWith('route_change', 'cancel');
+    expect(mocks.cancel).toHaveBeenCalledWith({
+      agentId: 1,
+      conversationId: 'test',
+      endedReason: 'route_change',
+    });
+    expect(complete).not.toHaveBeenCalled();
+  });
+
   it('does not reserve an attempt when microphone access is dismissed', async () => {
     vi.mocked(navigator.mediaDevices.getUserMedia).mockRejectedValue(
       new DOMException('dismissed', 'NotAllowedError')
