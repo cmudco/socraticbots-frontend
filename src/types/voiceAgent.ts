@@ -255,6 +255,8 @@ export interface VoiceAgentUpdateData {
 }
 
 export interface VoiceConversation {
+  endedReason?: string | null;
+  sessionActivity?: string | null;
   id: number;
   agent: number;
   agentName: string;
@@ -272,6 +274,8 @@ export interface VoiceConversation {
 }
 
 export interface VoiceConversationListItem {
+  endedReason?: string | null;
+  sessionActivity?: string | null;
   id: number;
   agent: number;
   agentName: string;

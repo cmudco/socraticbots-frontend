@@ -15,6 +15,18 @@ interface BaseRequestParams {
   params?: Record<string, unknown>;
   includeAuthToken?: boolean;
   responseType?: 'json' | 'blob';
+  timeoutMs?: number;
+}
+
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status?: number,
+    readonly code?: string
+  ) {
+    super(message);
+    this.name = 'ApiRequestError';
+  }
 }
 
 interface BlobResponse {
@@ -35,6 +47,7 @@ export async function baseRequest<T>({
   params,
   includeAuthToken = true,
   responseType = 'json',
+  timeoutMs,
 }: BaseRequestParams): Promise<T | BlobResponse> {
   const axiosOptions: AxiosRequestConfig = {
     url: `${BASE_URL}/${url}`,
@@ -46,6 +59,7 @@ export async function baseRequest<T>({
     params,
     data,
     responseType: responseType === 'blob' ? 'blob' : 'json',
+    timeout: timeoutMs,
   };
 
   if (includeAuthToken) {
@@ -87,6 +101,11 @@ export async function baseRequest<T>({
     }
 
     const errorMessage = getErrorMessage(error);
-    throw new Error(errorMessage);
+    const response = error instanceof AxiosError ? error.response : undefined;
+    throw new ApiRequestError(
+      errorMessage,
+      response?.status,
+      typeof response?.data?.code === 'string' ? response.data.code : undefined
+    );
   }
 }

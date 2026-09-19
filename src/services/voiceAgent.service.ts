@@ -82,6 +82,18 @@ class VoiceAgentService {
     return baseRequest<SignedUrlResponse>({
       url: `voice/agents/${agentId}/get_signed_url/`,
       method: METHOD.POST,
+      timeoutMs: 15000,
+    });
+  }
+
+  async getSessionStatus(
+    agentId: number,
+    conversationId: string
+  ): Promise<{ status: string; endedReason?: string }> {
+    return baseRequest({
+      url: `voice/agents/${agentId}/session_status/`,
+      params: { conversation_id: conversationId },
+      timeoutMs: 5000,
     });
   }
 
@@ -116,6 +128,7 @@ class VoiceAgentService {
     return baseRequest<VoiceConversation>({
       url: `voice/agents/${agentId}/cancel_conversation/`,
       method: METHOD.POST,
+      timeoutMs: 5000,
       data: { conversationId, endedReason },
     });
   }

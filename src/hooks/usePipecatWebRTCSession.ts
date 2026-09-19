@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { captureVoiceError, tagVoiceSession } from '@/lib/sentry';
+import { captureVoiceError, recordVoiceEvent, tagVoiceSession } from '@/lib/sentry';
+import {
+  ConnectionQuality,
+  VoiceConnectionMonitor,
+  isExpectedVoiceError,
+  normalizeVoiceError,
+} from '@/lib/voiceLifecycle';
 
 import {
   PipecatEndControlType,
@@ -18,6 +24,8 @@ interface PipecatWebRTCStartOptions {
   /** Capture from a specific microphone (MediaDeviceInfo.deviceId). */
   audioDeviceId?: string;
   sttProvider?: SttProvider;
+  /** Already acquired by the exam's permission preflight; ownership transfers to this hook. */
+  mediaStream?: MediaStream;
 }
 
 interface WebRTCAnswerResponse {
@@ -89,13 +97,16 @@ export const usePipecatWebRTCSession = ({
   const [status, setStatus] = useState<PipecatVoiceStatus>('disconnected');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [connectionQuality, setConnectionQuality] = useState<ConnectionQuality>('checking');
+  const attemptRef = useRef<AbortController | null>(null);
+  const statsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const endAckRef = useRef<{ id: string; resolve: () => void } | null>(null);
+  const endAckRef = useRef<{ id: string; resolve: (acknowledged: boolean) => void } | null>(null);
   const switchAckRef = useRef<{ id: string; resolve: (accepted: boolean) => void } | null>(null);
   const disconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -140,6 +151,7 @@ export const usePipecatWebRTCSession = ({
   const drainRuntimePlaybackQueue = useCallback(async () => {
     if (runtimePlaybackActiveRef.current) return;
     runtimePlaybackActiveRef.current = true;
+    const attempt = attemptRef.current;
     try {
       while (runtimePlaybackQueueRef.current.length > 0) {
         const name = runtimePlaybackQueueRef.current.shift();
@@ -151,20 +163,27 @@ export const usePipecatWebRTCSession = ({
           // Django API routes. Use fetch directly so playback does not pick up
           // the app-wide base URL or bearer-token behavior from baseRequest.
           const response = await fetch(url);
+          if (attempt !== attemptRef.current || attempt?.signal.aborted) return;
           if (!response.ok) {
-            console.warn(`[runtime-tts] failed to fetch ${name} (${response.status})`);
-            continue;
+            throw new Error(`Runtime audio fetch failed (${response.status})`);
           }
-          const objectUrl = URL.createObjectURL(await response.blob());
+          const blob = await response.blob();
+          if (attempt !== attemptRef.current || attempt?.signal.aborted) return;
+          const objectUrl = URL.createObjectURL(blob);
           runtimePlaybackObjectUrlRef.current = objectUrl;
           await new Promise<void>(resolve => {
             const audio = new Audio(objectUrl);
             runtimePlaybackAudioRef.current = audio;
             runtimePlaybackResolveRef.current = resolve;
             audio.onended = () => resolve();
-            audio.onerror = () => resolve();
+            audio.onerror = () => {
+              captureVoiceError(new Error('Runtime audio playback failed'), {
+                source: 'tts_playback',
+              });
+              resolve();
+            };
             void audio.play().catch(error => {
-              console.warn('[runtime-tts] playback failed:', error);
+              captureVoiceError(error, { source: 'tts_playback' });
               resolve();
             });
           });
@@ -173,14 +192,18 @@ export const usePipecatWebRTCSession = ({
             runtimePlaybackObjectUrlRef.current = null;
           }
         } catch (error) {
-          console.warn(`[runtime-tts] failed to play ${name}:`, error);
+          captureVoiceError(error instanceof Error ? error : new Error('Runtime audio failed'), {
+            source: 'tts_playback',
+          });
         } finally {
-          runtimePlaybackAudioRef.current = null;
-          runtimePlaybackResolveRef.current = null;
+          if (attempt === attemptRef.current) {
+            runtimePlaybackAudioRef.current = null;
+            runtimePlaybackResolveRef.current = null;
+          }
         }
       }
     } finally {
-      runtimePlaybackActiveRef.current = false;
+      if (attempt === attemptRef.current) runtimePlaybackActiveRef.current = false;
     }
   }, [buildRuntimeUtteranceUrl]);
 
@@ -199,6 +222,11 @@ export const usePipecatWebRTCSession = ({
   );
 
   const cleanup = useCallback(() => {
+    endAckRef.current?.resolve(false);
+    attemptRef.current?.abort();
+    attemptRef.current = null;
+    if (statsIntervalRef.current) clearInterval(statsIntervalRef.current);
+    statsIntervalRef.current = null;
     switchAckRef.current?.resolve(false);
     if (disconnectTimerRef.current) clearTimeout(disconnectTimerRef.current);
     disconnectTimerRef.current = null;
@@ -209,7 +237,11 @@ export const usePipecatWebRTCSession = ({
     }
     stopRuntimeTtsPlayback();
     webrtcAudioModeRef.current = false;
-    dataChannelRef.current?.close();
+    if (dataChannelRef.current) {
+      dataChannelRef.current.onmessage = null;
+      dataChannelRef.current.onopen = null;
+      dataChannelRef.current.close();
+    }
     dataChannelRef.current = null;
     peerConnectionRef.current?.close();
     peerConnectionRef.current = null;
@@ -240,7 +272,14 @@ export const usePipecatWebRTCSession = ({
     pingIntervalRef.current = setInterval(() => {
       const channel = dataChannelRef.current;
       if (channel?.readyState === DATA_CHANNEL_OPEN_STATE) {
-        channel.send(`ping:${Date.now()}`);
+        try {
+          channel.send(`ping:${Date.now()}`);
+        } catch (error) {
+          captureVoiceError(error instanceof Error ? error : new Error('Voice keepalive failed'), {
+            source: 'keepalive',
+          });
+          if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+        }
       }
     }, 1000);
   }, []);
@@ -252,21 +291,55 @@ export const usePipecatWebRTCSession = ({
       iceServers,
       audioDeviceId,
       sttProvider,
+      mediaStream,
     }: PipecatWebRTCStartOptions): Promise<void> => {
+      cleanup();
+      const attempt = new AbortController();
+      attemptRef.current = attempt;
+      const isCurrent = () => attemptRef.current === attempt && !attempt.signal.aborted;
+      const assertCurrent = () => {
+        if (!isCurrent()) throw new DOMException('Voice startup cancelled', 'AbortError');
+      };
+      // Covers permission, offer, ICE and runtime-ready waits, including a silent server.
+      const aborted = new Promise<never>((_, reject) => {
+        attempt.signal.addEventListener('abort', () => reject(attempt.signal.reason), {
+          once: true,
+        });
+      });
+      void aborted.catch(() => {});
+      const deadline = window.setTimeout(
+        () => attempt.abort(new Error('Voice connection timed out. Please retry.')),
+        30000
+      );
+      const wait = <T>(operation: Promise<T>) => Promise.race([operation, aborted]);
       setStatus('connecting');
+      setConnectionQuality('checking');
       sessionWebrtcUrlRef.current = webrtcUrl;
       sessionTokenRef.current = token;
       sessionIdRef.current = webrtcUrl.match(/\/sessions\/([^/]+)\/webrtc/)?.[1] ?? null;
       tagVoiceSession(sessionIdRef.current);
+      recordVoiceEvent('startup_started', { sessionId: sessionIdRef.current });
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            ...MIC_CONSTRAINTS,
-            ...(audioDeviceId ? { deviceId: { exact: audioDeviceId } } : {}),
+        const microphone = mediaStream
+          ? Promise.resolve(mediaStream)
+          : navigator.mediaDevices.getUserMedia({
+              audio: {
+                ...MIC_CONSTRAINTS,
+                ...(audioDeviceId ? { deviceId: { exact: audioDeviceId } } : {}),
+              },
+            });
+        // getUserMedia cannot be aborted: release a track granted after abandonment.
+        void microphone.then(
+          stream => {
+            if (!isCurrent()) stream.getTracks().forEach(track => track.stop());
           },
-        });
+          () => {}
+        );
+        const stream = await wait(microphone);
+        assertCurrent();
         mediaStreamRef.current = stream;
+        recordVoiceEvent('microphone_ready');
 
         const peerConnection = new RTCPeerConnection({
           iceServers: (iceServers?.length ? iceServers : ['stun:stun.l.google.com:19302']).map(
@@ -285,6 +358,7 @@ export const usePipecatWebRTCSession = ({
         const dataChannel = peerConnection.createDataChannel('app');
         dataChannelRef.current = dataChannel;
         dataChannel.onopen = () => {
+          if (!isCurrent()) return;
           // Announce the channel is open so the runtime re-sends runtime_ready.
           // The copy the runtime sends at ICE-connect can be dropped inside
           // pipecat when the channel opens after the pipeline starts (always
@@ -300,20 +374,52 @@ export const usePipecatWebRTCSession = ({
         remoteAudioRef.current = remoteAudio;
 
         peerConnection.ontrack = event => {
+          if (!isCurrent()) return;
           event.streams[0]?.getAudioTracks().forEach(track => remoteStream.addTrack(track));
           if (!event.streams[0]) remoteStream.addTrack(event.track);
-          void remoteAudio.play().catch(() => {
-            // Browser autoplay can briefly reject; later user gestures retry playback.
+          void remoteAudio.play().catch(error => {
+            if (isCurrent()) {
+              captureVoiceError(error, { source: 'remote_audio_playback' });
+              onError?.(
+                new Error(
+                  'Audio playback was blocked. Check browser audio permissions, then retry.'
+                )
+              );
+            }
           });
         };
 
         const connectedPromise = new Promise<void>((resolve, reject) => {
           let settled = false;
           const settleRuntimeReady = () => {
-            if (settled) return;
+            if (settled || !isCurrent()) return;
             settled = true;
             setStatus('runtimeReady');
             startKeepAlive();
+            recordVoiceEvent('runtime_ready');
+            const monitor = new VoiceConnectionMonitor();
+            let polling = false;
+            if (typeof peerConnection.getStats === 'function') {
+              statsIntervalRef.current = setInterval(async () => {
+                if (polling || !isCurrent() || peerConnection.connectionState !== 'connected')
+                  return;
+                polling = true;
+                try {
+                  const report = await peerConnection.getStats();
+                  if (isCurrent()) setConnectionQuality(monitor.sample(report));
+                } catch (error) {
+                  if (isCurrent()) {
+                    captureVoiceError(
+                      error instanceof Error ? error : new Error('Connection statistics failed'),
+                      { source: 'connection_stats' }
+                    );
+                    if (statsIntervalRef.current) clearInterval(statsIntervalRef.current);
+                  }
+                } finally {
+                  polling = false;
+                }
+              }, 2000);
+            }
             onConnect?.();
             resolve();
           };
@@ -324,6 +430,7 @@ export const usePipecatWebRTCSession = ({
           };
 
           dataChannel.onmessage = event => {
+            if (!isCurrent()) return;
             if (typeof event.data !== 'string') return;
             let message: PipecatVoiceMessage | null = null;
             try {
@@ -340,7 +447,7 @@ export const usePipecatWebRTCSession = ({
             }
             if (message.type === 'session_end_ack') {
               const ack = endAckRef.current;
-              if (ack && ack.id === message.requestId) ack.resolve();
+              if (ack && ack.id === message.requestId) ack.resolve(true);
               return;
             }
 
@@ -348,13 +455,20 @@ export const usePipecatWebRTCSession = ({
               const errorText = message.error ?? message.data?.error;
               const fatal = message.isFatal ?? message.fatal ?? message.data?.fatal ?? false;
               if (!fatal) {
-                console.warn('Recoverable Pipecat WebRTC runtime error:', errorText);
+                // The runtime owns exception reporting; do not duplicate recovered errors.
+                recordVoiceEvent('runtime_recoverable_error');
                 onMessage?.(message);
                 return;
               }
               const err = new Error(errorText || 'Pipecat voice runtime error');
               captureVoiceError(err, { source: 'runtime_message' });
+              const wasReady = settled;
               settleRejected(err);
+              if (wasReady) {
+                cleanup();
+                setStatus('disconnected');
+                onDisconnect?.();
+              }
               onError?.(err);
               return;
             }
@@ -376,12 +490,16 @@ export const usePipecatWebRTCSession = ({
           };
 
           peerConnection.onconnectionstatechange = () => {
+            if (!isCurrent()) return;
+            recordVoiceEvent('connection_state', { state: peerConnection.connectionState });
             if (peerConnection.connectionState === 'connected') {
+              setConnectionQuality('checking');
               if (disconnectTimerRef.current) clearTimeout(disconnectTimerRef.current);
               disconnectTimerRef.current = null;
               return;
             }
             const finishDisconnected = () => {
+              if (!isCurrent()) return;
               const reason =
                 peerConnection.connectionState === FAILED_CONNECTION_STATE
                   ? 'connection_failed'
@@ -390,7 +508,9 @@ export const usePipecatWebRTCSession = ({
               const err = new Error('Voice connection lost. Please reconnect to continue.');
               const wasReady = settled;
               settleRejected(err);
+              if (!wasReady) return; // The startup catch owns cleanup/reporting.
               cleanup();
+              setConnectionQuality('lost');
               setStatus('disconnected');
               if (wasReady) {
                 captureVoiceError(err, { source: reason });
@@ -402,6 +522,7 @@ export const usePipecatWebRTCSession = ({
               peerConnection.connectionState === FAILED_CONNECTION_STATE ||
               peerConnection.connectionState === 'closed'
             ) {
+              setConnectionQuality('lost');
               finishDisconnected();
             } else if (
               isDisconnectedPeerConnectionState(peerConnection.connectionState) &&
@@ -412,37 +533,53 @@ export const usePipecatWebRTCSession = ({
             }
           };
         });
+        // A transport rejection can precede completion of the HTTP offer.
+        void connectedPromise.catch(() => {});
 
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        await waitForIceGatheringComplete(peerConnection);
+        const offer = await wait(peerConnection.createOffer());
+        assertCurrent();
+        await wait(peerConnection.setLocalDescription(offer));
+        await wait(waitForIceGatheringComplete(peerConnection));
+        assertCurrent();
 
         // The WebRTC offer goes to the standalone FastAPI runtime, not the
         // Django REST API. Keep fetch here so this handshake remains isolated
         // from baseRequest auth/header/base-url behavior.
-        const response = await fetch(`${webrtcUrl}?token=${encodeURIComponent(token)}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sdp: peerConnection.localDescription?.sdp,
-            type: peerConnection.localDescription?.type,
-            ...(sttProvider ? { sttProvider } : {}),
-          }),
-        });
+        const response = await wait(
+          fetch(`${webrtcUrl}?token=${encodeURIComponent(token)}`, {
+            signal: attempt.signal,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sdp: peerConnection.localDescription?.sdp,
+              type: peerConnection.localDescription?.type,
+              ...(sttProvider ? { sttProvider } : {}),
+            }),
+          })
+        );
+        assertCurrent();
         if (!response.ok) {
           throw new Error(`Pipecat WebRTC offer failed (${response.status})`);
         }
-        const answer = (await response.json()) as WebRTCAnswerResponse;
-        await peerConnection.setRemoteDescription(answer);
+        const answer = (await wait(response.json())) as WebRTCAnswerResponse;
+        assertCurrent();
+        await wait(peerConnection.setRemoteDescription(answer));
 
-        await connectedPromise;
+        await wait(connectedPromise);
+        assertCurrent();
       } catch (error) {
+        if (attemptRef.current !== attempt)
+          throw new DOMException('Voice startup cancelled', 'AbortError');
+        const failure = attempt.signal.aborted ? attempt.signal.reason : error;
         cleanup();
         setStatus('disconnected');
-        const err = error instanceof Error ? error : new Error('Failed to start WebRTC session');
-        captureVoiceError(err, { source: 'start' });
+        const err = normalizeVoiceError(failure);
+        if (!isExpectedVoiceError(err)) captureVoiceError(err, { source: 'start' });
+        recordVoiceEvent('startup_failed', { category: err.name });
         onError?.(err);
         throw err;
+      } finally {
+        window.clearTimeout(deadline);
       }
     },
     [
@@ -480,6 +617,10 @@ export const usePipecatWebRTCSession = ({
         ...(audioDeviceId ? { deviceId: { exact: audioDeviceId } } : {}),
       },
     });
+    if (peerConnectionRef.current !== peerConnection) {
+      stream.getTracks().forEach(candidate => candidate.stop());
+      return;
+    }
     const track = stream.getAudioTracks()[0];
     if (!track) {
       stream.getTracks().forEach(candidate => candidate.stop());
@@ -488,6 +629,10 @@ export const usePipecatWebRTCSession = ({
 
     try {
       await sender.replaceTrack(track);
+      if (peerConnectionRef.current !== peerConnection) {
+        stream.getTracks().forEach(candidate => candidate.stop());
+        return;
+      }
     } catch (error) {
       stream.getTracks().forEach(candidate => candidate.stop());
       throw error instanceof Error ? error : new Error('Failed to switch microphone');
@@ -503,25 +648,27 @@ export const usePipecatWebRTCSession = ({
       reason = 'client_ended',
       controlType: PipecatEndControlType = 'end'
     ): Promise<boolean> => {
+      const endingAttempt = attemptRef.current;
       setStatus('disconnecting');
       const requestId = crypto.randomUUID();
       let acknowledged = false;
       await new Promise<void>(resolve => {
         const finish = () => {
           window.clearTimeout(timer);
-          endAckRef.current = null;
+          if (endAckRef.current?.id === requestId) endAckRef.current = null;
           resolve();
         };
         const timer = window.setTimeout(finish, 1500);
         endAckRef.current = {
           id: requestId,
-          resolve: () => {
-            acknowledged = true;
+          resolve: received => {
+            acknowledged = received;
             finish();
           },
         };
         if (!sendControlMessage({ type: controlType, reason, requestId })) finish();
       });
+      if (endingAttempt !== attemptRef.current) return false;
       cleanup();
       setStatus('disconnected');
       if (!acknowledged && controlType === 'end') {
@@ -561,6 +708,7 @@ export const usePipecatWebRTCSession = ({
 
   return {
     status,
+    connectionQuality,
     isSpeaking,
     isListening,
     startSession,

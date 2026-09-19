@@ -8,7 +8,11 @@ import { reduceVoiceFeedback } from '@/hooks/useVoiceFeedback';
 
 import { PipecatVoiceMessage } from '@/types/pipecat';
 
-vi.mock('@/lib/sentry', () => ({ captureVoiceError: vi.fn(), tagVoiceSession: vi.fn() }));
+vi.mock('@/lib/sentry', () => ({
+  captureVoiceError: vi.fn(),
+  tagVoiceSession: vi.fn(),
+  recordVoiceEvent: vi.fn(),
+}));
 
 class Channel {
   readyState = 'open';
@@ -89,6 +93,77 @@ async function start(options = {}) {
 }
 
 describe('voice session recovery and ending', () => {
+  it('ignores callbacks retained by an old attempt', async () => {
+    const onMessage = vi.fn();
+    const hook = await start({ onMessage });
+    const staleMessage = Peer.latest.channel.onmessage!;
+    const staleConnection = Peer.latest.onconnectionstatechange!;
+    const oldPeer = Peer.latest;
+    await act(async () =>
+      hook.result.current.startSession({
+        webrtcUrl: 'http://localhost/sessions/new/webrtc/offer',
+        token: 'test',
+      })
+    );
+    const currentPeer = Peer.latest;
+    onMessage.mockClear();
+    act(() => {
+      staleMessage({ data: JSON.stringify({ type: 'error', fatal: true, error: 'old failure' }) });
+      oldPeer.connectionState = 'failed';
+      staleConnection();
+    });
+    expect(currentPeer.close).not.toHaveBeenCalled();
+    expect(hook.result.current.status).toBe('runtimeReady');
+    expect(onMessage).not.toHaveBeenCalled();
+  });
+
+  it('bounds a runtime-ready wait even when HTTP succeeds', async () => {
+    // The mock uses instance fields; override the offer fetch while retaining the peer.
+    vi.mocked(fetch).mockImplementation(async () => {
+      Peer.latest.setRemoteDescription = async () => {};
+      return { ok: true, json: async () => ({ sdp: 'test', type: 'answer' }) } as Response;
+    });
+    const hook = renderHook(() => usePipecatWebRTCSession({}));
+    let failure: unknown;
+    await act(async () => {
+      const pending = hook.result.current
+        .startSession({
+          webrtcUrl: 'http://localhost/sessions/timeout/webrtc/offer',
+          token: 'test',
+        })
+        .catch(e => {
+          failure = e;
+        });
+      await vi.advanceTimersByTimeAsync(30000);
+      await pending;
+    });
+    expect((failure as Error).message).toContain('timed out');
+    expect(hook.result.current.status).toBe('disconnected');
+    expect(Peer.latest.close).toHaveBeenCalled();
+  });
+
+  it('stops microphone tracks granted after the attempt was abandoned', async () => {
+    let grant!: (value: MediaStream) => void;
+    navigator.mediaDevices.getUserMedia = () =>
+      new Promise(resolve => {
+        grant = resolve;
+      });
+    const hook = renderHook(() => usePipecatWebRTCSession({}));
+    let pending!: Promise<void>;
+    act(() => {
+      pending = hook.result.current
+        .startSession({ webrtcUrl: 'http://localhost/sessions/late/webrtc/offer', token: 'test' })
+        .catch(() => {});
+    });
+    hook.unmount();
+    const stop = vi.fn();
+    await act(async () => {
+      grant({ getTracks: () => [{ stop }] } as unknown as MediaStream);
+      await pending;
+    });
+    expect(stop).toHaveBeenCalled();
+  });
+
   it('switches only after the matching backup acknowledgement', async () => {
     const hook = await start();
     Peer.latest.channel.send.mockImplementation((raw: string) => {
