@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/voice-contract.tsbuildinfo",
+    "resolveJsonModule": true
+  },
+  "include": ["src", "tests/voiceApiContract.test.ts"]
+}

@@ -7,6 +7,7 @@
   "scripts": {
     "test": "vitest run",
     "test:voice": "vitest run tests/voiceSession.test.ts tests/voiceFeedback.test.tsx",
+    "test:voice-contract": "tsc -p tsconfig.voice-contract.json && vitest run tests/voiceApiContract.test.ts",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

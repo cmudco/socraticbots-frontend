@@ -254,9 +254,20 @@ export interface VoiceAgentUpdateData {
   team?: number | null;
 }
 
+export type VoiceSessionActivity =
+  | 'never_connected'
+  | 'connected_no_transcript'
+  | 'greeting_only'
+  | 'conversation';
+
+export interface VoiceSessionStatusResponse {
+  status: ConversationStatus;
+  endedReason: string | null;
+}
+
 export interface VoiceConversation {
-  endedReason?: string | null;
-  sessionActivity?: string | null;
+  endedReason: string | null;
+  sessionActivity: VoiceSessionActivity | null;
   id: number;
   agent: number;
   agentName: string;
@@ -274,8 +285,8 @@ export interface VoiceConversation {
 }
 
 export interface VoiceConversationListItem {
-  endedReason?: string | null;
-  sessionActivity?: string | null;
+  endedReason: string | null;
+  sessionActivity: VoiceSessionActivity | null;
   id: number;
   agent: number;
   agentName: string;

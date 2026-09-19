@@ -1,6 +1,8 @@
+import { ConversationStatus, type VoiceSessionStatusResponse } from '@/types/voiceAgent';
+
 /** A runtime acknowledgement confirms receipt, not persistence in Socratic Bots. */
 export async function confirmVoiceCompletion(
-  readStatus: () => Promise<{ status: string }>,
+  readStatus: () => Promise<Pick<VoiceSessionStatusResponse, 'status'>>,
   isCurrent: () => boolean,
   pause: () => Promise<void> = () => new Promise(resolve => setTimeout(resolve, 1000))
 ): Promise<void> {
@@ -8,8 +10,11 @@ export async function confirmVoiceCompletion(
     if (!isCurrent()) throw new DOMException('Attempt changed', 'AbortError');
     const result = await readStatus();
     if (!isCurrent()) throw new DOMException('Attempt changed', 'AbortError');
-    if (result.status === 'completed') return;
-    if (result.status === 'failed' || result.status === 'cancelled')
+    if (result.status === ConversationStatus.Completed) return;
+    if (
+      result.status === ConversationStatus.Failed ||
+      result.status === ConversationStatus.Cancelled
+    )
       throw new Error(
         'This session was interrupted, not submitted as completed. Please check your attempt before retrying.'
       );

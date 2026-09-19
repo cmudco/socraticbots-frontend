@@ -3,6 +3,12 @@
  */
 import { METHOD } from '@/constants/requests';
 
+import {
+  voiceConversationListItemSchema,
+  voiceConversationSchema,
+  voiceSessionStatusSchema,
+} from '@/lib/voiceApiContract';
+
 import { baseRequest } from '@/utils/baseRequest';
 
 import {
@@ -18,6 +24,7 @@ import {
   VoiceBrainModelsResponse,
   VoiceConversation,
   VoiceConversationListItem,
+  VoiceSessionStatusResponse,
   VoiceTeamMembership,
   VoiceTeamWithMembers,
 } from '@/types/voiceAgent';
@@ -89,12 +96,14 @@ class VoiceAgentService {
   async getSessionStatus(
     agentId: number,
     conversationId: string
-  ): Promise<{ status: string; endedReason?: string }> {
-    return baseRequest({
-      url: `voice/agents/${agentId}/session_status/`,
-      params: { conversation_id: conversationId },
-      timeoutMs: 5000,
-    });
+  ): Promise<VoiceSessionStatusResponse> {
+    return voiceSessionStatusSchema.parse(
+      await baseRequest<unknown>({
+        url: `voice/agents/${agentId}/session_status/`,
+        params: { conversation_id: conversationId },
+        timeoutMs: 5000,
+      })
+    );
   }
 
   async startSttLabSession(): Promise<SignedUrlResponse> {
@@ -125,35 +134,43 @@ class VoiceAgentService {
     conversationId: string,
     endedReason: string
   ): Promise<VoiceConversation> {
-    return baseRequest<VoiceConversation>({
-      url: `voice/agents/${agentId}/cancel_conversation/`,
-      method: METHOD.POST,
-      timeoutMs: 5000,
-      data: { conversationId, endedReason },
-    });
+    return voiceConversationSchema.parse(
+      await baseRequest<unknown>({
+        url: `voice/agents/${agentId}/cancel_conversation/`,
+        method: METHOD.POST,
+        timeoutMs: 5000,
+        data: { conversationId, endedReason },
+      })
+    );
   }
 
   // ============ Conversations ============
 
   async getConversations(): Promise<VoiceConversationListItem[]> {
-    return baseRequest<VoiceConversationListItem[]>({
-      url: 'voice/conversations/',
-      method: METHOD.GET,
-    });
+    return voiceConversationListItemSchema.array().parse(
+      await baseRequest<unknown>({
+        url: 'voice/conversations/',
+        method: METHOD.GET,
+      })
+    );
   }
 
   async getConversationsByAgent(agentId: number): Promise<VoiceConversationListItem[]> {
-    return baseRequest<VoiceConversationListItem[]>({
-      url: `voice/conversations/?agent_id=${agentId}`,
-      method: METHOD.GET,
-    });
+    return voiceConversationListItemSchema.array().parse(
+      await baseRequest<unknown>({
+        url: `voice/conversations/?agent_id=${agentId}`,
+        method: METHOD.GET,
+      })
+    );
   }
 
   async getConversationById(id: number): Promise<VoiceConversation> {
-    return baseRequest<VoiceConversation>({
-      url: `voice/conversations/${id}/`,
-      method: METHOD.GET,
-    });
+    return voiceConversationSchema.parse(
+      await baseRequest<unknown>({
+        url: `voice/conversations/${id}/`,
+        method: METHOD.GET,
+      })
+    );
   }
 
   async deleteConversation(id: number): Promise<void> {
