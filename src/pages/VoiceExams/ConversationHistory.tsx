@@ -183,7 +183,6 @@ const ConversationHistory: React.FC = () => {
                 <SessionOutcome
                   reason={conversation.endedReason}
                   activity={conversation.sessionActivity}
-                  browserDiagnostics={conversation.browserDiagnostics}
                 />
               </CardContent>
             </Card>

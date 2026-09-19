@@ -14,10 +14,14 @@ const mocks = vi.hoisted(() => ({
   status: 'disconnected',
   refresh: vi.fn(),
   report: vi.fn(),
+  sessionStatus: vi.fn(),
   unmount: undefined as (() => Promise<void>) | undefined,
 }));
 vi.mock('@/services/voiceAgent.service', () => ({
-  voiceAgentService: { reportBrowserDiagnostics: mocks.report },
+  voiceAgentService: {
+    reportBrowserDiagnostics: mocks.report,
+    getSessionStatus: mocks.sessionStatus,
+  },
 }));
 vi.mock('@/lib/sentry', () => ({ captureVoiceError: vi.fn(), recordVoiceEvent: vi.fn() }));
 vi.mock('@elevenlabs/react', () => ({ useConversation: () => ({ status: 'disconnected' }) }));
@@ -59,6 +63,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal('localStorage', { getItem: () => 'test-token' });
   mocks.report.mockResolvedValue(undefined);
+  mocks.sessionStatus.mockResolvedValue({ status: 'completed' });
   mocks.status = 'disconnected';
   mocks.signed.mockResolvedValue({
     provider: VoiceProvider.MistralVoice,
@@ -91,6 +96,52 @@ afterEach(async () => {
 });
 
 describe('startup UI', () => {
+  it('shows ending feedback immediately and waits for persisted completion', async () => {
+    const complete = vi.fn();
+    let acknowledge!: (value: boolean) => void;
+    let persist!: (value: { status: string }) => void;
+    mocks.end.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          acknowledge = resolve;
+        })
+    );
+    mocks.sessionStatus.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          persist = resolve;
+        })
+    );
+    mocks.start.mockImplementation(async () => {
+      mocks.status = 'active';
+    });
+    render(<VoiceInterface agent={agent} onComplete={complete} />);
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Start' })));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'End session' })));
+    expect(screen.getByRole('status').textContent).toContain('Ending your session');
+    expect(screen.queryByRole('button', { name: 'End session' })).toBeNull();
+    expect(complete).not.toHaveBeenCalled();
+    await act(async () => acknowledge(true));
+    expect(complete).not.toHaveBeenCalled();
+    await act(async () => persist({ status: 'completed' }));
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(mocks.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('removes the ending screen and shows an error if saving cannot be confirmed', async () => {
+    const complete = vi.fn();
+    mocks.start.mockImplementation(async () => {
+      mocks.status = 'active';
+    });
+    mocks.sessionStatus.mockRejectedValue(new Error('Submission could not be confirmed'));
+    render(<VoiceInterface agent={agent} onComplete={complete} />);
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Start' })));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'End session' })));
+    expect(screen.queryByText('Ending your session…')).toBeNull();
+    expect(screen.getByText('Submission could not be confirmed')).toBeTruthy();
+    expect(complete).not.toHaveBeenCalled();
+  });
+
   it('navigation cancels the current attempt without submitting or showing completion', async () => {
     const complete = vi.fn();
     mocks.start.mockResolvedValue(undefined);

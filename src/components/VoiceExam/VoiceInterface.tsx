@@ -924,6 +924,22 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     })();
   }, [conversation, hasOpenSession, isMistral, mic, switchPipecatAudioDevice]);
 
+  if (isEnding) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center"
+      >
+        <Loader2 aria-hidden="true" className="text-primary size-8 animate-spin" />
+        <h2 className="text-2xl font-semibold">Ending your session…</h2>
+        <p className="text-muted-foreground">
+          Please wait while we confirm your session was saved.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       {/* Header */}

@@ -159,7 +159,6 @@ const ConversationDetail: React.FC = () => {
           <SessionOutcome
             reason={conversation.endedReason}
             activity={conversation.sessionActivity}
-            browserDiagnostics={conversation.browserDiagnostics}
           />
         </CardContent>
       </Card>
