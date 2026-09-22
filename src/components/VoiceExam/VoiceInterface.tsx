@@ -25,7 +25,17 @@ import { useMicrophoneDevices } from '@/hooks/useMicrophoneDevices';
 import { usePipecatWebRTCSession } from '@/hooks/usePipecatWebRTCSession';
 import { useVoiceFeedback } from '@/hooks/useVoiceFeedback';
 
+import { voiceAgentService } from '@/services/voiceAgent.service';
+
+import { confirmVoiceCompletion } from '@/lib/confirmVoiceCompletion';
+import { captureVoiceError, recordVoiceEvent } from '@/lib/sentry';
 import { cn } from '@/lib/utils';
+import { VoiceBrowserDiagnostics } from '@/lib/voiceBrowserDiagnostics';
+import {
+  CONNECTION_QUALITY_COPY,
+  isExpectedVoiceError,
+  voiceErrorMessage,
+} from '@/lib/voiceLifecycle';
 
 import { formatTimeInCall } from '@/utils/formatters';
 
@@ -38,6 +48,7 @@ import { Button } from '@/components/ui/button';
 
 import { PipecatProcessingStage, PipecatVoiceMessage } from '@/types/pipecat';
 import { VoiceAgent, VoiceProvider } from '@/types/voiceAgent';
+import { VoiceDiagnosticKind, VoiceDiagnosticStage } from '@/types/voiceDiagnostics';
 
 interface VoiceInterfaceProps {
   agent: VoiceAgent;
@@ -143,6 +154,10 @@ const LIVE_STATE_META: Record<
 };
 
 export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceInterfaceProps) {
+  const startupRef = useRef(0);
+  const diagnosticsRef = useRef<VoiceBrowserDiagnostics | null>(null);
+  const startLockRef = useRef(false);
+  const [isStarting, setIsStarting] = useState(false);
   const { receive: receiveFeedback, reset: resetFeedback, ...feedback } = useVoiceFeedback();
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -184,9 +199,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
   const maxDuration = agent.maxDurationSeconds;
 
-  // Never prompts on mount: the exam only touches the microphone once the
-  // student's eligibility is confirmed. Where access was granted before, the
-  // device names are readable straight away.
+  // Never prompts on mount. Start performs permission preflight before reserving
+  // an attempt. Previously granted device labels are readable straight away.
   const mic = useMicrophoneDevices();
 
   // TanStack Query mutations
@@ -241,9 +255,11 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
     },
     onError: (err: unknown) => {
-      console.error('ElevenLabs error:', err);
       const errorMessage =
         typeof err === 'string' ? err : (err as Error)?.message || 'An error occurred';
+      captureVoiceError(err instanceof Error ? err : new Error(errorMessage), {
+        source: 'elevenlabs',
+      });
       setLocalError(errorMessage);
     },
   });
@@ -379,6 +395,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
   const {
     status: pipecatWebRTCStatus,
+    connectionQuality,
     isSpeaking: pipecatWebRTCIsSpeaking,
     isListening: pipecatWebRTCIsListening,
     startSession: startPipecatWebRTCSession,
@@ -387,11 +404,19 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     requestSttFallback,
     sendControlMessage,
   } = usePipecatWebRTCSession({
+    onUnmount: async () => {
+      await handleEndRef.current?.('route_change', {
+        cancelProviderSession: true,
+        notifyComplete: false,
+      });
+    },
     onConnect: () => {
+      diagnosticsRef.current?.setStage(VoiceDiagnosticStage.Active);
       setLocalError(null);
     },
     onMessage: handlePipecatMessage,
     onDisconnect: () => {
+      diagnosticsRef.current?.finish();
       resetFeedback();
       stopTimer();
       isMistralSessionActiveRef.current = false;
@@ -400,8 +425,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       setSpeechRecovery(null);
     },
     onError: err => {
-      console.error('Pipecat WebRTC runtime error:', err);
-      setLocalError(err.message || 'An error occurred');
+      setLocalError(voiceErrorMessage(err));
     },
     playRuntimeTtsAudio: true,
   });
@@ -442,15 +466,64 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   // Cleanup active provider session, microphone, and timer on unmount.
   useEffect(() => {
     return () => {
-      void handleEndRef.current?.('route_change', {
-        cancelProviderSession: true,
-        notifyComplete: false,
-      });
+      diagnosticsRef.current?.record({ kind: VoiceDiagnosticKind.ClientEnd });
+      diagnosticsRef.current?.finish();
+      startupRef.current += 1;
+      // Pipecat owns its async shutdown so its transport stays open for the ACK.
+      if (agent.voiceProvider !== VoiceProvider.MistralVoice) {
+        void handleEndRef.current?.('route_change', {
+          cancelProviderSession: true,
+          notifyComplete: false,
+        });
+      }
     };
-  }, []);
+  }, [agent.voiceProvider]);
 
   const handleStart = useCallback(async () => {
+    if (startLockRef.current || isMistralSessionActiveRef.current || isEndingRef.current) return;
+    startLockRef.current = true;
+    setIsStarting(true);
+    const startup = ++startupRef.current;
+    diagnosticsRef.current?.finish();
+    // Do not replay one user's evidence under another account after logout.
+    const readAuthToken = () => {
+      try {
+        return localStorage.getItem('access_token');
+      } catch {
+        return null;
+      }
+    };
+    const authToken = readAuthToken();
+    const diagnostics = new VoiceBrowserDiagnostics({
+      publish: async body => {
+        if (!authToken || readAuthToken() !== authToken) return;
+        await voiceAgentService.reportBrowserDiagnostics(agent.id, body);
+      },
+      breadcrumb: (event, attemptId) =>
+        recordVoiceEvent('browser_evidence', { ...event, attemptId }),
+    });
+    diagnosticsRef.current = diagnostics;
+    let reservedId: string | null = null;
+    let preflightStream: MediaStream | null = null;
+    const isCurrent = () => startup === startupRef.current;
+    const cancelReservation = async () => {
+      if (!reservedId) return;
+      try {
+        await cancelConversationMutation.mutateAsync({
+          agentId: agent.id,
+          conversationId: reservedId,
+          endedReason: 'start_failed',
+        });
+        recordVoiceEvent('startup_reservation_cancelled', { sessionId: reservedId });
+      } catch (error) {
+        captureVoiceError(error instanceof Error ? error : new Error('Startup cleanup failed'), {
+          source: 'startup_cleanup',
+          sessionId: reservedId,
+        });
+      }
+    };
     try {
+      recordVoiceEvent('start_clicked', { agentId: agent.id });
       resetFeedback();
       shouldAutoScrollTranscriptRef.current = true;
       setMessages([]);
@@ -463,17 +536,37 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       setLastReplyLatency(null);
       lastUserFinalAtRef.current = null;
 
-      // Check eligibility first (signed URL request will fail if already attempted)
+      // Permission is resolved before creating an attempt. This stream transfers
+      // to the runtime hook instead of requesting microphone access twice.
+      preflightStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          ...(mic.selectedId ? { deviceId: { exact: mic.selectedId } } : {}),
+        },
+      });
+      if (!isCurrent()) return;
+      diagnostics.watchMicrophone(preflightStream);
+      diagnostics.setStage(VoiceDiagnosticStage.Reservation);
+      recordVoiceEvent('microphone_permission_ready', { agentId: agent.id });
       const signedUrlResult = await getSignedUrlMutation.mutateAsync(agent.id);
+      if (signedUrlResult.provider === VoiceProvider.MistralVoice)
+        reservedId = signedUrlResult.sessionId ?? null;
+      if (reservedId) diagnostics.link(reservedId);
+      if (!isCurrent()) {
+        await cancelReservation();
+        return;
+      }
 
       if (signedUrlResult.provider === VoiceProvider.MistralVoice) {
         if (!signedUrlResult.token || !signedUrlResult.sessionId) {
-          setLocalError('Failed to get Mistral voice session details');
-          return;
+          throw new Error('Failed to get voice session details');
         }
 
         isMistralSessionActiveRef.current = true;
         setActiveConversationId(signedUrlResult.sessionId);
+        diagnostics.setStage(VoiceDiagnosticStage.Connection);
         if (signedUrlResult.webrtcUrl) {
           activeDeviceIdRef.current = mic.selectedId;
           await startPipecatWebRTCSession({
@@ -481,31 +574,32 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
             token: signedUrlResult.token,
             iceServers: signedUrlResult.iceServers,
             audioDeviceId: mic.selectedId || undefined,
+            mediaStream: preflightStream,
+            onDiagnostic: signal => diagnostics.record(signal),
+            onMicrophone: stream => diagnostics.watchMicrophone(stream),
           });
+          preflightStream = null;
           // Permission has just been granted at the latest, so device labels
           // are readable now even if they were not when the page loaded.
           void mic.refresh();
           return;
         } else {
-          setLocalError('Failed to get Mistral WebRTC session details');
-          return;
+          throw new Error('Failed to get voice connection details');
         }
       }
 
       if (!signedUrlResult?.signedUrl) {
-        setLocalError('Failed to get signed URL');
-        return;
+        throw new Error('Failed to get signed URL');
       }
 
       // Only request microphone after confirming eligibility
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: mic.selectedId ? { deviceId: { exact: mic.selectedId } } : true,
-      });
-      mediaStreamRef.current = stream;
+      mediaStreamRef.current = preflightStream;
+      preflightStream = null;
       void mic.refresh();
 
       // Start ElevenLabs session with signed URL
       activeDeviceIdRef.current = mic.selectedId;
+      diagnostics.setStage(VoiceDiagnosticStage.Connection);
       const conversationIdResult = await conversation.startSession({
         signedUrl: signedUrlResult.signedUrl,
         inputDeviceId: mic.selectedId || undefined,
@@ -517,26 +611,32 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
         // Record conversation start in backend (non-blocking so a backend
         // failure doesn't tear down the already-live ElevenLabs session)
-        startConversationMutation.mutate({
-          agentId: agent.id,
-          conversationId: conversationIdResult,
-        });
+        startConversationMutation.mutate(
+          {
+            agentId: agent.id,
+            conversationId: conversationIdResult,
+          },
+          {
+            onSuccess: () => diagnostics.link(conversationIdResult),
+          }
+        );
+        diagnostics.setStage(VoiceDiagnosticStage.Active);
       }
     } catch (err) {
-      console.error('Failed to start session:', err);
-      const conversationId = currentConversationIdRef.current;
-      if (isMistralSessionActiveRef.current && conversationId) {
-        void cancelConversationMutation.mutateAsync({
+      if (isCurrent()) diagnostics.error(err);
+      diagnostics.finish();
+      await cancelReservation();
+      if (!isCurrent()) return;
+      if (!isExpectedVoiceError(err))
+        captureVoiceError(err instanceof Error ? err : new Error('Session startup failed'), {
+          source: 'exam_start',
           agentId: agent.id,
-          conversationId,
-          endedReason: 'start_failed',
         });
-      }
       isMistralSessionActiveRef.current = false;
       setActiveConversationId(null);
       activeDeviceIdRef.current = null;
       stopMicrophone();
-      const message = err instanceof Error ? err.message : 'Failed to start session';
+      const message = voiceErrorMessage(err);
       // Check if this is an "already attempted" error from the backend
       if (
         (message.includes('already completed') || message.includes('maximum number of attempts')) &&
@@ -546,6 +646,12 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         return;
       }
       setLocalError(message);
+    } finally {
+      preflightStream?.getTracks().forEach(track => track.stop());
+      if (isCurrent()) {
+        startLockRef.current = false;
+        setIsStarting(false);
+      }
     }
   }, [
     agent.id,
@@ -574,6 +680,10 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
       if (!hasActiveSession && !conversationId) return;
 
+      diagnosticsRef.current?.setStage(VoiceDiagnosticStage.Ending);
+      diagnosticsRef.current?.record({ kind: VoiceDiagnosticKind.ClientEnd });
+      diagnosticsRef.current?.finish();
+
       isEndingRef.current = true;
       setIsEnding(true);
       activeDeviceIdRef.current = null;
@@ -586,6 +696,12 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
             shouldCancelProviderSession ? 'cancel' : 'end'
           );
           if (!confirmed) shouldNotifyComplete = false;
+          if (shouldNotifyComplete && conversationId) {
+            await confirmVoiceCompletion(
+              () => voiceAgentService.getSessionStatus(agent.id, conversationId),
+              () => currentConversationIdRef.current === conversationId
+            );
+          }
         } else {
           await conversation.endSession();
         }
@@ -609,19 +725,21 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
 
         setActiveConversationId(null);
         if (shouldNotifyComplete) {
+          recordVoiceEvent('completion_screen', {
+            conversationId,
+            reason: endedReason,
+            persisted: true,
+          });
           onComplete?.();
         }
       } catch (err) {
-        console.error('Failed to end session:', err);
+        captureVoiceError(err instanceof Error ? err : new Error('Session ending failed'), {
+          source: 'exam_end',
+          conversationId,
+        });
         stopMicrophone();
-        if (isMistral && conversationId) {
-          await cancelConversationMutation.mutateAsync({
-            agentId: agent.id,
-            conversationId,
-            endedReason,
-          });
-          setActiveConversationId(null);
-        }
+        // A failed completion request is NOT evidence that the attempt was cancelled.
+        // The runtime's authoritative callback reconciles the final outcome.
         setLocalError(err instanceof Error ? err.message : 'Failed to end session');
       } finally {
         isEndingRef.current = false;
@@ -659,7 +777,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const isSessionActive = isMistral ? isMistralExamActive : activeStatus === 'connected';
   const hasOpenSession = isMistral ? isMistralSessionOpen : activeStatus === 'connected';
   const isConnecting = isMistral ? isMistralStarting : activeStatus === 'connecting';
-  const isLoading = getSignedUrlMutation.isPending;
+  const isLoading = isStarting || getSignedUrlMutation.isPending;
   const isEndingSession = isEnding || activeStatus === 'disconnecting';
   const progress = maxDuration > 0 ? Math.min(elapsedSeconds / maxDuration, 1) : 0;
   const isTimeCritical = maxDuration > 0 && progress >= 0.9;
@@ -734,8 +852,15 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
     : isSessionActive
       ? {
-          label: 'Connected',
-          pill: 'border-primary/30 bg-primary/10 text-primary',
+          label: isMistral ? CONNECTION_QUALITY_COPY[connectionQuality] : 'Connected',
+          pill:
+            isMistral && connectionQuality === 'lost'
+              ? 'border-destructive/30 bg-destructive/10 text-destructive'
+              : isMistral && connectionQuality === 'unstable'
+                ? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                : isMistral && connectionQuality === 'checking'
+                  ? 'border-border bg-muted text-muted-foreground'
+                  : 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400',
           ping: true,
           pulse: false,
         }
@@ -747,8 +872,12 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
             pulse: true,
           }
         : {
-            label: 'Not started',
-            pill: 'border-border bg-card text-muted-foreground',
+            label:
+              isMistral && connectionQuality === 'lost' ? 'Connection interrupted' : 'Not started',
+            pill:
+              isMistral && connectionQuality === 'lost'
+                ? 'border-destructive/30 bg-destructive/10 text-destructive'
+                : 'border-border bg-card text-muted-foreground',
             ping: false,
             pulse: false,
           };
@@ -779,7 +908,11 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
         }
         setLocalError(null);
       } catch (error) {
-        console.error('Failed to switch microphone mid-session:', error);
+        if (!isExpectedVoiceError(error))
+          captureVoiceError(
+            error instanceof Error ? error : new Error('Microphone switch failed'),
+            { source: 'microphone_switch' }
+          );
         // Put the picker back on the microphone that is actually carrying the
         // exam, so what is shown and what is recorded never disagree.
         activeDeviceIdRef.current = previousDeviceId;
@@ -790,6 +923,22 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
     })();
   }, [conversation, hasOpenSession, isMistral, mic, switchPipecatAudioDevice]);
+
+  if (isEnding) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center"
+      >
+        <Loader2 aria-hidden="true" className="text-primary size-8 animate-spin" />
+        <h2 className="text-2xl font-semibold">Ending your session…</h2>
+        <p className="text-muted-foreground">
+          Please wait while we confirm your session was saved.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -822,6 +971,8 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
           </h2>
         </div>
         <div
+          role="status"
+          aria-live="polite"
           className={cn(
             'inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-300 lg:self-auto',
             connectionMeta.pill
@@ -1106,7 +1257,13 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                     disabled={isLoading || isConnecting}
                   >
                     {isLoading || isConnecting ? <Loader2 className="animate-spin" /> : <Mic />}
-                    {isLoading ? 'Preparing…' : isConnecting ? 'Starting…' : 'Start'}
+                    {isLoading
+                      ? 'Preparing…'
+                      : isConnecting
+                        ? 'Starting…'
+                        : localError
+                          ? 'Retry'
+                          : 'Start'}
                   </Button>
                   <p className="text-muted-foreground text-center text-[11px]">
                     Your browser will ask for microphone access.
@@ -1118,7 +1275,21 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                     size="lg"
                     variant={isSessionActive ? 'destructive' : 'outline'}
                     className="w-full"
-                    onClick={() => void handleEnd()}
+                    onClick={() => {
+                      if (isSessionActive) {
+                        void handleEnd();
+                      } else {
+                        diagnosticsRef.current?.record({ kind: VoiceDiagnosticKind.ClientEnd });
+                        diagnosticsRef.current?.finish();
+                        startupRef.current += 1;
+                        startLockRef.current = false;
+                        setIsStarting(false);
+                        void handleEnd('startup_cancelled', {
+                          cancelProviderSession: true,
+                          notifyComplete: false,
+                        });
+                      }
+                    }}
                     disabled={isEndingSession}
                   >
                     {isEndingSession ? <Loader2 className="animate-spin" /> : <Square />}

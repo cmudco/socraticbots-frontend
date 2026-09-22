@@ -3,6 +3,12 @@
  */
 import { METHOD } from '@/constants/requests';
 
+import {
+  voiceConversationListItemSchema,
+  voiceConversationSchema,
+  voiceSessionStatusSchema,
+} from '@/lib/voiceApiContract';
+
 import { baseRequest } from '@/utils/baseRequest';
 
 import {
@@ -18,11 +24,24 @@ import {
   VoiceBrainModelsResponse,
   VoiceConversation,
   VoiceConversationListItem,
+  VoiceSessionStatusResponse,
   VoiceTeamMembership,
   VoiceTeamWithMembers,
 } from '@/types/voiceAgent';
+import type { VoiceBrowserDiagnosticRequest } from '@/types/voiceDiagnostics';
 
 class VoiceAgentService {
+  async reportBrowserDiagnostics(
+    agentId: number,
+    data: VoiceBrowserDiagnosticRequest
+  ): Promise<void> {
+    await baseRequest<unknown>({
+      url: `voice/agents/${agentId}/browser_diagnostics/`,
+      method: METHOD.POST,
+      data,
+      timeoutMs: 5000,
+    });
+  }
   // ============ Voice Agents ============
 
   async getVoiceAgents(): Promise<VoiceAgentListItem[]> {
@@ -82,7 +101,21 @@ class VoiceAgentService {
     return baseRequest<SignedUrlResponse>({
       url: `voice/agents/${agentId}/get_signed_url/`,
       method: METHOD.POST,
+      timeoutMs: 15000,
     });
+  }
+
+  async getSessionStatus(
+    agentId: number,
+    conversationId: string
+  ): Promise<VoiceSessionStatusResponse> {
+    return voiceSessionStatusSchema.parse(
+      await baseRequest<unknown>({
+        url: `voice/agents/${agentId}/session_status/`,
+        params: { conversation_id: conversationId },
+        timeoutMs: 5000,
+      })
+    );
   }
 
   async startSttLabSession(): Promise<SignedUrlResponse> {
@@ -113,34 +146,43 @@ class VoiceAgentService {
     conversationId: string,
     endedReason: string
   ): Promise<VoiceConversation> {
-    return baseRequest<VoiceConversation>({
-      url: `voice/agents/${agentId}/cancel_conversation/`,
-      method: METHOD.POST,
-      data: { conversationId, endedReason },
-    });
+    return voiceConversationSchema.parse(
+      await baseRequest<unknown>({
+        url: `voice/agents/${agentId}/cancel_conversation/`,
+        method: METHOD.POST,
+        timeoutMs: 5000,
+        data: { conversationId, endedReason },
+      })
+    );
   }
 
   // ============ Conversations ============
 
   async getConversations(): Promise<VoiceConversationListItem[]> {
-    return baseRequest<VoiceConversationListItem[]>({
-      url: 'voice/conversations/',
-      method: METHOD.GET,
-    });
+    return voiceConversationListItemSchema.array().parse(
+      await baseRequest<unknown>({
+        url: 'voice/conversations/',
+        method: METHOD.GET,
+      })
+    );
   }
 
   async getConversationsByAgent(agentId: number): Promise<VoiceConversationListItem[]> {
-    return baseRequest<VoiceConversationListItem[]>({
-      url: `voice/conversations/?agent_id=${agentId}`,
-      method: METHOD.GET,
-    });
+    return voiceConversationListItemSchema.array().parse(
+      await baseRequest<unknown>({
+        url: `voice/conversations/?agent_id=${agentId}`,
+        method: METHOD.GET,
+      })
+    );
   }
 
   async getConversationById(id: number): Promise<VoiceConversation> {
-    return baseRequest<VoiceConversation>({
-      url: `voice/conversations/${id}/`,
-      method: METHOD.GET,
-    });
+    return voiceConversationSchema.parse(
+      await baseRequest<unknown>({
+        url: `voice/conversations/${id}/`,
+        method: METHOD.GET,
+      })
+    );
   }
 
   async deleteConversation(id: number): Promise<void> {

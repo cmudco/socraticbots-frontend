@@ -66,4 +66,9 @@ export function captureVoiceError(error: Error, extra?: Record<string, unknown>)
   Sentry.captureException(error, { tags: { area: 'voice' }, extra });
 }
 
+/** Bounded SDK breadcrumbs: no transcript, audio, token, or raw connection candidates. */
+export function recordVoiceEvent(event: string, data: Record<string, unknown> = {}): void {
+  Sentry.addBreadcrumb({ category: 'voice.lifecycle', message: event, level: 'info', data });
+}
+
 export { Sentry };

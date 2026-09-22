@@ -16,6 +16,7 @@ import {
 import { formatConversationStatus, getConversationStatusStyle } from '@/utils/conversationStatus';
 import { formatDate, formatDuration, formatTimeInCall } from '@/utils/formatters';
 
+import SessionOutcome from '@/components/VoiceExam/SessionOutcome';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -132,7 +133,7 @@ const ConversationDetail: React.FC = () => {
       {/* Stats */}
       <Card className="mb-6">
         <CardContent className="pt-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="flex items-center gap-3">
               <Clock className="text-primary h-5 w-5" />
               <div>
@@ -155,6 +156,10 @@ const ConversationDetail: React.FC = () => {
               </p>
             </div>
           </div>
+          <SessionOutcome
+            reason={conversation.endedReason}
+            activity={conversation.sessionActivity}
+          />
         </CardContent>
       </Card>
 
