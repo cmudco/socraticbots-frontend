@@ -18,6 +18,7 @@ import { formatConversationStatus, getConversationStatusStyle } from '@/utils/co
 import { formatDate } from '@/utils/formatters';
 import { toast } from '@/utils/toast';
 
+import SessionOutcome from '@/components/VoiceExam/SessionOutcome';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -168,7 +169,7 @@ const ConversationHistory: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-6 text-sm">
+                <div className="flex flex-wrap items-center gap-6 text-sm">
                   <div className="text-muted-foreground flex items-center gap-2">
                     <Clock className="h-4 w-4" />
                     <span>Duration: {formatDuration(conversation.durationSeconds)}</span>
@@ -179,6 +180,10 @@ const ConversationHistory: React.FC = () => {
                     </div>
                   )}
                 </div>
+                <SessionOutcome
+                  reason={conversation.endedReason}
+                  activity={conversation.sessionActivity}
+                />
               </CardContent>
             </Card>
           ))}
