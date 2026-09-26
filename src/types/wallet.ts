@@ -15,6 +15,8 @@ export interface WalletStatusBalance {
 
 export interface WalletStatusExternal {
   kind: 'EXTERNAL';
+  /** LiteLLM keys: reference cost of this user's calls through the key. */
+  spend?: string | null;
 }
 
 export type WalletStatus = WalletStatusBalance | WalletStatusExternal;
@@ -32,12 +34,69 @@ export interface WalletEntry {
   groupName?: string | null;
   expiresAt?: string | null;
   baseUrl?: string;
+  backgroundModel?: string;
 }
 
 export interface WalletsResponse {
   activeWallet: { type: ActiveWalletType; refId: string | null };
   byoEnabled: boolean;
+  litellmEnabled: boolean;
   wallets: WalletEntry[];
+}
+
+export interface LiteLLMTestResponse {
+  ok: boolean;
+  models: string[];
+  recommendedModels: string[];
+  error: string | null;
+}
+
+export interface NewLiteLLMKey {
+  label: string;
+  baseUrl: string;
+  apiKey: string;
+  backgroundModel: string;
+}
+
+/** Bots whose chat model routes through a LiteLLM key. */
+export interface LiteLLMKeyDependents {
+  botCount: number;
+  bots: { botId: number; botTitle: string; botGroupTitle: string }[];
+}
+
+export type ProviderKeyProvider = 'openai' | 'claude' | 'gemini';
+
+export interface ProviderKeyStatus {
+  hasKey: boolean;
+  maskedKey: string | null;
+  providerDisplay: string;
+}
+
+export type ProviderKeyStatusMap = Record<ProviderKeyProvider, ProviderKeyStatus>;
+
+/** DARE's per-bot usage: chatters' DARE wallet spend and the owner's sponsored spend. */
+export interface BotUsageTotals {
+  totalCost: string;
+  sponsoredCost: string;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  messageCount: number;
+}
+
+export interface BotUsageUserRow {
+  userId: number | null;
+  userEmail: string;
+  totalCost: string;
+  sponsoredCost: string;
+  messageCount: number;
+}
+
+export interface BotUsageResponse {
+  botId: number;
+  period: string;
+  groupBy: 'user' | 'date';
+  totals: BotUsageTotals;
+  userBreakdown: BotUsageUserRow[] | null;
 }
 
 export interface TransactionRow {

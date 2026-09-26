@@ -39,9 +39,16 @@ export interface DareLLMModel extends CommonModelFields {
   id: number;
 }
 
+/** Who pays for a model saved on a bot (bot-scoped lists only). */
+export type BotModelPaidBy = 'CHATTER' | 'OWNER';
+
 /** Picker / dispatch entry — `id` is the opaque DARE picker id. */
 export interface PickerModel extends CommonModelFields {
   id: string;
+  /** Bot scope: each chatter pays (DARE model) or the owner sponsors it (LiteLLM). */
+  paidBy?: BotModelPaidBy;
+  /** Bot scope, owner-paid: label of the owner's LiteLLM key. */
+  sponsorKeyLabel?: string | null;
 }
 
 export interface WalletMeta {

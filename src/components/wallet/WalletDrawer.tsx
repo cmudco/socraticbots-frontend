@@ -1,4 +1,6 @@
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+
+import { ExternalLink, KeyRound, Loader2, Network, Plus } from 'lucide-react';
 
 import { useEffectivePolicy, useWallet, useWalletTransactions } from '@/hooks/queries/useWallet';
 
@@ -8,6 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 import type { ActiveWalletType, TransactionRow, WalletEntry } from '@/types/wallet';
+
+import { AddLiteLLMKeyDialog } from './AddLiteLLMKeyDialog';
+import { ByoKeysDialog } from './ByoKeysDialog';
+import { WalletRow } from './WalletRow';
 
 const ACTIVE_LABEL: Record<ActiveWalletType, string> = {
   DARE: 'DARE Wallet',
@@ -34,21 +40,24 @@ const resolveDareBillingUrl = (): string => {
 };
 
 /**
- * Expanded wallet panel reachable from the WalletBadge popover.
+ * Expanded wallet panel reachable from the WalletBadge popover — the same
+ * controls as DARE's wallet popover.
  *
  * Sections (top-to-bottom):
  * 1. Active-wallet headline — balance for DARE, explanatory text for BYO/LiteLLM
  *    so users on external billing don't read a "$0.00" balance as "I'm broke"
- * 2. Refill policy — next refill date + the source tier (USER/GROUP/SYSTEM)
- *    so cohort members can see when their institution funds them next
- * 3. Recent SB transactions — last 5 SocraticBooks-platform debits
- * 4. Deeplink to the full DARE wallet page for management
+ * 2. Switch default — every wallet; own LiteLLM keys can be tested or removed
+ * 3. Add a LiteLLM or BYO key, when those wallets are enabled for the user
+ * 4. Refill policy and recent SocraticBooks debits
+ * 5. Deeplink to the full DARE billing page
  */
 export const WalletDrawer = () => {
   const { data: walletsResp, isLoading } = useWallet();
   const { data: txnResp, isLoading: txnLoading } = useWalletTransactions('SocraticBots');
   const { data: policy } = useEffectivePolicy();
   const dareBillingUrl = resolveDareBillingUrl();
+  const [addingLiteLLM, setAddingLiteLLM] = useState(false);
+  const [managingByo, setManagingByo] = useState(false);
 
   if (isLoading || !walletsResp) {
     return (
@@ -89,6 +98,44 @@ export const WalletDrawer = () => {
           <p className="text-muted-foreground mt-1 text-xs">
             Your DARE wallet is not charged for these calls — costs are paid via your own keys.
           </p>
+        )}
+      </section>
+
+      {/* --- Switch default --------------------------------------------- */}
+      <section>
+        <div className="text-muted-foreground mb-2 text-xs uppercase">Switch default</div>
+        <div className="max-h-64 space-y-2 overflow-y-auto">
+          {walletsResp.wallets.map(wallet => (
+            <WalletRow key={`${wallet.type}:${wallet.refId ?? 'none'}`} wallet={wallet} />
+          ))}
+        </div>
+        {(walletsResp.litellmEnabled || walletsResp.byoEnabled) && (
+          <div className="mt-2 flex gap-2">
+            {walletsResp.litellmEnabled && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => setAddingLiteLLM(true)}
+              >
+                <Network className="mr-1 h-3.5 w-3.5" />
+                <Plus className="mr-1 h-3 w-3" />
+                LiteLLM key
+              </Button>
+            )}
+            {walletsResp.byoEnabled && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => setManagingByo(true)}
+              >
+                <KeyRound className="mr-1 h-3.5 w-3.5" />
+                <Plus className="mr-1 h-3 w-3" />
+                BYO key
+              </Button>
+            )}
+          </div>
         )}
       </section>
 
@@ -143,6 +190,9 @@ export const WalletDrawer = () => {
           </a>
         </Button>
       </section>
+
+      <AddLiteLLMKeyDialog open={addingLiteLLM} onClose={() => setAddingLiteLLM(false)} />
+      <ByoKeysDialog open={managingByo} onClose={() => setManagingByo(false)} />
     </div>
   );
 };

@@ -185,6 +185,11 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                             </div>
                           </SelectItem>
                         ))}
+                        {values.chatModelDareId?.startsWith('litellm:') && (
+                          <SelectItem value={values.chatModelDareId}>
+                            {values.chatModelDareId.split(':').slice(2).join(':')} (LiteLLM)
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   )}

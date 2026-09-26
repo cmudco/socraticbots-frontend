@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import type { BotFormData } from '@/schemas/botFormSchema';
 import { CheckCircle, Copy, RefreshCw, Trash2 } from 'lucide-react';
 
+import { BotUsageSummary } from '@/components/bots/BotUsageSummary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,6 +64,16 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
 
   return (
     <div className="space-y-6">
+      {botId && (
+        <div className="space-y-3 rounded-lg border p-4">
+          <div>
+            <Label className="text-base font-medium">Usage</Label>
+            <p className="text-muted-foreground text-xs">What chats with this bot have cost.</p>
+          </div>
+          <BotUsageSummary botId={botId} />
+        </div>
+      )}
+
       {/* Subscription Code Section */}
       <div className="space-y-4 rounded-lg border p-4">
         <div>
