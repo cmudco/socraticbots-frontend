@@ -165,7 +165,11 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
       {/* Tracking Model Selection */}
       <div className="space-y-2">
         <Label htmlFor="trackingModelDareId">Progress Tracker</Label>
-        <p className="text-muted-foreground text-xs">Optional: Enable to track student progress</p>
+        <p className="text-muted-foreground text-xs">
+          {chatterPaid.length
+            ? 'Optional: Enable to track student progress'
+            : 'Progress tracking runs on a DARE model. Switch to your DARE or BYO wallet to choose one.'}
+        </p>
         {modelsLoading || !dareLLMModels ? (
           <div className="border-input bg-muted/50 text-muted-foreground flex h-10 w-full items-center rounded-md border px-3 text-sm">
             Loading models...

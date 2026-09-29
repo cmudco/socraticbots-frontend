@@ -20,34 +20,6 @@ export const useWallet = () => {
 };
 
 /**
- * SB-platform transaction history — drives the WalletDrawer's recent activity
- * section. Defaults to `platform=SocraticBots` so the drawer shows
- * SB-attributed debits; cross-platform users can override via a UI toggle
- * that flips this argument.
- */
-export const useWalletTransactions = (
-  platform: 'SocraticBots' | 'DARE' | 'ALL' = 'SocraticBots'
-) => {
-  return useQuery({
-    queryKey: ['wallet', 'transactions', platform],
-    queryFn: () => walletService.getTransactions({ platform }),
-    staleTime: 15_000,
-  });
-};
-
-/**
- * Resolved refill policy (USER → GROUP → SYSTEM) — used by the drawer to
- * show "next refill in 12 days" and the source badge.
- */
-export const useEffectivePolicy = () => {
-  return useQuery({
-    queryKey: ['wallet', 'effective-policy'],
-    queryFn: () => walletService.getEffectivePolicy(),
-    staleTime: 5 * 60_000, // policy doesn't change minute-to-minute
-  });
-};
-
-/**
  * Wallet changes also change which models a bot form can offer, so every
  * mutation refreshes both the wallet list and the model pickers.
  */

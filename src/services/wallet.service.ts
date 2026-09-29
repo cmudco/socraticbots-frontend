@@ -5,13 +5,11 @@ import { baseRequest } from '@/utils/baseRequest';
 import {
   ActiveWalletType,
   BotUsageResponse,
-  EffectivePolicy,
   LiteLLMKeyDependents,
   LiteLLMTestResponse,
   NewLiteLLMKey,
   ProviderKeyProvider,
   ProviderKeyStatusMap,
-  TransactionsResponse,
   WalletsResponse,
 } from '@/types/wallet';
 
@@ -23,31 +21,6 @@ class WalletService {
   async getWallets(): Promise<WalletsResponse> {
     return baseRequest<WalletsResponse>({
       url: 'wallet/',
-      method: METHOD.GET,
-    });
-  }
-
-  /**
-   * Caller's transactions, defaulted to the SocraticBooks platform.
-   * Use `platform=ALL` to include cross-platform activity.
-   */
-  async getTransactions(params?: {
-    platform?: 'SocraticBots' | 'DARE' | 'ALL';
-    billingMode?: 'wallet' | 'own_api';
-  }): Promise<TransactionsResponse> {
-    return baseRequest<TransactionsResponse>({
-      url: 'wallet/transactions/',
-      method: METHOD.GET,
-      params: {
-        platform: params?.platform ?? 'SocraticBots',
-        ...(params?.billingMode ? { billing_mode: params.billingMode } : {}),
-      },
-    });
-  }
-
-  async getEffectivePolicy(): Promise<EffectivePolicy> {
-    return baseRequest<EffectivePolicy>({
-      url: 'wallet/effective-policy/',
       method: METHOD.GET,
     });
   }

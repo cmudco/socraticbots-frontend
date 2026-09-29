@@ -10,13 +10,23 @@ export type ActiveWalletType = 'DARE' | 'BYO' | 'LITELLM';
 export interface WalletStatusBalance {
   kind: 'BALANCE';
   balance: string;
+  /** Balance scheduled refills top the wallet up to. */
+  ceiling?: string;
   lastRefillAt: string | null;
+}
+
+/** A member's allowance on their group's LiteLLM key. */
+export interface SpendLimit {
+  limit: string;
+  used: string;
+  isReached: boolean;
 }
 
 export interface WalletStatusExternal {
   kind: 'EXTERNAL';
   /** LiteLLM keys: reference cost of this user's calls through the key. */
   spend?: string | null;
+  spendLimit?: SpendLimit | null;
 }
 
 export type WalletStatus = WalletStatusBalance | WalletStatusExternal;
@@ -97,35 +107,4 @@ export interface BotUsageResponse {
   groupBy: 'user' | 'date';
   totals: BotUsageTotals;
   userBreakdown: BotUsageUserRow[] | null;
-}
-
-export interface TransactionRow {
-  id: number;
-  amount: string;
-  type: 'Debit' | 'Credit' | string;
-  source: string;
-  message: string;
-  llmName: string | null;
-  inputTokens: number | null;
-  outputTokens: number | null;
-  billingMode: string;
-  platform: string;
-  createdAt: string;
-  botId?: number | null;
-  fallbackReason?: string | null;
-}
-
-export interface TransactionsResponse {
-  count?: number;
-  next?: string | null;
-  previous?: string | null;
-  results: TransactionRow[];
-  summary: { all: number; wallet: number; ownApi: number };
-}
-
-export interface EffectivePolicy {
-  amount: string;
-  periodDays: number;
-  amountSource: 'USER' | 'GROUP' | 'SYSTEM';
-  periodSource: 'USER' | 'GROUP' | 'SYSTEM';
 }

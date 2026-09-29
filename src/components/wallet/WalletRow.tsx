@@ -1,6 +1,16 @@
 import { useState } from 'react';
 
-import { CheckCircle2, KeyRound, Loader2, MoreVertical, Network, Wallet } from 'lucide-react';
+import {
+  CheckCircle2,
+  Clock,
+  KeyRound,
+  Loader2,
+  MoreVertical,
+  Network,
+  Plug,
+  Trash2,
+  Wallet,
+} from 'lucide-react';
 
 import { useDeleteLiteLLMKey, useSetActiveWallet } from '@/hooks/queries/useWallet';
 
@@ -10,9 +20,10 @@ import { walletService } from '@/services/wallet.service';
 
 import { cn } from '@/lib/utils';
 
-import { formatCurrency } from '@/utils/formatters';
+import { byoProviders, formatBalanceOfCeiling, formatUsd } from '@/utils/wallets';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import ConfirmationModal from '@/components/ui/confirmation-modal';
 import {
   DropdownMenu,
@@ -25,24 +36,15 @@ import type { WalletEntry } from '@/types/wallet';
 
 const ICONS = { DARE: Wallet, BYO: KeyRound, LITELLM: Network } as const;
 
-const describe = (wallet: WalletEntry): string => {
-  if (wallet.status.kind === 'BALANCE') {
-    return `Balance: ${formatCurrency(wallet.status.balance)}`;
-  }
-  if (wallet.type === 'LITELLM' && wallet.groupName) {
-    return `Group key · ${wallet.groupName}`;
-  }
-  return 'External billing';
-};
-
 interface WalletRowProps {
   wallet: WalletEntry;
 }
 
 /**
- * One wallet in the switcher: click to make it the default. The user's own
- * LiteLLM keys also get test and remove; removing one first lists the bots
- * that would stop answering.
+ * One wallet in the switcher, with the same detail DARE's popover shows: the
+ * DARE balance, the providers a BYO wallet covers, a LiteLLM key's estimated
+ * cost or group allowance, and its expiry. Click to make it the default. Own
+ * LiteLLM keys can be tested or removed; removing lists the bots that use it.
  */
 export const WalletRow = ({ wallet }: WalletRowProps) => {
   const { addToast } = useToastStore();
@@ -53,6 +55,8 @@ export const WalletRow = ({ wallet }: WalletRowProps) => {
 
   const Icon = ICONS[wallet.type];
   const ownKey = wallet.type === 'LITELLM' && wallet.source === 'USER' && !!wallet.refId;
+  const providers = wallet.type === 'BYO' ? byoProviders(wallet) : [];
+  const switching = setActive.isPending && setActive.variables?.refId === wallet.refId;
 
   const activate = () => {
     if (wallet.isActive || setActive.isPending) return;
@@ -97,47 +101,113 @@ export const WalletRow = ({ wallet }: WalletRowProps) => {
       } off until you pick another model.`
     : 'No bots use this key. This cannot be undone.';
 
+  const status = wallet.status;
+
   return (
     <>
       <div
         role={wallet.isActive ? undefined : 'button'}
         onClick={activate}
         className={cn(
-          'flex items-center gap-3 rounded-lg border px-3 py-2 text-sm transition-colors',
+          'group flex items-center gap-3 rounded-lg border px-3 py-2 text-sm transition-colors',
           wallet.isActive
             ? 'border-primary/40 bg-primary/5 cursor-default'
-            : 'border-border hover:bg-muted cursor-pointer'
+            : 'border-border hover:border-primary/30 hover:bg-muted cursor-pointer'
         )}
       >
         <Icon className="text-muted-foreground h-4 w-4 shrink-0" />
+
         <div className="min-w-0 flex-1">
-          <div className="truncate font-medium">{wallet.label}</div>
-          <div className="text-muted-foreground truncate text-xs">{describe(wallet)}</div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="truncate font-medium">{wallet.label}</span>
+            {providers.length > 0 && (
+              <>
+                <Badge className="bg-primary/15 text-primary border-0 text-[10px] font-semibold tracking-wide uppercase">
+                  {providers.length} {providers.length === 1 ? 'key' : 'keys'} configured
+                </Badge>
+                {providers.map(name => (
+                  <Badge key={name} variant="outline" className="text-[10px]">
+                    {name}
+                  </Badge>
+                ))}
+              </>
+            )}
+            {wallet.type === 'LITELLM' && wallet.source === 'ADMIN_GROUP' && wallet.groupName && (
+              <Badge variant="outline" className="text-[10px]">
+                Issued by {wallet.groupName}
+              </Badge>
+            )}
+            {wallet.type === 'LITELLM' && wallet.source === 'ADMIN_USER' && (
+              <Badge variant="outline" className="text-[10px]">
+                Admin-issued
+              </Badge>
+            )}
+          </div>
+
+          <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-xs">
+            {status.kind === 'BALANCE' ? (
+              <span>Balance: {formatBalanceOfCeiling(status)}</span>
+            ) : wallet.type === 'BYO' ? (
+              <span>
+                Routes each request to your matching provider key — DARE wallet not charged.
+              </span>
+            ) : wallet.source === 'ADMIN_GROUP' ? (
+              <span>Billed to your group&apos;s gateway</span>
+            ) : (
+              <span>External billing</span>
+            )}
+            {status.kind === 'EXTERNAL' &&
+              (status.spendLimit ? (
+                <span
+                  className={
+                    status.spendLimit.isReached ? 'text-destructive font-medium' : undefined
+                  }
+                >
+                  Used {formatUsd(status.spendLimit.used)} of {formatUsd(status.spendLimit.limit)}{' '}
+                  allowance
+                </span>
+              ) : (
+                status.spend && <span>Est. cost ${Number(status.spend).toFixed(4)}</span>
+              ))}
+            {wallet.expiresAt && (
+              <span className="inline-flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Expires {new Date(wallet.expiresAt).toLocaleDateString()}
+              </span>
+            )}
+          </div>
         </div>
-        {setActive.isPending && setActive.variables?.refId === wallet.refId ? (
+
+        {switching ? (
           <Loader2 className="h-4 w-4 animate-spin" />
-        ) : wallet.isActive ? (
-          <Badge className="gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            Active
-          </Badge>
-        ) : null}
+        ) : (
+          wallet.isActive && (
+            <span className="bg-primary text-primary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
+              <CheckCircle2 className="h-3 w-3" />
+              Active
+            </span>
+          )
+        )}
+
         {ownKey && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={event => event.stopPropagation()}>
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground rounded p-1"
-                aria-label={`Manage ${wallet.label}`}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0 opacity-60 group-hover:opacity-100"
+                aria-label={`More actions for ${wallet.label}`}
               >
                 <MoreVertical className="h-4 w-4" />
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={event => event.stopPropagation()}>
               <DropdownMenuItem disabled={testing} onClick={test}>
+                <Plug className="mr-2 h-3.5 w-3.5" />
                 {testing ? 'Testing…' : 'Test connection'}
               </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive" onClick={askToRemove}>
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
                 Remove key
               </DropdownMenuItem>
             </DropdownMenuContent>
