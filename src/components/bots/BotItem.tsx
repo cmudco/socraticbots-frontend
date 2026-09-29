@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { isLiteLLMModelId } from '@/constants/wallet';
 import { FileText } from 'lucide-react';
 
 import { useIsCreator, useUser } from '@/hooks/queries/useUser';
@@ -35,7 +36,7 @@ const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView, onClon
               Pick a model
             </Badge>
           )}
-          {canManage && chatModel?.startsWith('litellm:') && (
+          {canManage && isLiteLLMModelId(chatModel) && (
             <Badge
               variant="secondary"
               title="Chats run on your LiteLLM key; students aren't charged."

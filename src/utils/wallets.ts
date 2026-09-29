@@ -12,12 +12,12 @@ export const formatBalanceOfCeiling = (status: WalletStatusBalance): string =>
     ? formatUsd(status.balance)
     : `${formatUsd(status.balance)} of ${formatUsd(status.ceiling)}`;
 
-const PROVIDER_NAMES: Record<string, string> = {
-  openai: 'OpenAI',
-  claude: 'Claude',
-  gemini: 'Gemini',
-  llama: 'LLaMA',
-};
+const PROVIDER_NAMES = new Map([
+  ['openai', 'OpenAI'],
+  ['claude', 'Claude'],
+  ['gemini', 'Gemini'],
+  ['llama', 'LLaMA'],
+]);
 
 /** Providers a BYO wallet row covers, from DARE's comma-separated `provider`. */
 export const byoProviders = (wallet: WalletEntry): string[] =>
@@ -25,4 +25,4 @@ export const byoProviders = (wallet: WalletEntry): string[] =>
     .split(',')
     .map(p => p.trim())
     .filter(Boolean)
-    .map(p => PROVIDER_NAMES[p] ?? p);
+    .map(p => PROVIDER_NAMES.get(p) ?? p);

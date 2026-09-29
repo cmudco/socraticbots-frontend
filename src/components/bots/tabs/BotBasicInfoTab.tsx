@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 
+import { isLiteLLMModelId, liteLLMModelName } from '@/constants/wallet';
 import { Field, Form, Formik, FormikProps } from 'formik';
 import * as Yup from 'yup';
 
@@ -185,9 +186,9 @@ const BotBasicInfoTab = forwardRef<FormikProps<FormValues>, BotBasicInfoTabProps
                             </div>
                           </SelectItem>
                         ))}
-                        {values.chatModelDareId?.startsWith('litellm:') && (
+                        {isLiteLLMModelId(values.chatModelDareId) && (
                           <SelectItem value={values.chatModelDareId}>
-                            {values.chatModelDareId.split(':').slice(2).join(':')} (LiteLLM)
+                            {liteLLMModelName(values.chatModelDareId)} (LiteLLM)
                           </SelectItem>
                         )}
                       </SelectContent>

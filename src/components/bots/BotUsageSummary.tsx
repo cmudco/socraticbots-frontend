@@ -4,6 +4,8 @@ import { useBotUsage } from '@/hooks/queries/useWallet';
 
 import { formatCurrency } from '@/utils/formatters';
 
+import { UsageStat } from './UsageStat';
+
 interface BotUsageSummaryProps {
   botId: number;
 }
@@ -38,10 +40,3 @@ export const BotUsageSummary = ({ botId }: BotUsageSummaryProps) => {
     </div>
   );
 };
-
-const UsageStat = ({ label, value }: { label: string; value: string }) => (
-  <div className="border-border rounded-md border p-3">
-    <div className="text-muted-foreground text-xs">{label}</div>
-    <div className="text-lg font-semibold tabular-nums">{value}</div>
-  </div>
-);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { WalletEmptyReason } from '@/constants/wallet';
+import { BotModelPaidBy, WalletEmptyReason } from '@/constants/wallet';
 import type { BotFormData } from '@/schemas/botFormSchema';
 
 import { useWalletScopedDareLLMModels } from '@/hooks/queries/useDareLLMModels';
@@ -38,8 +38,8 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
 
   const dareLLMModels = walletScoped?.models ?? [];
   const wallet = walletScoped?.wallet;
-  const chatterPaid = dareLLMModels.filter(model => model.paidBy !== 'OWNER');
-  const ownerPaid = dareLLMModels.filter(model => model.paidBy === 'OWNER');
+  const chatterPaid = dareLLMModels.filter(model => model.paidBy !== BotModelPaidBy.OWNER);
+  const ownerPaid = dareLLMModels.filter(model => model.paidBy === BotModelPaidBy.OWNER);
 
   return (
     <div className="space-y-6">
@@ -166,7 +166,7 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
       <div className="space-y-2">
         <Label htmlFor="trackingModelDareId">Progress Tracker</Label>
         <p className="text-muted-foreground text-xs">
-          {chatterPaid.length
+          {modelsLoading || chatterPaid.length
             ? 'Optional: Enable to track student progress'
             : 'Progress tracking runs on a DARE model. Switch to your DARE or BYO wallet to choose one.'}
         </p>

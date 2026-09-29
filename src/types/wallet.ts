@@ -68,10 +68,16 @@ export interface NewLiteLLMKey {
   backgroundModel: string;
 }
 
-/** Bots whose chat model routes through a LiteLLM key. */
+/** A bot whose chat model routes through a LiteLLM key. */
+export interface LiteLLMKeyDependentBot {
+  botId: number;
+  botTitle: string;
+  botGroupTitle: string;
+}
+
 export interface LiteLLMKeyDependents {
   botCount: number;
-  bots: { botId: number; botTitle: string; botGroupTitle: string }[];
+  bots: LiteLLMKeyDependentBot[];
 }
 
 export type ProviderKeyProvider = 'openai' | 'claude' | 'gemini';
@@ -82,7 +88,11 @@ export interface ProviderKeyStatus {
   providerDisplay: string;
 }
 
-export type ProviderKeyStatusMap = Record<ProviderKeyProvider, ProviderKeyStatus>;
+export interface ProviderKeyStatusMap {
+  openai: ProviderKeyStatus;
+  claude: ProviderKeyStatus;
+  gemini: ProviderKeyStatus;
+}
 
 /** DARE's per-bot usage: chatters' DARE wallet spend and the owner's sponsored spend. */
 export interface BotUsageTotals {

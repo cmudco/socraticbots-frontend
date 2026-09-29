@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { LiteLLMKeySource, WalletScopedType } from '@/constants/wallet';
 import {
   CheckCircle2,
   Clock,
@@ -12,11 +13,14 @@ import {
   Wallet,
 } from 'lucide-react';
 
-import { useDeleteLiteLLMKey, useSetActiveWallet } from '@/hooks/queries/useWallet';
+import {
+  useDeleteLiteLLMKey,
+  useLiteLLMKeyDependents,
+  useSetActiveWallet,
+  useTestSavedLiteLLMKey,
+} from '@/hooks/queries/useWallet';
 
 import { useToastStore } from '@/stores/ui/toastStore';
-
-import { walletService } from '@/services/wallet.service';
 
 import { cn } from '@/lib/utils';
 
@@ -34,7 +38,11 @@ import {
 
 import type { WalletEntry } from '@/types/wallet';
 
-const ICONS = { DARE: Wallet, BYO: KeyRound, LITELLM: Network } as const;
+const ICONS = {
+  [WalletScopedType.DARE]: Wallet,
+  [WalletScopedType.BYO]: KeyRound,
+  [WalletScopedType.LITELLM]: Network,
+} as const;
 
 interface WalletRowProps {
   wallet: WalletEntry;
@@ -50,13 +58,19 @@ export const WalletRow = ({ wallet }: WalletRowProps) => {
   const { addToast } = useToastStore();
   const setActive = useSetActiveWallet();
   const deleteKey = useDeleteLiteLLMKey();
+  const testKey = useTestSavedLiteLLMKey();
+  const findDependents = useLiteLLMKeyDependents();
   const [dependents, setDependents] = useState<string[] | null>(null);
-  const [testing, setTesting] = useState(false);
 
   const Icon = ICONS[wallet.type];
-  const ownKey = wallet.type === 'LITELLM' && wallet.source === 'USER' && !!wallet.refId;
-  const providers = wallet.type === 'BYO' ? byoProviders(wallet) : [];
-  const switching = setActive.isPending && setActive.variables?.refId === wallet.refId;
+  const isLiteLLM = wallet.type === WalletScopedType.LITELLM;
+  const ownKey = isLiteLLM && wallet.source === LiteLLMKeySource.USER && !!wallet.refId;
+  const providers = wallet.type === WalletScopedType.BYO ? byoProviders(wallet) : [];
+  // DARE and BYO rows both have refId null, so the type tells them apart.
+  const switching =
+    setActive.isPending &&
+    setActive.variables?.type === wallet.type &&
+    setActive.variables?.refId === wallet.refId;
 
   const activate = () => {
     if (wallet.isActive || setActive.isPending) return;
@@ -69,30 +83,22 @@ export const WalletRow = ({ wallet }: WalletRowProps) => {
     );
   };
 
-  const test = async () => {
-    setTesting(true);
-    try {
-      const result = await walletService.testSavedLiteLLMKey(wallet.refId as string);
-      addToast(
-        result.ok
-          ? { type: 'success', message: `Connected — ${result.models.length} models available.` }
-          : { type: 'error', message: result.error || 'Connection failed.' }
-      );
-    } catch (error) {
-      addToast({ type: 'error', message: (error as Error).message });
-    } finally {
-      setTesting(false);
-    }
-  };
+  const test = () =>
+    testKey.mutate(wallet.refId as string, {
+      onSuccess: result =>
+        addToast(
+          result.ok
+            ? { type: 'success', message: `Connected — ${result.models.length} models available.` }
+            : { type: 'error', message: result.error || 'Connection failed.' }
+        ),
+      onError: error => addToast({ type: 'error', message: error.message }),
+    });
 
-  const askToRemove = async () => {
-    try {
-      const { bots } = await walletService.getLiteLLMKeyDependents(wallet.refId as string);
-      setDependents(bots.map(bot => bot.botTitle));
-    } catch (error) {
-      addToast({ type: 'error', message: (error as Error).message });
-    }
-  };
+  const askToRemove = () =>
+    findDependents.mutate(wallet.refId as string, {
+      onSuccess: ({ bots }) => setDependents(bots.map(bot => bot.botTitle)),
+      onError: error => addToast({ type: 'error', message: error.message }),
+    });
 
   const removeDescription = dependents?.length
     ? `${dependents.length} bot${dependents.length === 1 ? ' uses' : 's use'} this key ` +
@@ -132,12 +138,12 @@ export const WalletRow = ({ wallet }: WalletRowProps) => {
                 ))}
               </>
             )}
-            {wallet.type === 'LITELLM' && wallet.source === 'ADMIN_GROUP' && wallet.groupName && (
+            {isLiteLLM && wallet.source === LiteLLMKeySource.ADMIN_GROUP && wallet.groupName && (
               <Badge variant="outline" className="text-[10px]">
                 Issued by {wallet.groupName}
               </Badge>
             )}
-            {wallet.type === 'LITELLM' && wallet.source === 'ADMIN_USER' && (
+            {isLiteLLM && wallet.source === LiteLLMKeySource.ADMIN_USER && (
               <Badge variant="outline" className="text-[10px]">
                 Admin-issued
               </Badge>
@@ -147,11 +153,11 @@ export const WalletRow = ({ wallet }: WalletRowProps) => {
           <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2 text-xs">
             {status.kind === 'BALANCE' ? (
               <span>Balance: {formatBalanceOfCeiling(status)}</span>
-            ) : wallet.type === 'BYO' ? (
+            ) : wallet.type === WalletScopedType.BYO ? (
               <span>
                 Routes each request to your matching provider key — DARE wallet not charged.
               </span>
-            ) : wallet.source === 'ADMIN_GROUP' ? (
+            ) : wallet.source === LiteLLMKeySource.ADMIN_GROUP ? (
               <span>Billed to your group&apos;s gateway</span>
             ) : (
               <span>External billing</span>
@@ -202,9 +208,9 @@ export const WalletRow = ({ wallet }: WalletRowProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={event => event.stopPropagation()}>
-              <DropdownMenuItem disabled={testing} onClick={test}>
+              <DropdownMenuItem disabled={testKey.isPending} onClick={test}>
                 <Plug className="mr-2 h-3.5 w-3.5" />
-                {testing ? 'Testing…' : 'Test connection'}
+                {testKey.isPending ? 'Testing…' : 'Test connection'}
               </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive" onClick={askToRemove}>
                 <Trash2 className="mr-2 h-3.5 w-3.5" />

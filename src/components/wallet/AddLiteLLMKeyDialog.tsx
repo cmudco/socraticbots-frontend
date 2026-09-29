@@ -2,11 +2,9 @@ import { useState } from 'react';
 
 import { ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 
-import { useCreateLiteLLMKey } from '@/hooks/queries/useWallet';
+import { useCreateLiteLLMKey, useTestLiteLLMConnection } from '@/hooks/queries/useWallet';
 
 import { useToastStore } from '@/stores/ui/toastStore';
-
-import { walletService } from '@/services/wallet.service';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,12 +18,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+import type { LiteLLMTestResponse } from '@/types/wallet';
+
 interface AddLiteLLMKeyDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
-type Found = { models: string[]; recommendedModels: string[] };
+type Found = Pick<LiteLLMTestResponse, 'models' | 'recommendedModels'>;
 
 const EMPTY = { label: '', baseUrl: '', apiKey: '' };
 
@@ -36,11 +36,11 @@ const EMPTY = { label: '', baseUrl: '', apiKey: '' };
 export const AddLiteLLMKeyDialog = ({ open, onClose }: AddLiteLLMKeyDialogProps) => {
   const { addToast } = useToastStore();
   const createKey = useCreateLiteLLMKey();
+  const probe = useTestLiteLLMConnection();
   const [values, setValues] = useState(EMPTY);
   const [found, setFound] = useState<Found | null>(null);
   const [backgroundModel, setBackgroundModel] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [testing, setTesting] = useState(false);
 
   const close = () => {
     setValues(EMPTY);
@@ -52,25 +52,22 @@ export const AddLiteLLMKeyDialog = ({ open, onClose }: AddLiteLLMKeyDialogProps)
 
   const complete = values.label.trim() && values.baseUrl.trim() && values.apiKey.trim();
 
-  const testConnection = async () => {
-    setTesting(true);
+  const testConnection = () => {
     setError(null);
-    try {
-      const result = await walletService.testLiteLLMConnection(
-        values.baseUrl.trim(),
-        values.apiKey.trim()
-      );
-      if (!result.ok) {
-        setError(result.error || 'Connection failed — check the URL and key.');
-        return;
+    probe.mutate(
+      { baseUrl: values.baseUrl.trim(), apiKey: values.apiKey.trim() },
+      {
+        onSuccess: result => {
+          if (!result.ok) {
+            setError(result.error || 'Connection failed — check the URL and key.');
+            return;
+          }
+          setFound({ models: result.models, recommendedModels: result.recommendedModels });
+          setBackgroundModel(result.recommendedModels[0] ?? '');
+        },
+        onError: requestError => setError(requestError.message),
       }
-      setFound({ models: result.models, recommendedModels: result.recommendedModels });
-      setBackgroundModel(result.recommendedModels[0] ?? '');
-    } catch (requestError) {
-      setError((requestError as Error).message);
-    } finally {
-      setTesting(false);
-    }
+    );
   };
 
   const save = () =>
@@ -166,12 +163,12 @@ export const AddLiteLLMKeyDialog = ({ open, onClose }: AddLiteLLMKeyDialogProps)
         <DialogFooter>
           {!found ? (
             <>
-              <Button variant="outline" onClick={close} disabled={testing}>
+              <Button variant="outline" onClick={close} disabled={probe.isPending}>
                 Cancel
               </Button>
-              <Button onClick={testConnection} disabled={!complete || testing}>
-                {testing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {testing ? 'Testing connection…' : 'Next'}
+              <Button onClick={testConnection} disabled={!complete || probe.isPending}>
+                {probe.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {probe.isPending ? 'Testing connection…' : 'Next'}
               </Button>
             </>
           ) : (

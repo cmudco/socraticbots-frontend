@@ -1,5 +1,5 @@
 import { METHOD } from '@/constants/requests';
-import { WalletEmptyReason, WalletScopedType } from '@/constants/wallet';
+import { BotModelPaidBy, WalletEmptyReason, WalletScopedType } from '@/constants/wallet';
 
 import { baseRequest } from '@/utils/baseRequest';
 
@@ -38,9 +38,6 @@ interface CommonModelFields {
 export interface DareLLMModel extends CommonModelFields {
   id: number;
 }
-
-/** Who pays for a model saved on a bot (bot-scoped lists only). */
-export type BotModelPaidBy = 'CHATTER' | 'OWNER';
 
 /** Picker / dispatch entry — `id` is the opaque DARE picker id. */
 export interface PickerModel extends CommonModelFields {

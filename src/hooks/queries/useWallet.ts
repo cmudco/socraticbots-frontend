@@ -61,6 +61,19 @@ export const useDeleteLiteLLMKey = () => {
   });
 };
 
+export const useTestLiteLLMConnection = () =>
+  useMutation({
+    mutationFn: ({ baseUrl, apiKey }: { baseUrl: string; apiKey: string }) =>
+      walletService.testLiteLLMConnection(baseUrl, apiKey),
+  });
+
+export const useTestSavedLiteLLMKey = () =>
+  useMutation({ mutationFn: (keyId: string) => walletService.testSavedLiteLLMKey(keyId) });
+
+/** Bots that stop answering if the key is removed — fetched when the user asks to remove it. */
+export const useLiteLLMKeyDependents = () =>
+  useMutation({ mutationFn: (keyId: string) => walletService.getLiteLLMKeyDependents(keyId) });
+
 export const useProviderKeyStatus = (enabled: boolean) => {
   return useQuery({
     queryKey: ['wallet', 'provider-keys'],
