@@ -1,71 +1,63 @@
 import { useState } from 'react';
 
-import { Wallet as WalletIcon } from 'lucide-react';
+import { ChevronDown, CreditCard } from 'lucide-react';
 
 import { useWallet } from '@/hooks/queries/useWallet';
 
 import { cn } from '@/lib/utils';
 
-import { formatCurrency } from '@/utils/formatters';
+import { formatUsd } from '@/utils/wallets';
 
-import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 import { WalletDrawer } from './WalletDrawer';
 
 /**
- * Top-bar wallet widget — mirrors DARE's wallet header so SocraticBooks users
- * can see their balance and recent activity without leaving SB.
- *
- * Shows the active wallet's "headline" value:
- *  - DARE wallet active → balance ($X.XX)
- *  - BYO active        → "BYO" badge (no balance — the user pays externally)
- *  - LiteLLM active    → "LiteLLM" badge (same reason)
+ * Top-bar wallet trigger, shaped like DARE's: the active wallet's balance (or
+ * "External" for BYO / LiteLLM, which the user pays outside DARE) next to its
+ * name. Opens the wallet popover.
  */
 export const WalletBadge = () => {
   const { data, isLoading, isError } = useWallet();
   const [open, setOpen] = useState(false);
 
-  const active = data?.activeWallet;
-  const activeWallet = data?.wallets.find(
-    w =>
-      w.type === active?.type &&
-      ((w.refId ?? null) === (active?.refId ?? null) || (active?.refId == null && w.refId == null))
-  );
-
-  let label: string;
+  const active = data?.wallets.find(wallet => wallet.isActive);
+  const label = active?.label ?? 'DARE Wallet';
+  let amount: string;
   if (isLoading) {
-    label = '…';
+    amount = '…';
   } else if (isError || !data) {
-    label = '—';
-  } else if (active?.type === 'DARE' && activeWallet?.status.kind === 'BALANCE') {
-    label = formatCurrency(activeWallet.status.balance);
-  } else if (active?.type === 'BYO') {
-    label = 'BYO';
-  } else if (active?.type === 'LITELLM') {
-    label = 'LiteLLM';
+    amount = '—';
+  } else if (active?.status.kind === 'BALANCE') {
+    amount = formatUsd(active.status.balance);
   } else {
-    label = '$0.00';
+    amount = 'External';
   }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          size="sm"
+          aria-label={`Wallet: ${label} (${amount})`}
           className={cn(
-            'border-border flex h-9 items-center gap-2 rounded-full border px-3',
-            'hover:bg-muted text-sm font-medium'
+            'group border-primary/20 bg-background text-foreground inline-flex items-center gap-2',
+            'rounded-full border py-0.5 pr-3 pl-0.5 text-sm font-medium shadow-xs transition-all',
+            'hover:border-primary/50 hover:shadow-md'
           )}
-          aria-label="Open wallet"
         >
-          <WalletIcon className="h-4 w-4" />
-          <span>{label}</span>
-        </Button>
+          <span className="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-full">
+            <CreditCard className="h-3.5 w-3.5" />
+          </span>
+          <span className="font-semibold tabular-nums">{amount}</span>
+          <span className="bg-border hidden h-3 w-px sm:inline-block" />
+          <span className="text-muted-foreground hidden max-w-[110px] truncate text-xs sm:inline">
+            {label}
+          </span>
+          <ChevronDown className="text-muted-foreground h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+        </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 p-0">
+      <PopoverContent align="end" className="w-[380px] overflow-hidden p-0">
         <WalletDrawer />
       </PopoverContent>
     </Popover>

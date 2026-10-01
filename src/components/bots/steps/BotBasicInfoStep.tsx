@@ -1,7 +1,7 @@
 import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { WalletEmptyReason } from '@/constants/wallet';
+import { BotModelPaidBy, WalletEmptyReason } from '@/constants/wallet';
 import type { BotFormData } from '@/schemas/botFormSchema';
 
 import { useWalletScopedDareLLMModels } from '@/hooks/queries/useDareLLMModels';
@@ -11,7 +11,9 @@ import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -25,15 +27,19 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
   const {
     register,
     control,
+    watch,
     formState: { errors },
   } = useFormContext<BotFormData>();
+  const selectedChatModel = watch('chatModelDareId');
 
-  const walletScope = botId ? `bot:${botId}` : 'active';
+  const walletScope = botId ? `bot:${botId}` : 'bot:new';
   const { data: walletScoped, isLoading: modelsLoading } =
     useWalletScopedDareLLMModels(walletScope);
 
   const dareLLMModels = walletScoped?.models ?? [];
   const wallet = walletScoped?.wallet;
+  const chatterPaid = dareLLMModels.filter(model => model.paidBy !== BotModelPaidBy.OWNER);
+  const ownerPaid = dareLLMModels.filter(model => model.paidBy === BotModelPaidBy.OWNER);
 
   return (
     <div className="space-y-6">
@@ -87,7 +93,7 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
                 'The LiteLLM key targeted by this bot was removed.'}
             </span>
             <span className="text-xs">
-              Update the bot’s billing source in the Billing tab to load models.
+              Switch your wallet or check the key from the wallet menu to load models.
             </span>
           </div>
         ) : modelsLoading || !dareLLMModels ? (
@@ -114,24 +120,56 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
                   <SelectValue placeholder="Select a model" />
                 </SelectTrigger>
                 <SelectContent>
-                  {dareLLMModels
-                    .filter(model => !model.isSynthetic && model.id != null)
-                    .map(model => (
-                      <SelectItem key={model.id} value={String(model.id)}>
+                  <SelectGroup>
+                    <SelectLabel>DARE models · each student pays</SelectLabel>
+                    {chatterPaid.map(model => (
+                      <SelectItem key={model.id} value={model.id}>
                         {model.name}
                       </SelectItem>
                     ))}
+                  </SelectGroup>
+                  {ownerPaid.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Your LiteLLM models · you pay</SelectLabel>
+                      {ownerPaid.map(model => (
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.name}
+                          <span className="text-muted-foreground ml-2 text-xs">
+                            via {model.sponsorKeyLabel}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
             )}
           />
+        )}
+        {botId &&
+          selectedChatModel &&
+          !modelsLoading &&
+          !dareLLMModels.some(model => model.id === selectedChatModel) && (
+            <p className="text-destructive text-xs">
+              The model this bot was saved with is no longer available to you. Pick another model.
+            </p>
+          )}
+        {ownerPaid.some(model => model.id === selectedChatModel) && (
+          <p className="text-muted-foreground text-xs">
+            Students chat on your LiteLLM key; their wallets aren&apos;t charged. You can see what
+            this bot costs you under Usage.
+          </p>
         )}
       </div>
 
       {/* Tracking Model Selection */}
       <div className="space-y-2">
         <Label htmlFor="trackingModelDareId">Progress Tracker</Label>
-        <p className="text-muted-foreground text-xs">Optional: Enable to track student progress</p>
+        <p className="text-muted-foreground text-xs">
+          {modelsLoading || chatterPaid.length
+            ? 'Optional: Enable to track student progress'
+            : 'Progress tracking runs on a DARE model. Switch to your DARE or BYO wallet to choose one.'}
+        </p>
         {modelsLoading || !dareLLMModels ? (
           <div className="border-input bg-muted/50 text-muted-foreground flex h-10 w-full items-center rounded-md border px-3 text-sm">
             Loading models...
@@ -155,13 +193,11 @@ const BotBasicInfoStep: React.FC<BotBasicInfoStepProps> = ({ botId }) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
-                  {dareLLMModels
-                    .filter(model => !model.isSynthetic && model.id != null)
-                    .map(model => (
-                      <SelectItem key={model.id} value={String(model.id)}>
-                        {model.name}
-                      </SelectItem>
-                    ))}
+                  {chatterPaid.map(model => (
+                    <SelectItem key={model.id} value={model.id}>
+                      {model.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
