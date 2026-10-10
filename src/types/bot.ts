@@ -58,6 +58,10 @@ export interface Bot {
   ragMode?: BotRagMode;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
+  /** Latest messages replayed to the chat model; 0 is the whole conversation. */
+  chatHistoryLimit?: number;
+  /** Latest messages the progress tracker reads; 0 is the whole conversation. */
+  trackingHistoryLimit?: number;
   isPubliclyDeployed?: boolean;
   budget?: number | string | null;
   budgetUsed?: number | string;
@@ -97,6 +101,10 @@ export interface CreateBotRequest {
   ragMode?: BotRagMode;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
+  /** Latest messages replayed to the chat model; 0 is the whole conversation. */
+  chatHistoryLimit?: number;
+  /** Latest messages the progress tracker reads; 0 is the whole conversation. */
+  trackingHistoryLimit?: number;
   accessCodeLimit?: number;
 }
 
@@ -110,6 +118,10 @@ export interface UpdateBotRequest {
   ragMode?: BotRagMode;
   maxContextSnippets?: number;
   documentSimilarityThreshold?: number;
+  /** Latest messages replayed to the chat model; 0 is the whole conversation. */
+  chatHistoryLimit?: number;
+  /** Latest messages the progress tracker reads; 0 is the whole conversation. */
+  trackingHistoryLimit?: number;
   accessCodeLimit?: number;
   isPubliclyDeployed?: boolean;
   budget?: number;

@@ -26,6 +26,9 @@ export const promptsSchema = z.object({
   chatPrompt: z.string(),
   trackingPrompt: z.string(),
   learningGoals: z.string(),
+  // Messages replayed to the chat model and the tracker; 0 is the whole conversation.
+  chatHistoryLimit: z.number().int().min(0),
+  trackingHistoryLimit: z.number().int().min(0),
 });
 
 /** Step 3: Quick Prompts (array of prompt templates) */
@@ -96,6 +99,8 @@ export const DEFAULT_BOT_FORM_VALUES: BotFormData = {
   chatPrompt: '',
   trackingPrompt: '',
   learningGoals: '',
+  chatHistoryLimit: 0,
+  trackingHistoryLimit: 0,
   // Quick Prompts
   quickPrompts: [],
   // Theme
@@ -131,6 +136,8 @@ export function mapBotToFormData(bot: {
   webSearchEnabled?: boolean;
   ragMode?: 'naive' | 'advanced' | 'agentic';
   isAdvanced?: boolean;
+  chatHistoryLimit?: number;
+  trackingHistoryLimit?: number;
   prompts?: {
     greeting?: string;
     chatPrompt?: string;
@@ -173,6 +180,8 @@ export function mapBotToFormData(bot: {
     chatPrompt: bot.prompts?.chatPrompt || '',
     trackingPrompt: bot.prompts?.trackingPrompt || '',
     learningGoals: bot.prompts?.learningGoals || '',
+    chatHistoryLimit: bot.chatHistoryLimit ?? 0,
+    trackingHistoryLimit: bot.trackingHistoryLimit ?? 0,
     // Quick Prompts
     quickPrompts: (bot.quickPrompts || []).map((qp, i) => ({
       id: qp.id,
@@ -215,6 +224,8 @@ export function mapFormDataToPayload(data: BotFormData) {
     chatPrompt: data.chatPrompt || undefined,
     trackingPrompt: data.trackingPrompt || undefined,
     learningGoals: data.learningGoals || undefined,
+    chatHistoryLimit: data.chatHistoryLimit,
+    trackingHistoryLimit: data.trackingHistoryLimit,
     // Quick Prompts
     quickPromptsData: data.quickPrompts
       .filter(qp => qp.title.trim() && qp.prompt.trim())

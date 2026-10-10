@@ -232,6 +232,9 @@ export interface SendMessagePayload {
   // Opaque DARE picker id ("42" or "litellm:<key>:<name>") for the
   // tracker model. SB-specific field; DARE resolves via parse_model_id.
   progress_llm_id?: string | null;
+  // Messages replayed to the chat model and the tracker; 0 is the whole conversation.
+  socratic_history_limit?: number;
+  tracking_history_limit?: number;
   bot_meta?: BotMeta;
 
   // LLM configuration. `model_id` is the new opaque dispatch field on

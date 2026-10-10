@@ -26,6 +26,8 @@ export function buildBotChatPayload(
     is_advanced: Boolean(bot.isAdvanced),
     enable_progress: isProgressTrackingConfigured(bot),
     progress_llm_id: bot.modelPreference?.trackingModelDareId,
+    socratic_history_limit: bot.chatHistoryLimit ?? 0,
+    tracking_history_limit: bot.trackingHistoryLimit ?? 0,
     bot_meta: {
       title: bot.title,
       subject: bot.subject,

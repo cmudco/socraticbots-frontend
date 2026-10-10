@@ -32,6 +32,8 @@ interface BotFormState {
   trackingModelDareId: string | null;
   webSearchEnabled: boolean;
   ragMode: 'naive' | 'advanced' | 'agentic';
+  chatHistoryLimit: number;
+  trackingHistoryLimit: number;
   accessCode: string;
   accessCodeLimit: number;
   accessCodeUsed: number;
@@ -67,6 +69,7 @@ interface BotFormState {
   updateModelField: (field: string, value: string | null) => void;
   setWebSearchEnabled: (value: boolean) => void;
   setRagMode: (value: 'naive' | 'advanced' | 'agentic') => void;
+  setHistoryLimit: (field: 'chatHistoryLimit' | 'trackingHistoryLimit', value: number) => void;
   updateAccessCode: (code: string) => void;
   updateAccessCodeLimit: (limit: number) => void;
   updateAccessCodeUsed: (used: number) => void;
@@ -104,6 +107,8 @@ const initialFormState = {
   trackingModelDareId: null,
   webSearchEnabled: false,
   ragMode: 'advanced' as const,
+  chatHistoryLimit: 0,
+  trackingHistoryLimit: 0,
   accessCode: '',
   accessCodeLimit: 0,
   accessCodeUsed: 0,
@@ -191,6 +196,8 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
       trackingModelDareId: bot.modelPreference?.trackingModelDareId ?? null,
       webSearchEnabled: !!bot.webSearchEnabled,
       ragMode: bot.ragMode || 'advanced',
+      chatHistoryLimit: bot.chatHistoryLimit ?? 0,
+      trackingHistoryLimit: bot.trackingHistoryLimit ?? 0,
       accessCode: bot.accessCode?.code || '',
       accessCodeLimit: bot.accessCode?.limit ?? 0,
       accessCodeUsed: bot.accessCode?.used ?? 0,
@@ -242,6 +249,9 @@ export const useBotFormStore = create<BotFormState>((set, get) => ({
   setWebSearchEnabled: (value: boolean) => set({ webSearchEnabled: value }),
 
   setRagMode: (value: 'naive' | 'advanced' | 'agentic') => set({ ragMode: value }),
+
+  setHistoryLimit: (field: 'chatHistoryLimit' | 'trackingHistoryLimit', value: number) =>
+    set({ [field]: value }),
 
   updateAccessCode: (code: string) => {
     set({ accessCode: code });
