@@ -4,6 +4,7 @@ import { Info } from 'lucide-react';
 
 import { useBotFormStore } from '@/stores/forms/botFormStore';
 
+import HistoryWindowSlider from '@/components/bots/HistoryWindowSlider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 
@@ -21,6 +22,9 @@ const BotPromptsTab: React.FC<BotPromptsTabProps> = ({ viewOnly = false }) => {
     updateField,
     isAdvanced,
     setIsAdvanced,
+    chatHistoryLimit,
+    trackingHistoryLimit,
+    setHistoryLimit,
   } = useBotFormStore();
 
   const isTrackingEnabled = trackingModelDareId !== null && trackingModelDareId !== undefined;
@@ -51,6 +55,15 @@ const BotPromptsTab: React.FC<BotPromptsTabProps> = ({ viewOnly = false }) => {
         />
       </div>
 
+      <HistoryWindowSlider
+        id="chat-history-limit"
+        label="Chat History"
+        description="How much of the conversation the bot rereads before each reply. Shorter windows cost less on long chats but forget earlier answers."
+        value={chatHistoryLimit}
+        onChange={value => setHistoryLimit('chatHistoryLimit', value)}
+        disabled={viewOnly}
+      />
+
       <div>
         <label className="text-foreground mb-1 block text-sm font-medium">
           Tracking Prompt
@@ -73,6 +86,15 @@ const BotPromptsTab: React.FC<BotPromptsTabProps> = ({ viewOnly = false }) => {
           }
         />
       </div>
+
+      <HistoryWindowSlider
+        id="tracking-history-limit"
+        label="Tracker History"
+        description="How much of the conversation the progress tracker reads when it assesses the student."
+        value={trackingHistoryLimit}
+        onChange={value => setHistoryLimit('trackingHistoryLimit', value)}
+        disabled={viewOnly || !isTrackingEnabled}
+      />
 
       <div>
         <label className="text-foreground mb-1 block text-sm font-medium">

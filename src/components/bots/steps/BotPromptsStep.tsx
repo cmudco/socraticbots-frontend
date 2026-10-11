@@ -3,6 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import type { BotFormData } from '@/schemas/botFormSchema';
 
+import HistoryWindowSlider from '@/components/bots/HistoryWindowSlider';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,6 +47,20 @@ const BotPromptsStep: React.FC = () => {
         />
       </div>
 
+      <Controller
+        name="chatHistoryLimit"
+        control={control}
+        render={({ field }) => (
+          <HistoryWindowSlider
+            id="chatHistoryLimit"
+            label="Chat History"
+            description="How much of the conversation the bot rereads before each reply. Shorter windows cost less on long chats but forget earlier answers."
+            value={field.value}
+            onChange={field.onChange}
+          />
+        )}
+      />
+
       {trackingModel && (!learningGoals?.trim() || !trackingPrompt?.trim()) && (
         <p role="status" className="bg-muted text-muted-foreground rounded-lg p-3 text-sm">
           Progress tracking is paused until both a tracking prompt and learning goals are provided.
@@ -66,6 +81,21 @@ const BotPromptsStep: React.FC = () => {
           rows={4}
         />
       </div>
+
+      <Controller
+        name="trackingHistoryLimit"
+        control={control}
+        render={({ field }) => (
+          <HistoryWindowSlider
+            id="trackingHistoryLimit"
+            label="Tracker History"
+            description="How much of the conversation the progress tracker reads when it assesses the student."
+            value={field.value}
+            onChange={field.onChange}
+            disabled={!trackingModel}
+          />
+        )}
+      />
 
       {/* Learning Goals */}
       <div className="space-y-2">
