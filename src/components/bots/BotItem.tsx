@@ -1,9 +1,11 @@
 import React from 'react';
 
+import { isLiteLLMModelId } from '@/constants/wallet';
 import { FileText } from 'lucide-react';
 
 import { useIsCreator, useUser } from '@/hooks/queries/useUser';
 
+import { Badge } from '@/components/ui/badge';
 import ItemActions from '@/components/widgets/actions/ItemActions';
 
 import { Bot } from '@/types/bot';
@@ -20,11 +22,28 @@ const BotItem: React.FC<BotItemProps> = ({ bot, onEdit, onDelete, onView, onClon
   const user = useUser();
   const isCreator = useIsCreator();
   const canManage = isCreator && user?.id === bot.createdById;
+  const chatModel = bot.modelPreference?.chatModelDareId;
   return (
     <div className="bg-background flex items-center justify-between rounded border p-3">
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <h4 className="text-foreground font-medium">{bot.title}</h4>
+          {canManage && !chatModel && (
+            <Badge
+              variant="destructive"
+              title="Its model was removed. Edit the bot to pick another."
+            >
+              Pick a model
+            </Badge>
+          )}
+          {canManage && isLiteLLMModelId(chatModel) && (
+            <Badge
+              variant="secondary"
+              title="Chats run on your LiteLLM key; students aren't charged."
+            >
+              You pay · LiteLLM
+            </Badge>
+          )}
           {bot.filesCount > 0 && (
             <div className="text-muted-foreground flex items-center gap-1 text-xs">
               <FileText size={12} />
