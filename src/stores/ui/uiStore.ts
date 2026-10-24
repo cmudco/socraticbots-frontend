@@ -11,7 +11,7 @@ interface UiStore {
   setBotGroupExpanded: (botGroupId: number, expanded: boolean) => void;
   clearExpandedBotGroups: () => void;
 
-  // Bots (formerly chapters) 
+  // Bots (formerly chapters)
   deletedBotIds: Set<number>;
   addDeletedBot: (botId: number) => void;
   removeDeletedBot: (botId: number) => void;

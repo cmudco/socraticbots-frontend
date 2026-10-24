@@ -1,5 +1,5 @@
 export const config = {
-  apiUrl: import.meta.env.VITE_API_URL || 'https://api.socraticbooks.com/api',
+  apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:8001/api',
 
   isDevelopment: import.meta.env.DEV,
   isProduction: import.meta.env.PROD,

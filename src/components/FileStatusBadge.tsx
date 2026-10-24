@@ -1,7 +1,10 @@
 import React from 'react';
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+
+import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+
 import { FileStatus } from '@/utils/fileStatus';
+
+import { Badge } from '@/components/ui/badge';
 
 interface FileStatusBadgeProps {
   status: number;
@@ -17,7 +20,7 @@ export const FileStatusBadge: React.FC<FileStatusBadgeProps> = ({ status, errorM
           Processing
         </Badge>
       );
-    
+
     case FileStatus.PROCESSED:
       return (
         <Badge variant="green">
@@ -25,23 +28,16 @@ export const FileStatusBadge: React.FC<FileStatusBadgeProps> = ({ status, errorM
           Processed
         </Badge>
       );
-    
+
     case FileStatus.FAILED:
       return (
-        <Badge 
-          variant="destructive"
-          title={errorMessage || 'Processing failed'}
-        >
+        <Badge variant="destructive" title={errorMessage || 'Processing failed'}>
           <AlertCircle className="mr-1 h-4 w-4" />
           Failed
         </Badge>
       );
-    
+
     default:
-      return (
-        <Badge variant="outline">
-          Unknown
-        </Badge>
-      );
+      return <Badge variant="outline">Unknown</Badge>;
   }
 };
