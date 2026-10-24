@@ -1,14 +1,16 @@
-# SocraticBooks Frontend
+# Socratic Bots Frontend
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/Node-18%2B-339933.svg)](https://nodejs.org/)
+[![Node](https://img.shields.io/badge/Node-20%2B-339933.svg)](https://nodejs.org/)
 
-> React/TypeScript frontend for **SocraticBooks** — an AI Socratic-tutoring platform built on DARE.
+> The React web app for **Socratic Bots**: AI tutors that guide students with questions instead of
+> handing them answers. Built on [DARE](https://github.com/cmudco/dare-backend).
 
 ## Table of Contents
 
-- [What is SocraticBooks?](#what-is-socraticbooks)
+- [What is Socratic Bots?](#what-is-socratic-bots)
 - [Overview](#overview)
+- [Features](#features)
 - [Quick Start](#quick-start)
 - [Documentation](#documentation)
 - [Tech Stack](#tech-stack)
@@ -19,158 +21,168 @@
 - [Contributors](#contributors)
 - [License](#license)
 
-## What is SocraticBooks?
+## What is Socratic Bots?
 
-SocraticBooks (also referred to as Socratic Bots) is an open-source, AI-powered educational platform
-built on top of [DARE](https://github.com/cmudco/dare-backend). It pairs structured learning content — books,
-chapters, and notes — with conversational AI tutors that use the Socratic method to guide students
-toward understanding rather than handing them answers. SocraticBooks delegates authentication, LLM
-access, and file processing to DARE, and adds the educational layer on top: progress tracking,
-access-code enrollment, and bot/tutor configuration.
+Socratic Bots (formerly SocraticBooks) lets instructors build AI tutors for a course. An instructor
+writes the tutor's teaching instructions, attaches course documents, picks a model, and shares the
+tutor with students through access codes or a public link. Students chat with the tutor, keep notes,
+and can take spoken exams with a voice agent. The tutor asks guiding questions rather than giving
+away answers, and can track each student's progress against learning goals.
 
-**This repository is the SocraticBooks web frontend** — the student- and instructor-facing React app.
-It talks to the [SocraticBooks backend](https://github.com/cmudco/socraticbots-backend) for all platform data and
-connects to the DARE backend over Socket.IO for real-time chat. Features include:
+Socratic Bots is a layer on top of DARE. Accounts, LLM chat, document ingestion and retrieval, and
+billing all live in the DARE backend; Socratic Bots adds tutors, bot groups, access codes, notes, and
+voice exams.
 
-- **Socratic chat** — real-time, streaming dialogue with AI tutors
-- **Books & chapters** — structured learning content with note-taking and annotations
-- **Rich text editing** — a TipTap-based editor for chat and notes (Markdown, math, code)
-- **Progress tracking** — AI-assisted assessment of student understanding
-- **Voice tutoring** — optional spoken sessions via the separate voice-agent-runtime
-
-> **Requires DARE.** SocraticBooks runs on top of DARE. To use it you must also have the
-> [DARE backend](https://github.com/cmudco/dare-backend) running (and the SocraticBooks backend in front of it),
-> because authentication, LLM access, and file processing all come from DARE. The reverse is not true:
-> DARE runs standalone and does not require SocraticBooks.
+> **Requires DARE.** Socratic Bots does not run on its own. You need a running
+> [DARE backend](https://github.com/cmudco/dare-backend) and the
+> [Socratic Bots backend](https://github.com/cmudco/socraticbots-backend). The reverse is not true:
+> DARE is a complete product without Socratic Bots.
 
 ## Overview
 
+This repository is the browser app. It talks to three services:
+
 ```mermaid
-flowchart TB
-    browser["Browser"]
+flowchart LR
+    browser["Socratic Bots Frontend<br/>(this repo, :5174)"]
+    sb["Socratic Bots Backend<br/>Django, :8001"]
+    dare["DARE Backend<br/>:8000"]
+    voice["voice-agent-runtime<br/>:8010 (optional)"]
 
-    subgraph frontend["SocraticBooks Frontend (React 19)"]
-        router["React Router v7"]
-        components["Feature Components\nChat, Books, Notes, Progress"]
-        stores["Zustand Stores\nclient state"]
-        query["TanStack Query\nserver state + caching"]
-    end
-
-    sbbackend["SocraticBooks Backend\n:8001"]
-    dare["DARE Backend\n:8000"]
-    voice["voice-agent-runtime\n:8010"]
-
-    browser --> frontend
-    components --> stores
-    components --> query
-    query <-->|REST| sbbackend
-    frontend <-->|Socket.IO| dare
-    frontend <-.->|WebRTC voice| voice
-    sbbackend <-->|proxy: auth, AI, files| dare
+    browser -->|"REST: bots, codes, notes, voice, wallet"| sb
+    browser -->|"Socket.IO /chat: streaming replies"| dare
+    browser -.->|"WebRTC: voice exams"| voice
+    sb -->|"REST: accounts, files, models, billing"| dare
+    voice -->|"session context, transcripts"| sb
 ```
 
-Client state lives in Zustand stores; server state is fetched and cached with TanStack Query against
-the SocraticBooks backend. Real-time chat streams from DARE over Socket.IO, and optional voice
-sessions are negotiated with the standalone voice runtime.
+- **REST** goes to the Socratic Bots backend only (`VITE_API_URL`).
+- **Chat** connects straight to DARE's Socket.IO `/chat` namespace (`VITE_DARE_SOCKET_URL`). DARE runs
+  the model, retrieval, and tools, and bills the chat.
+- **Voice exams** connect straight to the voice runtime over WebRTC, using a URL the Socratic Bots
+  backend signs for each session.
+
+See [docs/architecture.md](docs/architecture.md) for the full picture.
+
+## Features
+
+- **Tutor builder.** Bot groups and bots with teaching instructions, subject and topic, model choice
+  (DARE models or LiteLLM gateway models), attached course files, retrieval mode (fast, thorough, or
+  autonomous document search), web search, history limits, themes, quick prompts, and collaborators.
+- **Progress tracking.** Optional per-bot tracker that scores the conversation against learning
+  goals.
+- **Sharing.** Bot access codes for students, a user list per bot, and public deployment links for
+  anonymous chat.
+- **Chat.** Streaming replies, stop generation, image attachments, tool activity, a notes panel,
+  PDF export, and a message-details drawer for creators (retrieval trace, sources, tokens, cost).
+- **Voice exams.** Voice agents with teams, members, and retakes; live spoken sessions over WebRTC
+  (Mistral/Pipecat runtime) or ElevenLabs; transcripts and PDF export; a speech-to-text lab and
+  browser diagnostics.
+- **Wallet.** Wallet balance, transactions, provider API keys, LiteLLM keys, and per-bot usage, all
+  backed by DARE billing.
+
+Building and managing tutors requires a creator role in DARE. Students redeem codes, chat, keep notes,
+and take voice exams.
 
 ## Quick Start
 
-**Prerequisites:** Node.js 18+, a running [SocraticBooks backend](https://github.com/cmudco/socraticbots-backend)
-(default `http://localhost:8001`), and the [DARE backend](https://github.com/cmudco/dare-backend) it proxies to
-(default `http://localhost:8000`).
+Requires Node.js 20+ and a running Socratic Bots backend on `:8001` with DARE on `:8000`. If you
+don't have those yet, follow the
+[full-stack quick start](https://github.com/cmudco/socraticbots-backend/blob/dev/QUICKSTART.md) first.
 
 ```bash
-# 1. Install dependencies
-npm install
-
-# 2. Configure environment
-cp .env.example .env.local
-# VITE_API_URL          -> SocraticBooks backend API (default http://localhost:8001/api)
-# VITE_DARE_SOCKET_URL  -> DARE backend for Socket.IO (default http://localhost:8000)
-# VITE_DARE_FRONTEND_URL -> DARE web app for cross-links (default http://localhost:5173)
-
-# 3. Run the dev server on port 5174 (DARE frontend holds 5173)
+git clone https://github.com/cmudco/socraticbots-frontend.git
+cd socraticbots-frontend
+npm ci
+cp .env.example .env
 npm run dev -- --port 5174
 ```
 
-Then open http://localhost:5174. The dev server hot-reloads on changes.
-
-For a production build:
-
-```bash
-npm run build       # type-checks then produces ./dist
-npm run preview     # serves ./dist locally for verification
-```
-
-### Available scripts
-
-| Command                | Description                         |
-| ---------------------- | ----------------------------------- |
-| `npm run dev`          | Start the Vite dev server           |
-| `npm run build`        | Type-check and produce `dist/`      |
-| `npm run preview`      | Serve the production bundle locally |
-| `npm run lint`         | Run ESLint                          |
-| `npm run lint:fix`     | Run ESLint with autofix             |
-| `npm run format`       | Run Prettier                        |
-| `npm run format:check` | Check formatting                    |
+Open <http://localhost:5174>. Step-by-step details and troubleshooting are in
+[QUICKSTART.md](QUICKSTART.md).
 
 ## Documentation
 
-| Doc                    | What's in it                                           |
-| ---------------------- | ------------------------------------------------------ |
-| [CLAUDE.md](CLAUDE.md) | Architecture, state management, and component patterns |
-| [rules.md](rules.md)   | Frontend coding standards and conventions              |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution and validation checklist |
-| [SECURITY.md](SECURITY.md) | Private reporting and configuration guidance |
-| [CHANGELOG.md](CHANGELOG.md) | Unreleased onboarding changes |
-| [BRAND.md](BRAND.md)   | Brand and trademark usage policy                       |
+| Doc                                                  | What's in it                                               |
+| ---------------------------------------------------- | ---------------------------------------------------------- |
+| [QUICKSTART.md](QUICKSTART.md)                       | Run the frontend locally, verify it, fix common problems   |
+| [DEPLOYMENT.md](DEPLOYMENT.md)                       | Build and serve the app in production                      |
+| [docs/configuration.md](docs/configuration.md)       | Every environment variable                                 |
+| [docs/architecture.md](docs/architecture.md)         | How the app is structured and how it talks to each service |
+| [tests/README.md](tests/README.md)                   | Unit tests, voice contract tests, manual chat regressions  |
+| [tests/SOCKET_CONTRACT.md](tests/SOCKET_CONTRACT.md) | The chat Socket.IO wire contract shared with DARE          |
+| [rules.md](rules.md)                                 | Frontend coding standards                                  |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                   | Issues, pull requests, checks to run                       |
+| [SECURITY.md](SECURITY.md)                           | Reporting vulnerabilities, hardening notes                 |
+| [AGENTS.md](AGENTS.md)                               | Guide for AI coding agents working in this repo            |
+| [CHANGELOG.md](CHANGELOG.md)                         | Notable changes                                            |
+| [BRAND.md](BRAND.md)                                 | Brand and trademark usage policy                           |
+
+### Scripts
+
+| Command                           | What it does                               |
+| --------------------------------- | ------------------------------------------ |
+| `npm run dev`                     | Vite dev server (pass `-- --port 5174`)    |
+| `npm run build`                   | Type-check (`tsc -b`) and build to `dist/` |
+| `npm run preview`                 | Serve `dist/` locally                      |
+| `npm run lint` / `lint:fix`       | ESLint                                     |
+| `npm run format` / `format:check` | Prettier                                   |
+| `npm test`                        | Vitest unit tests                          |
+| `npm run test:voice`              | Voice session and feedback tests only      |
+| `npm run test:voice-contract`     | Type-check and test the voice API contract |
 
 ## Tech Stack
 
-- **React 19** + **TypeScript**
-- **Vite 6** for build and dev server
-- **Zustand** for client state
-- **TanStack Query** for server state and caching
-- **React Router v7**
-- **Tailwind CSS v4** + **Radix UI** primitives
-- **TipTap** rich text editor
-- **React Hook Form + Zod** for forms and validation
-- **socket.io-client** for real-time chat
-- **ElevenLabs React SDK** for voice support
+- React 19, TypeScript 5.7, Vite 6
+- React Router 7
+- TanStack Query 5 (server state) and Zustand 5 (client state)
+- Tailwind CSS 4 with the typography plugin, shadcn/ui on Radix primitives, lucide icons
+- socket.io-client 4 for chat
+- react-markdown with GFM, KaTeX math, and syntax highlighting
+- React Hook Form + Zod and Formik + Yup (both are in use)
+- `@elevenlabs/react` and a WebRTC client for the Pipecat voice runtime
+- Sentry for error reporting (optional)
+- Vitest + Testing Library, ESLint, Prettier, Husky + lint-staged
 
 ## What is included in this repo?
 
-- `src/` — application source: `components/`, `pages/`, `hooks/`, `services/` (API layer),
-  `stores/` (Zustand), `types/`, `utils/`, and `lib/`
-- Build and quality config — Vite, Tailwind, ESLint, Prettier, Husky
-- Project docs — `CLAUDE.md`, `rules.md`, `BRAND.md`
+- `src/`: the app (`pages/`, `components/`, `hooks/`, `services/` for REST, `stores/` for Zustand,
+  `config/socket.config.ts` for chat, `lib/`, `types/`, `utils/`, `themes/`)
+- `tests/`: Vitest suites plus browser-console regression scripts for chat
+- Build and quality config: Vite, TypeScript, ESLint, Prettier, Husky
+- Agent config: `AGENTS.md`, `CLAUDE.md`, `.agents/skills/`
 
 ## What is not included in this repo?
 
-- [socraticbooks-backend](https://github.com/cmudco/socraticbots-backend) — the Django API this app depends on (run it separately)
-- [dare-backend](https://github.com/cmudco/dare-backend) — the DARE backend that SocraticBooks proxies for auth, AI, and files
-- [voice-agent-runtime](https://github.com/cmudco/voice-agent-runtime) — the standalone Pipecat/WebRTC voice runtime used for spoken tutoring
+- [socraticbots-backend](https://github.com/cmudco/socraticbots-backend): the Django API this app
+  calls for everything except chat and voice media (required)
+- [dare-backend](https://github.com/cmudco/dare-backend): accounts, LLM chat, files, retrieval, and
+  billing (required)
+- [voice-agent-runtime](https://github.com/cmudco/voice-agent-runtime): the Pipecat voice runtime for
+  spoken exams (optional)
+- [dare-frontend](https://github.com/cmudco/dare-frontend): DARE's own web app, used only for
+  hand-off links such as billing (optional)
 
 ## Stay in touch
 
-- **Found a bug or have a feature request?** Open an issue on the project's GitHub repository.
+- **Found a bug or want a feature?** Open an issue in this repository.
 - **Questions or general inquiries?** Email the project team at vks@andrew.cmu.edu.
 
 ## Acknowledgements
 
-SocraticBooks is developed at the Dietrich College of Humanities and Social Sciences, Carnegie Mellon
+Socratic Bots is developed at the Dietrich College of Humanities and Social Sciences, Carnegie Mellon
 University, and is built on the [DARE](https://github.com/cmudco/dare-backend) platform.
 
 "DARE" (Dietrich Analysis Research Education Platform) and "SocraticBots" are trademarks of Carnegie
 Mellon University. See [BRAND.md](BRAND.md) for the brand usage policy. For trademark, licensing, or
 general inquiries, contact the project team at vks@andrew.cmu.edu.
 
-This software integrates with third-party APIs (Anthropic, OpenAI, ElevenLabs, and others); use of
-those APIs is subject to each provider's own Terms of Service.
+This software integrates with third-party APIs (for example Anthropic, OpenAI, Google, Mistral, and
+ElevenLabs). Use of those APIs is subject to each provider's terms of service.
 
 ## Contributors
 
-SocraticBooks is built and maintained by the team at the Dietrich College of Humanities and Social
+Socratic Bots is built and maintained by the team at the Dietrich College of Humanities and Social
 Sciences, Carnegie Mellon University.
 
 **Creators**
@@ -200,6 +212,7 @@ Sciences, Carnegie Mellon University.
 
 ## License
 
-This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only).
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE)
+(AGPL-3.0-only). © 2024–2026 Carnegie Mellon University.
 
-See the [LICENSE](LICENSE) file for the full license text, or visit <https://www.gnu.org/licenses/agpl-3.0.en.html>.
+See the [LICENSE](LICENSE) file for the full text, or <https://www.gnu.org/licenses/agpl-3.0.en.html>.
