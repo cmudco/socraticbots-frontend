@@ -32,8 +32,6 @@ Out of scope (report these to the right project):
 - **Serve over HTTPS** and redirect HTTP.
 - **Tokens live in `localStorage`.** Any XSS can read them. Keep a strict Content-Security-Policy on
   the host serving `dist/`, and don't add inline scripts or third-party script tags.
-- **Chat markdown renders raw HTML** (`rehype-raw`, without a sanitizer) for model output in
-  `src/components/chat/shared/MessageMarkdown.tsx`. Treat changes there as security-sensitive.
 - **Allow only your origin** on the Socratic Bots backend (CORS and CSRF), DARE, and the voice
   runtime.
 - **Sentry is optional.** Production replay masks all text, inputs, and media; local development
