@@ -62,7 +62,7 @@ flowchart LR
 - **Voice exams** connect straight to the voice runtime over WebRTC, using a URL the Socratic Bots
   backend signs for each session.
 
-See [docs/architecture.md](docs/architecture.md) for the full picture.
+See [docs/explanation/architecture.md](docs/explanation/architecture.md) for the full picture.
 
 ## Features
 
@@ -88,7 +88,7 @@ and take voice exams.
 
 Requires Node.js 20+ and a running Socratic Bots backend on `:8001` with DARE on `:8000`. If you
 don't have those yet, follow the
-[full-stack quick start](https://github.com/cmudco/socraticbots-backend/blob/dev/QUICKSTART.md) first.
+[full-stack quick start](https://github.com/cmudco/socraticbots-backend/blob/dev/docs/tutorials/quickstart.md) first.
 
 ```bash
 git clone https://github.com/cmudco/socraticbots-frontend.git
@@ -99,24 +99,24 @@ npm run dev -- --port 5174
 ```
 
 Open <http://localhost:5174>. Step-by-step details and troubleshooting are in
-[QUICKSTART.md](QUICKSTART.md).
+[docs/tutorials/quickstart.md](docs/tutorials/quickstart.md).
 
 ## Documentation
 
-| Kind        | Doc                                                  | What's in it                                               |
-| ----------- | ---------------------------------------------------- | ---------------------------------------------------------- |
-| Tutorial    | [QUICKSTART.md](QUICKSTART.md)                       | Run the frontend locally, verify it, fix common problems   |
-| How-to      | [DEPLOYMENT.md](DEPLOYMENT.md)                       | Build and serve the app in production                      |
-| How-to      | [tests/README.md](tests/README.md)                   | Unit tests, voice contract tests, manual chat regressions  |
-| Reference   | [docs/configuration.md](docs/configuration.md)       | Every environment variable                                 |
-| Reference   | [tests/SOCKET_CONTRACT.md](tests/SOCKET_CONTRACT.md) | The chat Socket.IO wire contract shared with DARE          |
-| Explanation | [docs/architecture.md](docs/architecture.md)         | How the app is structured and how it talks to each service |
-| Project     | [CONTRIBUTING.md](CONTRIBUTING.md)                   | Issues, pull requests, checks to run                       |
-| Project     | [rules.md](rules.md)                                 | Frontend coding standards                                  |
-| Project     | [AGENTS.md](AGENTS.md)                               | Guide for AI coding agents working in this repo            |
-| Project     | [SECURITY.md](SECURITY.md)                           | Reporting vulnerabilities, hardening notes                 |
-| Project     | [CHANGELOG.md](CHANGELOG.md)                         | Notable changes                                            |
-| Project     | [BRAND.md](BRAND.md)                                 | Brand and trademark usage policy                           |
+| Kind        | Doc                                                                  | What's in it                                               |
+| ----------- | -------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Tutorial    | [docs/tutorials/quickstart.md](docs/tutorials/quickstart.md)         | Run the frontend locally, verify it, fix common problems   |
+| How-to      | [docs/how-to/deploy.md](docs/how-to/deploy.md)                       | Build and serve the app in production                      |
+| How-to      | [tests/README.md](tests/README.md)                                   | Unit tests, voice contract tests, manual chat regressions  |
+| Reference   | [docs/reference/configuration.md](docs/reference/configuration.md)   | Every environment variable                                 |
+| Reference   | [tests/SOCKET_CONTRACT.md](tests/SOCKET_CONTRACT.md)                 | The chat Socket.IO wire contract shared with DARE          |
+| Explanation | [docs/explanation/architecture.md](docs/explanation/architecture.md) | How the app is structured and how it talks to each service |
+| Project     | [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)                   | Issues, pull requests, checks to run                       |
+| Project     | [docs/reference/rules.md](docs/reference/rules.md)                   | Frontend coding standards                                  |
+| Project     | [AGENTS.md](AGENTS.md)                                               | Guide for AI coding agents working in this repo            |
+| Project     | [.github/SECURITY.md](.github/SECURITY.md)                           | Reporting vulnerabilities, hardening notes                 |
+| Project     | [CHANGELOG.md](CHANGELOG.md)                                         | Notable changes                                            |
+| Project     | [docs/brand.md](docs/brand.md)                                       | Brand and trademark usage policy                           |
 
 ### Scripts
 
@@ -150,7 +150,7 @@ Open <http://localhost:5174>. Step-by-step details and troubleshooting are in
   `config/socket.config.ts` for chat, `lib/`, `types/`, `utils/`, `themes/`)
 - `tests/`: Vitest suites plus browser-console regression scripts for chat
 - Build and quality config: Vite, TypeScript, ESLint, Prettier, Husky
-- Agent config: `AGENTS.md`, `CLAUDE.md`, `.agents/skills/`
+- Agent config: `AGENTS.md`, `.claude/CLAUDE.md`, `.agents/skills/`
 
 ## What is not included in this repo?
 
@@ -174,7 +174,7 @@ Socratic Bots is developed at the Dietrich College of Humanities and Social Scie
 University, and is built on the [DARE](https://github.com/cmudco/dare-backend) platform.
 
 "DARE" (Dietrich Analysis Research Education Platform) and "SocraticBots" are trademarks of Carnegie
-Mellon University. See [BRAND.md](BRAND.md) for the brand usage policy. For trademark, licensing, or
+Mellon University. See [docs/brand.md](docs/brand.md) for the brand usage policy. For trademark, licensing, or
 general inquiries, contact the project team at vks@andrew.cmu.edu.
 
 This software integrates with third-party APIs (for example Anthropic, OpenAI, Google, Mistral, and

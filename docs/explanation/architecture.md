@@ -64,7 +64,7 @@ user back to login.
 
 DARE tells Socratic Bots traffic apart from its own by the socket's `Origin`, matched against its
 `SOCRATIC_BOTS_FRONTEND_URL`. The full wire format is in
-[tests/SOCKET_CONTRACT.md](../tests/SOCKET_CONTRACT.md).
+[tests/SOCKET_CONTRACT.md](../../tests/SOCKET_CONTRACT.md).
 
 ### Bot files
 

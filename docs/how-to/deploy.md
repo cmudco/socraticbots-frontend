@@ -1,6 +1,6 @@
 # Socratic Bots Frontend — Deployment Guide
 
-> **Just want to run it locally?** See [QUICKSTART.md](QUICKSTART.md). This guide is for serving the
+> **Just want to run it locally?** See [docs/tutorials/quickstart.md](../tutorials/quickstart.md). This guide is for serving the
 > app to real users.
 
 The frontend is a static single-page app. You build it once into `dist/` and serve those files from
@@ -106,7 +106,7 @@ The frontend works only if the backends accept your frontend's origin.
 
 | Service               | What to set                                                                                                                                                                               |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Socratic Bots backend | Allow `https://sb.example.org` for CORS and CSRF. See that repo's DEPLOYMENT.md.                                                                                                          |
+| Socratic Bots backend | Allow `https://sb.example.org` for CORS and CSRF. See that repo's `docs/how-to/deploy.md`.                                                                                                |
 | DARE backend          | `SOCRATIC_BOTS_FRONTEND_URL=https://sb.example.org`. DARE matches the socket's `Origin` against it to tag the chat as Socratic Bots traffic; without it, chats are treated as DARE chats. |
 | voice-agent-runtime   | Add `https://sb.example.org` to `VOICE_RUNTIME_CORS_ORIGINS`.                                                                                                                             |
 

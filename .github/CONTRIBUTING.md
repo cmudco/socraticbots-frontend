@@ -11,7 +11,7 @@ Before opening an issue:
 2. Check that the problem reproduces on the latest `dev`.
 3. Note whether it involves the Socratic Bots backend, DARE, or the voice runtime. Many frontend
    symptoms (failed login, no chat reply) come from backend configuration; the
-   [QUICKSTART troubleshooting table](QUICKSTART.md#troubleshooting) covers the common ones.
+   [QUICKSTART troubleshooting table](../docs/tutorials/quickstart.md#troubleshooting) covers the common ones.
 
 ### Bug reports
 
@@ -30,7 +30,7 @@ implementation open.
 
 ### Security issues
 
-Do **not** open public issues for vulnerabilities. See [SECURITY.md](SECURITY.md).
+Do **not** open public issues for vulnerabilities. See [.github/SECURITY.md](SECURITY.md).
 
 ## Pull requests
 
@@ -61,9 +61,9 @@ Do **not** open public issues for vulnerabilities. See [SECURITY.md](SECURITY.md
    `tsc --noEmit`.
 
 3. Test the change in a browser against a local Socratic Bots backend and DARE. If you touched chat
-   sockets, also run the browser-console regressions in [tests/README.md](tests/README.md).
+   sockets, also run the browser-console regressions in [tests/README.md](../tests/README.md).
 
-4. If you change a socket payload or event, update [tests/SOCKET_CONTRACT.md](tests/SOCKET_CONTRACT.md)
+4. If you change a socket payload or event, update [tests/SOCKET_CONTRACT.md](../tests/SOCKET_CONTRACT.md)
    and coordinate the matching change in DARE.
 
 The Husky pre-commit hook runs Prettier and ESLint on staged files. Run Prettier only on files you
@@ -87,7 +87,7 @@ reviewable.
 
 ## Coding standards
 
-[rules.md](rules.md) is the full standard. The short version:
+[docs/reference/rules.md](../docs/reference/rules.md) is the full standard. The short version:
 
 - TypeScript everywhere. No `any`; ESLint enforces it.
 - REST calls go through a service in `src/services/` built on `baseRequest`, wrapped in a TanStack
@@ -115,13 +115,13 @@ already knows how to run the app and check a change.
 | File                             | What it is                                                                      |
 | -------------------------------- | ------------------------------------------------------------------------------- |
 | `AGENTS.md`                      | Project instructions. Read by Codex and other tools that follow the convention. |
-| `CLAUDE.md`                      | Imports `AGENTS.md`, plus any Claude Code-specific notes.                       |
+| `.claude/CLAUDE.md`              | Imports `AGENTS.md`, plus any Claude Code-specific notes.                       |
 | `.agents/skills/<name>/SKILL.md` | Task procedures: `run-frontend`, `check`.                                       |
 | `.claude/skills/<name>`          | Symlinks to the above, because Claude Code scans a different path.              |
 
 Invoke a skill by name (`/run-frontend` in Claude Code, `$run-frontend` in Codex) or describe the
 task and let the agent pick the skill. Edit skills under `.agents/skills/`; the symlinks need no
-change. See [.agents/README.md](.agents/README.md), including the Windows symlink note.
+change. See [.agents/README.md](../.agents/README.md), including the Windows symlink note.
 
 Treat these files like code. If you change how the app is run, built, or tested, update the matching
 skill in the same PR.

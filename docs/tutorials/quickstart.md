@@ -1,10 +1,10 @@
 # Socratic Bots Frontend — Quick Start
 
-Run the web app locally against a local backend. To deploy it, see [DEPLOYMENT.md](DEPLOYMENT.md).
+Run the web app locally against a local backend. To deploy it, see [docs/how-to/deploy.md](../how-to/deploy.md).
 
 This guide covers the frontend only. The app is useless without the Socratic Bots backend and DARE
 behind it, so if those aren't running yet, start with the
-[full-stack quick start](https://github.com/cmudco/socraticbots-backend/blob/dev/QUICKSTART.md),
+[full-stack quick start](https://github.com/cmudco/socraticbots-backend/blob/dev/docs/tutorials/quickstart.md),
 which brings up all the services in order and ends by pointing back here.
 
 ## Prerequisites
@@ -42,7 +42,7 @@ The defaults point at the standard local ports, so you usually don't need to cha
 | `VITE_DARE_FRONTEND_URL` | `http://localhost:5173`     | DARE web app, for billing hand-off links |
 
 Every variable, including the optional Sentry ones, is in
-[docs/configuration.md](docs/configuration.md). `VITE_*` values are compiled into the browser bundle:
+[docs/reference/configuration.md](../reference/configuration.md). `VITE_*` values are compiled into the browser bundle:
 never put secrets in them.
 
 ## 3. Run

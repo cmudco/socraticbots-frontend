@@ -2,12 +2,12 @@
 
 Guidance for AI coding agents working in the Socratic Bots frontend. Codex and other tools that
 follow the `AGENTS.md` convention read this file directly; Claude Code reads it through the import
-in `CLAUDE.md`.
+in `.claude/CLAUDE.md`.
 
 Task procedures (running the app, pre-PR checks) are skills in `.agents/skills/`. See
 `.agents/README.md` for how that directory works.
 
-Before changing code, read and follow `rules.md`.
+Before changing code, read and follow `docs/reference/rules.md`.
 
 ## What this app is
 

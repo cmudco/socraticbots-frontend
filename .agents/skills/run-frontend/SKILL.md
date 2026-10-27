@@ -10,7 +10,7 @@ A Vite + React app. It needs two backends already running:
 - **Socratic Bots backend** on `http://localhost:8001` (all REST calls)
 - **DARE backend** on `http://localhost:8000` with Redis (chat over Socket.IO `/chat`)
 
-If they aren't up, start them first; the backend repo's `QUICKSTART.md` has the full-stack order.
+If they aren't up, start them first; the backend repo's `docs/tutorials/quickstart.md` has the full-stack order.
 Check quickly:
 
 ```bash
@@ -64,4 +64,4 @@ lsof -ti tcp:5174 | xargs kill
 ## Related
 
 - `check` — lint, format, tests, and build before a PR.
-- `README.md` and `QUICKSTART.md` for the overview and full setup.
+- `README.md` and `docs/tutorials/quickstart.md` for the overview and full setup.

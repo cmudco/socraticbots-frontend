@@ -21,13 +21,13 @@ Vite compiles `VITE_*` values into the JavaScript bundle at build time. That has
 
 ## What is not configured here
 
-| Setting                  | Where it comes from                                                                                                                      |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Voice runtime URL        | The Socratic Bots backend returns a signed URL per voice session (`VOICE_RUNTIME_PUBLIC_URL` on the backend).                            |
-| WebRTC STUN/TURN servers | Sent by the Socratic Bots backend with the voice session (`VOICE_RUNTIME_ICE_SERVERS` on the backend).                                   |
-| Models, wallets, prices  | Fetched from the Socratic Bots backend, which reads them from DARE.                                                                      |
-| Dev server port          | Not set in `vite.config.ts`. Pass `-- --port 5174` to `npm run dev`; 5173 is the DARE frontend's port.                                   |
-| Allowed origins          | Configured on the backends, not here. See the frontend [DEPLOYMENT.md](../DEPLOYMENT.md#3-configure-the-other-services-for-this-origin). |
+| Setting                  | Where it comes from                                                                                                                                 |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Voice runtime URL        | The Socratic Bots backend returns a signed URL per voice session (`VOICE_RUNTIME_PUBLIC_URL` on the backend).                                       |
+| WebRTC STUN/TURN servers | Sent by the Socratic Bots backend with the voice session (`VOICE_RUNTIME_ICE_SERVERS` on the backend).                                              |
+| Models, wallets, prices  | Fetched from the Socratic Bots backend, which reads them from DARE.                                                                                 |
+| Dev server port          | Not set in `vite.config.ts`. Pass `-- --port 5174` to `npm run dev`; 5173 is the DARE frontend's port.                                              |
+| Allowed origins          | Configured on the backends, not here. See the frontend [docs/how-to/deploy.md](../how-to/deploy.md#3-configure-the-other-services-for-this-origin). |
 
 ## Local example
 
