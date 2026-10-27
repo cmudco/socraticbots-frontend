@@ -103,20 +103,20 @@ Open <http://localhost:5174>. Step-by-step details and troubleshooting are in
 
 ## Documentation
 
-| Doc                                                  | What's in it                                               |
-| ---------------------------------------------------- | ---------------------------------------------------------- |
-| [QUICKSTART.md](QUICKSTART.md)                       | Run the frontend locally, verify it, fix common problems   |
-| [DEPLOYMENT.md](DEPLOYMENT.md)                       | Build and serve the app in production                      |
-| [docs/configuration.md](docs/configuration.md)       | Every environment variable                                 |
-| [docs/architecture.md](docs/architecture.md)         | How the app is structured and how it talks to each service |
-| [tests/README.md](tests/README.md)                   | Unit tests, voice contract tests, manual chat regressions  |
-| [tests/SOCKET_CONTRACT.md](tests/SOCKET_CONTRACT.md) | The chat Socket.IO wire contract shared with DARE          |
-| [rules.md](rules.md)                                 | Frontend coding standards                                  |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                   | Issues, pull requests, checks to run                       |
-| [SECURITY.md](SECURITY.md)                           | Reporting vulnerabilities, hardening notes                 |
-| [AGENTS.md](AGENTS.md)                               | Guide for AI coding agents working in this repo            |
-| [CHANGELOG.md](CHANGELOG.md)                         | Notable changes                                            |
-| [BRAND.md](BRAND.md)                                 | Brand and trademark usage policy                           |
+| Kind        | Doc                                                  | What's in it                                               |
+| ----------- | ---------------------------------------------------- | ---------------------------------------------------------- |
+| Tutorial    | [QUICKSTART.md](QUICKSTART.md)                       | Run the frontend locally, verify it, fix common problems   |
+| How-to      | [DEPLOYMENT.md](DEPLOYMENT.md)                       | Build and serve the app in production                      |
+| How-to      | [tests/README.md](tests/README.md)                   | Unit tests, voice contract tests, manual chat regressions  |
+| Reference   | [docs/configuration.md](docs/configuration.md)       | Every environment variable                                 |
+| Reference   | [tests/SOCKET_CONTRACT.md](tests/SOCKET_CONTRACT.md) | The chat Socket.IO wire contract shared with DARE          |
+| Explanation | [docs/architecture.md](docs/architecture.md)         | How the app is structured and how it talks to each service |
+| Project     | [CONTRIBUTING.md](CONTRIBUTING.md)                   | Issues, pull requests, checks to run                       |
+| Project     | [rules.md](rules.md)                                 | Frontend coding standards                                  |
+| Project     | [AGENTS.md](AGENTS.md)                               | Guide for AI coding agents working in this repo            |
+| Project     | [SECURITY.md](SECURITY.md)                           | Reporting vulnerabilities, hardening notes                 |
+| Project     | [CHANGELOG.md](CHANGELOG.md)                         | Notable changes                                            |
+| Project     | [BRAND.md](BRAND.md)                                 | Brand and trademark usage policy                           |
 
 ### Scripts
 
