@@ -116,7 +116,7 @@ Open <http://localhost:5174>. Step-by-step details and troubleshooting are in
 | Project     | [AGENTS.md](AGENTS.md)                                               | Guide for AI coding agents working in this repo            |
 | Project     | [.github/SECURITY.md](.github/SECURITY.md)                           | Reporting vulnerabilities, hardening notes                 |
 | Project     | [CHANGELOG.md](CHANGELOG.md)                                         | Notable changes                                            |
-| Project     | [docs/brand.md](docs/brand.md)                                       | Brand and trademark usage policy                           |
+| Project     | [BRAND.md](BRAND.md)                                                 | Brand and trademark usage policy                           |
 
 ### Scripts
 
@@ -174,7 +174,7 @@ Socratic Bots is developed at the Dietrich College of Humanities and Social Scie
 University, and is built on the [DARE](https://github.com/cmudco/dare-backend) platform.
 
 "DARE" (Dietrich Analysis Research Education Platform) and "SocraticBots" are trademarks of Carnegie
-Mellon University. See [docs/brand.md](docs/brand.md) for the brand usage policy. For trademark, licensing, or
+Mellon University. See [BRAND.md](BRAND.md) for the brand usage policy. For trademark, licensing, or
 general inquiries, contact the project team at vks@andrew.cmu.edu.
 
 This software integrates with third-party APIs (for example Anthropic, OpenAI, Google, Mistral, and
