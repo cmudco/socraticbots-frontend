@@ -2,9 +2,10 @@
 
 The Socratic Bots frontend is a React single-page app. It owns no data: tutors, codes, notes, and
 voice agents live in the Socratic Bots backend; accounts, conversations, files, models, and billing
-live in DARE. This page explains how the app is put together and which service it talks to for what.
+live in DARE. The app is a thin client over three services: REST to the Socratic Bots backend,
+Socket.IO chat straight to DARE, and WebRTC voice to the voice runtime or ElevenLabs.
 
-## Services
+## Overview
 
 ```mermaid
 flowchart LR
@@ -34,6 +35,55 @@ flowchart LR
 
 The frontend never calls DARE's REST API directly. The Socratic Bots backend proxies everything it
 needs from DARE (login, files, models, wallets, conversation history).
+
+## Components
+
+| Path                                                            | What lives there                                                                                                         |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `src/App.tsx`                                                   | All routes                                                                                                               |
+| `src/pages/`                                                    | Route-level pages                                                                                                        |
+| `src/components/`                                               | Feature components (`bots/`, `botGroups/`, `chat/`, `VoiceExam/`, `voice-agents/`, `wallet/`, ...) and `ui/` (shadcn/ui) |
+| `src/services/*.service.ts`                                     | One REST client per backend area, all built on `src/utils/baseRequest.ts`                                                |
+| `src/services/socket.service.ts`, `src/config/socket.config.ts` | Socket.IO connection to DARE                                                                                             |
+| `src/hooks/queries/`                                            | TanStack Query hooks wrapping the services                                                                               |
+| `src/stores/core/`                                              | Zustand stores for chat sockets, conversations, public bots, notes, attachments                                          |
+| `src/stores/ui/`, `src/stores/forms/`                           | Zustand stores for modals, toasts, theme, and multi-step forms                                                           |
+| `src/schemas/`                                                  | Zod schemas (bot form, socket events)                                                                                    |
+| `src/lib/`                                                      | Config, Sentry, voice lifecycle and contract helpers                                                                     |
+| `src/types/`                                                    | Shared TypeScript types                                                                                                  |
+| `src/themes/`, `src/styles/`                                    | Bot chat themes (CSS custom properties)                                                                                  |
+
+### State
+
+- **Server state** (anything fetched over REST) goes through TanStack Query hooks in
+  `src/hooks/queries/`. Mutations invalidate the matching query keys.
+- **Client state** (socket messages, streaming text, UI toggles, form drafts) lives in Zustand
+  stores. The two chat stores (`websocketStore` for signed-in chat, `publicWebSocketStore` for public
+  bots) share their event handling through `chatSocketCore.ts`.
+
+### Routes
+
+| Path                                                                           | Page                                | Who       |
+| ------------------------------------------------------------------------------ | ----------------------------------- | --------- |
+| `/public-deployment/bot/:botId`                                                | Public bot chat                     | Anyone    |
+| `/login`, `/register`, `/forgot-password`, `/forgot-password-success`          | Auth pages                          | Anyone    |
+| `/`                                                                            | Home (landing page when signed out) | Signed in |
+| `/access-codes`                                                                | Subscription codes                  | Signed in |
+| `/bot-groups`                                                                  | Chatbot groups                      | Signed in |
+| `/bot-groups/:botGroupId/bots/new`, `/bot-groups/:botGroupId/bots/:botId/edit` | Bot editor                          | Creators  |
+| `/bot-access`, `/bot-access/:botGroupId/:botId`                                | Users and conversations per bot     | Creators  |
+| `/chat`, `/chat/:botId`                                                        | Chat                                | Signed in |
+| `/voice-exams`                                                                 | Voice assignments                   | Signed in |
+| `/voice-exams/create`, `/voice-exams/:id`                                      | Voice agent editor and detail       | Creators  |
+| `/voice-exams/:id/exam`                                                        | Take a voice exam                   | Signed in |
+| `/voice-exams/:agentId/conversations[/:id]`                                    | Voice transcripts                   | Creators  |
+| `/voice-exams/stt-lab`                                                         | Speech-to-text lab                  | Signed in |
+| `/settings`                                                                    | Account, wallet, keys               | Signed in |
+| `/about`                                                                       | About                               | Signed in |
+| anything else                                                                  | Redirects to `/`                    |           |
+
+"Creators" means the page is built for creator roles. Access is enforced by the Socratic Bots
+backend, not by the route.
 
 ## Main flows
 
@@ -87,51 +137,10 @@ page polls the file list every five seconds while any file is still processing
 3. When the session ends, the runtime (or the ElevenLabs webhook) sends the transcript to the
    backend, and the frontend polls `voice/agents/<id>/session_status/` to show the outcome.
 
-## Code layout
+## Further reading
 
-| Path                                                            | What lives there                                                                                                         |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `src/App.tsx`                                                   | All routes                                                                                                               |
-| `src/pages/`                                                    | Route-level pages                                                                                                        |
-| `src/components/`                                               | Feature components (`bots/`, `botGroups/`, `chat/`, `VoiceExam/`, `voice-agents/`, `wallet/`, ...) and `ui/` (shadcn/ui) |
-| `src/services/*.service.ts`                                     | One REST client per backend area, all built on `src/utils/baseRequest.ts`                                                |
-| `src/services/socket.service.ts`, `src/config/socket.config.ts` | Socket.IO connection to DARE                                                                                             |
-| `src/hooks/queries/`                                            | TanStack Query hooks wrapping the services                                                                               |
-| `src/stores/core/`                                              | Zustand stores for chat sockets, conversations, public bots, notes, attachments                                          |
-| `src/stores/ui/`, `src/stores/forms/`                           | Zustand stores for modals, toasts, theme, and multi-step forms                                                           |
-| `src/schemas/`                                                  | Zod schemas (bot form, socket events)                                                                                    |
-| `src/lib/`                                                      | Config, Sentry, voice lifecycle and contract helpers                                                                     |
-| `src/types/`                                                    | Shared TypeScript types                                                                                                  |
-| `src/themes/`, `src/styles/`                                    | Bot chat themes (CSS custom properties)                                                                                  |
-
-### State
-
-- **Server state** (anything fetched over REST) goes through TanStack Query hooks in
-  `src/hooks/queries/`. Mutations invalidate the matching query keys.
-- **Client state** (socket messages, streaming text, UI toggles, form drafts) lives in Zustand
-  stores. The two chat stores (`websocketStore` for signed-in chat, `publicWebSocketStore` for public
-  bots) share their event handling through `chatSocketCore.ts`.
-
-## Routes
-
-| Path                                                                           | Page                                | Who       |
-| ------------------------------------------------------------------------------ | ----------------------------------- | --------- |
-| `/public-deployment/bot/:botId`                                                | Public bot chat                     | Anyone    |
-| `/login`, `/register`, `/forgot-password`, `/forgot-password-success`          | Auth pages                          | Anyone    |
-| `/`                                                                            | Home (landing page when signed out) | Signed in |
-| `/access-codes`                                                                | Subscription codes                  | Signed in |
-| `/bot-groups`                                                                  | Chatbot groups                      | Signed in |
-| `/bot-groups/:botGroupId/bots/new`, `/bot-groups/:botGroupId/bots/:botId/edit` | Bot editor                          | Creators  |
-| `/bot-access`, `/bot-access/:botGroupId/:botId`                                | Users and conversations per bot     | Creators  |
-| `/chat`, `/chat/:botId`                                                        | Chat                                | Signed in |
-| `/voice-exams`                                                                 | Voice assignments                   | Signed in |
-| `/voice-exams/create`, `/voice-exams/:id`                                      | Voice agent editor and detail       | Creators  |
-| `/voice-exams/:id/exam`                                                        | Take a voice exam                   | Signed in |
-| `/voice-exams/:agentId/conversations[/:id]`                                    | Voice transcripts                   | Creators  |
-| `/voice-exams/stt-lab`                                                         | Speech-to-text lab                  | Signed in |
-| `/settings`                                                                    | Account, wallet, keys               | Signed in |
-| `/about`                                                                       | About                               | Signed in |
-| anything else                                                                  | Redirects to `/`                    |           |
-
-"Creators" means the page is built for creator roles. Access is enforced by the Socratic Bots
-backend, not by the route.
+- [tests/SOCKET_CONTRACT.md](../../tests/SOCKET_CONTRACT.md): the chat wire contract shared with DARE.
+- [docs/reference/configuration.md](../reference/configuration.md): every environment variable.
+- [docs/reference/rules.md](../reference/rules.md): coding rules and project conventions.
+- [Socratic Bots backend](https://github.com/cmudco/socraticbots-backend) and
+  [DARE backend](https://github.com/cmudco/dare-backend): the services this app calls.

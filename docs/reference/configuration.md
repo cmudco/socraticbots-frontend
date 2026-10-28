@@ -1,33 +1,31 @@
 # Configuration
 
-The frontend reads a handful of Vite environment variables. Copy `.env.example` to `.env` for local
-development, or to `.env.production` before a production build.
+The frontend reads a handful of Vite `VITE_*` variables through `import.meta.env`; copy
+`.env.example` to `.env` for local development, or to `.env.production` before a production build.
 
-Vite compiles `VITE_*` values into the JavaScript bundle at build time. That has two consequences:
+Vite compiles `VITE_*` values into the JavaScript bundle at build time, so:
 
-- Everything in them is public. Never put API keys, internal service keys, or other secrets here.
-- Changing a value requires a restart (`npm run dev`) or a rebuild (`npm run build`).
+- Everything in them is public. Never put API keys, internal service keys or other secrets here.
+- Changing a value needs a restart (`npm run dev`) or a rebuild (`npm run build`).
+
+## Values that must match across services
+
+- **This app's origin** must equal DARE's `SOCRATIC_BOTS_FRONTEND_URL` (`http://localhost:5174`
+  locally). DARE matches the socket `Origin` against it to tag chats as Socratic Bots traffic.
+- **This app's origin** must be allowed for CORS and CSRF on the Socratic Bots backend, and in
+  `VOICE_RUNTIME_CORS_ORIGINS` on the voice runtime. See
+  [deploy.md](../how-to/deploy.md#3-configure-the-other-services-for-this-origin).
 
 ## Variables
 
-| Variable                  | Default                                   | Required           | What it does                                                                                                                                                | Read in                                  |
-| ------------------------- | ----------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| `VITE_API_URL`            | `http://localhost:8001/api`               | Yes, in production | Base URL of the Socratic Bots backend REST API, including `/api`. Every REST call is `${VITE_API_URL}/<path>`.                                              | `src/lib/config.ts`                      |
-| `VITE_DARE_SOCKET_URL`    | `http://localhost:8000`                   | Yes, in production | DARE backend origin. Chat connects to `${VITE_DARE_SOCKET_URL}/chat` over Socket.IO (path `/socket.io/`). A trailing slash is stripped.                     | `src/config/socket.config.ts`            |
-| `VITE_DARE_FRONTEND_URL`  | `http://localhost:5173`                   | No                 | DARE web app origin. Used for the "manage in DARE" billing link in the wallet drawer (`${VITE_DARE_FRONTEND_URL}/billing/`).                                | `src/components/wallet/WalletDrawer.tsx` |
-| `VITE_SENTRY_DSN`         | unset (Sentry off)                        | No                 | Sentry DSN for production builds. Enables error reporting, tracing at 20%, and session replay with all text, inputs, and media masked.                      | `src/lib/sentry.ts`                      |
-| `VITE_LOCAL_SENTRY_DSN`   | unset (Sentry off)                        | No                 | Sentry DSN used only by `npm run dev`. Keeps local errors out of the production project. Local events are stripped to a minimal payload and have no replay. | `src/lib/sentry.ts`                      |
-| `VITE_SENTRY_ENVIRONMENT` | Vite mode (`development` or `production`) | No                 | Environment tag on Sentry events.                                                                                                                           | `src/lib/sentry.ts`                      |
-
-## What is not configured here
-
-| Setting                  | Where it comes from                                                                                                                                 |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Voice runtime URL        | The Socratic Bots backend returns a signed URL per voice session (`VOICE_RUNTIME_PUBLIC_URL` on the backend).                                       |
-| WebRTC STUN/TURN servers | Sent by the Socratic Bots backend with the voice session (`VOICE_RUNTIME_ICE_SERVERS` on the backend).                                              |
-| Models, wallets, prices  | Fetched from the Socratic Bots backend, which reads them from DARE.                                                                                 |
-| Dev server port          | Not set in `vite.config.ts`. Pass `-- --port 5174` to `npm run dev`; 5173 is the DARE frontend's port.                                              |
-| Allowed origins          | Configured on the backends, not here. See the frontend [docs/how-to/deploy.md](../how-to/deploy.md#3-configure-the-other-services-for-this-origin). |
+| Variable                  | Default                                                         | Description                                                                                                                                                                                |
+| ------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `VITE_API_URL`            | **Required** in production; `http://localhost:8001/api` locally | Base URL of the Socratic Bots backend REST API, including `/api`. Every REST call is `${VITE_API_URL}/<path>`. Read in `src/lib/config.ts`.                                                |
+| `VITE_DARE_SOCKET_URL`    | **Required** in production; `http://localhost:8000` locally     | DARE backend origin. Chat connects to `${VITE_DARE_SOCKET_URL}/chat` over Socket.IO (path `/socket.io/`); a trailing slash is stripped. Read in `src/config/socket.config.ts`.             |
+| `VITE_DARE_FRONTEND_URL`  | `http://localhost:5173`                                         | DARE web app origin, for the "manage in DARE" billing link in the wallet drawer (`${VITE_DARE_FRONTEND_URL}/billing/`). Read in `src/components/wallet/WalletDrawer.tsx`.                  |
+| `VITE_SENTRY_DSN`         | unset (Sentry off)                                              | Sentry DSN for production builds. Enables error reporting, tracing at 20%, and session replay with all text, inputs and media masked. Read in `src/lib/sentry.ts`.                         |
+| `VITE_LOCAL_SENTRY_DSN`   | unset (Sentry off)                                              | Sentry DSN used only by `npm run dev`, to keep local errors out of the production project. Local events are stripped to a minimal payload and have no replay. Read in `src/lib/sentry.ts`. |
+| `VITE_SENTRY_ENVIRONMENT` | Vite mode (`development` or `production`)                       | Environment tag on Sentry events. Read in `src/lib/sentry.ts`.                                                                                                                             |
 
 ## Local example
 
@@ -46,3 +44,22 @@ VITE_DARE_FRONTEND_URL=https://dare.example.org
 VITE_SENTRY_DSN=https://<key>@<org>.ingest.sentry.io/<project>
 VITE_SENTRY_ENVIRONMENT=production
 ```
+
+## Adding a variable
+
+1. Name it `VITE_<NAME>` (Vite exposes nothing else) and add it, commented if optional, to
+   `.env.example`.
+2. Read it in one module through `import.meta.env`, with a local default; app-wide settings go in
+   `src/lib/config.ts`.
+3. Add a row to the table above.
+4. If production needs it, add it to the build step in
+   [deploy.md](../how-to/deploy.md#1-build).
+
+## Not configured here
+
+| Setting                  | Where it comes from                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Voice runtime URL        | The Socratic Bots backend returns a signed URL per voice session (`VOICE_RUNTIME_PUBLIC_URL` on the backend). |
+| WebRTC STUN/TURN servers | Sent by the Socratic Bots backend with the voice session (`VOICE_RUNTIME_ICE_SERVERS` on the backend).        |
+| Models, wallets, prices  | Fetched from the Socratic Bots backend, which reads them from DARE.                                           |
+| Dev server port          | Not set in `vite.config.ts`. Pass `-- --port 5174` to `npm run dev`; 5173 is the DARE frontend's port.        |

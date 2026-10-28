@@ -6,32 +6,25 @@
 > The React web app for **Socratic Bots**: AI tutors that guide students with questions instead of
 > handing them answers. Built on [DARE](https://github.com/cmudco/dare-backend).
 
-## Table of Contents
-
-- [What is Socratic Bots?](#what-is-socratic-bots)
-- [Overview](#overview)
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [Documentation](#documentation)
-- [Tech Stack](#tech-stack)
-- [What is included in this repo?](#what-is-included-in-this-repo)
-- [What is not included in this repo?](#what-is-not-included-in-this-repo)
-- [Stay in touch](#stay-in-touch)
-- [Acknowledgements](#acknowledgements)
-- [Contributors](#contributors)
-- [License](#license)
-
 ## What is Socratic Bots?
 
-Socratic Bots (formerly SocraticBooks) lets instructors build AI tutors for a course. An instructor
-writes the tutor's teaching instructions, attaches course documents, picks a model, and shares the
-tutor with students through access codes or a public link. Students chat with the tutor, keep notes,
-and can take spoken exams with a voice agent. The tutor asks guiding questions rather than giving
-away answers, and can track each student's progress against learning goals.
+Socratic Bots lets instructors build AI tutors for a course. An instructor writes the tutor's
+teaching instructions, attaches course documents, picks a model, and shares the tutor with students
+through access codes or a public link. Students chat with the tutor, keep notes, and can take spoken
+exams with a voice agent. The tutor asks guiding questions rather than giving away answers, and can
+track each student's progress against learning goals.
 
 Socratic Bots is a layer on top of DARE. Accounts, LLM chat, document ingestion and retrieval, and
-billing all live in the DARE backend; Socratic Bots adds tutors, bot groups, access codes, notes, and
+billing live in the DARE backend; Socratic Bots adds tutors, bot groups, access codes, notes, and
 voice exams.
+
+**This repository is the browser app.** It talks to three services:
+
+- **REST** goes to the Socratic Bots backend only (`VITE_API_URL`).
+- **Chat** connects straight to DARE's Socket.IO `/chat` namespace (`VITE_DARE_SOCKET_URL`). DARE
+  runs the model, retrieval, and tools, and bills the chat.
+- **Voice exams** connect straight to the voice runtime over WebRTC, using a URL the Socratic Bots
+  backend signs for each session.
 
 > **Requires DARE.** Socratic Bots does not run on its own. You need a running
 > [DARE backend](https://github.com/cmudco/dare-backend) and the
@@ -39,8 +32,6 @@ voice exams.
 > DARE is a complete product without Socratic Bots.
 
 ## Overview
-
-This repository is the browser app. It talks to three services:
 
 ```mermaid
 flowchart LR
@@ -56,13 +47,8 @@ flowchart LR
     voice -->|"session context, transcripts"| sb
 ```
 
-- **REST** goes to the Socratic Bots backend only (`VITE_API_URL`).
-- **Chat** connects straight to DARE's Socket.IO `/chat` namespace (`VITE_DARE_SOCKET_URL`). DARE runs
-  the model, retrieval, and tools, and bills the chat.
-- **Voice exams** connect straight to the voice runtime over WebRTC, using a URL the Socratic Bots
-  backend signs for each session.
-
-See [docs/explanation/architecture.md](docs/explanation/architecture.md) for the full picture.
+The app owns no data: it reads and writes everything through the services above. See
+[docs/explanation/architecture.md](docs/explanation/architecture.md) for the full picture.
 
 ## Features
 
@@ -84,11 +70,12 @@ See [docs/explanation/architecture.md](docs/explanation/architecture.md) for the
 Building and managing tutors requires a creator role in DARE. Students redeem codes, chat, keep notes,
 and take voice exams.
 
-## Quick Start
+## Quick start
 
 Requires Node.js 20+ and a running Socratic Bots backend on `:8001` with DARE on `:8000`. If you
 don't have those yet, follow the
-[full-stack quick start](https://github.com/cmudco/socraticbots-backend/blob/dev/docs/tutorials/quickstart.md) first.
+[full-stack quick start](https://github.com/cmudco/socraticbots-backend/blob/dev/docs/tutorials/quickstart.md)
+first.
 
 ```bash
 git clone https://github.com/cmudco/socraticbots-frontend.git
@@ -98,8 +85,8 @@ cp .env.example .env
 npm run dev -- --port 5174
 ```
 
-Open <http://localhost:5174>. Step-by-step details and troubleshooting are in
-[docs/tutorials/quickstart.md](docs/tutorials/quickstart.md).
+The app runs at <http://localhost:5174>. Step-by-step setup, every script, and troubleshooting are
+in [docs/tutorials/quickstart.md](docs/tutorials/quickstart.md).
 
 ## Documentation
 
@@ -112,26 +99,12 @@ Open <http://localhost:5174>. Step-by-step details and troubleshooting are in
 | Reference   | [tests/SOCKET_CONTRACT.md](tests/SOCKET_CONTRACT.md)                 | The chat Socket.IO wire contract shared with DARE          |
 | Explanation | [docs/explanation/architecture.md](docs/explanation/architecture.md) | How the app is structured and how it talks to each service |
 | Project     | [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md)                   | Issues, pull requests, checks to run                       |
-| Project     | [docs/reference/rules.md](docs/reference/rules.md)                   | Frontend coding standards                                  |
-| Project     | [AGENTS.md](AGENTS.md)                                               | Guide for AI coding agents working in this repo            |
+| Project     | [docs/reference/rules.md](docs/reference/rules.md)                   | Frontend coding rules                                      |
 | Project     | [.github/SECURITY.md](.github/SECURITY.md)                           | Reporting vulnerabilities, hardening notes                 |
-| Project     | [CHANGELOG.md](CHANGELOG.md)                                         | Notable changes                                            |
+| Project     | [AGENTS.md](AGENTS.md)                                               | Guide for AI coding agents working in this repo            |
 | Project     | [BRAND.md](BRAND.md)                                                 | Brand and trademark usage policy                           |
 
-### Scripts
-
-| Command                           | What it does                               |
-| --------------------------------- | ------------------------------------------ |
-| `npm run dev`                     | Vite dev server (pass `-- --port 5174`)    |
-| `npm run build`                   | Type-check (`tsc -b`) and build to `dist/` |
-| `npm run preview`                 | Serve `dist/` locally                      |
-| `npm run lint` / `lint:fix`       | ESLint                                     |
-| `npm run format` / `format:check` | Prettier                                   |
-| `npm test`                        | Vitest unit tests                          |
-| `npm run test:voice`              | Voice session and feedback tests only      |
-| `npm run test:voice-contract`     | Type-check and test the voice API contract |
-
-## Tech Stack
+## Tech stack
 
 - React 19, TypeScript 5.7, Vite 6
 - React Router 7
@@ -166,6 +139,7 @@ Open <http://localhost:5174>. Step-by-step details and troubleshooting are in
 ## Stay in touch
 
 - **Found a bug or want a feature?** Open an issue in this repository.
+- **Found a security issue?** Report it privately as described in [.github/SECURITY.md](.github/SECURITY.md).
 - **Questions or general inquiries?** Email the project team at vks@andrew.cmu.edu.
 
 ## Acknowledgements
@@ -174,11 +148,11 @@ Socratic Bots is developed at the Dietrich College of Humanities and Social Scie
 University, and is built on the [DARE](https://github.com/cmudco/dare-backend) platform.
 
 "DARE" (Dietrich Analysis Research Education Platform) and "SocraticBots" are trademarks of Carnegie
-Mellon University. See [BRAND.md](BRAND.md) for the brand usage policy. For trademark, licensing, or
-general inquiries, contact the project team at vks@andrew.cmu.edu.
+Mellon University; see [BRAND.md](BRAND.md) for the usage policy. Send trademark and licensing
+questions to vks@andrew.cmu.edu.
 
-This software integrates with third-party APIs (for example Anthropic, OpenAI, Google, Mistral, and
-ElevenLabs). Use of those APIs is subject to each provider's terms of service.
+The app integrates with third-party APIs (for example Anthropic, OpenAI, Google, Mistral, and
+ElevenLabs), each subject to its provider's terms of service.
 
 ## Contributors
 
@@ -213,6 +187,5 @@ Sciences, Carnegie Mellon University.
 ## License
 
 This project is licensed under the [GNU Affero General Public License v3.0](LICENSE)
-(AGPL-3.0-only). © 2024–2026 Carnegie Mellon University.
-
-See the [LICENSE](LICENSE) file for the full text, or <https://www.gnu.org/licenses/agpl-3.0.en.html>.
+(AGPL-3.0-only). © 2024–2026 Carnegie Mellon University. The full text is in [LICENSE](LICENSE) and
+at <https://www.gnu.org/licenses/agpl-3.0.en.html>.

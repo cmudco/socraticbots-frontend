@@ -1,14 +1,14 @@
-# Socratic Bots Frontend — Deployment Guide
+# Deploy
 
-> **Just want to run it locally?** See [docs/tutorials/quickstart.md](../tutorials/quickstart.md). This guide is for serving the
-> app to real users.
+Build the frontend once into static files and serve them to real users. To run it locally, see
+[docs/tutorials/quickstart.md](../tutorials/quickstart.md).
 
-The frontend is a static single-page app. You build it once into `dist/` and serve those files from
-any web server or CDN. There is no Node process in production.
+The frontend is a static single-page app: there is no Node process in production. You build
+`dist/` and serve it from any web server or CDN.
 
-## Before you start
+## Prerequisites
 
-You need these running and reachable over HTTPS from your users' browsers:
+These services must be running and reachable over HTTPS from your users' browsers:
 
 | Service               | Example URL                    | Used for                      |
 | --------------------- | ------------------------------ | ----------------------------- |
@@ -17,13 +17,24 @@ You need these running and reachable over HTTPS from your users' browsers:
 | DARE frontend         | `https://dare.example.org`     | Billing hand-off links        |
 | voice-agent-runtime   | `https://sb-voice.example.org` | Voice exams (optional)        |
 
-The voice runtime URL is not a frontend setting. The Socratic Bots backend hands the browser a signed
-runtime URL for each voice session, so configure it there (`VOICE_RUNTIME_PUBLIC_URL`).
+The voice runtime URL is not a frontend setting. The Socratic Bots backend hands the browser a
+signed runtime URL for each voice session, so set it there (`VOICE_RUNTIME_PUBLIC_URL`).
+
+## Production checklist
+
+- `VITE_API_URL`, `VITE_DARE_SOCKET_URL` and `VITE_DARE_FRONTEND_URL` point at production HTTPS
+  URLs.
+- No secrets in any `VITE_*` variable. Everything in them is public.
+- Unknown paths fall back to `index.html`.
+- `index.html` is not cached; `/assets/*` is.
+- The frontend origin is allowed on the Socratic Bots backend, DARE and the voice runtime.
+- If you use Sentry, `VITE_SENTRY_DSN` is set for the production build.
 
 ## 1. Build
 
-Environment variables are compiled into the bundle at build time. Changing them later means
-rebuilding.
+Vite compiles environment variables into the bundle at build time, so changing one later means
+rebuilding. Always set `VITE_API_URL`: without it the build falls back to
+`http://localhost:8001/api`, which works only on a developer machine.
 
 ```bash
 git clone https://github.com/cmudco/socraticbots-frontend.git
@@ -42,11 +53,7 @@ EOF
 npm run build
 ```
 
-The build type-checks first (`tsc -b`), then writes the app to `dist/`. Vite warns that the main
-chunk is larger than 500 kB; that warning is expected and does not fail the build.
-
-Always set `VITE_API_URL`. If it's missing, the build falls back to `http://localhost:8001/api`,
-which only works on a developer machine.
+The build type-checks first (`tsc -b`), then writes the app to `dist/`.
 
 ## 2. Serve
 
@@ -87,9 +94,6 @@ server {
 }
 ```
 
-Deploy a new build by copying the new `dist/` into place, for example with
-`rsync -a --delete dist/ /var/www/socraticbots-frontend/dist/`. No reload is needed.
-
 ### Other hosts
 
 Any static host works (S3 + CloudFront, Netlify, Cloudflare Pages, GitHub Pages with a custom
@@ -99,6 +103,11 @@ domain). Configure its "single-page app" or "rewrite all to `index.html`" option
 
 There is no Dockerfile in this repo, and you don't need one. If your platform requires a container,
 copy `dist/` into an `nginx:alpine` image with the config above.
+
+### Docker (optional)
+
+The repo has no Dockerfile and does not need one. If your platform requires a container, copy
+`dist/` into an `nginx:alpine` image with the config above.
 
 ## 3. Configure the other services for this origin
 
@@ -110,13 +119,24 @@ The frontend works only if the backends accept your frontend's origin.
 | DARE backend          | `SOCRATIC_BOTS_FRONTEND_URL=https://sb.example.org`. DARE matches the socket's `Origin` against it to tag the chat as Socratic Bots traffic; without it, chats are treated as DARE chats. |
 | voice-agent-runtime   | Add `https://sb.example.org` to `VOICE_RUNTIME_CORS_ORIGINS`.                                                                                                                             |
 
-## Checklist
+## Verify
 
-- [ ] `VITE_API_URL`, `VITE_DARE_SOCKET_URL`, and `VITE_DARE_FRONTEND_URL` point at production HTTPS
-      URLs.
-- [ ] No secrets in any `VITE_*` variable. Everything in them is public.
-- [ ] Unknown paths fall back to `index.html` (open `/chat` directly and reload).
-- [ ] `index.html` is not cached; `/assets/*` is.
-- [ ] The frontend origin is allowed on the Socratic Bots backend, DARE, and the voice runtime.
-- [ ] Log in, open a bot, and get a streamed reply.
-- [ ] If you use Sentry, `VITE_SENTRY_DSN` is set for the production build.
+- Open `/chat` directly and reload: the app loads instead of a 404.
+- Log in, open a bot, and get a streamed reply.
+
+## Upgrade
+
+- Rebuild with the same `.env.production`, then copy the new `dist/` into place, for example
+  `rsync -a --delete dist/ /var/www/socraticbots-frontend/dist/`. No reload is needed.
+- `index.html` is never cached, so users get the new build on their next page load.
+- When a release depends on a backend change, follow the deploy order its PR names.
+
+## Troubleshooting
+
+- **The build warns that the main chunk is larger than 500 kB.** Expected; it does not fail the
+  build.
+- **Every request goes to `localhost:8001`.** `VITE_API_URL` was not set at build time. Set it and
+  rebuild.
+- **Reloading a deep link returns 404.** The host is not rewriting unknown paths to `index.html`.
+- **Chats show up as DARE chats.** DARE's `SOCRATIC_BOTS_FRONTEND_URL` does not match this
+  origin.
