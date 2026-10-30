@@ -5,17 +5,24 @@ backend and DARE.
 
 ## Filing issues
 
-- **Search first.** Check existing issues and confirm the problem reproduces on the latest `dev`.
-- **Find the right service.** Note whether it involves the Socratic Bots backend, DARE or the voice
-  runtime. Many frontend symptoms (failed login, no chat reply) come from backend configuration;
-  the [quick start troubleshooting list](../docs/tutorials/quickstart.md#troubleshooting) covers
-  the common ones.
-- **Bug reports.** Include your OS, browser and version, Node version and backend versions;
-  minimal numbered steps to reproduce; expected and actual behaviour with browser console errors
-  and failed network requests (redact tokens); and screenshots or a recording for anything visual.
-- **Feature requests.** Describe the problem for instructors or students, who it affects, and any
-  constraints. Leave the implementation open.
-- **Security issues.** Never open a public issue. See [SECURITY.md](SECURITY.md).
+1. **Search first.** Look through
+   [open and closed issues](https://github.com/cmudco/socraticbots-frontend/issues?q=is%3Aissue),
+   and check that the problem still happens on the latest `dev`.
+2. **Pick the right repo.** A failed login or a missing chat reply usually comes from backend
+   configuration; the
+   [quick start troubleshooting list](../docs/tutorials/quickstart.md#troubleshooting) covers the
+   common ones. The bug form asks which service fails; pick "Not sure" if you don't know.
+3. **Open a form.** Go to
+   [Issues → New issue](https://github.com/cmudco/socraticbots-frontend/issues/new/choose) and
+   choose **Bug report**, **Feature request** or **Docs problem**. Each form asks for exactly what
+   we need; fill in every required field.
+4. **Redact.** Remove keys, tokens and student data from logs and screenshots.
+5. **Watch the issue.** If we need more detail, we ask there.
+
+Before a large change, such as a new page, a change to a socket payload, or a new dependency, open a
+feature request with a short design sketch and wait for a reply before you write code.
+
+Security vulnerabilities never go in an issue. Follow [SECURITY.md](SECURITY.md).
 
 ## Pull requests
 
@@ -48,18 +55,14 @@ npm run build
   sockets, also run the browser-console regressions in [tests/README.md](../tests/README.md).
 - If you change a socket payload or event, update
   [tests/SOCKET_CONTRACT.md](../tests/SOCKET_CONTRACT.md) and coordinate the matching DARE change.
-- The Husky pre-commit hook runs Prettier and ESLint on staged files. Run Prettier only on files
-  you changed (`npx prettier --write <files>`), never `npm run format`.
+- The Husky pre-commit hook runs Prettier and ESLint on staged files. Run Prettier only on files you
+  changed (`npx prettier --write <files>`), never `npm run format`.
 
 ### PR description
 
-- **What.** A short summary.
-- **Why.** The motivation, with `Closes #123` if there is an issue.
-- **How.** The approach and any non-obvious decisions.
-- **Testing.** What you ran and what you clicked through.
-- **Screenshots or recordings.** For any UI change.
-- **Backend dependencies.** If the change needs a Socratic Bots backend or DARE change, link it
-  and say which to deploy first.
+The [pull request template](pull_request_template.md) asks for what, why, how, testing, screenshots
+and AI assistance, plus a checklist. Fill in every section; write "none" where nothing applies. If
+the change needs a backend or DARE change, link that PR and say which to deploy first.
 
 ### Review and merge
 
@@ -80,11 +83,11 @@ docs: list every environment variable in configuration.md
 
 `AGENTS.md` holds the project instructions; `.claude/CLAUDE.md` imports it for Claude Code.
 Procedures (`run-frontend`, `check`) live in `.agents/skills/`, with symlinks in `.claude/skills/`;
-see [.agents/README.md](../.agents/README.md). Invoke one by name (`/run-frontend` in Claude
-Code, `$run-frontend` in Codex). If you change how the app is run, built or tested,
-update the matching skill in the same PR.
+see [.agents/README.md](../.agents/README.md). Invoke one by name (`/run-frontend` in Claude Code,
+`$run-frontend` in Codex). If you change how the app is run, built or tested, update the matching
+skill in the same PR.
 
 ## Getting help
 
-Open an issue (with a design sketch before a large change) or a draft PR and ask in the
-description. For anything else, email vks@andrew.cmu.edu.
+Open an issue (with a design sketch before a large change) or a draft PR and ask in the description.
+For anything else, email vks@andrew.cmu.edu.
