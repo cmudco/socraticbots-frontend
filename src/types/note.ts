@@ -2,7 +2,7 @@ export interface Note {
   id: string;
   title: string;
   content: string;
-  botId: string;    // changed from chapter_id to botId (camelCase)
+  botId: string; // changed from chapter_id to botId (camelCase)
   createdAt: string; // camelCase from created_at
   updatedAt: string; // camelCase from updated_at
   timestamp?: string;

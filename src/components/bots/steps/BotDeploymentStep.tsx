@@ -258,7 +258,7 @@ const BotDeploymentStep: React.FC<BotDeploymentStepProps> = ({ botId }) => {
       <div className="rounded-lg border p-4">
         <Label className="text-base font-medium">How Students Access This Bot</Label>
         <div className="text-muted-foreground mt-2 space-y-1 text-sm">
-          <p>1. Students log into the Socratic Books platform</p>
+          <p>1. Students log into the Socratic Bots platform</p>
           <p>2. They enter the subscription code to gain access</p>
           <p>3. Once redeemed, they can start chatting immediately</p>
         </div>

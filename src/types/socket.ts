@@ -5,10 +5,10 @@ import type { MessageDiagnostics } from './messageDetails';
 export type { SocketAuth } from '@/config/socket.config';
 
 /**
- * Socket.IO Type Definitions for Socratic Books
+ * Socket.IO Type Definitions for Socratic Bots
  *
  * These types mirror the DARE backend Socket.IO event structure
- * with additions for Socratic Books-specific learning progress events.
+ * with additions for Socratic Bots-specific learning progress events.
  */
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -84,7 +84,7 @@ export type SocketMessageType =
   | 'tool_call_result'
   | 'tool_rounds_capped'
   | 'context_trace'
-  // Socratic Books specific - Learning Progress
+  // Socratic Bots specific - Learning Progress
   | 'progress_start'
   | 'progress_token'
   | 'progress_stream'
@@ -146,7 +146,7 @@ export interface SocketMessage extends MessageDiagnostics {
   // Conversation history (for initial load)
   conversationHistory?: ConversationHistoryMessage[];
 
-  // Learning progress assessment (Socratic Books specific)
+  // Learning progress assessment (Socratic Bots specific)
   assessment?: LearningProgressAssessment;
 
   // Error info
@@ -191,7 +191,7 @@ export interface ConversationHistoryMessage extends MessageDiagnostics {
 }
 
 /**
- * Learning progress assessment structure (Socratic Books specific)
+ * Learning progress assessment structure (Socratic Bots specific)
  */
 export interface LearningProgressAssessment {
   content: string;
@@ -205,7 +205,7 @@ export interface LearningProgressAssessment {
 // ════════════════════════════════════════════════════════════════════════════
 
 /**
- * Bot metadata sent with messages (Socratic Books specific)
+ * Bot metadata sent with messages (Socratic Bots specific)
  */
 export interface BotMeta {
   title?: string;
@@ -224,7 +224,7 @@ export interface SendMessagePayload {
   message: string;
   sender_type?: number;
 
-  // Socratic Books specific
+  // Socratic Bots specific
   enable_progress?: boolean;
   is_advanced?: boolean;
   tracking_prompt?: string;

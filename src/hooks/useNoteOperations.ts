@@ -1,15 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { notesService, CreateNoteRequest, UpdateNoteRequest } from '@/services/notes.service';
-
+import { CreateNoteRequest, UpdateNoteRequest, notesService } from '@/services/notes.service';
 
 export const useNoteOperations = (selectedBotId: string | null) => {
   const queryClient = useQueryClient();
-  
+
   // Query for notes
   const { data: notes = [], isLoading } = useQuery({
     queryKey: ['notes', selectedBotId],
-    queryFn: () => selectedBotId ? notesService.getNotes(selectedBotId) : Promise.resolve([]),
+    queryFn: () => (selectedBotId ? notesService.getNotes(selectedBotId) : Promise.resolve([])),
     enabled: !!selectedBotId,
   });
 
@@ -23,7 +22,7 @@ export const useNoteOperations = (selectedBotId: string | null) => {
 
   // Update note mutation
   const updateNoteMutation = useMutation({
-    mutationFn: ({ id, noteData }: { id: string; noteData: UpdateNoteRequest }) => 
+    mutationFn: ({ id, noteData }: { id: string; noteData: UpdateNoteRequest }) =>
       notesService.updateNote(id, noteData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes', selectedBotId] });
@@ -41,7 +40,7 @@ export const useNoteOperations = (selectedBotId: string | null) => {
   // Simple handlers
   const handleCreateNote = async (title: string, content: string) => {
     if (!selectedBotId) return;
-    
+
     await createNoteMutation.mutateAsync({
       title: title.trim(),
       content: content.trim(),

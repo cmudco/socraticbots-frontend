@@ -1,6 +1,6 @@
-# DARE / Socratic chat contract audit — 2026-09-09
+# DARE / Socratic Bots chat socket contract
 
-Compared Socratic frontend #83 with DARE frontend `d234d8014f1904adb5df6496a0d68a290f798f61` and DARE backend #349 (`7ab8735`). This checks the common chat protocol, not complete feature equivalence between the products.
+The chat protocol the Socratic Bots frontend shares with the DARE frontend and DARE backend, from an audit of all three in September 2026. It covers the common chat protocol, not complete feature equivalence between the products.
 
 ## Wire contract
 
@@ -44,18 +44,4 @@ Run on the local Socratic Vite origin:
 await (await import('/tests/chat-socket-parity.js')).runChatSocketParityTests();
 ```
 
-The wire test captures both actual Socratic store adapters with transport mocked: six combinations of retrieval modes and database/LiteLLM IDs, stale-room protection, zero threshold, nested tracking and connection auth. Captured frames were replayed through DARE's real `MessageValidationService` and `LLMQueryRequestBuilder` for 12 authenticated/public cases. No external model calls occur in this contract check. The response regression verifies numeric/string IDs, completion/next send, errors, persisted sender/model/decimal cost and diagnostics in both stores. Build and changed-file lint pass. DARE frontend was inspected at the commit above; a new full DARE browser journey was not run for this audit.
-
-## PR handover
-
-Core integration targets, all based on dev:
-
-1. [DARE backend #349](https://github.com/cmudco/dare-backend/pull/349)
-2. [Socratic backend #68](https://github.com/cmudco/socraticbots-backend/pull/68), including migration `bots.0016_bot_rag_mode`
-3. [Socratic frontend #83](https://github.com/cmudco/socraticbots-frontend/pull/83)
-
-Deploy both backends before frontend. These are integration targets, not evidence of production deployment.
-
-Superseded: frontend #60/#61/#62/#63 by #83, backend #52/#53 by #68, DARE #348 by #349. Backend heads are ancestors of the integration heads. Frontend patches are equivalent; the foundation patch differs only in its rebase context around the numeric-ID hotfix, whose guard is retained in the shared core.
-
-Keep separate: frontend #77 and backend #64 (voice-provider retirement), frontend #44 (audio saving; old branch needs reconciliation), frontend #47 and backend #41 (documentation), backend #50 (account deletion), backend #51 (internal throttling, targets main). These are not included simply because the chat integration is complete. Frontend #64 and backend #54 are old main/dev sync PRs with multiple merge bases; review their merge resolutions separately rather than closing or deploying them as duplicate chat work.
+The wire test captures both actual Socratic store adapters with transport mocked: six combinations of retrieval modes and database/LiteLLM IDs, stale-room protection, zero threshold, nested tracking and connection auth. Captured frames were replayed through DARE's real `MessageValidationService` and `LLMQueryRequestBuilder` for 12 authenticated/public cases. No external model calls occur in this contract check. The response regression verifies numeric/string IDs, completion/next send, errors, persisted sender/model/decimal cost and diagnostics in both stores. Build and changed-file lint pass. A full DARE browser journey was not run for this audit.

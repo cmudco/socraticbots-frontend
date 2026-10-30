@@ -31,7 +31,7 @@ export interface ChatSocketState {
   error: string | null;
   currentConversationId: string | null;
 
-  // Progress streaming state (Socratic Books specific)
+  // Progress streaming state (Socratic Bots specific)
   isProgressStreaming: boolean;
   progressTokens: string[];
   progressContent: string;
@@ -368,7 +368,7 @@ export function createChatSocketCore<TMessage extends ChatMessageLike>(
             }
 
             // ────────────────────────────────────────────────────────────────
-            // Learning Progress Events (Socratic Books Specific)
+            // Learning Progress Events (Socratic Bots specific)
             // ────────────────────────────────────────────────────────────────
 
             case 'progress_start': {

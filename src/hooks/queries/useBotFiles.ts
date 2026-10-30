@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { botFileService, BotFileUploadRequest } from '@/services/botFiles.service';
+import { BotFile, BotFileUploadRequest, botFileService } from '@/services/botFiles.service';
+
 import { FileStatus } from '@/utils/fileStatus';
 
 export const useBotFiles = (
-  botGroupId: number, 
-  botId: number, 
+  botGroupId: number,
+  botId: number,
   options?: { enablePolling?: boolean }
 ) => {
   const { enablePolling = false } = options || {};
@@ -16,23 +17,27 @@ export const useBotFiles = (
       const result = await botFileService.getBotFiles(botGroupId, botId);
       return result;
     },
-    refetchInterval: enablePolling ? (query) => {
-      if (!query.state.data) {
-        return 5000;
-      }
-      
-      if (!query.state.data || !query.state.data.files) {
-        return 5000;
-      }
-      
-      const hasProcessingFiles = query.state.data.files.some((file: any) => file.status === FileStatus.PROCESSING);
-      
-      if (hasProcessingFiles) {
-        return 5000; // Poll every 5 seconds when files are processing
-      } else {
-        return false; // Stop polling when no files are processing
-      }
-    } : false,
+    refetchInterval: enablePolling
+      ? query => {
+          if (!query.state.data) {
+            return 5000;
+          }
+
+          if (!query.state.data || !query.state.data.files) {
+            return 5000;
+          }
+
+          const hasProcessingFiles = query.state.data.files.some(
+            (file: BotFile) => file.status === FileStatus.PROCESSING
+          );
+
+          if (hasProcessingFiles) {
+            return 5000; // Poll every 5 seconds when files are processing
+          } else {
+            return false; // Stop polling when no files are processing
+          }
+        }
+      : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
     staleTime: enablePolling ? 0 : 30000, // No caching when polling
@@ -40,7 +45,8 @@ export const useBotFiles = (
 
   return {
     ...query,
-    hasProcessingFiles: query.data?.files?.some((file: any) => file.status === FileStatus.PROCESSING) || false,
+    hasProcessingFiles:
+      query.data?.files?.some((file: BotFile) => file.status === FileStatus.PROCESSING) || false,
   };
 };
 

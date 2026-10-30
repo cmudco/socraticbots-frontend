@@ -382,7 +382,7 @@ const BotDeploymentTab: React.FC<BotDeploymentTabProps> = ({ botId }) => {
         </CardHeader>
         <CardContent>
           <div className="text-muted-foreground space-y-2 text-sm">
-            <p>1. Students should log into the Socratic Books platform</p>
+            <p>1. Students should log into the Socratic Bots platform</p>
             <p>2. They can enter the subscription code to gain access to this bot</p>
             <p>3. Once redeemed, they can start chatting with the bot immediately</p>
           </div>

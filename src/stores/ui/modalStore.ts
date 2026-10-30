@@ -1,14 +1,5 @@
 import { create } from 'zustand';
 
-// import type { Chapter } from '@/services/chapters.service'; // Temporarily disabled
-
-// Temporary interface for backward compatibility
-interface Chapter {
-  id: string;
-  title: string;
-  [key: string]: any;
-}
-
 import type { Bot } from '@/types/bot';
 import type { BotGroup } from '@/types/botGroup';
 
@@ -44,20 +35,6 @@ interface ModalStoreState {
     botGroupId: number | null;
   };
 
-  // Legacy chapter modals (keeping for backward compatibility)
-
-  chapterFormModal: {
-    isOpen: boolean;
-    chapter: Chapter | null;
-    bookId: string | null;
-    mode: 'create' | 'edit' | 'view';
-  };
-  deleteChapterModal: {
-    isOpen: boolean;
-    chapter: Chapter | null;
-    bookId: string | null;
-  };
-
   clearConversationModal: {
     isOpen: boolean;
   };
@@ -70,18 +47,11 @@ interface ModalStoreState {
   openDeleteBotGroupModal: (botGroup: BotGroup) => void;
   closeDeleteBotGroupModal: () => void;
 
-  // Bot modal methods  
+  // Bot modal methods
   openBotFormModal: (botGroupId: number, bot?: Bot, viewOnly?: boolean) => void;
   closeBotFormModal: () => void;
   openDeleteBotModal: (botGroupId: number, bot: Bot) => void;
   closeDeleteBotModal: () => void;
-
-  // Legacy methods (keeping for backward compatibility)
-
-  openChapterFormModal: (bookId: string, chapter?: Chapter, viewOnly?: boolean) => void;
-  closeChapterFormModal: () => void;
-  openDeleteChapterModal: (bookId: string, chapter: Chapter) => void;
-  closeDeleteChapterModal: () => void;
 
   openClearConversationModal: () => void;
   closeClearConversationModal: () => void;
@@ -117,18 +87,6 @@ export const useModalStore = create<ModalStoreState>(set => ({
     botGroupId: null,
   },
 
-  // Legacy modals
-  chapterFormModal: {
-    isOpen: false,
-    chapter: null,
-    bookId: null,
-    mode: 'create',
-  },
-  deleteChapterModal: {
-    isOpen: false,
-    chapter: null,
-    bookId: null,
-  },
   clearConversationModal: {
     isOpen: false,
   },
@@ -171,7 +129,7 @@ export const useModalStore = create<ModalStoreState>(set => ({
       },
     }),
 
-  // Bot modal methods  
+  // Bot modal methods
   openBotFormModal: (botGroupId: number, bot?: Bot, viewOnly?: boolean) =>
     set({
       botFormModal: {
@@ -204,42 +162,6 @@ export const useModalStore = create<ModalStoreState>(set => ({
         isOpen: false,
         bot: null,
         botGroupId: null,
-      },
-    }),
-
-
-  openChapterFormModal: (bookId: string, chapter?: Chapter, viewOnly?: boolean) =>
-    set({
-      chapterFormModal: {
-        isOpen: true,
-        chapter: chapter || null,
-        bookId,
-        mode: viewOnly ? 'view' : chapter ? 'edit' : 'create',
-      },
-    }),
-  closeChapterFormModal: () =>
-    set({
-      chapterFormModal: {
-        isOpen: false,
-        chapter: null,
-        bookId: null,
-        mode: 'create',
-      },
-    }),
-  openDeleteChapterModal: (bookId: string, chapter: Chapter) =>
-    set({
-      deleteChapterModal: {
-        isOpen: true,
-        chapter,
-        bookId,
-      },
-    }),
-  closeDeleteChapterModal: () =>
-    set({
-      deleteChapterModal: {
-        isOpen: false,
-        chapter: null,
-        bookId: null,
       },
     }),
 
@@ -298,18 +220,6 @@ export const useModalStore = create<ModalStoreState>(set => ({
         isOpen: false,
         bot: null,
         botGroupId: null,
-      },
-      // Legacy modals
-      chapterFormModal: {
-        isOpen: false,
-        chapter: null,
-        bookId: null,
-        mode: 'create',
-      },
-      deleteChapterModal: {
-        isOpen: false,
-        chapter: null,
-        bookId: null,
       },
       clearConversationModal: {
         isOpen: false,
