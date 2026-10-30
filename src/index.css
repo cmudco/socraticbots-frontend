@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin '@tailwindcss/typography';
+@source '../node_modules/streamdown/dist/*.js';
+@source '../node_modules/@streamdown/code/dist/*.js';
+@source '../node_modules/@streamdown/math/dist/*.js';
+@source '../node_modules/@streamdown/mermaid/dist/*.js';
 
 @import './themes/common.css';
 @import './themes/amber-minimal.css';
@@ -121,6 +125,30 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Streamdown draws its own code and inline-code chrome; keep Tailwind
+   Typography's pre/code styles (margins, backtick pseudo-content) off it. */
+.prose [data-streamdown='code-block'] pre {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+}
+.prose [data-streamdown='inline-code']::before,
+.prose [data-streamdown='inline-code']::after {
+  content: none;
+}
+/* Streamdown gives inline code bg-muted but no text color; pair it with the
+   foreground so it stays readable on primary-colored user bubbles. */
+[data-streamdown='inline-code'] {
+  font-size: 0.875em;
+  font-weight: 500;
+  color: var(--foreground);
+}
+[data-streamdown='code-block-body'] pre {
+  font-size: 0.8125rem;
 }
 
 @layer base {
