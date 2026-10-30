@@ -1,5 +1,5 @@
 /**
- * Socket.IO Configuration for Socratic Books
+ * Socket.IO Configuration for Socratic Bots
  *
  * Configures connection to DARE backend Socket.IO server.
  *
