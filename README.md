@@ -72,7 +72,7 @@ and take voice exams.
 
 ## Quick start
 
-Requires Node.js 20+ and a running Socratic Bots backend on `:8001` with DARE on `:8000`. If you
+Requires Node.js 20+ (or Docker) and a running Socratic Bots backend on `:8001` with DARE on `:8000`. If you
 don't have those yet, follow the
 [full-stack quick start](https://github.com/cmudco/socraticbots-backend/blob/dev/docs/tutorials/quickstart.md)
 first.
@@ -83,6 +83,13 @@ cd socraticbots-frontend
 npm ci
 cp .env.example .env
 npm run dev -- --port 5174
+```
+
+Or serve the production build with Docker, without Node:
+
+```bash
+docker build -t socraticbots-frontend .
+docker run -d -p 5174:80 socraticbots-frontend
 ```
 
 The app runs at <http://localhost:5174>. Step-by-step setup, every script, and troubleshooting are

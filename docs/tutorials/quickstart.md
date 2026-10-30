@@ -11,6 +11,7 @@ which brings up all the services in order and ends by pointing back here.
 ## Prerequisites
 
 - **Node.js 20+** (Vitest 4 needs it; the team uses Node 22) and **npm 10+**, which ships with it.
+  Or Docker, to run the production build instead of the dev server (step 3, Option B).
 - **Socratic Bots backend** running on `http://localhost:8001`.
 - **DARE backend** running on `http://localhost:8000`, with Redis for Socket.IO.
 - **voice-agent-runtime** (optional), only for voice exams with the Mistral/Pipecat voice.
@@ -45,15 +46,30 @@ the browser bundle: never put secrets in them.
 
 ## 3. Run
 
-Use port 5174. Vite's default, 5173, is where the DARE frontend runs, and DARE tells the two apps
-apart by their origin. The Socratic Bots backend allows `http://localhost:5174` for CORS out of the
-box.
+Use port 5174 either way. Vite's default, 5173, is where the DARE frontend runs, and DARE tells the
+two apps apart by their origin. The Socratic Bots backend allows `http://localhost:5174` for CORS
+out of the box.
+
+### Option A — dev server
 
 ```bash
 npm run dev -- --port 5174
 ```
 
 Open <http://localhost:5174>. Vite hot-reloads on save.
+
+### Option B — Docker
+
+This builds the production bundle and serves it with nginx; there is no hot reload. The image does
+not read `.env`: it bakes in the same local defaults, and you override them with `--build-arg`
+(see [docs/how-to/deploy.md](../how-to/deploy.md#docker)).
+
+```bash
+docker build -t socraticbots-frontend .
+docker run -d --name socraticbots-frontend -p 5174:80 socraticbots-frontend
+```
+
+Open <http://localhost:5174>. Rebuild the image to pick up code changes.
 
 ## 4. Sign in
 
