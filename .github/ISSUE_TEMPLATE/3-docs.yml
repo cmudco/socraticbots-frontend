@@ -1,13 +1,13 @@
 name: Docs problem
 description: Something in the docs is wrong, unclear or missing
-labels: ["documentation"]
+labels: ['documentation']
 body:
   - type: input
     id: page
     attributes:
       label: Page
       description: The file path or link.
-      placeholder: "docs/tutorials/quickstart.md"
+      placeholder: 'docs/tutorials/quickstart.md'
     validations:
       required: true
   - type: textarea
