@@ -11,12 +11,7 @@ interface BotGroupTableProps {
   onView?: (botGroup: BotGroup) => void;
 }
 
-const BotGroupTable: React.FC<BotGroupTableProps> = ({ 
-  botGroups, 
-  onEdit, 
-  onDelete, 
-  onView 
-}) => {
+const BotGroupTable: React.FC<BotGroupTableProps> = ({ botGroups, onEdit, onDelete, onView }) => {
   return (
     <div className="space-y-4">
       {botGroups.map(botGroup => (

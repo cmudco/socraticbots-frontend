@@ -12,17 +12,6 @@ export interface RegistrationRequest {
   access_code: string;
 }
 
-/**
- * @deprecated Professor registration is now managed via DARE admin.
- * This endpoint returns 410 GONE on the backend.
- */
-export interface ProfessorRegistrationRequest {
-  name: string;
-  email: string;
-  password: string;
-  confirm_password: string;
-}
-
 export interface VoiceAssignmentSummary {
   id: number;
   name: string;
@@ -106,21 +95,6 @@ class AuthService {
   async register(registrationData: RegistrationRequest): Promise<RegistrationResponse> {
     return baseRequest<RegistrationResponse>({
       url: 'access-codes/register/',
-      method: METHOD.POST,
-      data: registrationData,
-      includeAuthToken: false,
-    });
-  }
-
-  /**
-   * @deprecated Professor/Creator registration is now managed via DARE admin.
-   * This endpoint returns 410 GONE on the backend.
-   */
-  async registerProfessor(
-    registrationData: ProfessorRegistrationRequest
-  ): Promise<RegistrationResponse> {
-    return baseRequest<RegistrationResponse>({
-      url: 'access-codes/register-professor/',
       method: METHOD.POST,
       data: registrationData,
       includeAuthToken: false,

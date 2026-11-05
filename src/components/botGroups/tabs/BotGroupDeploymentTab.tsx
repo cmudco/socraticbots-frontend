@@ -209,7 +209,7 @@ const BotGroupDeploymentTab: React.FC<BotGroupDeploymentTabProps> = ({ botGroupI
         </CardHeader>
         <CardContent>
           <div className="text-muted-foreground space-y-2 text-sm">
-            <p>1. Students log into Socratic Books</p>
+            <p>1. Students log into Socratic Bots</p>
             <p>2. Enter the subscription code to unlock ALL bots in this group</p>
             <p>3. Start chatting with any bot immediately</p>
             <p className="mt-4 font-semibold">

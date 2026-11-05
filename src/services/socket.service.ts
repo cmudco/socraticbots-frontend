@@ -1,5 +1,5 @@
 /**
- * Socket.IO Service for Socratic Books
+ * Socket.IO Service for Socratic Bots
  *
  * Provides Socket.IO connection management for bot conversations.
  * This service is designed to be used by Zustand stores, adapting DARE's Redux middleware pattern.
