@@ -1,0 +1,14 @@
+.git
+.github
+.husky
+.agents
+.claude
+.env
+.env.*
+node_modules
+dist
+coverage
+docs
+tests
+.DS_Store
+*.log

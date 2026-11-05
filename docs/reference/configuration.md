@@ -7,6 +7,8 @@ Vite compiles `VITE_*` values into the JavaScript bundle at build time, so:
 
 - Everything in them is public. Never put API keys, internal service keys or other secrets here.
 - Changing a value needs a restart (`npm run dev`) or a rebuild (`npm run build`).
+- The `Dockerfile` ignores `.env`: pass each variable as a `--build-arg`. Unset ones fall back to
+  the local defaults below (`VITE_SENTRY_ENVIRONMENT` falls back to `production`).
 
 ## Values that must match across services
 

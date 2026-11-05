@@ -99,15 +99,25 @@ server {
 Any static host works (S3 + CloudFront, Netlify, Cloudflare Pages, GitHub Pages with a custom
 domain). Configure its "single-page app" or "rewrite all to `index.html`" option.
 
-### Docker (optional)
+### Docker
 
-There is no Dockerfile in this repo, and you don't need one. If your platform requires a container,
-copy `dist/` into an `nginx:alpine` image with the config above.
+The `Dockerfile` runs step 1 in a `node:22-alpine` stage and serves `dist/` from `nginx:1.27-alpine`
+with the repo's `nginx.conf` (the SPA fallback and caching rules above, on plain HTTP port 80).
+Terminate TLS in front of it. `VITE_*` values are build arguments: changing one means rebuilding
+the image, not restarting the container.
 
-### Docker (optional)
+```bash
+docker build -t socraticbots-frontend \
+  --build-arg VITE_API_URL=https://sb-api.example.org/api \
+  --build-arg VITE_DARE_SOCKET_URL=https://dare-api.example.org \
+  --build-arg VITE_DARE_FRONTEND_URL=https://dare.example.org \
+  .
+docker run -d --name socraticbots-frontend --restart unless-stopped -p 127.0.0.1:8080:80 socraticbots-frontend
+```
 
-The repo has no Dockerfile and does not need one. If your platform requires a container, copy
-`dist/` into an `nginx:alpine` image with the config above.
+Optional build arguments: `VITE_SENTRY_DSN` and `VITE_SENTRY_ENVIRONMENT` (default `production`).
+The image is about 100 MB and nginx uses about 15 MiB of RAM; any host that runs the backends can
+run it. The container health check requests `/`.
 
 ## 3. Configure the other services for this origin
 
