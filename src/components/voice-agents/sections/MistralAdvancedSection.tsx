@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useVoiceBrainModels } from '@/hooks/queries/useVoiceAgents';
+import { useKokoroVoices, useVoiceBrainModels } from '@/hooks/queries/useVoiceAgents';
 
 import { useVoiceAgentFormStore } from '@/stores/forms/voiceAgentFormStore';
 
@@ -21,16 +21,14 @@ interface MistralAdvancedSectionProps {
   viewOnly?: boolean;
 }
 
-/**
- * Mistral runtime timing controls. Examiner audio for the production path is
- * controlled by the runtime TTS env, so per-agent Mistral voice selection is
- * intentionally not shown here.
- */
+const DEFAULT_VOICE = 'default';
+
 export const MistralAdvancedSection: React.FC<MistralAdvancedSectionProps> = ({
   viewOnly = false,
 }) => {
   const {
     voiceProvider,
+    voiceId,
     voiceEagerness,
     voiceTurnMode,
     voiceTurnTimeoutSecs,
@@ -41,10 +39,15 @@ export const MistralAdvancedSection: React.FC<MistralAdvancedSectionProps> = ({
 
   const isMistral = voiceProvider === VoiceProvider.MistralVoice;
   const { data: brainModels, isLoading: brainModelsLoading } = useVoiceBrainModels(isMistral);
+  const { data: kokoroVoices, isLoading: kokoroVoicesLoading } = useKokoroVoices(isMistral);
 
   if (!isMistral) return null;
 
   const knownBrainModel = brainModels?.models.some(model => model.id === brainModel);
+  // voiceId can hold an old value from another voice provider; that plays as the default voice.
+  const selectedVoice = kokoroVoices?.voices.some(voice => voice.id === voiceId)
+    ? voiceId
+    : DEFAULT_VOICE;
 
   return (
     <Card>
@@ -103,6 +106,28 @@ export const MistralAdvancedSection: React.FC<MistralAdvancedSectionProps> = ({
             Push to talk stops background noise from cutting students off. The exam timer keeps
             running either way.
           </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Examiner Voice</Label>
+          <Select
+            value={selectedVoice}
+            onValueChange={value => updateField('voiceId', value === DEFAULT_VOICE ? '' : value)}
+            disabled={viewOnly || kokoroVoicesLoading}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={DEFAULT_VOICE}>Default</SelectItem>
+              {kokoroVoices?.voices.map(voice => (
+                <SelectItem key={voice.id} value={voice.id}>
+                  {voice.label} — {voice.gender}, {voice.accent}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-muted-foreground text-xs">The voice students hear during the exam.</p>
         </div>
 
         <div className="space-y-2">

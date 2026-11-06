@@ -44,6 +44,7 @@ export const voiceAgentKeys = {
   conversation: (id: number) => [...voiceAgentKeys.conversations(), id] as const,
   students: (agentId: number) => [...voiceAgentKeys.all, 'students', agentId] as const,
   brainModels: () => [...voiceAgentKeys.all, 'brainModels'] as const,
+  kokoroVoices: () => [...voiceAgentKeys.all, 'kokoroVoices'] as const,
   members: (agentId: number) => [...voiceAgentKeys.all, 'members', agentId] as const,
 };
 
@@ -71,6 +72,18 @@ export const useVoiceBrainModels = (enabled: boolean = true) => {
   return useQuery({
     queryKey: voiceAgentKeys.brainModels(),
     queryFn: () => voiceAgentService.getBrainModels(),
+    enabled: enabled && isAuthenticated,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+  });
+};
+
+export const useKokoroVoices = (enabled: boolean = true) => {
+  const isAuthenticated = useIsAuthenticated();
+
+  return useQuery({
+    queryKey: voiceAgentKeys.kokoroVoices(),
+    queryFn: () => voiceAgentService.getKokoroVoices(),
     enabled: enabled && isAuthenticated,
     staleTime: 60 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
