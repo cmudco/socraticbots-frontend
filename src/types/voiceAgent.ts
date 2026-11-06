@@ -17,6 +17,11 @@ export enum VoiceProvider {
   MistralVoice = 'mistral_pipecat',
 }
 
+export enum VoiceTurnMode {
+  Auto = 'auto',
+  PushToTalk = 'push_to_talk',
+}
+
 export enum VoiceEagerness {
   Low = 'low',
   Normal = 'normal',
@@ -180,6 +185,7 @@ export interface VoiceAgent {
   temperature: number;
   maxDurationSeconds: number;
   voiceEagerness: VoiceEagerness;
+  voiceTurnMode: VoiceTurnMode;
   voiceTurnTimeoutSecs: number;
   /** Brain model id for the Mistral Voice runtime. */
   llmModel: string;
@@ -222,6 +228,7 @@ export interface VoiceAgentCreateData {
   temperature?: number;
   maxDurationSeconds?: number;
   voiceEagerness?: VoiceEagerness;
+  voiceTurnMode?: VoiceTurnMode;
   voiceTurnTimeoutSecs?: number;
   llmModel?: string;
   examTitle?: string;
@@ -244,6 +251,7 @@ export interface VoiceAgentUpdateData {
   temperature?: number;
   maxDurationSeconds?: number;
   voiceEagerness?: VoiceEagerness;
+  voiceTurnMode?: VoiceTurnMode;
   voiceTurnTimeoutSecs?: number;
   llmModel?: string;
   examTitle?: string;

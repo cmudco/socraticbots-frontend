@@ -7,6 +7,7 @@ import {
   TurnEagerness,
   VoiceEagerness,
   VoiceProvider,
+  VoiceTurnMode,
 } from '@/types/voiceAgent';
 import type { VoiceAgent } from '@/types/voiceAgent';
 
@@ -54,6 +55,7 @@ export interface VoiceAgentFormState {
 
   // Mistral-side advanced settings (consumed by the Pipecat runtime).
   voiceEagerness: VoiceEagerness;
+  voiceTurnMode: VoiceTurnMode;
   voiceTurnTimeoutSecs: number;
   // Brain model for the Pipecat runtime. Distinct from the ElevenLabs-only
   // `llmModel` below, which lives inside conversationConfig.
@@ -110,6 +112,7 @@ export interface VoiceAgentFormData {
   temperature: number;
   maxDurationSeconds: number;
   voiceEagerness: VoiceEagerness;
+  voiceTurnMode: VoiceTurnMode;
   voiceTurnTimeoutSecs: number;
   llmModel: string;
   conversationConfig?: {
@@ -162,6 +165,7 @@ const initialFormState = {
 
   // Mistral advanced (sensible defaults)
   voiceEagerness: VoiceEagerness.Normal,
+  voiceTurnMode: VoiceTurnMode.Auto,
   voiceTurnTimeoutSecs: 7,
   brainModel: DEFAULT_BRAIN_MODEL,
 
@@ -264,6 +268,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
 
       // Mistral advanced
       voiceEagerness: agent.voiceEagerness ?? VoiceEagerness.Normal,
+      voiceTurnMode: agent.voiceTurnMode ?? VoiceTurnMode.Auto,
       voiceTurnTimeoutSecs: agent.voiceTurnTimeoutSecs ?? 7,
       brainModel: agent.llmModel || DEFAULT_BRAIN_MODEL,
 
@@ -333,6 +338,7 @@ export const useVoiceAgentFormStore = create<VoiceAgentFormState>((set, get) => 
       temperature: state.temperature,
       maxDurationSeconds: state.maxDurationSeconds,
       voiceEagerness: state.voiceEagerness,
+      voiceTurnMode: state.voiceTurnMode,
       voiceTurnTimeoutSecs: state.voiceTurnTimeoutSecs,
       llmModel: state.brainModel,
     };

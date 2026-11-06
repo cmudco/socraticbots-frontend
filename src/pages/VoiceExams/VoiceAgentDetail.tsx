@@ -55,7 +55,7 @@ import {
   ProviderSection,
 } from '@/components/voice-agents/sections';
 
-import { AgentStatus, VoiceProvider } from '@/types/voiceAgent';
+import { AgentStatus, VoiceProvider, VoiceTurnMode } from '@/types/voiceAgent';
 
 const VoiceAgentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -424,6 +424,16 @@ const VoiceAgentDetail: React.FC = () => {
                         : 'ElevenLabs'}
                     </dd>
                   </div>
+                  {agent.voiceProvider === VoiceProvider.MistralVoice && (
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Turn Taking</dt>
+                      <dd className="text-foreground">
+                        {agent.voiceTurnMode === VoiceTurnMode.PushToTalk
+                          ? 'Push to talk'
+                          : 'Automatic'}
+                      </dd>
+                    </div>
+                  )}
                   {agent.voiceProvider === VoiceProvider.ElevenLabs && (
                     <div>
                       <dt className="text-muted-foreground text-sm">Voice ID</dt>
