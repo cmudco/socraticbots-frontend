@@ -91,6 +91,7 @@ const Login: React.FC = () => {
                     id="email"
                     name="email"
                     type="email"
+                    autoCapitalize="none"
                     placeholder="Enter your email address"
                     disabled={isSubmitting || loginMutation.isPending}
                   />
