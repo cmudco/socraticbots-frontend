@@ -48,7 +48,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 import { PipecatProcessingStage, PipecatVoiceMessage } from '@/types/pipecat';
-import { VoiceAgent, VoiceProvider } from '@/types/voiceAgent';
+import { VoiceAgent, VoiceProvider, VoiceTurnMode } from '@/types/voiceAgent';
 import { VoiceDiagnosticKind, VoiceDiagnosticStage } from '@/types/voiceDiagnostics';
 
 interface VoiceInterfaceProps {
@@ -279,7 +279,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
     (message: PipecatVoiceMessage) => {
       receiveFeedback(message);
       if (message.type === 'runtime_ready') {
-        setPushToTalk(message.turnMode === 'push_to_talk');
+        setPushToTalk(message.turnMode === VoiceTurnMode.PushToTalk);
       }
       if (message.type === 'ptt_state') {
         setCapturing(Boolean(message.capturing));

@@ -1,3 +1,5 @@
+import { VoiceTurnMode } from '@/types/voiceAgent';
+
 export type PipecatVoiceStatus =
   | 'disconnected'
   | 'connecting'
@@ -60,7 +62,7 @@ export interface PipecatVoiceMessage {
   // On runtime_ready: "webrtc" = play the live WebRTC audio track (streaming),
   // "http" (or absent) = fetch pre-rendered WAVs. Default is HTTP.
   ttsTransport?: 'webrtc' | 'http';
-  turnMode?: 'auto' | 'push_to_talk';
+  turnMode?: VoiceTurnMode;
   // On ptt_state: whether the runtime is capturing the student's answer.
   capturing?: boolean;
 }
