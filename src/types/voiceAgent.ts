@@ -371,3 +371,15 @@ export interface VoiceBrainModelsResponse {
   models: VoiceBrainModel[];
   total: number;
 }
+
+export interface KokoroVoice {
+  id: string;
+  label: string;
+  gender: string;
+  accent: string;
+}
+
+export interface KokoroVoicesResponse {
+  voices: KokoroVoice[];
+  total: number;
+}

@@ -23,6 +23,7 @@ import {
 import {
   useCloneVoiceAgent,
   useDeleteVoiceAgent,
+  useKokoroVoices,
   useSyncFromElevenLabs,
   useUpdateVoiceAgent,
   useVoiceAgent,
@@ -63,6 +64,10 @@ const VoiceAgentDetail: React.FC = () => {
   const agentId = parseInt(id || '0');
 
   const { data: agent, isLoading } = useVoiceAgent(agentId);
+  const { data: kokoroVoices } = useKokoroVoices(
+    agent?.voiceProvider === VoiceProvider.MistralVoice
+  );
+  const examinerVoice = kokoroVoices?.voices.find(voice => voice.id === agent?.voiceId);
   const updateAgent = useUpdateVoiceAgent();
   const cloneAgent = useCloneVoiceAgent();
   const deleteAgent = useDeleteVoiceAgent();
@@ -432,6 +437,12 @@ const VoiceAgentDetail: React.FC = () => {
                           ? 'Push to talk'
                           : 'Automatic'}
                       </dd>
+                    </div>
+                  )}
+                  {agent.voiceProvider === VoiceProvider.MistralVoice && (
+                    <div>
+                      <dt className="text-muted-foreground text-sm">Examiner Voice</dt>
+                      <dd className="text-foreground">{examinerVoice?.label ?? 'Default'}</dd>
                     </div>
                   )}
                   {agent.voiceProvider === VoiceProvider.ElevenLabs && (

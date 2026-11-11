@@ -14,6 +14,7 @@ import { baseRequest } from '@/utils/baseRequest';
 import {
   AgentMembersResponse,
   ElevenLabsAgentItem,
+  KokoroVoicesResponse,
   SignedUrlResponse,
   StudentAttemptInfo,
   VoiceAgent,
@@ -54,6 +55,13 @@ class VoiceAgentService {
   async getBrainModels(): Promise<VoiceBrainModelsResponse> {
     return baseRequest<VoiceBrainModelsResponse>({
       url: 'voice/brain-models/',
+      method: METHOD.GET,
+    });
+  }
+
+  async getKokoroVoices(): Promise<KokoroVoicesResponse> {
+    return baseRequest<KokoroVoicesResponse>({
+      url: 'voice/kokoro-voices/',
       method: METHOD.GET,
     });
   }
