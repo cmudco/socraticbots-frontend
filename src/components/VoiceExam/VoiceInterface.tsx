@@ -41,13 +41,14 @@ import { formatTimeInCall } from '@/utils/formatters';
 
 import BackupSpeechControl from '@/components/VoiceExam/BackupSpeechControl';
 import MicrophoneSelect from '@/components/VoiceExam/MicrophoneSelect';
+import PushToTalkControl from '@/components/VoiceExam/PushToTalkControl';
 import ReplyLatencyBreakdown from '@/components/VoiceExam/ReplyLatencyBreakdown';
 import { ThinkingDots, VoiceActivityBars } from '@/components/VoiceExam/indicators';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 import { PipecatProcessingStage, PipecatVoiceMessage } from '@/types/pipecat';
-import { VoiceAgent, VoiceProvider } from '@/types/voiceAgent';
+import { VoiceAgent, VoiceProvider, VoiceTurnMode } from '@/types/voiceAgent';
 import { VoiceDiagnosticKind, VoiceDiagnosticStage } from '@/types/voiceDiagnostics';
 
 interface VoiceInterfaceProps {
@@ -157,6 +158,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const startupRef = useRef(0);
   const diagnosticsRef = useRef<VoiceBrowserDiagnostics | null>(null);
   const startLockRef = useRef(false);
+  const [pushToTalk, setPushToTalk] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const [pttNotice, setPttNotice] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const { receive: receiveFeedback, reset: resetFeedback, ...feedback } = useVoiceFeedback();
   const [messages, setMessages] = useState<TranscriptMessage[]>([]);
@@ -274,6 +278,22 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const handlePipecatMessage = useCallback(
     (message: PipecatVoiceMessage) => {
       receiveFeedback(message);
+      if (message.type === 'runtime_ready') {
+        setPushToTalk(message.turnMode === VoiceTurnMode.PushToTalk);
+      }
+      if (message.type === 'ptt_state') {
+        setCapturing(Boolean(message.capturing));
+        if (message.capturing) setPttNotice(null);
+        return;
+      }
+      if (message.type === 'ptt_no_speech') {
+        setPttNotice("Didn't catch that — press Talk and try again.");
+        return;
+      }
+      if (message.type === 'ptt_auto_stopped') {
+        setPttNotice('We sent your answer because it reached the time limit for one turn.');
+        return;
+      }
       if (message.type === 'error') {
         setLocalError(
           message.error ??
@@ -290,6 +310,7 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       }
       if (message.type === 'agent_audio_started') {
         setInterruptionState(null);
+        setPttNotice(null);
         startTimerRef.current?.();
         setIsProcessingResponse(false);
         setProcessingStage(null);
@@ -423,6 +444,9 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
       setIsProcessingResponse(false);
       setInterruptionState(null);
       setSpeechRecovery(null);
+      setPushToTalk(false);
+      setCapturing(false);
+      setPttNotice(null);
     },
     onError: err => {
       setLocalError(voiceErrorMessage(err));
@@ -783,8 +807,14 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   const isTimeCritical = maxDuration > 0 && progress >= 0.9;
   const minutesRemaining =
     maxDuration > 0 ? Math.max(0, Math.ceil((maxDuration - elapsedSeconds) / 60)) : null;
-  const liveState: LiveState =
-    isSessionActive && interruptionState
+  const handleTalkToggle = useCallback(() => {
+    const next = !capturing;
+    // Flip right away so a quick second press means "stop", not a repeated "start".
+    if (sendControlMessage({ type: next ? 'ptt_start' : 'ptt_stop' })) setCapturing(next);
+  }, [capturing, sendControlMessage]);
+  const liveState: LiveState = capturing
+    ? 'listening'
+    : isSessionActive && interruptionState
       ? interruptionState
       : agentIsSpeaking
         ? 'speaking'
@@ -801,19 +831,23 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
   // Refine the generic "thinking" state when the runtime says which pipeline
   // phase it is waiting on (LLM text vs TTS audio).
   const effectiveStateMeta =
-    isSessionActive && speechRecovery
-      ? { ...stateMeta, ...speechRecovery }
-      : isSessionActive && feedback.stage && !interruptionState
-        ? { ...stateMeta, ...VOICE_STAGE_COPY[feedback.stage] }
-        : liveState === 'thinking' && processingStage === 'tts'
-          ? { ...stateMeta, label: 'Preparing voice', caption: 'The agent is about to speak.' }
-          : liveState === 'thinking' && processingStage === 'llm'
-            ? {
-                ...stateMeta,
-                label: 'Agent thinking',
-                caption: 'Working out the next question.',
-              }
-            : stateMeta;
+    pushToTalk && capturing
+      ? { ...stateMeta, caption: 'Press Done when you have finished your answer.' }
+      : pushToTalk && (liveState === 'listening' || liveState === 'ready')
+        ? { ...stateMeta, caption: 'Press Talk when you are ready to answer.' }
+        : isSessionActive && speechRecovery
+          ? { ...stateMeta, ...speechRecovery }
+          : isSessionActive && feedback.stage && !interruptionState
+            ? { ...stateMeta, ...VOICE_STAGE_COPY[feedback.stage] }
+            : liveState === 'thinking' && processingStage === 'tts'
+              ? { ...stateMeta, label: 'Preparing voice', caption: 'The agent is about to speak.' }
+              : liveState === 'thinking' && processingStage === 'llm'
+                ? {
+                    ...stateMeta,
+                    label: 'Agent thinking',
+                    caption: 'Working out the next question.',
+                  }
+                : stateMeta;
   useEffect(() => {
     if (isSessionActive && feedback.stage && !interruptionState && !speechRecovery) {
       sendControlMessage({
@@ -1176,6 +1210,14 @@ export function VoiceInterface({ agent, onComplete, onAlreadyAttempted }: VoiceI
                 </div>
               </div>
             </div>
+
+            {isSessionActive && pushToTalk ? (
+              <PushToTalkControl
+                capturing={capturing}
+                notice={pttNotice}
+                onToggle={handleTalkToggle}
+              />
+            ) : null}
 
             {/* Timer */}
             {isSessionActive && isMistral ? (

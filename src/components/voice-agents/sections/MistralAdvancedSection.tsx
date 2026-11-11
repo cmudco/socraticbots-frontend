@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 
-import { VoiceEagerness, VoiceProvider } from '@/types/voiceAgent';
+import { VoiceEagerness, VoiceProvider, VoiceTurnMode } from '@/types/voiceAgent';
 
 interface MistralAdvancedSectionProps {
   viewOnly?: boolean;
@@ -32,6 +32,7 @@ export const MistralAdvancedSection: React.FC<MistralAdvancedSectionProps> = ({
   const {
     voiceProvider,
     voiceEagerness,
+    voiceTurnMode,
     voiceTurnTimeoutSecs,
     brainModel,
     updateField,
@@ -80,11 +81,36 @@ export const MistralAdvancedSection: React.FC<MistralAdvancedSectionProps> = ({
         </div>
 
         <div className="space-y-2">
+          <Label>Turn Taking</Label>
+          <Select
+            value={voiceTurnMode}
+            onValueChange={value => updateField('voiceTurnMode', value as VoiceTurnMode)}
+            disabled={viewOnly}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={VoiceTurnMode.Auto}>
+                Automatic — the agent detects when the student stops talking
+              </SelectItem>
+              <SelectItem value={VoiceTurnMode.PushToTalk}>
+                Push to talk — the student presses Talk to start and to finish
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-muted-foreground text-xs">
+            Push to talk stops background noise from cutting students off. The exam timer keeps
+            running either way.
+          </p>
+        </div>
+
+        <div className="space-y-2">
           <Label>Eagerness</Label>
           <Select
             value={voiceEagerness}
             onValueChange={value => updateField('voiceEagerness', value as VoiceEagerness)}
-            disabled={viewOnly}
+            disabled={viewOnly || voiceTurnMode === VoiceTurnMode.PushToTalk}
           >
             <SelectTrigger className="w-full">
               <SelectValue />
